@@ -37,6 +37,7 @@ import {
   fetchArtistRadio,
   fetchMoreRadioRecommendations,
   fetchYouTubeVideoIdForSong,
+  searchITunesAudio,
   syncYouTubeLibraryByInput,
   TURKISH_ROCK_RADIO_POOL,
 } from './services/musicResolver';
@@ -1176,6 +1177,15 @@ export default function App() {
         const ytId = await fetchYouTubeVideoIdForSong(song.artist, song.title);
         if (ytId) {
           playableSong = { ...song, youtubeVideoId: ytId };
+        } else if (!playableSong.audioUrl) {
+          const appleFallback = await searchITunesAudio(`${song.artist} ${song.title}`, true);
+          if (appleFallback && appleFallback.audioUrl) {
+            playableSong = {
+              ...playableSong,
+              audioUrl: appleFallback.audioUrl,
+              coverUrl: playableSong.coverUrl || appleFallback.coverUrl,
+            };
+          }
         }
       } catch {
         // fallback

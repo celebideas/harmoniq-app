@@ -68,24 +68,18 @@ function cleanSongTitle(rawTitle: string): { artist: string; title: string } {
  * This ensures songs stream their FULL complete version (NOT a 30s preview demo!)
  */
 export async function fetchYouTubeVideoIdForSong(artist: string, title: string): Promise<string | null> {
+  const query = `${artist} ${title}`.trim();
+  if (!query) return null;
+
   try {
-    const query = `${artist} ${title}`.trim();
     const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`);
     if (res.ok) {
       const data = await res.json();
       return data.videoId || null;
-    } else {
-      console.info('[Harmoniq Sync Diagnostic] fetchYouTubeVideoIdForSong non-OK status:', {
-        query,
-        status: res.status,
-      });
     }
   } catch (err: any) {
-    console.info('[Harmoniq Sync Diagnostic] fetchYouTubeVideoIdForSong exception:', {
-      artist,
-      title,
-      message: err?.message,
-    });
+    // Graceful fallback notice - no throw or crash
+    console.info('[Harmoniq] YouTube search service unavailable, falling back to Apple Music stream:', err?.message);
   }
   return null;
 }
@@ -495,28 +489,60 @@ export async function resolveMusicLinkOrQuery(
   }
 
   // Fallback: search YouTube directly for the raw text query
-  const fallbackYtId = await fetchYouTubeVideoIdForSong('', trimmed);
+  let fallbackYtId: string | null = null;
+  try {
+    fallbackYtId = await fetchYouTubeVideoIdForSong('', trimmed);
+  } catch {
+    fallbackYtId = null;
+  }
+
   const parsed = cleanSongTitle(trimmed);
+  let appleAudioUrl: string | undefined = undefined;
+  let appleCoverUrl: string | undefined = undefined;
+  let resolvedArtist = parsed.artist;
+  let resolvedTitle = parsed.title;
+  let resolvedAlbum = 'Canlı Akış';
+  let resolvedGenre = 'Müzik Akışı';
+  let resolvedDuration = 210;
+
+  // Seamless fallback to Apple Music API if YouTube video was not resolved
+  if (!fallbackYtId) {
+    try {
+      const appleFallback = await searchITunesAudio(parsed.title || trimmed, allowExplicit);
+      if (appleFallback) {
+        appleAudioUrl = appleFallback.audioUrl;
+        appleCoverUrl = appleFallback.coverUrl;
+        if (appleFallback.artist) resolvedArtist = appleFallback.artist;
+        if (appleFallback.title) resolvedTitle = appleFallback.title;
+        if (appleFallback.album) resolvedAlbum = appleFallback.album;
+        if (appleFallback.genre) resolvedGenre = appleFallback.genre;
+        if (appleFallback.durationSeconds) resolvedDuration = appleFallback.durationSeconds;
+      }
+    } catch (appleErr) {
+      console.info('[Harmoniq] Apple Music fallback search notice:', appleErr);
+    }
+  }
+
   return {
     id: `custom-${Date.now()}`,
-    title: parsed.title,
-    artist: parsed.artist,
-    album: 'Canlı Akış',
-    genre: 'Müzik Akışı',
-    rawMediaTitle: `${parsed.artist} - ${parsed.title}`,
+    title: resolvedTitle,
+    artist: resolvedArtist,
+    album: resolvedAlbum,
+    genre: resolvedGenre,
+    rawMediaTitle: `${resolvedArtist} - ${resolvedTitle}`,
+    coverUrl: appleCoverUrl,
     coverGradient: 'from-emerald-700 via-zinc-900 to-black',
-    durationSeconds: 240,
+    durationSeconds: resolvedDuration,
     bpm: 115,
     keyNote: 'Am',
     catalogNumber: `CST-${Date.now().toString().slice(-6)}`,
     releaseYear: new Date().getFullYear(),
     soundType: 'rock',
     youtubeVideoId: fallbackYtId || undefined,
+    audioUrl: appleAudioUrl,
     isExplicit: allowExplicit,
-    timelineMarkers: [
-      { second: 20, label: 'Giriş', emoji: '⚡' },
-      { second: 80, label: 'Nakarat', emoji: '🔥' },
-    ],
+    timelineMarkers: buildDynamicTimelineMarkers(resolvedDuration, resolvedGenre),
+    lyrics: buildSynchronizedLyrics(resolvedArtist, resolvedTitle, resolvedAlbum, resolvedDuration, resolvedGenre),
   };
 }
 
