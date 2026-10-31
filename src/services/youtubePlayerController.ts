@@ -195,6 +195,15 @@ class YouTubePlayerController {
     this.notifyState(false);
   }
 
+  public stop() {
+    this.isPlaying = false;
+    this.sendCommand('stopVideo');
+    this.sendCommand('pauseVideo');
+    this.stopTimer();
+    this.currentSecond = 0;
+    this.notifyState(false);
+  }
+
   public seek(second: number) {
     const safeSec = Math.max(0, isNaN(second) ? 0 : second);
     this.currentSecond = safeSec;

@@ -54,6 +54,7 @@ import {
   CheckCircle2,
   Download,
   Copy,
+  Pencil,
 } from 'lucide-react';
 import {
   detectLiveLocation,
@@ -474,6 +475,7 @@ export const ProfileTab: React.FC<Props> = ({
   const [showStoryCardModal, setShowStoryCardModal] = useState(false);
   const [isGeneratingStoryImage, setIsGeneratingStoryImage] = useState(false);
   const [storyActionSuccess, setStoryActionSuccess] = useState<string | null>(null);
+  const [toastNotice, setToastNotice] = useState<string | null>(null);
   const [appealSent, setAppealSent] = useState(false);
   const [viewingPlaylist, setViewingPlaylist] = useState<UserPlaylist | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
@@ -908,6 +910,64 @@ export const ProfileTab: React.FC<Props> = ({
     return top4;
   }, [favoriteSongs, allWeeklyTracks]);
 
+  // User-customized Top 4 Vitrin Tracks (persisted to LocalStorage)
+  const [customTop4Tracks, setCustomTop4Tracks] = useState<(Song | null)[]>(() => {
+    try {
+      const saved = localStorage.getItem('harmoniq_custom_top4_vitrin');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+      }
+    } catch {}
+    return [null, null, null, null];
+  });
+
+  const [editingTop4Slot, setEditingTop4Slot] = useState<number | null>(null);
+  const [top4SearchQuery, setTop4SearchQuery] = useState('');
+
+  // Combined Top 4 Vitrin Tracks (Custom override -> Fallback to dynamic top tracks)
+  const displayedTop4Tracks: Song[] = useMemo(() => {
+    const fallbackTop4 = signatureTop4Tracks;
+    return [0, 1, 2, 3].map((idx) => {
+      return customTop4Tracks[idx] || fallbackTop4[idx] || SAMPLE_SONGS[idx % SAMPLE_SONGS.length];
+    });
+  }, [customTop4Tracks, signatureTop4Tracks]);
+
+  // Combined catalog of user's songs for vitrin slot selection
+  const allAvailableSongsForVitrin: Song[] = useMemo(() => {
+    const combined = [
+      ...favoriteSongs,
+      ...(syncedPlaylists || []).flatMap((p) => p.tracks || []),
+      ...allWeeklyTracks,
+      ...SAMPLE_SONGS,
+    ];
+    const seen = new Set<string>();
+    const list: Song[] = [];
+    for (const s of combined) {
+      if (!s || !s.title) continue;
+      const key = `${s.title.toLowerCase()}::${(s.artist || '').toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        list.push(s);
+      }
+    }
+    return list;
+  }, [favoriteSongs, syncedPlaylists, allWeeklyTracks]);
+
+  const handleAssignSongToTop4Slot = (song: Song, slotIndex: number) => {
+    triggerHaptic(20);
+    const updated = [...displayedTop4Tracks];
+    updated[slotIndex] = song;
+    setCustomTop4Tracks(updated);
+    try {
+      localStorage.setItem('harmoniq_custom_top4_vitrin', JSON.stringify(updated));
+    } catch {}
+    setEditingTop4Slot(null);
+    setTop4SearchQuery('');
+    setToastNotice(`📌 "${song.title}" #${slotIndex + 1} vitrinine atandı!`);
+    setTimeout(() => setToastNotice(null), 3000);
+  };
+
   // Fetch high-res 300x300bb portraits for Top Weekly Artists & Library Artists
   React.useEffect(() => {
     let cancelled = false;
@@ -938,12 +998,94 @@ export const ProfileTab: React.FC<Props> = ({
     };
   }, [sortedWeeklyArtists, sanitizedFavoriteArtists, subscribedChannels]);
 
-  const drawStoryCanvas = (): HTMLCanvasElement => {
+  // CORS-safe image loader for HTML5 canvas export without tainted canvas errors
+  const loadSafeImage = (url?: string): Promise<HTMLImageElement | null> => {
+    if (!url) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      let done = false;
+      const timer = setTimeout(() => {
+        if (!done) {
+          done = true;
+          resolve(null);
+        }
+      }, 2500);
+
+      img.onload = () => {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          resolve(img);
+        }
+      };
+      img.onerror = () => {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      };
+      img.src = url;
+    });
+  };
+
+  // High-Resolution 1080x1920 Instagram Story Canvas Renderer
+  const renderStoryCanvas = async (includeExternalImages: boolean = true): Promise<HTMLCanvasElement> => {
     const canvas = document.createElement('canvas');
     canvas.width = 1080;
     canvas.height = 1920;
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
+
+    // Load images safely in parallel
+    let avatarImg: HTMLImageElement | null = null;
+    let artistImg: HTMLImageElement | null = null;
+    let top4Imgs: (HTMLImageElement | null)[] = [null, null, null, null];
+
+    if (includeExternalImages) {
+      try {
+        const topArtistImgUrl =
+          artistPortraitMap[topArtistName.toLowerCase()] ||
+          sortedWeeklyArtists[0]?.sampleSong?.coverUrl;
+
+        [avatarImg, artistImg, ...top4Imgs] = await Promise.all([
+          loadSafeImage(userProfile.avatarUrl || googleUser?.photoUrl),
+          loadSafeImage(topArtistImgUrl),
+          ...displayedTop4Tracks.map((t) => loadSafeImage(t.coverUrl)),
+        ]);
+      } catch {
+        // Fallback gracefully without external images
+      }
+    }
+
+    // Helper: Rounded Rectangle with optional clip or stroke
+    const fillRoundRect = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      r: number,
+      fillStyle: string | CanvasGradient,
+      strokeStyle?: string
+    ) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+      if (strokeStyle) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
 
     // 1. Dark Gradient Mesh Background
     const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1920);
@@ -967,39 +1109,12 @@ export const ProfileTab: React.FC<Props> = ({
     ctx.fillStyle = orb2;
     ctx.fillRect(0, 1080, 800, 840);
 
-    const fillRoundRect = (
-      x: number,
-      y: number,
-      w: number,
-      h: number,
-      r: number,
-      fillStyle: string,
-      strokeStyle?: string
-    ) => {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-      ctx.fillStyle = fillStyle;
-      ctx.fill();
-      if (strokeStyle) {
-        ctx.strokeStyle = strokeStyle;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-      ctx.restore();
-    };
-
     // Outer subtle border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 3;
     ctx.strokeRect(50, 50, 980, 1820);
 
-    // Top Header: HARMONIQ
+    // Top Header: HARMONIQ & Label
     ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#10b981';
     ctx.fillText('🎧 HARMONIQ', 90, 125);
@@ -1011,190 +1126,273 @@ export const ProfileTab: React.FC<Props> = ({
     ctx.textAlign = 'left';
 
     // User Profile Box
-    fillRoundRect(90, 175, 900, 170, 28, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
+    fillRoundRect(90, 165, 900, 165, 28, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
 
-    // User Initial / Avatar Circle
-    const avatarGrad = ctx.createLinearGradient(130, 205, 230, 305);
-    avatarGrad.addColorStop(0, '#10b981');
-    avatarGrad.addColorStop(1, '#06b6d4');
-    ctx.fillStyle = avatarGrad;
-    ctx.beginPath();
-    ctx.arc(175, 260, 48, 0, Math.PI * 2);
-    ctx.fill();
+    // User Avatar Drawing (with real image or stylish initial gradient)
+    if (avatarImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(175, 247, 48, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(avatarImg, 127, 199, 96, 96);
+      ctx.restore();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(175, 247, 48, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      const avatarGrad = ctx.createLinearGradient(130, 205, 230, 305);
+      avatarGrad.addColorStop(0, '#10b981');
+      avatarGrad.addColorStop(1, '#06b6d4');
+      ctx.fillStyle = avatarGrad;
+      ctx.beginPath();
+      ctx.arc(175, 247, 48, 0, Math.PI * 2);
+      ctx.fill();
 
-    const initials = (userProfile.youtubeAccount?.name || userProfile.name || 'YC')
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
-    ctx.fillStyle = '#052e16';
-    ctx.textAlign = 'center';
-    ctx.fillText(initials, 175, 273);
-    ctx.textAlign = 'left';
+      const initials = (userProfile.youtubeAccount?.name || userProfile.name || 'YC')
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = '#052e16';
+      ctx.textAlign = 'center';
+      ctx.fillText(initials, 175, 260);
+      ctx.textAlign = 'left';
+    }
 
     // User Name & Handle
     ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(userProfile.youtubeAccount?.name || userProfile.name, 245, 245);
+    ctx.fillText(userProfile.youtubeAccount?.name || userProfile.name, 245, 235);
 
     ctx.font = '500 24px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText(userProfile.youtubeAccount?.handle || '@yasincelebi', 245, 285);
+    ctx.fillText(userProfile.youtubeAccount?.handle || '@harmoniq_user', 245, 275);
 
     // Trust Shield Badge
-    fillRoundRect(245, 298, 360, 34, 17, 'rgba(16, 185, 129, 0.16)', 'rgba(16, 185, 129, 0.35)');
+    fillRoundRect(245, 288, 380, 32, 16, 'rgba(16, 185, 129, 0.16)', 'rgba(16, 185, 129, 0.35)');
     ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#34d399';
-    ctx.fillText(`🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 · Doğrulanmış`, 260, 322);
+    ctx.fillText(`🛡️ Güven Puanı: %${userProfile.trustScore || 98} · Doğrulanmış Dinleyici`, 260, 310);
 
-    // AURA HERO BANNER
-    fillRoundRect(90, 380, 900, 370, 36, 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.28)');
+    // 2. MÜZİKAL AURA HERO BANNER
+    fillRoundRect(90, 360, 900, 330, 32, 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.28)');
 
     // Aura Tag
-    fillRoundRect(130, 420, 210, 40, 20, 'rgba(16, 185, 129, 0.25)', 'rgba(16, 185, 129, 0.5)');
-    ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
+    fillRoundRect(130, 395, 210, 36, 18, 'rgba(16, 185, 129, 0.25)', 'rgba(16, 185, 129, 0.5)');
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#6ee7b7';
-    ctx.fillText('✨ MÜZİKAL AURA', 148, 447);
+    ctx.fillText('✨ MÜZİKAL AURA', 148, 420);
 
     // Persona Title
-    ctx.font = '900 64px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 58px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(weeklyPersona, 130, 540);
+    ctx.fillText(weeklyPersona, 130, 505);
 
     // Persona Description
-    ctx.font = '400 28px system-ui, -apple-system, sans-serif';
+    ctx.font = '400 26px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     const words = weeklyPersonaDesc.split(' ');
     let line = '';
-    let y = 605;
+    let y = 560;
     for (let i = 0; i < words.length; i++) {
       const testLine = line + words[i] + ' ';
       const metrics = ctx.measureText(testLine);
       if (metrics.width > 820 && i > 0) {
         ctx.fillText(line, 130, y);
         line = words[i] + ' ';
-        y += 40;
+        y += 36;
       } else {
         line = testLine;
       }
     }
     ctx.fillText(line, 130, y);
 
-    // 3 KEY WRAPPED METRICS
+    // 3. 📌 İMZA PARÇALARIM (TOP 4 VİTRİN)
+    fillRoundRect(90, 715, 900, 320, 28, 'rgba(255, 255, 255, 0.03)', 'rgba(255, 255, 255, 0.07)');
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('📌 İmza Parçalarım (Top 4 Vitrin)', 130, 755);
+
+    // 4 Vitrin Kartı Çizimi
+    const vitrinY = 780;
+    const cardW = 195;
+    const cardH = 225;
+    const gap = 25;
+    const startX = 120;
+
+    displayedTop4Tracks.forEach((t, i) => {
+      const cx = startX + i * (cardW + gap);
+      const img = top4Imgs[i];
+
+      fillRoundRect(cx, vitrinY, cardW, cardH, 18, 'rgba(0, 0, 0, 0.4)', 'rgba(255, 255, 255, 0.12)');
+
+      // Draw Album Cover if loaded, or stylized gradient
+      if (img) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx + 16, vitrinY);
+        ctx.arcTo(cx + cardW, vitrinY, cx + cardW, vitrinY + 140, 16);
+        ctx.arcTo(cx + cardW, vitrinY + 140, cx, vitrinY + 140, 0);
+        ctx.arcTo(cx, vitrinY + 140, cx, vitrinY, 0);
+        ctx.arcTo(cx, vitrinY, cx + cardW, vitrinY, 16);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, cx, vitrinY, cardW, 140);
+        ctx.restore();
+      } else {
+        const coverGrad = ctx.createLinearGradient(cx, vitrinY, cx + cardW, vitrinY + 140);
+        coverGrad.addColorStop(0, i === 0 ? '#b45309' : i === 1 ? '#4338ca' : i === 2 ? '#047857' : '#831843');
+        coverGrad.addColorStop(1, '#090a0f');
+        fillRoundRect(cx, vitrinY, cardW, 140, 16, coverGrad);
+        ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.textAlign = 'center';
+        ctx.fillText('♪', cx + cardW / 2, vitrinY + 85);
+        ctx.textAlign = 'left';
+      }
+
+      // Rank Badge (#1..#4)
+      fillRoundRect(cx + 8, vitrinY + 8, 38, 26, 8, i === 0 ? '#f59e0b' : 'rgba(0, 0, 0, 0.75)');
+      ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = i === 0 ? '#000000' : '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(`#${i + 1}`, cx + 27, vitrinY + 26);
+      ctx.textAlign = 'left';
+
+      // Title & Artist
+      ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      const maxTitleW = cardW - 20;
+      let tName = t.title || 'Şarkı';
+      if (ctx.measureText(tName).width > maxTitleW) {
+        while (tName.length > 3 && ctx.measureText(tName + '...').width > maxTitleW) {
+          tName = tName.slice(0, -1);
+        }
+        tName += '...';
+      }
+      ctx.fillText(tName, cx + 10, vitrinY + 172);
+
+      ctx.font = '400 15px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      let aName = t.artist || 'Sanatçı';
+      if (ctx.measureText(aName).width > maxTitleW) {
+        aName = aName.slice(0, 12) + '...';
+      }
+      ctx.fillText(aName, cx + 10, vitrinY + 200);
+    });
+
+    // 4. KEY WRAPPED METRICS
     // Box 1: Listening Time
-    fillRoundRect(90, 790, 900, 150, 26, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
-    ctx.font = '500 22px system-ui, -apple-system, sans-serif';
+    fillRoundRect(90, 1060, 900, 130, 24, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
+    ctx.font = '500 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('🎧 HAFTALIK DİNLEME SÜRESİ', 130, 835);
-    ctx.font = 'bold 46px system-ui, -apple-system, sans-serif';
+    ctx.fillText('🎧 HAFTALIK DİNLEME SÜRESİ', 130, 1100);
+    ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#a3e635';
-    ctx.fillText(`${weeklyHours} saat ${weeklyRemainingMinutes} dakika`, 130, 895);
-    ctx.font = '400 22px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`${weeklyHours} saat ${weeklyRemainingMinutes} dakika`, 130, 1155);
+    ctx.font = '400 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.textAlign = 'right';
-    ctx.fillText(`${weeklyScrobbleCount} parça dinlendi`, 950, 895);
+    ctx.fillText(`${weeklyScrobbleCount} parça dinlendi`, 950, 1155);
     ctx.textAlign = 'left';
 
     // Box 2: #1 Artist
-    fillRoundRect(90, 970, 900, 150, 26, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
-    ctx.font = '500 22px system-ui, -apple-system, sans-serif';
+    fillRoundRect(90, 1215, 900, 130, 24, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
+    ctx.font = '500 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('👑 1 NUMARALI SANATÇI', 130, 1015);
-    ctx.font = 'bold 46px system-ui, -apple-system, sans-serif';
+    ctx.fillText('👑 1 NUMARALI SANATÇI', 130, 1255);
+    ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#fde047';
-    ctx.fillText(topArtistName, 130, 1075);
-    ctx.font = '400 22px system-ui, -apple-system, sans-serif';
+    ctx.fillText(topArtistName, 130, 1310);
+    ctx.font = '400 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.textAlign = 'right';
-    ctx.fillText(`${sortedWeeklyArtists[0]?.tracksCount || 24} parça tekrarlandı`, 950, 1075);
+    ctx.fillText(`${sortedWeeklyArtists[0]?.tracksCount || 24} parça tekrarlandı`, 950, 1310);
     ctx.textAlign = 'left';
 
     // Box 3: Dominant Genre
-    fillRoundRect(90, 1150, 900, 150, 26, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
-    ctx.font = '500 22px system-ui, -apple-system, sans-serif';
+    fillRoundRect(90, 1370, 900, 130, 24, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
+    ctx.font = '500 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('📊 BASKIN MÜZİK TÜRÜ', 130, 1195);
-    ctx.font = 'bold 46px system-ui, -apple-system, sans-serif';
+    ctx.fillText('📊 BASKIN MÜZİK TÜRÜ', 130, 1410);
+    ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText(topGenreName, 130, 1255);
-    ctx.font = '400 22px system-ui, -apple-system, sans-serif';
+    ctx.fillText(topGenreName, 130, 1465);
+    ctx.font = '400 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.textAlign = 'right';
-    ctx.fillText(`Haftalık akışın %${sortedWeeklyGenres[0]?.percentage || 42}'si`, 950, 1255);
+    ctx.fillText(`Haftalık akışın %${sortedWeeklyGenres[0]?.percentage || 42}'si`, 950, 1465);
     ctx.textAlign = 'left';
 
-    // VIBE SCORE PILLARS
-    fillRoundRect(90, 1330, 900, 180, 26, 'rgba(255, 255, 255, 0.03)', 'rgba(255, 255, 255, 0.07)');
-    const pillars = [
-      { label: 'Dinamik Enerji', score: '%94', color: '#f59e0b', sub: 'Yüksek ritim & rifler' },
-      { label: 'Melankolik Doku', score: '%88', color: '#06b6d4', sub: 'Derin indie & sözler' },
-      { label: 'Frekans Uyumu', score: '%98', color: '#10b981', sub: 'Doğrulanmış zevk' },
-    ];
-    pillars.forEach((p, idx) => {
-      const px = 120 + idx * 290;
-      ctx.font = '500 20px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.fillText(p.label, px, 1380);
-
-      ctx.font = 'bold 50px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = p.color;
-      ctx.fillText(p.score, px, 1440);
-
-      ctx.font = '400 18px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fillText(p.sub, px, 1475);
-    });
-
-    // WAVEFORM SOUNDBAR
+    // 5. WAVEFORM SOUNDBAR
     const barStartX = 90;
-    const barStartY = 1550;
+    const barStartY = 1530;
     const totalBars = 36;
     for (let i = 0; i < totalBars; i++) {
       const heightMultiplier = Math.sin((i / totalBars) * Math.PI * 3) * 0.5 + 0.5;
       const bHeight = 15 + heightMultiplier * 55;
       const bx = barStartX + i * 25;
       const by = barStartY + (70 - bHeight) / 2;
-      ctx.fillStyle = i % 3 === 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255, 255, 255, 0.25)';
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(255, 255, 255, 0.25)';
       fillRoundRect(bx, by, 12, bHeight, 6, ctx.fillStyle);
     }
 
-    // FOOTER
-    fillRoundRect(90, 1660, 900, 140, 24, 'rgba(0, 0, 0, 0.45)', 'rgba(255, 255, 255, 0.08)');
-    ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+    // 6. FOOTER BRANDING & REZONANS
+    fillRoundRect(90, 1630, 900, 160, 28, 'rgba(0, 0, 0, 0.55)', 'rgba(255, 255, 255, 0.1)');
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('harmoniq.app · Canlı Rezonans & Sosyal Müzik', 130, 1720);
+    ctx.fillText('harmoniq.app · Canlı Rezonans & Sosyal Müzik', 130, 1695);
 
     ctx.font = '500 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.fillText('Dinleme zevkini doğrula, frekansını keşfet.', 130, 1760);
+    ctx.fillText('Dinleme zevkini doğrula, frekansını keşfet.', 130, 1740);
 
     ctx.textAlign = 'right';
-    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#10b981';
-    ctx.fillText('Senkronize Dinle ⚡', 950, 1735);
+    ctx.fillText('Senkronize Dinle ⚡', 950, 1715);
     ctx.textAlign = 'left';
 
     return canvas;
   };
 
-  const handleDownloadStoryCard = () => {
+  const handleDownloadStoryCard = async () => {
     setIsGeneratingStoryImage(true);
+    setStoryActionSuccess(null);
     try {
-      const canvas = drawStoryCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
+      let canvas: HTMLCanvasElement;
+      let dataUrl: string = '';
+
+      try {
+        // Attempt high-res render with CORS-loaded album covers
+        canvas = await renderStoryCanvas(true);
+        dataUrl = canvas.toDataURL('image/png');
+      } catch (corsErr) {
+        console.warn('Canvas tainted by external image CORS, switching to guaranteed vector render:', corsErr);
+        // Guaranteed fallback: renders pure vectors and gradients without external images, completely immune to CORS
+        canvas = await renderStoryCanvas(false);
+        dataUrl = canvas.toDataURL('image/png');
+      }
+
       const a = document.createElement('a');
-      const handleClean = (userProfile.youtubeAccount?.handle || '@yasincelebi').replace('@', '');
-      a.download = `harmoniq-frekans-aura-${handleClean}.png`;
+      const handleClean = (userProfile.youtubeAccount?.handle || userProfile.name || 'harmoniq')
+        .replace('@', '')
+        .trim();
+      a.download = `harmoniq-frekans-kart-${handleClean}-1080x1920.png`;
       a.href = dataUrl;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setStoryActionSuccess('Görsel başarıyla galerinize / cihazınıza indirildi! (1080x1920)');
+
+      setStoryActionSuccess('Görsel başarıyla galerinize / cihazınıza indirildi! (1080x1920 PNG)');
       setTimeout(() => setStoryActionSuccess(null), 4000);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to download story image:', e);
+      setStoryActionSuccess('İndirme sırasında bir sorun oluştu, lütfen tekrar deneyin.');
     } finally {
       setIsGeneratingStoryImage(false);
     }
@@ -1203,39 +1401,40 @@ export const ProfileTab: React.FC<Props> = ({
   const handleShareStoryCard = async () => {
     setIsGeneratingStoryImage(true);
     try {
-      const canvas = drawStoryCanvas();
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await renderStoryCanvas(true);
+      } catch {
+        canvas = await renderStoryCanvas(false);
+      }
+
       canvas.toBlob(async (blob) => {
         if (!blob) {
           handleCopyWeeklySummary();
+          setIsGeneratingStoryImage(false);
           return;
         }
-        const handleClean = (userProfile.youtubeAccount?.handle || '@yasincelebi').replace('@', '');
-        const file = new File([blob], `harmoniq-aura-${handleClean}.png`, { type: 'image/png' });
+        const handleClean = (userProfile.youtubeAccount?.handle || userProfile.name || 'harmoniq')
+          .replace('@', '')
+          .trim();
+        const file = new File([blob], `harmoniq-frekans-kart-${handleClean}.png`, { type: 'image/png' });
         if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               title: `Harmoniq Frekans Kimliği · ${weeklyPersona}`,
-              text: `Bu haftaki Harmoniq Müzikal Auram: ${weeklyPersona}! 🎧 Toplam ${weeklyHours} saat dinleme, #1 sanatçı ${topArtistName}.`,
+              text: `🎧 Bu haftaki Harmoniq Müzikal Auram: ${weeklyPersona}! Toplam ${weeklyHours} saat dinleme, #1 sanatçı ${topArtistName}.`,
               files: [file],
             });
-            setStoryActionSuccess('Hikayede paylaşım menüsü açıldı!');
-            setTimeout(() => setStoryActionSuccess(null), 3000);
-            return;
-          } catch (err: any) {
-            if (err.name !== 'AbortError') {
-              console.warn('Share error:', err);
-            }
+          } catch {
+            // Share cancelled or not supported
           }
+        } else {
+          handleDownloadStoryCard();
         }
-        // Fallback: download image and copy text
-        handleDownloadStoryCard();
-        handleCopyWeeklySummary();
+        setIsGeneratingStoryImage(false);
       }, 'image/png');
-    } catch (e) {
-      console.error('Share failure:', e);
-      handleCopyWeeklySummary();
-    } finally {
-      setIsGeneratingStoryImage(false);
+    } catch {
+      handleDownloadStoryCard();
     }
   };
 
@@ -1277,7 +1476,14 @@ export const ProfileTab: React.FC<Props> = ({
   const activeProfileAvatar = draftAvatar || userProfile.avatarUrl;
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6 relative">
+      {/* Toast Notice Banner */}
+      {toastNotice && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-zinc-950/95 border border-purple-500/50 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
+          <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+          <span>{toastNotice}</span>
+        </div>
+      )}
       {/* =====================================================================
           1. MINIMALIST PROFILE HEADER
          ===================================================================== */}
@@ -1499,7 +1705,7 @@ export const ProfileTab: React.FC<Props> = ({
         </div>
 
         <div className="grid grid-cols-4 gap-2.5">
-          {signatureTop4Tracks.map((track, idx) => {
+          {displayedTop4Tracks.map((track, idx) => {
             const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
             const rank = idx + 1;
             return (
@@ -1516,6 +1722,22 @@ export const ProfileTab: React.FC<Props> = ({
                 }`}
                 title={`${track.title} - ${track.artist} (Çalmak için dokun)`}
               >
+                {/* ✎ Edit Slot Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic(20);
+                    setEditingTop4Slot(idx);
+                    setTop4SearchQuery('');
+                  }}
+                  className="absolute top-2 left-2 w-6 h-6 rounded-lg bg-black/60 hover:bg-purple-600 text-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
+                  title={`#${rank} Vitrin Parçasını Değiştir`}
+                  aria-label={`Vitrin ${rank} parçasını değiştir`}
+                >
+                  <Pencil className="w-3 h-3 text-white" />
+                </button>
+
                 {track.coverUrl ? (
                   <img
                     src={track.coverUrl}
@@ -3724,6 +3946,108 @@ export const ProfileTab: React.FC<Props> = ({
                 </span>
                 <span>Harmoniq AI Engine</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          TOP 4 VİTRİN ŞARKI SEÇİCİ MODAL
+         ===================================================================== */}
+      {editingTop4Slot !== null && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setEditingTop4Slot(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-[#14121E] border border-zinc-200 dark:border-white/10 rounded-3xl p-5 space-y-4 shadow-2xl max-h-[85vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
+              <div>
+                <h3 className="text-base font-heading font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <span>📌 Vitrin #{editingTop4Slot + 1} İçin Parça Seç</span>
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Kütüphanenden, favorilerinden veya haftalık parçalarından seç
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingTop4Slot(null)}
+                className="p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={top4SearchQuery}
+                onChange={(e) => setTop4SearchQuery(e.target.value)}
+                placeholder="Şarkı veya sanatçı adı ara..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-xs text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                autoFocus
+              />
+            </div>
+
+            {/* Song List */}
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-1.5 divide-y divide-zinc-100 dark:divide-white/5">
+              {allAvailableSongsForVitrin
+                .filter((s) => {
+                  if (!top4SearchQuery.trim()) return true;
+                  const q = top4SearchQuery.toLowerCase();
+                  return (
+                    s.title.toLowerCase().includes(q) ||
+                    s.artist.toLowerCase().includes(q) ||
+                    (s.album && s.album.toLowerCase().includes(q))
+                  );
+                })
+                .map((song) => {
+                  const isSelected = displayedTop4Tracks[editingTop4Slot]?.id === song.id;
+                  return (
+                    <div
+                      key={song.id}
+                      onClick={() => handleAssignSongToTop4Slot(song, editingTop4Slot)}
+                      className={`pt-2 pb-2 px-2.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition ${
+                        isSelected
+                          ? 'bg-purple-500/15 border border-purple-500/40 text-purple-600 dark:text-purple-300'
+                          : 'hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-900 dark:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 relative">
+                          {song.coverUrl ? (
+                            <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${song.coverGradient || 'from-purple-900 to-black'} flex items-center justify-center`}>
+                              <Music className="w-4 h-4 text-white/60" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold truncate">{song.title}</div>
+                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-1.5">
+                        {isSelected ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500 text-white">
+                            Seçili
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-purple-500 dark:text-purple-400 hover:underline">
+                            Ata +
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

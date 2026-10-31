@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Song, LoungeUser, PrivacyMode, TimelineMarker } from '../types';
 import {
   X,
@@ -49,10 +49,27 @@ export const TimelineTrack: React.FC<Props> = ({
   onWhisperTrack,
   onShowToast,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
   const [syncedUser, setSyncedUser] = useState<LoungeUser | null>(null);
   const [whisperUserId, setWhisperUserId] = useState<string | null>(null);
   const [whisperedNotice, setWhisperedNotice] = useState<{ userId: string; songTitle: string } | null>(null);
+
+  // Close active balloon/preview when clicking anywhere outside
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveClusterId(null);
+        setWhisperUserId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleGlobalClick);
+    document.addEventListener('touchstart', handleGlobalClick);
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+      document.removeEventListener('touchstart', handleGlobalClick);
+    };
+  }, []);
 
   const duration = song.durationSeconds || 210;
 
@@ -168,11 +185,12 @@ export const TimelineTrack: React.FC<Props> = ({
 
   return (
     <div
+      ref={containerRef}
       onClick={() => {
         setActiveClusterId(null);
         setWhisperUserId(null);
       }}
-      className="surface-card rounded-2xl p-4 sm:p-5 space-y-3.5 select-none relative"
+      className="surface-card rounded-2xl p-4 sm:p-5 space-y-3.5 select-none relative overflow-hidden"
     >
       {/* 1. Header: Şarkı Zaman Rayı & Canlı Zaman Bilgisi */}
       <div className="flex items-center justify-between text-xs">
@@ -307,7 +325,7 @@ export const TimelineTrack: React.FC<Props> = ({
                     >
                       {primaryUser.avatarSeed}
                       <span className="absolute -top-2 -right-2.5 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-force-white font-black text-[9px] shadow-md border border-zinc-950 tabular-nums">
-                        +{cluster.users.length}
+                        +{cluster.users.length - 1}
                       </span>
                     </div>
                   </div>
@@ -353,18 +371,24 @@ export const TimelineTrack: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 3. SEÇİLİ KİŞİ / KÜME KARTI (2-Satırlı Ferah Önizleme Kartı) */}
+      {/* 3. SEÇİLİ KİŞİ / KÜME KARTI (2-Satırlı Ferah Önizleme Balonu - Kenara Taşmaz) */}
       {activeCluster && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="surface-inner rounded-2xl p-3.5 sm:p-4 space-y-3 border border-purple-500/30 animate-in fade-in slide-in-from-top-1 duration-150"
+          className="relative surface-inner rounded-2xl p-3.5 sm:p-4 space-y-3 border border-purple-500/40 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 max-w-full"
         >
+          {/* Dynamic Clamped Pointer Arrow pointing to the clicked pin */}
+          <div
+            className="absolute -top-1.5 w-3 h-3 bg-white dark:bg-[#14121E] border-t border-l border-purple-500/50 rotate-45 -translate-x-1/2 pointer-events-none transition-all duration-200 shadow-sm"
+            style={{ left: `${Math.min(92, Math.max(8, getPercent(activeCluster.centerSecond)))}%` }}
+          />
+
           {activeCluster.users.length > 1 && (
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.06] text-xs">
               <div className="flex items-center gap-1.5 font-bold text-zinc-900 dark:text-white">
                 <Users className="w-3.5 h-3.5 text-purple-500" />
                 <span>
-                  {formatTime(activeCluster.centerSecond)} Saniyesinde +{activeCluster.users.length} Dinleyici
+                  {formatTime(activeCluster.centerSecond)} Saniyesinde {activeCluster.users.length} Dinleyici
                 </span>
               </div>
               <button

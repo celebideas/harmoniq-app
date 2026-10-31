@@ -15,6 +15,8 @@ class RealMusicEngine {
   private isPlaying: boolean = false;
   private isLoading: boolean = false;
   private currentRequestId: number = 0;
+  private activePlaybackId: string = '';
+  private hasTriggeredEndForCurrentSong: boolean = false;
   private timeUpdateCallbacks: ((sec: number) => void)[] = [];
   private stateChangeCallbacks: ((playing: boolean) => void)[] = [];
   private loadingCallbacks: ((loading: boolean) => void)[] = [];
@@ -252,14 +254,24 @@ class RealMusicEngine {
       if (!this.audio || this.currentSong?.youtubeVideoId) return;
       const sec = Math.floor(this.audio.currentTime);
       this.notifyTimeUpdate(sec);
+
+      // 30-Second Preview Auto-Advance:
+      // If Apple Music 30-sec preview reaches the end (within 0.4s of audio.duration),
+      // don't let the progress bar freeze; advance automatically to next track!
+      if (
+        this.audio.duration > 0 &&
+        this.audio.currentTime >= this.audio.duration - 0.4 &&
+        !this.hasTriggeredEndForCurrentSong
+      ) {
+        this.hasTriggeredEndForCurrentSong = true;
+        this.handleTrackEnded();
+      }
     });
 
     this.audio.addEventListener('ended', () => {
-      this.isPlaying = false;
-      this.notifyStateChange(false);
-      this.setIsLoading(false);
-      if (!this.currentSong?.youtubeVideoId && this.onNextTrackHandler) {
-        this.onNextTrackHandler();
+      if (!this.hasTriggeredEndForCurrentSong) {
+        this.hasTriggeredEndForCurrentSong = true;
+        this.handleTrackEnded();
       }
     });
 
@@ -346,6 +358,15 @@ class RealMusicEngine {
     }
   }
 
+  private handleTrackEnded() {
+    this.isPlaying = false;
+    this.notifyStateChange(false);
+    this.setIsLoading(false);
+    if (this.onNextTrackHandler) {
+      this.onNextTrackHandler();
+    }
+  }
+
   private notifyTimeUpdate(sec: number) {
     this.timeUpdateCallbacks.forEach((cb) => cb(sec));
   }
@@ -382,10 +403,13 @@ class RealMusicEngine {
   /**
    * Play authentic track: if YouTube track, route to YouTube controller.
    * If direct audio track, route to HTMLAudioElement.
-   * Uses centralized playRequestId lock to strictly avoid overlapping audio on rapid skips.
+   * Strictly enforces activePlaybackId lock to prevent overlapping audio on rapid track skips.
    */
   public async playSong(song: Song, startSecond: number = 0): Promise<boolean> {
     const requestId = ++this.currentRequestId;
+    const playbackId = `pb_${requestId}_${song.id}_${Date.now()}`;
+    this.activePlaybackId = playbackId;
+    this.hasTriggeredEndForCurrentSong = false;
     this.initAudioElement();
     this.setIsLoading(true);
 
@@ -393,14 +417,17 @@ class RealMusicEngine {
     if (this.audio) {
       try {
         this.audio.pause();
-        if (this.currentSong && this.currentSong.id !== song.id) {
-          this.audio.removeAttribute('src');
-          this.audio.load();
-        }
+        this.audio.removeAttribute('src');
+        this.audio.load();
       } catch {}
     }
 
+    // Strictly stop previous YouTube playback
+    ytController.stop();
     ytController.pause();
+    ytController.sendCommand('stopVideo');
+    ytController.sendCommand('pauseVideo');
+
     this.stopSimulatedTimer();
 
     this.currentSong = song;
@@ -408,6 +435,10 @@ class RealMusicEngine {
 
     // CASE 1: YouTube Track
     if (song.youtubeVideoId) {
+      if (this.activePlaybackId !== playbackId) {
+        return false;
+      }
+
       // Play a silent audio loop so iOS / Android browser media session stays pinned in notification tray
       if (this.audio) {
         try {
@@ -420,7 +451,7 @@ class RealMusicEngine {
         } catch {}
       }
 
-      if (this.currentRequestId !== requestId) {
+      if (this.activePlaybackId !== playbackId) {
         return false;
       }
 
@@ -456,7 +487,7 @@ class RealMusicEngine {
             this.audio.addEventListener(
               'loadedmetadata',
               () => {
-                if (this.audio && this.currentRequestId === requestId) {
+                if (this.audio && this.activePlaybackId === playbackId) {
                   const safe = this.audio.duration && startSecond >= this.audio.duration ? 0 : startSecond;
                   this.audio.currentTime = safe;
                 }
@@ -469,9 +500,10 @@ class RealMusicEngine {
         await this.audio.play();
 
         // Check if a newer track was commanded while waiting for audio play Promise
-        if (this.currentRequestId !== requestId) {
+        if (this.activePlaybackId !== playbackId) {
           if (this.audio) {
             this.audio.pause();
+            this.audio.removeAttribute('src');
           }
           return false;
         }
@@ -482,7 +514,7 @@ class RealMusicEngine {
         this.setIsLoading(false);
         return true;
       } catch (err: any) {
-        if (this.currentRequestId !== requestId) return false;
+        if (this.activePlaybackId !== playbackId) return false;
         console.warn('Audio play request notice:', err);
         this.setIsLoading(false);
 
@@ -494,9 +526,10 @@ class RealMusicEngine {
         return false;
       }
     } else {
-      if (this.currentRequestId !== requestId) return false;
+      if (this.activePlaybackId !== playbackId) return false;
       if (this.audio) {
         this.audio.pause();
+        this.audio.removeAttribute('src');
       }
       this.isPlaying = true;
       this.notifyStateChange(true);
@@ -540,10 +573,13 @@ class RealMusicEngine {
   }
 
   public stop(): void {
+    this.activePlaybackId = '';
     if (this.audio) {
       this.audio.pause();
+      this.audio.removeAttribute('src');
       this.audio.currentTime = 0;
     }
+    ytController.stop();
     ytController.pause();
     this.stopSimulatedTimer();
     this.simulatedSecond = 0;
