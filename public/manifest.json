@@ -1,0 +1,66 @@
+{
+  "id": "/",
+  "name": "Harmoniq - Ortak Canlı Müzik Odası",
+  "short_name": "Harmoniq",
+  "description": "Makromusic deneyiminden esinlenen, canlı frekans odaları ve senkronize zaman çizelgesiyle yeni nesil müzik sosyalleşme uygulaması.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["music", "social", "entertainment"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Canlı Frekans Lounge",
+      "short_name": "Lounge",
+      "description": "Aynı anda aynı şarkıyı dinleyenlerle eşleş",
+      "url": "/?tab=lounge",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Müzik Odaları",
+      "short_name": "Odalar",
+      "description": "Canlı dinleme ve frekans odalarına katıl",
+      "url": "/?tab=rooms",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Profilim & Kütüphanem",
+      "short_name": "Profil",
+      "description": "YouTube Music senkronizasyonu ve kütüphanem",
+      "url": "/?tab=profile",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

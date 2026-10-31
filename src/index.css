@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+    /* 3-Token Semantic Color Architecture ("Velvet Pitch & Electric Resonance")
+       1. Primary Brand & Music Action (Electric Violet): #9333EA -> #EC4899
+       2. Live Signal & Trust (Live Signal Cyan-Mint): #10B981
+       3. Warm Moments & Solo Highlight (Warm Amber): #F59E0B
+    */
+    --theme-accent: #9333EA;
+    --theme-accent-secondary: #EC4899;
+    --theme-accent-rgb: 147, 51, 234;
+    --theme-accent-glow: rgba(147, 51, 234, 0.38);
+    --theme-accent-subtle: rgba(147, 51, 234, 0.14);
+    --theme-accent-text: #ffffff;
+
+    --semantic-live: #10B981;
+    --semantic-warm: #F59E0B;
+
+    /* Default Dark Theme ("Velvet Pitch") */
+    --bg-primary: #0A090F;
+    --bg-card: rgba(20, 18, 30, 0.90);
+    --bg-elevated: rgba(30, 27, 46, 0.75);
+    --text-primary: #FAFAFA;
+    --text-secondary: #9E9AA8;
+    --border-subtle: rgba(255, 255, 255, 0.07);
+  }
+
+  html.light {
+    /* Light Theme ("Warm Vinyl Studio") */
+    --bg-primary: #F5F4F8;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-elevated: rgba(236, 234, 242, 0.80);
+    --text-primary: #12101B;
+    --text-secondary: #646073;
+    --border-subtle: #E4E2EC;
+  }
+
+  html,
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.025em;
+  }
+}
+
+/* ============================================================================
+   WARM VINYL STUDIO LIGHT MODE ADAPTIVE SURFACE & TEXT OVERRIDES
+   ============================================================================ */
+html.light body {
+  background-color: #F5F4F8;
+  color: #12101B;
+}
+
+html.light .bg-\[\#0A090F\],
+html.light .bg-\[\#09090B\],
+html.light .bg-\[\#09090B\]\/90,
+html.light .bg-\[\#0A0A0C\],
+html.light .bg-\[\#0C0C0E\],
+html.light .bg-\[\#0C0C0E\]\/95,
+html.light .bg-\[\#0E0E12\] {
+  background-color: #F5F4F8 !important;
+  color: #12101B !important;
+}
+
+html.light .bg-\[\#14121E\]\/90,
+html.light .bg-\[\#14121E\]\/95,
+html.light .bg-zinc-950,
+html.light .bg-zinc-950\/95,
+html.light .bg-zinc-950\/90,
+html.light .bg-zinc-950\/85,
+html.light .bg-zinc-950\/80,
+html.light .bg-zinc-950\/70,
+html.light .bg-zinc-950\/40,
+html.light .bg-zinc-900,
+html.light .bg-zinc-900\/95,
+html.light .bg-zinc-900\/90,
+html.light .bg-zinc-900\/60,
+html.light .bg-neutral-900\/90,
+html.light .bg-neutral-900\/80,
+html.light .bg-neutral-900\/60 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #12101B !important;
+  border-color: #E4E2EC !important;
+  box-shadow: 0 8px 24px rgba(20, 18, 30, 0.06) !important;
+}
+
+html.light .bg-\[\#1E1B2E\]\/75,
+html.light .bg-black\/40,
+html.light .bg-black\/60,
+html.light .bg-black\/70,
+html.light .bg-white\/\[0\.02\],
+html.light .bg-white\/\[0\.025\],
+html.light .bg-white\/\[0\.03\],
+html.light .bg-white\/\[0\.04\],
+html.light .bg-white\/\[0\.05\],
+html.light .bg-white\/\[0\.06\],
+html.light .bg-white\/\[0\.07\],
+html.light .bg-white\/\[0\.08\] {
+  background-color: rgba(236, 234, 242, 0.80) !important;
+  border-color: #DFDCE8 !important;
+}
+
+html.light .text-white,
+html.light .text-zinc-50,
+html.light .text-zinc-100,
+html.light .text-zinc-200,
+html.light .text-neutral-200 {
+  color: #12101B !important;
+}
+
+/* Keep white text inside vibrant brand/semantic buttons and avatars */
+html.light .bg-gradient-to-tr.text-white,
+html.light .bg-gradient-to-r.text-white,
+html.light .bg-gradient-to-br.text-white,
+html.light .bg-purple-600.text-white,
+html.light .bg-emerald-500.text-white,
+html.light .bg-rose-500.text-white,
+html.light .text-force-white {
+  color: #ffffff !important;
+}
+
+html.light .text-zinc-300,
+html.light .text-zinc-400,
+html.light .text-neutral-400,
+html.light .text-\[\#9E9AA8\] {
+  color: #646073 !important;
+}
+
+html.light .text-zinc-500,
+html.light .text-neutral-500 {
+  color: #7A7589 !important;
+}
+
+html.light .border-white\/\[0\.04\],
+html.light .border-white\/\[0\.05\],
+html.light .border-white\/\[0\.06\],
+html.light .border-white\/\[0\.07\],
+html.light .border-white\/\[0\.08\],
+html.light .border-white\/\[0\.09\],
+html.light .border-white\/10,
+html.light .border-white\/15 {
+  border-color: #E4E2EC !important;
+}
+
+html.light .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+html.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #E4E2EC !important;
+}
+
+/* Dynamic Theme Utility Classes (Electric Violet Primary Action) */
+.bg-accent-theme {
+  background: linear-gradient(135deg, #9333EA 0%, #DB2777 55%, #EC4899 100%);
+  color: #ffffff !important;
+}
+
+.text-accent-theme {
+  color: #A855F7;
+}
+
+html.light .text-accent-theme {
+  color: #7E22CE;
+}
+
+.border-accent-theme {
+  border-color: #9333EA;
+}
+
+.bg-accent-subtle {
+  background-color: rgba(147, 51, 234, 0.14);
+}
+
+.glow-accent-theme {
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.35);
+}
+
+/* Surface utility tokens */
+.surface-card {
+  background-color: rgba(20, 18, 30, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(24px);
+}
+
+html.light .surface-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #E4E2EC;
+  box-shadow: 0 8px 24px rgba(20, 18, 30, 0.06);
+  color: #12101B;
+}
+
+.surface-inner {
+  background-color: rgba(30, 27, 46, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+html.light .surface-inner {
+  background-color: rgba(236, 234, 242, 0.80);
+  border: 1px solid #DFDCE8;
+  color: #1E1B2E;
+}
+
+/* Custom Animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+@keyframes vu-bounce {
+  0%, 100% {
+    height: 25%;
+  }
+  50% {
+    height: 95%;
+  }
+}
+
+.animate-vu-bar {
+  animation: vu-bounce 0.65s ease-in-out infinite;
+}
+
+@keyframes float-up-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.05);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -26px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -42px) scale(0.92);
+  }
+}
+
+.animate-float-up {
+  animation: float-up-fade 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Hide scrollbars cleanly */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Harmoniq - Müzik Eşleşme",
+  "description": "Makromusic hatalarından arındırılmış, canlı frekans odaları ve senkronize zaman çizelgesiyle yeni nesil müzik sosyalleşme uygulaması.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
