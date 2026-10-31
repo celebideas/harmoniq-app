@@ -111,7 +111,7 @@ export interface Song {
   keyNote: string;
   catalogNumber: string;
   releaseYear: number;
-  soundType: 'indie' | 'synthwave' | 'anatolian' | 'lofi' | 'rock';
+  soundType: 'indie' | 'synthwave' | 'anatolian' | 'lofi' | 'rock' | 'grunge';
   timelineMarkers: TimelineMarker[];
   lyrics?: { second: number; text: string }[];
   youtubeVideoId?: string;

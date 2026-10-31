@@ -95,6 +95,30 @@ export const NowPlayingModal: React.FC<Props> = ({
   } | null>(null);
   const [isLoadingRadio, setIsLoadingRadio] = useState<boolean>(false);
 
+  // Synchronized viewMode and activeTab management
+  const handleSelectViewMode = (mode: 'cover' | 'vinyl' | 'lyrics') => {
+    triggerHaptic(15);
+    setViewMode(mode);
+    if (mode === 'lyrics') {
+      setActiveTab('lyrics');
+    } else if (activeTab === 'lyrics') {
+      setActiveTab('queue');
+    }
+  };
+
+  const handleSelectTab = (tab: 'queue' | 'radio' | 'lyrics') => {
+    triggerHaptic(15);
+    setActiveTab(tab);
+    if (tab === 'lyrics') {
+      setViewMode('lyrics');
+      setTimeout(() => {
+        heroLyricsContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 60);
+    } else if (viewMode === 'lyrics') {
+      setViewMode('cover');
+    }
+  };
+
   // Hotspot Flash Announcement Banner State
   const [activeHotspotNotice, setActiveHotspotNotice] = useState<{
     label: string;
@@ -585,7 +609,7 @@ export const NowPlayingModal: React.FC<Props> = ({
 
   const handleStartRadio = async () => {
     setIsLoadingRadio(true);
-    setActiveTab('radio');
+    handleSelectTab('radio');
     try {
       let radio: any = null;
       if (onStartRadioStation) {
@@ -698,7 +722,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           {/* Mode Switcher Pill (Kapak | Vinil | Sözler | Canlı Oda) */}
           <div className="flex items-center gap-1 p-1 rounded-full bg-white/[0.06] border border-white/[0.08] backdrop-blur-md mb-3 shadow-inner z-10">
             <button
-              onClick={() => setViewMode('cover')}
+              onClick={() => handleSelectViewMode('cover')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 viewMode === 'cover'
                   ? 'bg-white text-zinc-950 font-bold shadow-md'
@@ -709,7 +733,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Kapak</span>
             </button>
             <button
-              onClick={() => setViewMode('vinyl')}
+              onClick={() => handleSelectViewMode('vinyl')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 viewMode === 'vinyl'
                   ? 'bg-white text-zinc-950 font-bold shadow-md'
@@ -720,7 +744,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Vinil</span>
             </button>
             <button
-              onClick={() => setViewMode('lyrics')}
+              onClick={() => handleSelectViewMode('lyrics')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 viewMode === 'lyrics'
                   ? 'bg-white text-zinc-950 font-bold shadow-md'
@@ -1232,7 +1256,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           {/* Tab Selector */}
           <div className="flex rounded-xl bg-white/[0.03] p-1 border border-white/[0.06]">
             <button
-              onClick={() => setActiveTab('queue')}
+              onClick={() => handleSelectTab('queue')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'queue'
                   ? 'bg-white text-zinc-950 font-bold shadow-sm'
@@ -1243,7 +1267,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Sıradaki Parçalar</span>
             </button>
             <button
-              onClick={() => setActiveTab('radio')}
+              onClick={() => handleSelectTab('radio')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'radio'
                   ? 'bg-accent-theme text-zinc-950 font-bold shadow-sm'
@@ -1254,7 +1278,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Radyo Oluştur</span>
             </button>
             <button
-              onClick={() => setActiveTab('lyrics')}
+              onClick={() => handleSelectTab('lyrics')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'lyrics'
                   ? 'bg-white text-zinc-950 font-bold shadow-sm'

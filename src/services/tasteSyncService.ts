@@ -1,4 +1,9 @@
 import { UserPlaylist, PersonalMusicTaste, Song, LoungeUser } from '../types';
+import {
+  isMusicArtistOrChannel,
+  cleanNonMusicArtists,
+  NON_ARTIST_BLACKLIST,
+} from './artistFilterService';
 
 export function getYasinCelebiDefaultPlaylists(): UserPlaylist[] {
   // Return empty array by default so real user playlists from YouTube Music are loaded
@@ -48,11 +53,26 @@ export function derivePersonalTasteFromData(
   const trackArtists = allTracks.map((t) => t.artist).filter(Boolean);
   const trackGenres = allTracks.map((t) => t.genre).filter(Boolean);
 
-  // Frequency map for top artists
+  // Sanitize favorite artists using artistFilterService
+  const sanitizedFavoriteArtists = cleanNonMusicArtists(favoriteArtists, favoriteSongs);
+
+  // Frequency map for top artists (strictly filtered against non-music tech, brands, and aggregators)
   const artistCount = new Map<string, number>();
-  [...favoriteArtists, ...trackArtists].forEach((a) => {
+  [...sanitizedFavoriteArtists, ...trackArtists].forEach((a) => {
+    if (!a || typeof a !== 'string') return;
     const clean = a.trim();
-    if (!clean || clean === 'YouTube Music' || clean === 'Bilinmeyen Sanatçı') return;
+    if (
+      !clean ||
+      clean === 'YouTube Music' ||
+      clean === 'Bilinmeyen Sanatçı' ||
+      clean === 'YouTube' ||
+      NON_ARTIST_BLACKLIST.test(clean)
+    ) {
+      return;
+    }
+    const check = isMusicArtistOrChannel(clean, favoriteSongs);
+    if (!check.isMusic) return;
+
     artistCount.set(clean, (artistCount.get(clean) || 0) + 1);
   });
 

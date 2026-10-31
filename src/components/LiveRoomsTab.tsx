@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Radio, Music, Play, Pause, Headphones, Users, Sparkles, MessageCircle, Volume2 } from 'lucide-react';
 import { UserProfile, Song } from '../types';
 import { soundEngine } from '../services/soundEngine';
+import { isMusicArtistOrChannel, NON_ARTIST_BLACKLIST } from '../services/artistFilterService';
 
 interface Props {
   profiles: UserProfile[];
@@ -18,7 +19,14 @@ export const LiveRoomsTab: React.FC<Props> = ({
 }) => {
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
 
-  const liveProfiles = profiles.filter((p) => p.isListeningNow);
+  // Filter live profiles so only verified music artists and non-blacklisted profiles are listed
+  const liveProfiles = profiles.filter((p) => {
+    if (!p.isListeningNow || !p.currentSong) return false;
+    const artist = p.currentSong.artist?.trim() || '';
+    if (!artist || NON_ARTIST_BLACKLIST.test(artist)) return false;
+    const check = isMusicArtistOrChannel(artist);
+    return check.isMusic;
+  });
 
   const handleTogglePlay = (song: Song) => {
     if (playingSongId === song.id) {

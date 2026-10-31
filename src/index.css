@@ -65,10 +65,10 @@ html.light body {
   color: #12101B;
 }
 
+/* Base App & Page Backgrounds */
 html.light .bg-\[\#0A090F\],
 html.light .bg-\[\#09090B\],
 html.light .bg-\[\#09090B\]\/90,
-html.light .bg-\[\#0A0A0C\],
 html.light .bg-\[\#0C0C0E\],
 html.light .bg-\[\#0C0C0E\]\/95,
 html.light .bg-\[\#0E0E12\] {
@@ -76,8 +76,24 @@ html.light .bg-\[\#0E0E12\] {
   color: #12101B !important;
 }
 
+/* Modals & Full Deck Container Surface */
+html.light .bg-\[\#0A0A0C\] {
+  background-color: #FFFFFF !important;
+  color: #12101B !important;
+  border-color: #E4E2EC !important;
+}
+
+/* Elevated Cards & Primary Content Surfaces */
+html.light .bg-\[\#14121E\],
+html.light .bg-\[\#14121E\]\/80,
 html.light .bg-\[\#14121E\]\/90,
 html.light .bg-\[\#14121E\]\/95,
+html.light .bg-\[\#181622\],
+html.light .bg-\[\#1E1B2E\],
+html.light .bg-\[\#1E1B2E\]\/75,
+html.light .bg-\[\#1E1B2E\]\/80,
+html.light .bg-\[\#1E1B2E\]\/90,
+html.light .bg-\[\#1E1B2E\]\/95,
 html.light .bg-zinc-950,
 html.light .bg-zinc-950\/95,
 html.light .bg-zinc-950\/90,
@@ -88,20 +104,34 @@ html.light .bg-zinc-950\/40,
 html.light .bg-zinc-900,
 html.light .bg-zinc-900\/95,
 html.light .bg-zinc-900\/90,
+html.light .bg-zinc-900\/80,
 html.light .bg-zinc-900\/60,
+html.light .bg-zinc-900\/50,
+html.light .bg-zinc-900\/40,
+html.light .bg-zinc-900\/30,
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/90,
+html.light .bg-zinc-800\/80,
+html.light .bg-zinc-800\/60,
+html.light .bg-zinc-800\/50,
+html.light .bg-neutral-900,
 html.light .bg-neutral-900\/90,
 html.light .bg-neutral-900\/80,
 html.light .bg-neutral-900\/60 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(255, 255, 255, 0.96) !important;
   color: #12101B !important;
   border-color: #E4E2EC !important;
-  box-shadow: 0 8px 24px rgba(20, 18, 30, 0.06) !important;
+  box-shadow: 0 4px 20px rgba(20, 18, 30, 0.05) !important;
 }
 
-html.light .bg-\[\#1E1B2E\]\/75,
+/* Secondary Inset Surfaces, Pill Containers & Sub-Cards */
+html.light .bg-black\/20,
+html.light .bg-black\/25,
+html.light .bg-black\/30,
+html.light .bg-black\/35,
 html.light .bg-black\/40,
+html.light .bg-black\/50,
 html.light .bg-black\/60,
-html.light .bg-black\/70,
 html.light .bg-white\/\[0\.02\],
 html.light .bg-white\/\[0\.025\],
 html.light .bg-white\/\[0\.03\],
@@ -109,27 +139,50 @@ html.light .bg-white\/\[0\.04\],
 html.light .bg-white\/\[0\.05\],
 html.light .bg-white\/\[0\.06\],
 html.light .bg-white\/\[0\.07\],
-html.light .bg-white\/\[0\.08\] {
-  background-color: rgba(236, 234, 242, 0.80) !important;
+html.light .bg-white\/\[0\.08\],
+html.light .bg-white\/\[0\.1\] {
+  background-color: rgba(238, 236, 244, 0.85) !important;
   border-color: #DFDCE8 !important;
 }
 
+/* Form inputs & text fields in light mode */
+html.light input:not([type='range']),
+html.light textarea,
+html.light select {
+  background-color: #FFFFFF !important;
+  color: #12101B !important;
+  border-color: #E4E2EC !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #8C889B !important;
+}
+
+/* Text Colors */
 html.light .text-white,
 html.light .text-zinc-50,
 html.light .text-zinc-100,
 html.light .text-zinc-200,
+html.light .text-neutral-100,
 html.light .text-neutral-200 {
   color: #12101B !important;
 }
 
-/* Keep white text inside vibrant brand/semantic buttons and avatars */
-html.light .bg-gradient-to-tr.text-white,
-html.light .bg-gradient-to-r.text-white,
-html.light .bg-gradient-to-br.text-white,
-html.light .bg-purple-600.text-white,
-html.light .bg-emerald-500.text-white,
-html.light .bg-rose-500.text-white,
-html.light .text-force-white {
+/* Keep white text inside vibrant brand/semantic action buttons, tags & gradients */
+html.light .bg-accent-theme,
+html.light .bg-accent-theme *,
+html.light .bg-gradient-to-r *,
+html.light .bg-gradient-to-tr *,
+html.light .bg-gradient-to-br *,
+html.light .bg-purple-600,
+html.light .bg-purple-600 *,
+html.light .bg-emerald-500,
+html.light .bg-emerald-500 *,
+html.light .bg-rose-500,
+html.light .bg-rose-500 *,
+html.light .text-force-white,
+html.light .text-force-white * {
   color: #ffffff !important;
 }
 
@@ -145,19 +198,28 @@ html.light .text-neutral-500 {
   color: #7A7589 !important;
 }
 
+/* Borders */
+html.light .border-zinc-800,
+html.light .border-zinc-800\/80,
+html.light .border-zinc-700,
+html.light .border-zinc-700\/80,
 html.light .border-white\/\[0\.04\],
 html.light .border-white\/\[0\.05\],
 html.light .border-white\/\[0\.06\],
 html.light .border-white\/\[0\.07\],
 html.light .border-white\/\[0\.08\],
 html.light .border-white\/\[0\.09\],
+html.light .border-white\/\[0\.1\],
 html.light .border-white\/10,
-html.light .border-white\/15 {
+html.light .border-white\/15,
+html.light .border-white\/20 {
   border-color: #E4E2EC !important;
 }
 
+html.light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+html.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]),
+html.light .divide-white\/\[0\.08\] > :not([hidden]) ~ :not([hidden]) {
   border-color: #E4E2EC !important;
 }
 

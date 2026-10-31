@@ -11,6 +11,9 @@ import {
   ExternalLink,
   ChevronRight,
   Filter,
+  ShieldCheck,
+  Music,
+  X,
 } from 'lucide-react';
 import { LoungeUser, Song } from '../types';
 import {
@@ -21,6 +24,7 @@ import {
   requestNativeGpsLocation,
   GeolocationPermissionStatus,
 } from '../services/locationService';
+import { triggerHaptic } from '../services/themeService';
 
 export type DistanceFilter = '1km' | '5km' | 'city' | 'all';
 
@@ -399,66 +403,91 @@ export const ProximityDensityMap: React.FC<Props> = ({
           })}
         </div>
 
-        {/* 4. Active Selected User Info Callout Banner (2-Row Spacious Card when a pin is clicked) */}
+        {/* 4. Active Selected User Info Callout Banner (Spacious, Multi-Row Clean Card) */}
         {selectedUser && (
-          <div className="relative z-30 p-4 rounded-2xl bg-[#ECEAF2]/90 dark:bg-[#1E1B2E]/90 border border-[#DFDCE8] dark:border-white/15 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200 mt-2 space-y-3 shadow-xl">
-            {/* Üst Satır: Sol tarafta avatar, tam okunur isim ve yaş, yanında 🛡️ 99 ve ⚡ %94 Uyum rozetleri, en sağda zümrüt yeşili mesafe rozeti */}
-            <div className="flex items-center justify-between gap-2.5">
+          <div className="relative z-30 p-4 rounded-2xl bg-white/95 dark:bg-[#1E1B2E]/95 border border-zinc-200 dark:border-white/15 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200 mt-2 space-y-3 shadow-xl">
+            {/* 1. Üst Satır: Avatar, İsim & Yaş, Konum ve Sağda Mesafe & Kapat Butonu */}
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {selectedUser.avatarUrl ? (
                   <img
                     src={selectedUser.avatarUrl}
                     alt={selectedUser.name}
-                    className="w-11 h-11 rounded-full object-cover shrink-0 ring-2 ring-purple-500/40"
+                    className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-purple-500/50 shadow-md"
                   />
                 ) : (
                   <div
-                    className={`w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 ring-2 ring-purple-500/40`}
+                    className={`w-12 h-12 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-purple-500/50 shadow-md`}
                   >
                     {selectedUser.avatarSeed}
                   </div>
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center flex-wrap gap-1.5">
-                    <span className="font-heading font-bold text-zinc-900 dark:text-white text-sm">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading font-bold text-zinc-900 dark:text-white text-base leading-tight truncate">
                       {selectedUser.name}, {selectedUser.age}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
-                      🛡️ {selectedUser.trustScore || 99}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
-                      ⚡ %{selectedUser.compatibilityScore || 94} Uyum
-                    </span>
+                    </h4>
                   </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                    <span>{selectedUser.city}</span>
+                  </p>
                 </div>
               </div>
 
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold shrink-0">
-                {selectedUser.distanceKm} km
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold">
+                  {selectedUser.distanceKm} km
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserId(null)}
+                  className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-500 dark:text-zinc-300 flex items-center justify-center transition"
+                  title="Kapat"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Rozetler Satırı (Nefes alan, ferah rozet dizilimi) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center gap-1 shrink-0">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Güven: %{selectedUser.trustScore || 99}</span>
+              </span>
+
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center gap-1 shrink-0">
+                <Zap className="w-3.5 h-3.5 text-emerald-500 fill-current" />
+                <span>%{selectedUser.compatibilityScore || 94} Uyum</span>
+              </span>
+
+              <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/25 text-xs font-semibold flex items-center gap-1 shrink-0">
+                <Music className="w-3.5 h-3.5 text-purple-500" />
+                <span>{formatTime(selectedUser.currentSecond)} Anında</span>
               </span>
             </div>
 
-            {/* Orta Satır: Konum ve tırnak içinde kullanıcının o saniyeye bıraktığı not */}
-            <div className="space-y-1">
-              <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">
-                📍 {selectedUser.city}
-              </p>
-              <p className="text-xs text-zinc-700 dark:text-zinc-200 italic bg-white/60 dark:bg-black/30 px-3 py-1.5 rounded-xl border border-zinc-200/80 dark:border-white/[0.06]">
+            {/* 3. Durum Notu (Genişletilmiş, rahat okunur lirik ve duygu kartı) */}
+            <div className="p-3 rounded-xl bg-zinc-100/80 dark:bg-black/40 border border-zinc-200 dark:border-white/10 flex items-start gap-2.5 shadow-sm">
+              <MessageCircle className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-zinc-700 dark:text-zinc-200 italic font-medium leading-relaxed">
                 "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor 🎸`}"
               </p>
             </div>
 
-            {/* Alt Satır (2 Net Aksiyon Butonu): Sol buton 🔗 01:42 Saniyesine Katıl, sağ buton 👋 Frekans Gönder */}
+            {/* 4. Alt Satır (2 Net ve Konforlu Aksiyon Butonu) */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => {
+                  triggerHaptic(20);
                   if (onSeekSecond) {
                     onSeekSecond(selectedUser.currentSecond);
                   }
                 }}
-                className="py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
               >
                 <span>🔗 {formatTime(selectedUser.currentSecond)} Saniyesine Katıl</span>
               </button>
@@ -466,15 +495,17 @@ export const ProximityDensityMap: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => {
+                  triggerHaptic(20);
                   if (onDirectChat) {
                     onDirectChat(selectedUser);
                   } else {
                     onSelectUser(selectedUser);
                   }
                 }}
-                className="py-2 px-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                className="py-2.5 px-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
               >
-                <span>👋 Frekans Gönder</span>
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Frekans Gönder</span>
               </button>
             </div>
           </div>
