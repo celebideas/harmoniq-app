@@ -84,9 +84,76 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
   return { city: 'İstanbul', district: 'Kadıköy' };
 }
 
+export const KNOWN_DATACENTER_VPN_CITIES = new Set([
+  'san jose',
+  'santa clara',
+  'ashburn',
+  'frankfurt',
+  'amsterdam',
+  'london',
+  'council bluffs',
+  'boardman',
+  'seattle',
+  'dublin',
+  'helsinki',
+  'zurich',
+  'paris',
+  'dallas',
+  'chicago',
+  'los angeles',
+  'atlanta',
+  'new york',
+  'newark',
+  'reston',
+  'sterling',
+  'clifton',
+]);
+
+/**
+ * Checks whether the location is a known foreign datacenter, VPN endpoint, or non-Turkish IP
+ */
+export function isForeignOrVpnLocation(
+  countryCode?: string,
+  cityName?: string,
+  isVpn?: boolean
+): boolean {
+  if (isVpn) return true;
+  if (countryCode && !['TR', 'TURKEY', 'TÜRKİYE'].includes(countryCode.toUpperCase().trim())) {
+    return true;
+  }
+  if (cityName) {
+    const lower = cityName.toLowerCase().trim();
+    for (const dc of KNOWN_DATACENTER_VPN_CITIES) {
+      if (lower.includes(dc)) return true;
+    }
+  }
+  return false;
+}
+
+function getSafeTurkishFallbackLocation(): UserLocation {
+  let fallbackCity = 'İstanbul, Kadıköy';
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem(STORAGE_KEY_CITY);
+    if (saved && !isForeignOrVpnLocation(undefined, saved, false)) {
+      fallbackCity = saved;
+    }
+  }
+  const parts = fallbackCity.split(',');
+  const city = parts[0]?.trim() || 'İstanbul';
+  const district = parts[1]?.trim() || 'Kadıköy';
+  return {
+    city,
+    district,
+    fullLocation: fallbackCity,
+    isAuto: true,
+    source: 'network_ip',
+    updatedAt: Date.now(),
+  };
+}
+
 /**
  * Detect location via Network/IP address.
- * Requires ZERO browser permissions and works even when GPS is blocked or inside iframes!
+ * Protected against Cloudflare WARP, DNS, and VPNs (prevents San Jose, Frankfurt, Ashburn foreign overrides).
  */
 export async function detectLocationByIP(): Promise<UserLocation> {
   // 1. Primary: ipwho.is (Free, CORS enabled, HTTPS, Turkish language support)
@@ -95,7 +162,19 @@ export async function detectLocationByIP(): Promise<UserLocation> {
     if (res.ok) {
       const data = await res.json();
       if (data && data.success !== false && (data.city || data.region)) {
-        const city = data.city || data.region || 'İstanbul';
+        const countryCode = data.country_code || data.countryCode;
+        const rawCity = data.city || data.region || 'İstanbul';
+        const isVpn = Boolean(data.security?.vpn || data.security?.proxy || data.security?.hosting);
+
+        // VPN / Cloudflare / Foreign IP guard: Never display San Jose or foreign datacenters
+        if (isForeignOrVpnLocation(countryCode, rawCity, isVpn)) {
+          console.info(
+            `[Harmoniq Location] VPN / Cloudflare WARP detected (${rawCity}, ${countryCode}). Guarding Turkish frequency anchor.`
+          );
+          return getSafeTurkishFallbackLocation();
+        }
+
+        const city = rawCity;
         const district = data.region && data.region !== city ? data.region : undefined;
         const formatted = formatCityName(district, city);
         const loc: UserLocation = {
@@ -122,7 +201,17 @@ export async function detectLocationByIP(): Promise<UserLocation> {
     if (res.ok) {
       const data = await res.json();
       if (data && (data.cityName || data.regionName)) {
-        const city = data.cityName || data.regionName || 'İstanbul';
+        const countryCode = data.countryCode;
+        const rawCity = data.cityName || data.regionName || 'İstanbul';
+
+        if (isForeignOrVpnLocation(countryCode, rawCity, false)) {
+          console.info(
+            `[Harmoniq Location] VPN / Datacenter IP detected (${rawCity}, ${countryCode}). Guarding Turkish frequency anchor.`
+          );
+          return getSafeTurkishFallbackLocation();
+        }
+
+        const city = rawCity;
         const district = data.regionName && data.regionName !== city ? data.regionName : undefined;
         const formatted = formatCityName(district, city);
         const loc: UserLocation = {
@@ -144,14 +233,7 @@ export async function detectLocationByIP(): Promise<UserLocation> {
   }
 
   // 3. Fallback default
-  const loc: UserLocation = {
-    city: 'İstanbul',
-    district: 'Kadıköy',
-    fullLocation: 'İstanbul, Kadıköy',
-    isAuto: true,
-    source: 'network_ip',
-    updatedAt: Date.now(),
-  };
+  const loc = getSafeTurkishFallbackLocation();
   saveLocationToStorage(loc);
   return loc;
 }

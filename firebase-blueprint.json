@@ -1,0 +1,441 @@
+{
+  "entities": {
+    "PublicProfile": {
+      "title": "PublicProfile",
+      "description": "Discoverable social profile and real-time music presence for an authenticated Harmoniq listener. Strictly excludes PII such as email.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "handle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "avatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "avatarSeed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "avatarGradient": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "topGenres": {
+          "type": "array",
+          "description": "Up to 6 favorite music genres"
+        },
+        "currentSongId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "currentSongTitle": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "currentSongArtist": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "currentSecond": {
+          "type": "number"
+        },
+        "statusBubble": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "trustScore": {
+          "type": "number"
+        },
+        "isDiscoverable": {
+          "type": "boolean"
+        },
+        "isOnline": {
+          "type": "boolean"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "handle",
+        "avatarSeed",
+        "avatarGradient",
+        "city",
+        "bio",
+        "topGenres",
+        "currentSongId",
+        "currentSongTitle",
+        "currentSongArtist",
+        "currentSecond",
+        "trustScore",
+        "isDiscoverable",
+        "isOnline",
+        "lastSeenAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PrivateAccount": {
+      "title": "PrivateAccount",
+      "description": "Strictly owner-only PII and privacy preferences isolated from publicProfiles.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "privacyMode": {
+          "type": "string",
+          "enum": ["public", "friends_only", "private"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "privacyMode", "createdAt", "updatedAt"]
+    },
+    "FriendRequest": {
+      "title": "FriendRequest",
+      "description": "Directional friend request keyed by deterministic pairId (minUid_maxUid).",
+      "type": "object",
+      "properties": {
+        "fromUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "toUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fromName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "fromAvatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "fromAvatarSeed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "fromAvatarGradient": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "fromCity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "songContext": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "declined"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "fromUid",
+        "toUid",
+        "fromName",
+        "fromAvatarSeed",
+        "fromAvatarGradient",
+        "fromCity",
+        "songContext",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Confirmed mutual friendship keyed by deterministic pairId (uidA_uidB where uidA < uidB).",
+      "type": "object",
+      "properties": {
+        "uidA": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uidB": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "acceptedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uidA", "uidB", "acceptedBy", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Deterministic 1-to-1 conversation room summary keyed by uidA_uidB (uidA < uidB).",
+      "type": "object",
+      "properties": {
+        "uidA": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uidB": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantA": {
+          "type": "object"
+        },
+        "participantB": {
+          "type": "object"
+        },
+        "matchedTrackId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "matchedTrackTitle": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "matchedTrackArtist": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "matchedTrackCoverUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "matchedTrackCoverGradient": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "matchedTrackDuration": {
+          "type": "number"
+        },
+        "matchedSecond": {
+          "type": "number"
+        },
+        "lastMessage": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "lastMessageAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSenderId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "unreadCountA": {
+          "type": "number"
+        },
+        "unreadCountB": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uidA",
+        "uidB",
+        "participantA",
+        "participantB",
+        "matchedTrackId",
+        "matchedTrackTitle",
+        "matchedTrackArtist",
+        "matchedTrackCoverGradient",
+        "matchedTrackDuration",
+        "matchedSecond",
+        "lastMessage",
+        "lastMessageAt",
+        "lastSenderId",
+        "unreadCountA",
+        "unreadCountB",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessageDoc": {
+      "title": "ChatMessageDoc",
+      "description": "Individual message or playable timestamped song card inside a conversation.",
+      "type": "object",
+      "properties": {
+        "uidA": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uidB": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "isIcebreaker": {
+          "type": "boolean"
+        },
+        "sharedSongId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sharedSongTitle": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "sharedSongArtist": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "sharedSongCoverUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "sharedSongCoverGradient": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "sharedSongDuration": {
+          "type": "number"
+        },
+        "sharedSongAudioUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "sharedSongYoutubeId": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "sharedTimestampSecond": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uidA", "uidB", "senderId", "text", "isIcebreaker", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/publicProfiles/{uid}": {
+      "schema": { "$ref": "#/entities/PublicProfile" },
+      "description": "Discoverable listener profiles and live listening presence without PII."
+    },
+    "/users/{uid}/private/account": {
+      "schema": { "$ref": "#/entities/PrivateAccount" },
+      "description": "Owner-only private account metadata including email and privacy mode."
+    },
+    "/friendRequests/{pairId}": {
+      "schema": { "$ref": "#/entities/FriendRequest" },
+      "description": "Pending, accepted, or declined friend requests scoped strictly to sender and recipient."
+    },
+    "/friendships/{pairId}": {
+      "schema": { "$ref": "#/entities/Friendship" },
+      "description": "Confirmed mutual friendships between two verified users."
+    },
+    "/conversations/{pairId}": {
+      "schema": { "$ref": "#/entities/Conversation" },
+      "description": "1-to-1 conversation headers scoped strictly to participant uidA and uidB."
+    },
+    "/conversations/{pairId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessageDoc" },
+      "description": "Real-time messages and timestamped song cards inside a 1-to-1 conversation."
+    }
+  }
+}

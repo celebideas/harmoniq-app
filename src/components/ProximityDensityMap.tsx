@@ -453,6 +453,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
             {/* 2. Rozetler Satırı (Nefes alan, ferah rozet dizilimi) */}
             <div className="flex items-center gap-2 flex-wrap">
+              {selectedUser.isRealUser && (
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 text-xs font-black flex items-center gap-1.5 shrink-0 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>🟢 GERÇEK CANLI</span>
+                </span>
+              )}
+
               <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center gap-1 shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Güven: %{selectedUser.trustScore || 99}</span>

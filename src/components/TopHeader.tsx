@@ -98,7 +98,7 @@ export const TopHeader: React.FC<Props> = ({
           : 'bg-[#0A090F]/85 border-white/[0.07] text-zinc-50'
       }`}
     >
-      <div className="max-w-xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
         {/* LEFT: Harmoniq Brand Icon & Title */}
         <div
           onClick={() => {
@@ -164,11 +164,19 @@ export const TopHeader: React.FC<Props> = ({
                   : 'bg-[#14121E]/95 border-white/10 text-zinc-50'
               }`}
             >
-              <div className="px-2.5 py-1.5 border-b border-white/[0.06] mb-1">
+              <div
+                className={`px-2.5 py-1.5 border-b mb-1 ${
+                  isLight ? 'border-[#E4E2EC]' : 'border-white/[0.06]'
+                }`}
+              >
                 <div className="text-[11px] font-bold">
                   Frekans Görünürlüğü
                 </div>
-                <div className="text-[10px] text-[#9E9AA8]">
+                <div
+                  className={`text-[10px] ${
+                    isLight ? 'text-[#5B576A]' : 'text-[#9E9AA8]'
+                  }`}
+                >
                   Seni canlı odalarda kimlerin görebileceğini seç
                 </div>
               </div>
@@ -188,6 +196,8 @@ export const TopHeader: React.FC<Props> = ({
                       className={`w-full p-2.5 rounded-xl text-left flex items-start justify-between gap-2.5 transition cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-500/15 border border-emerald-500/30'
+                          : isLight
+                          ? 'hover:bg-zinc-100 border border-transparent'
                           : 'hover:bg-white/[0.05] border border-transparent'
                       }`}
                     >
@@ -197,7 +207,11 @@ export const TopHeader: React.FC<Props> = ({
                           <div className="text-xs font-bold leading-none">
                             {opt.label}
                           </div>
-                          <div className="text-[10px] text-[#9E9AA8] mt-1 leading-snug">
+                          <div
+                            className={`text-[10px] mt-1 leading-snug ${
+                              isLight ? 'text-[#5B576A]' : 'text-[#9E9AA8]'
+                            }`}
+                          >
                             {opt.desc}
                           </div>
                         </div>

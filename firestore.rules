@@ -1,0 +1,478 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // GLOBAL HARDENED PRIMITIVES
+    // =========================================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isPairIdParticipant(pairId) {
+      return pairId.matches('^' + request.auth.uid + '_[a-zA-Z0-9\\-]+$')
+        || pairId.matches('^[a-zA-Z0-9\\-]+_' + request.auth.uid + '$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptionalNumber(data, field, minVal, maxVal) {
+      return !(field in data) || (data[field] is number && data[field] >= minVal && data[field] <= maxVal);
+    }
+
+    // =========================================================================
+    // ENTITY VALIDATION BLUEPRINTS (ANTI-UPDATE-GAP)
+    // =========================================================================
+    function isValidPublicProfile(data, uid) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'handle', 'avatarSeed', 'avatarGradient',
+        'city', 'bio', 'topGenres', 'currentSongId', 'currentSongTitle',
+        'currentSongArtist', 'currentSecond', 'trustScore', 'isDiscoverable',
+        'isOnline', 'lastSeenAt', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid', 'displayName', 'handle', 'avatarUrl', 'avatarSeed', 'avatarGradient',
+        'city', 'bio', 'topGenres', 'currentSongId', 'currentSongTitle',
+        'currentSongArtist', 'currentSecond', 'statusBubble', 'trustScore',
+        'isDiscoverable', 'isOnline', 'lastSeenAt', 'createdAt', 'updatedAt'
+      ])
+      && data.uid == uid
+      && isValidId(data.uid)
+      && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60
+      && data.handle is string && data.handle.size() >= 2 && data.handle.size() <= 40
+      && isOptionalString(data, 'avatarUrl', 500)
+      && data.avatarSeed is string && data.avatarSeed.size() >= 1 && data.avatarSeed.size() <= 4
+      && data.avatarGradient is string && data.avatarGradient.size() >= 1 && data.avatarGradient.size() <= 120
+      && data.city is string && data.city.size() >= 1 && data.city.size() <= 80
+      && data.bio is string && data.bio.size() <= 240
+      && data.topGenres is list && data.topGenres.size() <= 6
+      && (data.topGenres.size() == 0 || (data.topGenres[0] is string && data.topGenres[0].size() <= 40))
+      && data.currentSongId is string && data.currentSongId.size() <= 128
+      && data.currentSongTitle is string && data.currentSongTitle.size() <= 140
+      && data.currentSongArtist is string && data.currentSongArtist.size() <= 140
+      && data.currentSecond is number && data.currentSecond >= 0 && data.currentSecond <= 7200
+      && isOptionalString(data, 'statusBubble', 160)
+      && data.trustScore is number && data.trustScore >= 0 && data.trustScore <= 100
+      && data.isDiscoverable is bool
+      && data.isOnline is bool
+      && data.lastSeenAt is timestamp
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidPrivateAccount(data, uid) {
+      return data.keys().hasAll(['uid', 'email', 'privacyMode', 'createdAt', 'updatedAt'])
+      && data.keys().hasOnly(['uid', 'email', 'privacyMode', 'createdAt', 'updatedAt'])
+      && data.uid == uid
+      && isValidId(data.uid)
+      && data.email is string && data.email.size() <= 160
+      && data.privacyMode in ['public', 'friends_only', 'private']
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidFriendRequest(data, pairId) {
+      return data.keys().hasAll([
+        'fromUid', 'toUid', 'fromName', 'fromAvatarSeed', 'fromAvatarGradient',
+        'fromCity', 'songContext', 'status', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'fromUid', 'toUid', 'fromName', 'fromAvatarUrl', 'fromAvatarSeed',
+        'fromAvatarGradient', 'fromCity', 'songContext', 'status',
+        'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.fromUid)
+      && isValidId(data.toUid)
+      && data.fromUid != data.toUid
+      && (
+        (data.fromUid < data.toUid && pairId == data.fromUid + '_' + data.toUid) ||
+        (data.toUid < data.fromUid && pairId == data.toUid + '_' + data.fromUid)
+      )
+      && data.fromName is string && data.fromName.size() >= 1 && data.fromName.size() <= 60
+      && isOptionalString(data, 'fromAvatarUrl', 500)
+      && data.fromAvatarSeed is string && data.fromAvatarSeed.size() >= 1 && data.fromAvatarSeed.size() <= 4
+      && data.fromAvatarGradient is string && data.fromAvatarGradient.size() >= 1 && data.fromAvatarGradient.size() <= 120
+      && data.fromCity is string && data.fromCity.size() >= 1 && data.fromCity.size() <= 80
+      && data.songContext is string && data.songContext.size() <= 160
+      && data.status in ['pending', 'accepted', 'declined']
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidFriendship(data, pairId) {
+      return data.keys().hasAll(['uidA', 'uidB', 'acceptedBy', 'createdAt'])
+      && data.keys().hasOnly(['uidA', 'uidB', 'acceptedBy', 'createdAt'])
+      && isValidId(data.uidA)
+      && isValidId(data.uidB)
+      && data.uidA < data.uidB
+      && pairId == data.uidA + '_' + data.uidB
+      && isValidId(data.acceptedBy)
+      && (data.acceptedBy == data.uidA || data.acceptedBy == data.uidB)
+      && data.createdAt is timestamp;
+    }
+
+    function isValidParticipantSummary(p, expectedUid) {
+      return p is map
+      && p.keys().hasAll(['uid', 'name', 'avatarSeed', 'avatarGradient', 'city'])
+      && p.keys().hasOnly(['uid', 'name', 'avatarUrl', 'avatarSeed', 'avatarGradient', 'city'])
+      && p.uid == expectedUid
+      && p.name is string && p.name.size() >= 1 && p.name.size() <= 60
+      && isOptionalString(p, 'avatarUrl', 500)
+      && p.avatarSeed is string && p.avatarSeed.size() >= 1 && p.avatarSeed.size() <= 4
+      && p.avatarGradient is string && p.avatarGradient.size() >= 1 && p.avatarGradient.size() <= 120
+      && p.city is string && p.city.size() >= 1 && p.city.size() <= 80;
+    }
+
+    function isValidConversation(data, pairId) {
+      return data.keys().hasAll([
+        'uidA', 'uidB', 'participantA', 'participantB', 'matchedTrackId',
+        'matchedTrackTitle', 'matchedTrackArtist', 'matchedTrackCoverGradient',
+        'matchedTrackDuration', 'matchedSecond', 'lastMessage', 'lastMessageAt',
+        'lastSenderId', 'unreadCountA', 'unreadCountB', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uidA', 'uidB', 'participantA', 'participantB', 'matchedTrackId',
+        'matchedTrackTitle', 'matchedTrackArtist', 'matchedTrackCoverUrl',
+        'matchedTrackCoverGradient', 'matchedTrackDuration', 'matchedSecond',
+        'lastMessage', 'lastMessageAt', 'lastSenderId', 'unreadCountA',
+        'unreadCountB', 'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.uidA)
+      && isValidId(data.uidB)
+      && data.uidA < data.uidB
+      && pairId == data.uidA + '_' + data.uidB
+      && isValidParticipantSummary(data.participantA, data.uidA)
+      && isValidParticipantSummary(data.participantB, data.uidB)
+      && data.matchedTrackId is string && data.matchedTrackId.size() <= 128
+      && data.matchedTrackTitle is string && data.matchedTrackTitle.size() <= 140
+      && data.matchedTrackArtist is string && data.matchedTrackArtist.size() <= 140
+      && isOptionalString(data, 'matchedTrackCoverUrl', 500)
+      && data.matchedTrackCoverGradient is string && data.matchedTrackCoverGradient.size() <= 120
+      && data.matchedTrackDuration is number && data.matchedTrackDuration >= 0 && data.matchedTrackDuration <= 7200
+      && data.matchedSecond is number && data.matchedSecond >= 0 && data.matchedSecond <= 7200
+      && data.lastMessage is string && data.lastMessage.size() <= 500
+      && data.lastMessageAt is timestamp
+      && isValidId(data.lastSenderId)
+      && (data.lastSenderId == data.uidA || data.lastSenderId == data.uidB)
+      && data.unreadCountA is number && data.unreadCountA >= 0 && data.unreadCountA <= 9999
+      && data.unreadCountB is number && data.unreadCountB >= 0 && data.unreadCountB <= 9999
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['uidA', 'uidB', 'senderId', 'text', 'isIcebreaker', 'createdAt'])
+      && data.keys().hasOnly([
+        'uidA', 'uidB', 'senderId', 'text', 'isIcebreaker',
+        'sharedSongId', 'sharedSongTitle', 'sharedSongArtist', 'sharedSongCoverUrl',
+        'sharedSongCoverGradient', 'sharedSongDuration', 'sharedSongAudioUrl',
+        'sharedSongYoutubeId', 'sharedTimestampSecond', 'createdAt'
+      ])
+      && isValidId(data.uidA)
+      && isValidId(data.uidB)
+      && data.uidA < data.uidB
+      && isValidId(data.senderId)
+      && (data.senderId == data.uidA || data.senderId == data.uidB)
+      && data.text is string && data.text.size() >= 1 && data.text.size() <= 1000
+      && data.isIcebreaker is bool
+      && isOptionalString(data, 'sharedSongId', 128)
+      && isOptionalString(data, 'sharedSongTitle', 140)
+      && isOptionalString(data, 'sharedSongArtist', 140)
+      && isOptionalString(data, 'sharedSongCoverUrl', 500)
+      && isOptionalString(data, 'sharedSongCoverGradient', 120)
+      && isOptionalNumber(data, 'sharedSongDuration', 0, 7200)
+      && isOptionalString(data, 'sharedSongAudioUrl', 500)
+      && isOptionalString(data, 'sharedSongYoutubeId', 32)
+      && isOptionalNumber(data, 'sharedTimestampSecond', 0, 7200)
+      && data.createdAt is timestamp;
+    }
+
+    // =========================================================================
+    // 1. PUBLIC PROFILES & REAL-TIME LISTENING PRESENCE (NO PII)
+    // =========================================================================
+    match /publicProfiles/{uid} {
+      allow get: if isSignedIn() && isValidId(uid) && (
+        request.auth.uid == uid
+        || (resource != null && existing().isDiscoverable == true)
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.isDiscoverable == true || resource.data.uid == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(uid)
+        && request.auth.uid == uid
+        && isValidPublicProfile(incoming(), uid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && incoming().lastSeenAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(uid)
+        && isValidPublicProfile(incoming(), uid)
+        && request.auth.uid == uid
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Live heartbeat / playback presence pulse
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'currentSongId', 'currentSongTitle', 'currentSongArtist',
+              'currentSecond', 'statusBubble', 'isOnline', 'lastSeenAt', 'updatedAt'
+            ])
+            && incoming().lastSeenAt == request.time
+          ) ||
+          // Action 2: Full profile details edit by owner
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'handle', 'avatarUrl', 'avatarSeed', 'avatarGradient',
+              'city', 'bio', 'topGenres', 'isDiscoverable', 'isOnline',
+              'currentSongId', 'currentSongTitle', 'currentSongArtist',
+              'currentSecond', 'statusBubble', 'lastSeenAt', 'updatedAt'
+            ])
+            && incoming().lastSeenAt == request.time
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(uid) && request.auth.uid == uid;
+    }
+
+    // =========================================================================
+    // 2. PRIVATE ACCOUNT METADATA (STRICT PII ISOLATION)
+    // =========================================================================
+    match /users/{uid}/private/account {
+      allow get: if isSignedIn() && isValidId(uid) && request.auth.uid == uid;
+      allow list: if false;
+
+      allow create: if isVerifiedUser()
+        && isValidId(uid)
+        && request.auth.uid == uid
+        && isValidPrivateAccount(incoming(), uid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(uid)
+        && isValidPrivateAccount(incoming(), uid)
+        && request.auth.uid == uid
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'privacyMode', 'updatedAt']);
+
+      allow delete: if isVerifiedUser() && isValidId(uid) && request.auth.uid == uid;
+    }
+
+    // =========================================================================
+    // 3. FRIEND REQUESTS (DETERMINISTIC PAIR ID, ATOMIC ACCEPTANCE)
+    // =========================================================================
+    match /friendRequests/{pairId} {
+      allow get: if isSignedIn() && isValidId(pairId) && (
+        (resource == null && isPairIdParticipant(pairId))
+        || (resource != null && (existing().fromUid == request.auth.uid || existing().toUid == request.auth.uid))
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(pairId)
+        && isValidFriendRequest(incoming(), pairId)
+        && incoming().fromUid == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(incoming().toUid));
+
+      allow update: if isVerifiedUser()
+        && isValidId(pairId)
+        && isValidFriendRequest(incoming(), pairId)
+        && existing().status == 'pending'
+        && incoming().fromUid == existing().fromUid
+        && incoming().toUid == existing().toUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Recipient accepts request atomically with friendship creation
+          (
+            existing().toUid == request.auth.uid
+            && incoming().status == 'accepted'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+            && existsAfter(/databases/$(database)/documents/friendships/$(pairId))
+          ) ||
+          // Action 2: Recipient declines request
+          (
+            existing().toUid == request.auth.uid
+            && incoming().status == 'declined'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isVerifiedUser()
+        && isValidId(pairId)
+        && (existing().fromUid == request.auth.uid || existing().toUid == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 4. CONFIRMED FRIENDSHIPS (MUTUAL, ATOMICALLY LINKED TO REQUEST)
+    // =========================================================================
+    match /friendships/{pairId} {
+      allow get: if isSignedIn() && isValidId(pairId) && (
+        (resource == null && isPairIdParticipant(pairId))
+        || (resource != null && (existing().uidA == request.auth.uid || existing().uidB == request.auth.uid))
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.uidA == request.auth.uid || resource.data.uidB == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(pairId)
+        && isValidFriendship(incoming(), pairId)
+        && incoming().acceptedBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/friendRequests/$(pairId))
+        && get(/databases/$(database)/documents/friendRequests/$(pairId)).data.toUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/friendRequests/$(pairId)).data.status == 'accepted';
+
+      allow update: if false;
+
+      allow delete: if isVerifiedUser()
+        && isValidId(pairId)
+        && (existing().uidA == request.auth.uid || existing().uidB == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 5. 1-TO-1 CONVERSATIONS & MESSAGES SUBCOLLECTION
+    // =========================================================================
+    match /conversations/{pairId} {
+      allow get: if isSignedIn() && isValidId(pairId) && (
+        (resource == null && isPairIdParticipant(pairId))
+        || (resource != null && (existing().uidA == request.auth.uid || existing().uidB == request.auth.uid))
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.uidA == request.auth.uid || resource.data.uidB == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(pairId)
+        && isValidConversation(incoming(), pairId)
+        && (incoming().uidA == request.auth.uid || incoming().uidB == request.auth.uid)
+        && incoming().lastSenderId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && incoming().lastMessageAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(incoming().uidA))
+        && exists(/databases/$(database)/documents/publicProfiles/$(incoming().uidB));
+
+      allow update: if isVerifiedUser()
+        && isValidId(pairId)
+        && isValidConversation(incoming(), pairId)
+        && (existing().uidA == request.auth.uid || existing().uidB == request.auth.uid)
+        && incoming().uidA == existing().uidA
+        && incoming().uidB == existing().uidB
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Update conversation summary after sending a message
+          (
+            incoming().lastSenderId == request.auth.uid
+            && incoming().lastMessageAt == request.time
+            && (
+              (existing().uidA == request.auth.uid && incoming().unreadCountB >= existing().unreadCountB)
+              || (existing().uidB == request.auth.uid && incoming().unreadCountA >= existing().unreadCountA)
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'lastMessage', 'lastMessageAt', 'lastSenderId',
+              'unreadCountA', 'unreadCountB', 'updatedAt'
+            ])
+          ) ||
+          // Action 2: Participant A marks messages as read
+          (
+            existing().uidA == request.auth.uid
+            && incoming().unreadCountA == 0
+            && incoming().diff(existing()).affectedKeys().hasOnly(['unreadCountA', 'updatedAt'])
+          ) ||
+          // Action 3: Participant B marks messages as read
+          (
+            existing().uidB == request.auth.uid
+            && incoming().unreadCountB == 0
+            && incoming().diff(existing()).affectedKeys().hasOnly(['unreadCountB', 'updatedAt'])
+          ) ||
+          // Action 4: Participant A refreshes own display snapshot
+          (
+            existing().uidA == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['participantA', 'updatedAt'])
+          ) ||
+          // Action 5: Participant B refreshes own display snapshot
+          (
+            existing().uidB == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['participantB', 'updatedAt'])
+          )
+        );
+
+      allow delete: if false;
+
+      // Messages subcollection (Master Gate on create + participant-scoped list)
+      match /messages/{messageId} {
+        allow get: if isSignedIn()
+          && isValidId(pairId)
+          && isValidId(messageId)
+          && (existing().uidA == request.auth.uid || existing().uidB == request.auth.uid);
+
+        allow list: if isSignedIn() && (
+          resource.data.uidA == request.auth.uid || resource.data.uidB == request.auth.uid
+        );
+
+        allow create: if isVerifiedUser()
+          && isValidId(pairId)
+          && isValidId(messageId)
+          && isValidChatMessage(incoming())
+          && incoming().senderId == request.auth.uid
+          && incoming().createdAt == request.time
+          && existsAfter(/databases/$(database)/documents/conversations/$(pairId))
+          && getAfter(/databases/$(database)/documents/conversations/$(pairId)).data.uidA == incoming().uidA
+          && getAfter(/databases/$(database)/documents/conversations/$(pairId)).data.uidB == incoming().uidB
+          && (
+            getAfter(/databases/$(database)/documents/conversations/$(pairId)).data.uidA == request.auth.uid ||
+            getAfter(/databases/$(database)/documents/conversations/$(pairId)).data.uidB == request.auth.uid
+          );
+
+        allow update: if false;
+
+        allow delete: if isVerifiedUser()
+          && isValidId(pairId)
+          && isValidId(messageId)
+          && existing().senderId == request.auth.uid;
+      }
+    }
+  }
+}

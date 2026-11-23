@@ -6,7 +6,7 @@ export type IntentType = 'music_discovery' | 'concert_buddy' | 'romantic' | 'jam
 
 export type PrivacyMode = 'public' | 'friends_only' | 'private';
 
-export type FriendStatus = 'none' | 'pending' | 'friends';
+export type FriendStatus = 'none' | 'pending' | 'pending_received' | 'friends';
 
 export interface UserProfile {
   id: string;
@@ -139,6 +139,7 @@ export interface SongPrediction {
 export interface LoungeUser {
   id: string;
   name: string;
+  handle?: string;
   age: number;
   city: string;
   avatarSeed: string;
@@ -155,19 +156,27 @@ export interface LoungeUser {
   distanceKm: number;
   privacyMode?: PrivacyMode;
   friendStatus?: FriendStatus;
+  friendDirection?: 'incoming' | 'outgoing';
   statusLikesCount?: number;
   hasLikedStatus?: boolean;
   compatibilityScore?: number;
   sharedWithUserArtists?: string[];
   currentSong?: Song;
+  isRealUser?: boolean;
+  uid?: string;
+  topGenres?: string[];
 }
 
 export interface FriendRequest {
   id: string;
+  pairId?: string;
   fromUser: LoungeUser;
+  toUser?: LoungeUser;
+  direction?: 'incoming' | 'outgoing';
   timestamp: string;
   songContext?: string;
   status: 'pending' | 'accepted' | 'declined';
+  isCloudRequest?: boolean;
 }
 
 export interface FloatingReaction {
@@ -198,6 +207,10 @@ export interface LoungeConversation {
   lastMessageTime: string;
   unreadCount: number;
   messages: ChatMessage[];
+  isCloudConversation?: boolean;
+  cloudPairId?: string;
+  cloudUidA?: string;
+  cloudUidB?: string;
 }
 
 export interface ComplaintSolution {

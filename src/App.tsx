@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavTab, BottomNav } from './components/BottomNav';
 import { TopHeader } from './components/TopHeader';
 import { LiveLoungeTab } from './components/LiveLoungeTab';
@@ -11,6 +11,8 @@ import { InstallAppModal } from './components/InstallAppModal';
 import { NowPlayingModal } from './components/NowPlayingModal';
 import { LiveRoomListenersModal } from './components/LiveRoomListenersModal';
 import { YouTubeMusicConnectModal } from './components/YouTubeMusicConnectModal';
+import { OnboardingModal } from './components/OnboardingModal';
+import { realtimePresence } from './services/realtimePresenceService';
 import {
   SAMPLE_SONGS,
   INITIAL_LOUNGE_USERS,
@@ -48,6 +50,7 @@ import {
   derivePersonalTasteFromData,
   calculateSongCompatibilityWithUser,
 } from './services/tasteSyncService';
+import { User as FirebaseAuthUser } from 'firebase/auth';
 import {
   signInWithGoogle,
   logoutGoogle,
@@ -55,6 +58,32 @@ import {
   initAuth,
   getCachedAccessToken,
 } from './services/googleAuthService';
+import {
+  PublicProfileDoc,
+  CloudFriendRequest,
+  CloudFriendship,
+  CloudConversationDoc,
+  getPairId,
+  sortPair,
+  formatCloudTimestamp,
+  publicProfileToLoungeUser,
+  cloudConversationToLoungeConversation,
+  syncUserProfileToFirestore,
+  updateLiveListeningPresence,
+  markProfileOffline,
+  subscribeDiscoverableProfiles,
+  subscribeFriendRequests,
+  subscribeFriendships,
+  subscribeConversations,
+  subscribeConversationMessages,
+  sendCloudFriendRequest,
+  acceptCloudFriendRequest,
+  declineCloudFriendRequest,
+  cancelCloudFriendRequest,
+  removeCloudFriendship,
+  sendOrStartCloudMessage,
+  markCloudConversationRead,
+} from './services/socialFirestoreService';
 import {
   cleanNonMusicArtists,
   purgeNonMusicFromLocalStorage,
@@ -68,35 +97,46 @@ import {
   ExtractedPalette,
 } from './services/colorExtractor';
 import { getSavedLocation, detectLiveLocation, localizeUsersForCity, setManualLocation } from './services/locationService';
+import { testFirestoreConnection } from './firebase';
 import {
   ThemeMode,
   getSavedTheme,
   applyTheme,
   toggleThemeMode,
   resolveEffectiveTheme,
+  subscribeSystemThemeChange,
   triggerHaptic,
 } from './services/themeService';
 
 export default function App() {
   const pwa = usePwaUpdate();
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => getSavedTheme());
+  const [effectiveTheme, setEffectiveTheme] = useState<'dark' | 'light'>(() =>
+    resolveEffectiveTheme(getSavedTheme())
+  );
 
-  // Initialize theme mode on mount & changes
+  // Initialize theme mode on mount & react live to OS theme changes when in 'system' mode
   useEffect(() => {
-    applyTheme(themeMode);
+    setEffectiveTheme(applyTheme(themeMode));
+    if (themeMode === 'system') {
+      return subscribeSystemThemeChange(() => {
+        setEffectiveTheme(applyTheme('system'));
+      });
+    }
   }, [themeMode]);
 
   const handleToggleTheme = () => {
     triggerHaptic(20);
     const next = toggleThemeMode(themeMode);
     setThemeMode(next);
+    setEffectiveTheme(resolveEffectiveTheme(next));
     setToastMessage(next === 'dark' ? 'Obsidyen Gece Modu Aktif 🌙' : 'Stüdyo Gündüz Modu Aktif ☀️');
     setTimeout(() => setToastMessage(null), 2500);
   };
 
   const handleThemeModeChange = (mode: ThemeMode) => {
     setThemeMode(mode);
-    applyTheme(mode);
+    setEffectiveTheme(applyTheme(mode));
     setToastMessage(
       mode === 'dark'
         ? 'Obsidyen Gece Modu Aktif 🌙'
@@ -287,24 +327,141 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const [isYouTubeConnected, setIsYouTubeConnected] = useState<boolean>(true);
+  const [isYouTubeConnected, setIsYouTubeConnected] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('harmoniq_youtube_connected') === 'true';
+    }
+    return false;
+  });
   const [youtubeAccount, setYoutubeAccount] = useState<{ email: string; handle: string; name: string }>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('harmoniq_user_account');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.email !== 'contact.yasincelebi@gmail.com') {
+            return parsed;
+          }
         } catch {
           // ignore
         }
       }
     }
     return {
-      email: 'contact.yasincelebi@gmail.com',
-      handle: '@yasincelebi',
-      name: 'Yasin Çelebi',
+      email: '',
+      handle: '@muziksever',
+      name: 'Müzik Kaşifi',
     };
   });
+
+  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('harmoniq_onboarding_completed');
+    }
+    return false;
+  });
+
+  const [realLiveListeners, setRealLiveListeners] = useState<LoungeUser[]>([]);
+
+  const handleOnboardingComplete = (data: {
+    name: string;
+    avatarUrl?: string;
+    avatarGradient: string;
+    avatarSeed: string;
+    genres: string[];
+    city: string;
+  }) => {
+    const acc = {
+      email: '',
+      handle: `@${data.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'kesif'}`,
+      name: data.name,
+    };
+    setYoutubeAccount(acc);
+    setUserCity(data.city);
+    setManualLocation(data.city);
+    if (data.avatarUrl) {
+      setUserAvatarUrl(data.avatarUrl);
+    }
+    setPersonalTaste((prev) => ({
+      ...prev,
+      topGenres: data.genres,
+    }));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('harmoniq_onboarding_completed', 'true');
+      localStorage.setItem('harmoniq_user_account', JSON.stringify(acc));
+      if (data.avatarUrl) {
+        localStorage.setItem('harmoniq_user_avatar', data.avatarUrl);
+      }
+      localStorage.setItem('harmoniq_user_city', data.city);
+    }
+    setShowOnboardingModal(false);
+    setToastMessage(`⚡ Frekans kimliğin hazır! Hoş geldin, ${data.name}.`);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleOnboardingSkip = () => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('harmoniq_onboarding_completed', 'true');
+    }
+    setShowOnboardingModal(false);
+    setToastMessage('Misafir modunda frekansa bağlandınız.');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleLoadPopularCollection = () => {
+    const popularPlaylists: UserPlaylist[] = [
+      {
+        id: 'pl-turkce-rock-klasikler',
+        title: '🎸 Türkçe Rock & Grunge Frekansları',
+        description: 'Duman, Mor ve Ötesi, Teoman ve döneme damgasını vuran kült riff’ler.',
+        coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500&auto=format&fit=crop&q=80',
+        trackCount: 4,
+        duration: '14:20',
+        genre: 'Türkçe Rock',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[0], SAMPLE_SONGS[1], SAMPLE_SONGS[4], SAMPLE_SONGS[2]],
+        isFavorite: true,
+        updatedAt: 'Az önce',
+      },
+      {
+        id: 'pl-gece-indie-darkwave',
+        title: '⚡ Gece Yarısı Indie & Darkwave',
+        description: 'She Past Away, Jakuzi, Arctic Monkeys ile post-punk ve synth dalgaları.',
+        coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+        trackCount: 3,
+        duration: '11:45',
+        genre: 'Indie & Darkwave',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[5], SAMPLE_SONGS[3], SAMPLE_SONGS[2]],
+        isFavorite: true,
+        updatedAt: 'Az önce',
+      },
+      {
+        id: 'pl-kadikoy-akustik-lofi',
+        title: '☕ Kadıköy Akustik & Lo-Fi Odası',
+        description: 'Yağmurlu Moda sokakları, analog gitarlar ve derin melodi rezonansı.',
+        coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
+        trackCount: 3,
+        duration: '10:50',
+        genre: 'Lo-Fi & Akustik',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[4], SAMPLE_SONGS[0], SAMPLE_SONGS[3]],
+        isFavorite: false,
+        updatedAt: 'Az önce',
+      },
+    ];
+
+    setSyncedPlaylists(popularPlaylists);
+    setFavoriteSongs(SAMPLE_SONGS.slice(0, 4));
+    setFavoriteArtists(['Duman', 'Mor ve Ötesi', 'Arctic Monkeys', 'Teoman', 'She Past Away']);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('harmoniq_user_playlists', JSON.stringify(popularPlaylists));
+      localStorage.setItem('harmoniq_user_favorite_songs', JSON.stringify(SAMPLE_SONGS.slice(0, 4)));
+      localStorage.setItem('harmoniq_user_favorite_artists', JSON.stringify(['Duman', 'Mor ve Ötesi', 'Arctic Monkeys', 'Teoman', 'She Past Away']));
+    }
+    setToastMessage('🔥 Popüler Rock & Indie koleksiyonu kütüphanene başarıyla eklendi!');
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const [userBio, setUserBio] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -380,16 +537,31 @@ export default function App() {
   const [showYouTubeConnectModal, setShowYouTubeConnectModal] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isMobileFrameView, setIsMobileFrameView] = useState<boolean>(false);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseAuthUser | null>(null);
   const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState<boolean>(false);
   const [hasActiveYouTubeToken, setHasActiveYouTubeToken] = useState<boolean>(false);
   const [googleUser, setGoogleUser] = useState<{ name: string; email: string; photoUrl?: string } | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [syncDiagnosticError, setSyncDiagnosticError] = useState<string | null>(null);
 
-  // Listen to Google Auth state
+  // Real-Time Cloud Firestore Social State
+  const [cloudProfiles, setCloudProfiles] = useState<PublicProfileDoc[]>([]);
+  const [cloudIncomingRequests, setCloudIncomingRequests] = useState<CloudFriendRequest[]>([]);
+  const [cloudOutgoingRequests, setCloudOutgoingRequests] = useState<CloudFriendRequest[]>([]);
+  const [cloudFriendships, setCloudFriendships] = useState<CloudFriendship[]>([]);
+  const [cloudConversations, setCloudConversations] = useState<CloudConversationDoc[]>([]);
+  const [activeCloudMessages, setActiveCloudMessages] = useState<ChatMessage[]>([]);
+
+  // Verify Firestore connectivity on boot
   useEffect(() => {
-    const unsub = initAuth((user, token) => {
-      if (user) {
+    void testFirestoreConnection();
+  }, []);
+
+  // Listen to Firebase Google Auth state
+  useEffect(() => {
+    const unsub = initAuth(
+      (user, token) => {
+        setFirebaseUser(user);
         setIsGoogleAuthenticated(true);
         setHasActiveYouTubeToken(Boolean(token));
         setGoogleUser({
@@ -397,12 +569,20 @@ export default function App() {
           email: user.email || '',
           photoUrl: user.photoURL || undefined,
         });
-      } else {
+      },
+      () => {
+        setFirebaseUser(null);
         setIsGoogleAuthenticated(false);
         setHasActiveYouTubeToken(false);
         setGoogleUser(null);
+        setCloudProfiles([]);
+        setCloudIncomingRequests([]);
+        setCloudOutgoingRequests([]);
+        setCloudFriendships([]);
+        setCloudConversations([]);
+        setActiveCloudMessages([]);
       }
-    });
+    );
     return () => unsub();
   }, []);
 
@@ -475,6 +655,15 @@ export default function App() {
       onPrevTrack: () => handlePrevSong(),
       onNextTrack: () => handleNextSong(),
       onTogglePlay: () => handleTogglePlay(),
+      onPlayPause: (play) => {
+        if (play) {
+          soundEngine.resume();
+          setIsPlaying(true);
+        } else {
+          soundEngine.pause();
+          setIsPlaying(false);
+        }
+      },
       onSeek: (sec) => handleSeekSecond(sec),
     });
     soundEngine.updateMediaSession(currentSong);
@@ -1142,11 +1331,59 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  // Quick Google Sign-In dedicated to Real-Time Cloud Social (Chat & Friendships) without requiring YouTube API scope
+  const handleSocialGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setToastMessage('Google hesabıyla bulut sohbete bağlanılıyor...');
+    try {
+      const res = await signInWithGoogle(false);
+      if (res && res.user) {
+        const authedUser = res.user;
+        setFirebaseUser(authedUser);
+        setIsGoogleAuthenticated(true);
+        setGoogleUser({
+          name: authedUser.displayName || 'Google Kullanıcısı',
+          email: authedUser.email || '',
+          photoUrl: authedUser.photoURL || undefined,
+        });
+        if (authedUser.photoURL && !userAvatarUrl) {
+          handleUpdateAvatar(authedUser.photoURL);
+        }
+        if (authedUser.displayName) {
+          setYoutubeAccount((prev) => ({
+            ...prev,
+            name: authedUser.displayName || prev.name,
+            email: authedUser.email || prev.email,
+            handle: authedUser.email ? `@${authedUser.email.split('@')[0]}` : prev.handle,
+          }));
+        }
+        setToastMessage(`Hoş geldin ${authedUser.displayName || ''}! Bulut sohbet ve arkadaşlıklar aktif.`);
+      } else {
+        setToastMessage(res?.userFacingError || 'Google girişi tamamlanamadı.');
+      }
+    } catch (err: any) {
+      setToastMessage(`Giriş hatası: ${err?.message || 'Lütfen tekrar deneyin.'}`);
+    } finally {
+      setIsGoogleLoading(false);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+
   const handleGoogleSignOut = async () => {
+    if (firebaseUser) {
+      await markProfileOffline(firebaseUser.uid);
+    }
     await logoutGoogle();
+    setFirebaseUser(null);
     setIsGoogleAuthenticated(false);
     setHasActiveYouTubeToken(false);
     setGoogleUser(null);
+    setCloudProfiles([]);
+    setCloudIncomingRequests([]);
+    setCloudOutgoingRequests([]);
+    setCloudFriendships([]);
+    setCloudConversations([]);
+    setActiveCloudMessages([]);
     setToastMessage('Google oturumu kapatıldı.');
     setTimeout(() => setToastMessage(null), 3000);
   };
@@ -1258,7 +1495,46 @@ export default function App() {
     }
   };
 
-  const handleToggleFriend = (user: LoungeUser) => {
+  const handleToggleFriend = async (user: LoungeUser) => {
+    if (user.isRealUser) {
+      if (!firebaseUser) {
+        setToastMessage('Gerçek kullanıcılarla arkadaş olmak için Google ile giriş yapın.');
+        setTimeout(() => setToastMessage(null), 3500);
+        await handleSocialGoogleSignIn();
+        return;
+      }
+
+      const pairId = getPairId(firebaseUser.uid, user.id);
+      try {
+        if (user.friendStatus === 'friends') {
+          await removeCloudFriendship(pairId);
+          setToastMessage(`${user.name} arkadaş listenden çıkarıldı.`);
+        } else if (user.friendStatus === 'pending' && user.friendDirection === 'incoming') {
+          await acceptCloudFriendRequest(pairId, user.id, firebaseUser.uid);
+          setToastMessage(`${user.name} ile artık arkadaşsınız.`);
+        } else if (user.friendStatus === 'pending') {
+          await cancelCloudFriendRequest(pairId);
+          setToastMessage('Arkadaşlık isteği geri çekildi.');
+        } else {
+          await sendCloudFriendRequest({
+            myUid: firebaseUser.uid,
+            myName: currentUserProfile.name,
+            myAvatarUrl: currentUserProfile.avatarUrl,
+            myAvatarSeed: currentUserProfile.avatarSeed,
+            myAvatarGradient: currentUserProfile.avatarGradient,
+            myCity: currentUserProfile.city,
+            targetUid: user.id,
+            songContext: `${currentSong.artist} - ${currentSong.title}`,
+          });
+          setToastMessage(`${user.name} için gerçek arkadaşlık isteği gönderildi.`);
+        }
+      } catch {
+        setToastMessage('Arkadaşlık işlemi tamamlanamadı. Lütfen tekrar deneyin.');
+      }
+      setTimeout(() => setToastMessage(null), 3500);
+      return;
+    }
+
     if (user.friendStatus === 'friends') {
       setFriendsList((prev) => prev.filter((f) => f.id !== user.id));
       setLoungeUsers((prev) =>
@@ -1297,7 +1573,19 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleAcceptFriendRequest = (requestId: string) => {
+  const handleAcceptFriendRequest = async (requestId: string) => {
+    const cloudReq = cloudIncomingRequests.find((r) => r.pairId === requestId);
+    if (cloudReq && firebaseUser) {
+      try {
+        await acceptCloudFriendRequest(cloudReq.pairId, cloudReq.fromUid, firebaseUser.uid);
+        setToastMessage(`${cloudReq.fromName} ile artık arkadaşsınız.`);
+      } catch {
+        setToastMessage('İstek kabul edilirken bir hata oluştu.');
+      }
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     const req = friendRequests.find((r) => r.id === requestId);
     if (!req) return;
     const acceptedUser: LoungeUser = { ...req.fromUser, friendStatus: 'friends' };
@@ -1311,11 +1599,34 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleDeclineFriendRequest = (requestId: string) => {
+  const handleDeclineFriendRequest = async (requestId: string) => {
+    const cloudReq = cloudIncomingRequests.find((r) => r.pairId === requestId);
+    if (cloudReq && firebaseUser) {
+      try {
+        await declineCloudFriendRequest(cloudReq.pairId);
+        setToastMessage('Arkadaşlık isteği reddedildi.');
+      } catch {
+        setToastMessage('İstek reddedilemedi.');
+      }
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
     setFriendRequests((prev) => prev.filter((r) => r.id !== requestId));
   };
 
-  const handleCancelSentRequest = (userId: string) => {
+  const handleCancelSentRequest = async (userId: string) => {
+    const cloudOut = cloudOutgoingRequests.find((r) => r.toUid === userId);
+    if (cloudOut && firebaseUser) {
+      try {
+        await cancelCloudFriendRequest(cloudOut.pairId);
+        setToastMessage('Gönderilen istek iptal edildi.');
+      } catch {
+        setToastMessage('İstek iptal edilemedi.');
+      }
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     setLoungeUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, friendStatus: 'none' as const } : u))
     );
@@ -1324,8 +1635,47 @@ export default function App() {
     }
   };
 
-  const handleSendFrequency = (user: LoungeUser, icebreakerText?: string) => {
+  const handleSendFrequency = async (user: LoungeUser, icebreakerText?: string) => {
     setSelectedDrawerUser(null);
+
+    if (user.isRealUser) {
+      if (!firebaseUser) {
+        setToastMessage('Gerçek kullanıcıya mesaj göndermek için Google ile giriş yapın.');
+        setTimeout(() => setToastMessage(null), 3500);
+        await handleSocialGoogleSignIn();
+        return;
+      }
+
+      setActiveChatUser(user);
+      setActiveTab('chat');
+
+      const pairId = getPairId(firebaseUser.uid, user.id);
+      const existingCloud = cloudConversations.find((c) => c.pairId === pairId);
+      if (!existingCloud || icebreakerText) {
+        const initialText =
+          icebreakerText || `Selam ${user.name}! ${currentSong.title} şarkısında aynı frekansta karşılaştık.`;
+        try {
+          await sendOrStartCloudMessage({
+            myUid: firebaseUser.uid,
+            myName: currentUserProfile.name,
+            myAvatarUrl: currentUserProfile.avatarUrl,
+            myAvatarSeed: currentUserProfile.avatarSeed,
+            myAvatarGradient: currentUserProfile.avatarGradient,
+            myCity: currentUserProfile.city,
+            targetUser: user,
+            text: initialText,
+            currentSong,
+            currentSecond: mySecond,
+            isIcebreaker: Boolean(icebreakerText),
+          });
+        } catch {
+          setToastMessage('Mesaj buluta iletilemedi. Lütfen tekrar deneyin.');
+          setTimeout(() => setToastMessage(null), 3500);
+        }
+      }
+      return;
+    }
+
     setActiveChatUser(user);
     setActiveTab('chat');
 
@@ -1356,7 +1706,32 @@ export default function App() {
     }
   };
 
-  const handleSendMessage = (matchId: string, text: string, isIcebreaker?: boolean) => {
+  const handleSendMessage = async (matchId: string, text: string, isIcebreaker?: boolean) => {
+    const cloudTarget = mergedConversations.find((c) => c.matchId === matchId && c.isCloudConversation);
+    if ((cloudTarget || activeChatUser?.isRealUser) && firebaseUser) {
+      const targetUser = cloudTarget?.user || activeChatUser;
+      if (!targetUser) return;
+      try {
+        await sendOrStartCloudMessage({
+          myUid: firebaseUser.uid,
+          myName: currentUserProfile.name,
+          myAvatarUrl: currentUserProfile.avatarUrl,
+          myAvatarSeed: currentUserProfile.avatarSeed,
+          myAvatarGradient: currentUserProfile.avatarGradient,
+          myCity: currentUserProfile.city,
+          targetUser,
+          text,
+          currentSong,
+          currentSecond: mySecond,
+          isIcebreaker,
+        });
+      } catch {
+        setToastMessage('Mesaj gönderilemedi. Bağlantınızı kontrol edin.');
+        setTimeout(() => setToastMessage(null), 3500);
+      }
+      return;
+    }
+
     const newMsg = {
       id: `msg-${Date.now()}`,
       senderId: 'me',
@@ -1380,14 +1755,46 @@ export default function App() {
     );
   };
 
-  const handleSendSongMessage = (matchId: string, song: Song, comment?: string, timestampSecond?: number) => {
+  const handleSendSongMessage = async (
+    matchId: string,
+    song: Song,
+    comment?: string,
+    timestampSecond?: number
+  ) => {
     const formattedTime = timestampSecond !== undefined
       ? `${Math.floor(timestampSecond / 60)}:${timestampSecond % 60 < 10 ? '0' : ''}${Math.floor(timestampSecond % 60)}`
       : null;
     const defaultText = formattedTime
-      ? `🎸 Bu şarkının ${formattedTime} saniyesini dinle!`
-      : `🎵 Sana bu şarkıyı öneriyorum: ${song.artist} - ${song.title}`;
+      ? `Bu şarkının ${formattedTime} saniyesini dinle!`
+      : `Sana bu şarkıyı öneriyorum: ${song.artist} - ${song.title}`;
     const text = comment && comment.trim() ? comment.trim() : defaultText;
+
+    const cloudTarget = mergedConversations.find((c) => c.matchId === matchId && c.isCloudConversation);
+    if ((cloudTarget || activeChatUser?.isRealUser) && firebaseUser) {
+      const targetUser = cloudTarget?.user || activeChatUser;
+      if (!targetUser) return;
+      try {
+        await sendOrStartCloudMessage({
+          myUid: firebaseUser.uid,
+          myName: currentUserProfile.name,
+          myAvatarUrl: currentUserProfile.avatarUrl,
+          myAvatarSeed: currentUserProfile.avatarSeed,
+          myAvatarGradient: currentUserProfile.avatarGradient,
+          myCity: currentUserProfile.city,
+          targetUser,
+          text,
+          currentSong,
+          currentSecond: mySecond,
+          sharedSong: song,
+          sharedTimestampSecond: timestampSecond,
+        });
+      } catch {
+        setToastMessage('Şarkı kartı gönderilemedi.');
+        setTimeout(() => setToastMessage(null), 3500);
+      }
+      return;
+    }
+
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       senderId: 'me',
@@ -1460,20 +1867,20 @@ export default function App() {
 
   const currentUserProfile: UserProfile = {
     id: 'me',
-    name: googleUser?.name || youtubeAccount.name || 'Yasin Çelebi',
+    name: googleUser?.name || (youtubeAccount.name && youtubeAccount.name !== 'Yasin Çelebi' ? youtubeAccount.name : 'Müzik Kaşifi'),
     age: 24,
     city: userCity,
     avatarGradient: 'from-zinc-700 to-zinc-900',
-    avatarSeed: (youtubeAccount.name || 'YÇ')
+    avatarSeed: (googleUser?.name || youtubeAccount.name || 'MK')
       .split(' ')
       .map((s) => s[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2) || 'YÇ',
+      .slice(0, 2) || 'MK',
     avatarUrl: userAvatarUrl || googleUser?.photoUrl || undefined,
     isYouTubeConnected,
     youtubeAccount,
-    email: googleUser?.email || youtubeAccount.email,
+    email: googleUser?.email || (youtubeAccount.email && youtubeAccount.email !== 'contact.yasincelebi@gmail.com' ? youtubeAccount.email : undefined),
     bio: userBio,
     currentSong,
     songProgressSeconds: mySecond,
@@ -1496,8 +1903,323 @@ export default function App() {
     friendsCount: friendsList.length,
   };
 
-  const totalUnread = conversations.reduce((acc, curr) => acc + curr.unreadCount, 0);
-  const isLight = resolveEffectiveTheme(themeMode) === 'light';
+  // Sync authenticated profile & attach real-time Firestore social listeners
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const myUid = firebaseUser.uid;
+
+    void syncUserProfileToFirestore({
+      firebaseUser,
+      displayName: currentUserProfile.name,
+      handle: youtubeAccount.handle || (firebaseUser.email ? `@${firebaseUser.email.split('@')[0]}` : undefined),
+      avatarUrl: currentUserProfile.avatarUrl,
+      avatarSeed: currentUserProfile.avatarSeed,
+      avatarGradient: currentUserProfile.avatarGradient,
+      city: currentUserProfile.city,
+      bio: currentUserProfile.bio,
+      topGenres: currentUserProfile.topGenres,
+      currentSong,
+      currentSecond: mySecond,
+      statusBubble: `${currentSong.title} dinliyor`,
+      privacyMode,
+    }).catch(() => {});
+
+    const unsubProfiles = subscribeDiscoverableProfiles(myUid, setCloudProfiles);
+    const unsubReqs = subscribeFriendRequests(myUid, ({ incoming, outgoing }) => {
+      setCloudIncomingRequests(incoming);
+      setCloudOutgoingRequests(outgoing);
+    });
+    const unsubFriends = subscribeFriendships(myUid, setCloudFriendships);
+    const unsubConvs = subscribeConversations(myUid, setCloudConversations);
+
+    return () => {
+      unsubProfiles();
+      unsubReqs();
+      unsubFriends();
+      unsubConvs();
+    };
+  }, [
+    firebaseUser?.uid,
+    currentUserProfile.name,
+    currentUserProfile.city,
+    currentUserProfile.bio,
+    currentUserProfile.avatarUrl,
+    privacyMode,
+  ]);
+
+  // Periodic live listening heartbeat to /publicProfiles/{uid}
+  const latestPlaybackRef = useRef({ song: currentSong, sec: mySecond });
+  latestPlaybackRef.current = { song: currentSong, sec: mySecond };
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const sendPulse = () => {
+      const { song, sec } = latestPlaybackRef.current;
+      void updateLiveListeningPresence({
+        uid: firebaseUser.uid,
+        currentSong: song,
+        currentSecond: sec,
+        statusBubble: `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, '0')} · ${song.title}`,
+        isOnline: true,
+      }).catch(() => {});
+    };
+    sendPulse();
+    const timer = setInterval(sendPulse, 25000);
+    return () => clearInterval(timer);
+  }, [firebaseUser?.uid, currentSong.id]);
+
+  // Subscribe to real-time messages for the currently open cloud conversation
+  useEffect(() => {
+    if (!firebaseUser || !activeChatUser?.isRealUser) {
+      setActiveCloudMessages([]);
+      return;
+    }
+    const [uidA, uidB] = sortPair(firebaseUser.uid, activeChatUser.id);
+    const pairId = `${uidA}_${uidB}`;
+    const unsub = subscribeConversationMessages(
+      pairId,
+      uidA,
+      uidB,
+      firebaseUser.uid,
+      setActiveCloudMessages
+    );
+    return () => unsub();
+  }, [firebaseUser?.uid, activeChatUser?.id, activeChatUser?.isRealUser]);
+
+  // Real-time Heartbeat & Cross-Tab Presence (BroadcastChannel)
+  useEffect(() => {
+    realtimePresence.startHeartbeatCycle();
+    const unsub = realtimePresence.subscribeToRealListeners(currentSong.id, (realUsers) => {
+      setRealLiveListeners(realUsers);
+    });
+    return () => {
+      unsub();
+      realtimePresence.stopHeartbeatCycle();
+    };
+  }, [currentSong.id]);
+
+  useEffect(() => {
+    const clientUid =
+      firebaseUser?.uid ||
+      (typeof window !== 'undefined'
+        ? localStorage.getItem('harmoniq_client_uid') ||
+          (() => {
+            const id = 'u_' + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('harmoniq_client_uid', id);
+            return id;
+          })()
+        : 'user_me');
+
+    realtimePresence.updateLocalUserPresence({
+      userId: clientUid,
+      name: currentUserProfile.name,
+      avatarUrl: currentUserProfile.avatarUrl,
+      avatarGradient: currentUserProfile.avatarGradient,
+      avatarSeed: currentUserProfile.avatarSeed,
+      city: currentUserProfile.city,
+      currentSong,
+      currentSecond: mySecond,
+      trustScore: currentUserProfile.trustScore,
+      statusBubble: `${Math.floor(mySecond / 60)}:${(mySecond % 60).toString().padStart(2, '0')} anında aynı frekansta 🎧`,
+    });
+  }, [firebaseUser?.uid, currentSong.id, currentSong.title, mySecond, currentUserProfile.name, currentUserProfile.city]);
+
+  // Unified Cloud + Local Derived Social Models
+  const cloudProfileMap = useMemo(() => {
+    const map = new Map<string, PublicProfileDoc>();
+    cloudProfiles.forEach((p) => map.set(p.uid, p));
+    return map;
+  }, [cloudProfiles]);
+
+  const cloudFriendUidSet = useMemo(() => {
+    const set = new Set<string>();
+    if (!firebaseUser) return set;
+    cloudFriendships.forEach((f) => {
+      const otherUid = f.uidA === firebaseUser.uid ? f.uidB : f.uidA;
+      set.add(otherUid);
+    });
+    return set;
+  }, [cloudFriendships, firebaseUser]);
+
+  const discoverableCloudUsers = useMemo<LoungeUser[]>(() => {
+    const incomingFromSet = new Set(cloudIncomingRequests.map((r) => r.fromUid));
+    const outgoingToSet = new Set(cloudOutgoingRequests.map((r) => r.toUid));
+    return cloudProfiles.map((p) => {
+      if (cloudFriendUidSet.has(p.uid)) {
+        return publicProfileToLoungeUser(p, 'friends');
+      }
+      if (incomingFromSet.has(p.uid)) {
+        return publicProfileToLoungeUser(p, 'pending', 'incoming');
+      }
+      if (outgoingToSet.has(p.uid)) {
+        return publicProfileToLoungeUser(p, 'pending', 'outgoing');
+      }
+      return publicProfileToLoungeUser(p, 'none');
+    });
+  }, [cloudProfiles, cloudFriendUidSet, cloudIncomingRequests, cloudOutgoingRequests]);
+
+  const mergedFriendsList = useMemo<LoungeUser[]>(() => {
+    const realFriends: LoungeUser[] = [];
+    cloudFriendUidSet.forEach((uid) => {
+      const p = cloudProfileMap.get(uid);
+      if (p) {
+        realFriends.push(publicProfileToLoungeUser(p, 'friends'));
+      } else {
+        const conv = cloudConversations.find((c) => c.uidA === uid || c.uidB === uid);
+        const summary = conv ? (conv.uidA === uid ? conv.participantA : conv.participantB) : null;
+        if (summary) {
+          realFriends.push({
+            id: summary.uid,
+            name: summary.name,
+            age: 24,
+            city: summary.city,
+            avatarSeed: summary.avatarSeed,
+            avatarGradient: summary.avatarGradient,
+            avatarUrl: summary.avatarUrl,
+            platform: 'youtube_music',
+            currentSecond: 0,
+            topArtists: ['Harmoniq'],
+            bio: 'Harmoniq arkadaşı.',
+            trustScore: 98,
+            lastHeartbeatAgoSeconds: 30,
+            isOnline: false,
+            distanceKm: 1.5,
+            friendStatus: 'friends',
+            isRealUser: true,
+          });
+        }
+      }
+    });
+    const realIds = new Set(realFriends.map((f) => f.id));
+    return [...realFriends, ...friendsList.filter((f) => !realIds.has(f.id))];
+  }, [cloudFriendUidSet, cloudProfileMap, cloudConversations, friendsList]);
+
+  const mergedIncomingRequests = useMemo<FriendRequest[]>(() => {
+    const realReqs: FriendRequest[] = cloudIncomingRequests.map((r) => {
+      const liveProfile = cloudProfileMap.get(r.fromUid);
+      const fromUser: LoungeUser = liveProfile
+        ? publicProfileToLoungeUser(liveProfile, 'pending', 'incoming')
+        : {
+            id: r.fromUid,
+            name: r.fromName,
+            age: 24,
+            city: r.fromCity,
+            avatarSeed: r.fromAvatarSeed,
+            avatarGradient: r.fromAvatarGradient,
+            avatarUrl: r.fromAvatarUrl,
+            platform: 'youtube_music',
+            currentSecond: 0,
+            topArtists: ['Harmoniq'],
+            bio: 'Harmoniq dinleyicisi.',
+            trustScore: 98,
+            lastHeartbeatAgoSeconds: 10,
+            isOnline: true,
+            distanceKm: 1.5,
+            friendStatus: 'pending',
+            friendDirection: 'incoming',
+            isRealUser: true,
+          };
+      return {
+        id: r.pairId,
+        fromUser,
+        timestamp: formatCloudTimestamp(r.createdAt),
+        songContext: r.songContext,
+        status: r.status,
+        isCloudRequest: true,
+      };
+    });
+    const realIds = new Set(realReqs.map((r) => r.id));
+    return [...realReqs, ...friendRequests.filter((r) => !realIds.has(r.id))];
+  }, [cloudIncomingRequests, cloudProfileMap, friendRequests]);
+
+  const mergedOutgoingRequestUsers = useMemo<LoungeUser[]>(() => {
+    const realOut: LoungeUser[] = cloudOutgoingRequests.map((r) => {
+      const liveProfile = cloudProfileMap.get(r.toUid);
+      if (liveProfile) return publicProfileToLoungeUser(liveProfile, 'pending', 'outgoing');
+      return {
+        id: r.toUid,
+        name: 'Harmoniq Dinleyicisi',
+        age: 24,
+        city: 'Türkiye',
+        avatarSeed: 'HD',
+        avatarGradient: 'from-emerald-500 to-teal-700',
+        platform: 'youtube_music',
+        currentSecond: 0,
+        topArtists: ['Harmoniq'],
+        bio: 'Bekleyen arkadaşlık isteği.',
+        trustScore: 98,
+        lastHeartbeatAgoSeconds: 15,
+        isOnline: false,
+        distanceKm: 2.0,
+        friendStatus: 'pending',
+        friendDirection: 'outgoing',
+        isRealUser: true,
+      };
+    });
+    const realIds = new Set(realOut.map((u) => u.id));
+    const localPending = loungeUsers.filter(
+      (u) => u.friendStatus === 'pending' && !realIds.has(u.id)
+    );
+    return [...realOut, ...localPending];
+  }, [cloudOutgoingRequests, cloudProfileMap, loungeUsers]);
+
+  const mergedConversations = useMemo<LoungeConversation[]>(() => {
+    if (!firebaseUser) return conversations;
+    const mappedCloud: LoungeConversation[] = cloudConversations.map((conv) => {
+      const otherUid = conv.uidA === firebaseUser.uid ? conv.uidB : conv.uidA;
+      const isSelected = activeChatUser?.id === otherUid;
+      return cloudConversationToLoungeConversation(
+        conv,
+        firebaseUser.uid,
+        cloudProfileMap,
+        cloudFriendUidSet,
+        isSelected ? activeCloudMessages : []
+      );
+    });
+    const cloudUserIds = new Set(mappedCloud.map((c) => c.user.id));
+    return [...mappedCloud, ...conversations.filter((c) => !cloudUserIds.has(c.user.id))];
+  }, [
+    firebaseUser,
+    cloudConversations,
+    cloudProfileMap,
+    cloudFriendUidSet,
+    activeChatUser?.id,
+    activeCloudMessages,
+    conversations,
+  ]);
+
+  const combinedLoungeUsers = useMemo(() => {
+    const onlineCloud = discoverableCloudUsers.filter((u) => u.isOnline);
+    const mergedReal = [...onlineCloud, ...realLiveListeners];
+    if (mergedReal.length === 0) return loungeUsers;
+    const seen = new Set<string>();
+    const dedupedReal: LoungeUser[] = [];
+    for (const u of mergedReal) {
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        dedupedReal.push(u);
+      }
+    }
+    const filteredSimulated = loungeUsers.filter((u) => !seen.has(u.id));
+    return [...dedupedReal, ...filteredSimulated];
+  }, [discoverableCloudUsers, realLiveListeners, loungeUsers]);
+
+  // Keep open MiniProfileDrawer friendStatus in sync with real-time Firestore state
+  const resolvedDrawerUser = useMemo(() => {
+    if (!selectedDrawerUser) return null;
+    if (selectedDrawerUser.isRealUser) {
+      const fresh = discoverableCloudUsers.find((u) => u.id === selectedDrawerUser.id);
+      if (fresh) return fresh;
+      const friendMatch = mergedFriendsList.find((u) => u.id === selectedDrawerUser.id);
+      if (friendMatch) return friendMatch;
+    }
+    return selectedDrawerUser;
+  }, [selectedDrawerUser, discoverableCloudUsers, mergedFriendsList]);
+
+  const totalUnread =
+    mergedConversations.reduce((acc, curr) => acc + curr.unreadCount, 0) +
+    cloudIncomingRequests.length;
+  const isLight = effectiveTheme === 'light';
 
   return (
     <div
@@ -1556,9 +2278,9 @@ export default function App() {
           isMobileFrameView={isMobileFrameView}
           onToggleMobileFrame={() => setIsMobileFrameView(!isMobileFrameView)}
           userProfile={currentUserProfile}
-          themeMode={resolveEffectiveTheme(themeMode)}
+          themeMode={effectiveTheme}
           onToggleTheme={handleToggleTheme}
-          liveListenersCount={privacyMode === 'friends_only' ? friendsList.length + 1 : loungeUsers.length}
+          liveListenersCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
         />
 
         <main
@@ -1570,7 +2292,7 @@ export default function App() {
             <LiveLoungeTab
               currentSong={currentSong}
               mySecond={mySecond}
-              users={loungeUsers}
+              users={combinedLoungeUsers}
               activePlatform={activePlatform}
               privacyMode={privacyMode}
               onChangePrivacyMode={setPrivacyMode}
@@ -1641,9 +2363,20 @@ export default function App() {
 
           {activeTab === 'chat' && (
             <ChatTab
-              conversations={conversations}
+              conversations={mergedConversations}
               activeChatUser={activeChatUser}
-              onSelectConversation={(conv) => setActiveChatUser(conv.user)}
+              onSelectConversation={(conv) => {
+                setActiveChatUser(conv.user);
+                if (
+                  conv.isCloudConversation &&
+                  conv.unreadCount > 0 &&
+                  conv.cloudPairId &&
+                  conv.cloudUidA &&
+                  firebaseUser
+                ) {
+                  void markCloudConversationRead(conv.cloudPairId, conv.cloudUidA, firebaseUser.uid).catch(() => {});
+                }
+              }}
               onBackToList={() => setActiveChatUser(null)}
               onSendMessage={handleSendMessage}
               onSendSongMessage={handleSendSongMessage}
@@ -1651,7 +2384,26 @@ export default function App() {
               onPlaySong={(song) => handleSelectSong(song, true)}
               onStartChatWithUser={(user, text) => handleSendFrequency(user, text)}
               onOpenUserProfile={(user) => setSelectedDrawerUser(user)}
-              recentListeners={loungeUsers}
+              recentListeners={combinedLoungeUsers}
+              discoverableCloudUsers={discoverableCloudUsers}
+              friendsList={mergedFriendsList}
+              incomingRequests={mergedIncomingRequests}
+              outgoingRequests={mergedOutgoingRequestUsers.map((u) => ({
+                id: `out-${u.id}`,
+                fromUser: u,
+                toUser: u,
+                direction: 'outgoing' as const,
+                timestamp: 'Bekliyor',
+                status: 'pending' as const,
+                isCloudRequest: Boolean(u.isRealUser),
+              }))}
+              onToggleFriend={handleToggleFriend}
+              onAcceptFriendRequest={handleAcceptFriendRequest}
+              onDeclineFriendRequest={handleDeclineFriendRequest}
+              onCancelSentRequest={handleCancelSentRequest}
+              isCloudAuthenticated={Boolean(firebaseUser)}
+              isAuthLoading={isGoogleLoading}
+              onGoogleSignIn={handleSocialGoogleSignIn}
               currentSong={currentSong}
               currentSecond={mySecond}
               allSongs={activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
@@ -1660,10 +2412,10 @@ export default function App() {
 
           {activeTab === 'profile' && (
             <ProfileTab
-              userProfile={currentUserProfile}
-              friendsList={friendsList}
-              friendRequests={friendRequests}
-              pendingSentUsers={loungeUsers.filter((u) => u.friendStatus === 'pending')}
+              userProfile={{ ...currentUserProfile, friendsCount: mergedFriendsList.length }}
+              friendsList={mergedFriendsList}
+              friendRequests={mergedIncomingRequests}
+              pendingSentUsers={mergedOutgoingRequestUsers}
               onAcceptFriendRequest={handleAcceptFriendRequest}
               onDeclineFriendRequest={handleDeclineFriendRequest}
               onCancelSentRequest={handleCancelSentRequest}
@@ -1716,6 +2468,7 @@ export default function App() {
               onClearSyncError={() => setSyncDiagnosticError(null)}
               themeMode={themeMode}
               onChangeThemeMode={handleThemeModeChange}
+              onLoadPopularCollection={handleLoadPopularCollection}
             />
           )}
         </main>
@@ -1879,11 +2632,23 @@ export default function App() {
       </div>
 
       <MiniProfileDrawer
-        user={selectedDrawerUser}
+        user={resolvedDrawerUser}
         song={currentSong}
         onClose={() => setSelectedDrawerUser(null)}
         onSendFrequency={handleSendFrequency}
         onToggleFriend={handleToggleFriend}
+        onAcceptIncomingRequest={(user) => {
+          const targetUid = user.uid || user.id;
+          const matchingReq = cloudIncomingRequests.find((r) => r.fromUid === targetUid);
+          if (matchingReq) {
+            handleAcceptFriendRequest(matchingReq.pairId);
+          } else {
+            const localReq = friendRequests.find((r) => r.fromUser.id === user.id);
+            if (localReq) {
+              handleAcceptFriendRequest(localReq.id);
+            }
+          }
+        }}
       />
 
       <SongPickerModal
@@ -1992,6 +2757,12 @@ export default function App() {
         onGoogleSignOut={handleGoogleSignOut}
         googleUser={googleUser}
         isGoogleLoading={isGoogleLoading}
+      />
+
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onComplete={handleOnboardingComplete}
+        onSkipAsGuest={handleOnboardingSkip}
       />
     </div>
   );

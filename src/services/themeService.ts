@@ -3,7 +3,7 @@
  * Supports:
  * - 'dark': Velvet Pitch (#0A090F)
  * - 'light': Warm Vinyl Studio (#F5F4F8)
- * - 'system': Automatic OS preference sync
+ * - 'system': Automatic OS preference sync with live change listener
  */
 
 export type ThemeMode = 'dark' | 'light' | 'system';
@@ -28,27 +28,37 @@ export function resolveEffectiveTheme(mode: ThemeMode): 'dark' | 'light' {
 
 export function applyTheme(mode: ThemeMode): 'dark' | 'light' {
   if (typeof window === 'undefined') return 'dark';
-  localStorage.setItem(THEME_STORAGE_KEY, mode);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  } catch {
+    // ignore storage quota errors
+  }
   const effective = resolveEffectiveTheme(mode);
   const root = document.documentElement;
 
-  if (effective === 'light') {
-    root.classList.add('light');
-    root.classList.remove('dark');
-    root.style.colorScheme = 'light';
-  } else {
-    root.classList.add('dark');
-    root.classList.remove('light');
-    root.style.colorScheme = 'dark';
-  }
+  root.classList.remove('light', 'dark');
+  root.classList.add(effective);
+  root.setAttribute('data-theme', effective);
+  root.style.colorScheme = effective;
 
-  // Update mobile status bar theme-color meta tag
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) {
-    metaTheme.setAttribute('content', effective === 'light' ? '#F5F4F8' : '#0A090F');
-  }
+  // Update mobile status bar theme-color meta tags
+  const metaThemes = document.querySelectorAll('meta[name="theme-color"]');
+  metaThemes.forEach((meta) => {
+    meta.setAttribute('content', effective === 'light' ? '#F5F4F8' : '#0A090F');
+  });
 
   return effective;
+}
+
+export function subscribeSystemThemeChange(callback: () => void): () => void {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const listener = () => callback();
+  if (typeof mq.addEventListener === 'function') {
+    mq.addEventListener('change', listener);
+    return () => mq.removeEventListener('change', listener);
+  }
+  return () => {};
 }
 
 export function toggleThemeMode(current: ThemeMode): ThemeMode {

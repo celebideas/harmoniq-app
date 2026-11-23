@@ -296,6 +296,7 @@ export const TimelineTrack: React.FC<Props> = ({
             const isMultiUser = cluster.users.length > 1;
             const primaryUser = cluster.users[0];
             const hasSynced = syncedUser && cluster.users.some((u) => u.id === syncedUser.id);
+            const hasRealUser = cluster.users.some((u) => u.isRealUser);
 
             return (
               <div
@@ -318,6 +319,8 @@ export const TimelineTrack: React.FC<Props> = ({
                       className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} shadow-lg border-2 ${
                         hasSynced
                           ? 'border-emerald-400 ring-2 ring-emerald-400/70'
+                          : hasRealUser
+                          ? 'border-emerald-400 ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]'
                           : isClusterActive
                           ? 'border-purple-500 ring-2 ring-purple-500/40'
                           : 'border-zinc-950'
@@ -334,6 +337,8 @@ export const TimelineTrack: React.FC<Props> = ({
                     className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} shadow-md border-2 ${
                       hasSynced
                         ? 'border-emerald-400 ring-2 ring-emerald-400/70'
+                        : hasRealUser
+                        ? 'border-emerald-400 ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]'
                         : isClusterActive
                         ? 'border-purple-500 ring-2 ring-purple-500/40'
                         : 'border-zinc-950'
@@ -439,6 +444,13 @@ export const TimelineTrack: React.FC<Props> = ({
                         <span className="text-sm font-bold text-zinc-900 dark:text-white group-hover/u:text-purple-500 transition">
                           {user.name}, {user.age}
                         </span>
+
+                        {user.isRealUser && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 text-[10px] font-black flex items-center gap-1 shrink-0 animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span>🟢 GERÇEK CANLI</span>
+                          </span>
+                        )}
 
                         <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-0.5 shrink-0">
                           <Shield className="w-2.5 h-2.5" />

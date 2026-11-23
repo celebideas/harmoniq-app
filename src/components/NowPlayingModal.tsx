@@ -813,7 +813,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               />
 
               {/* Turntable Platter Base (Obsidian & Metal Gövde) */}
-              <div className="relative w-full h-full rounded-[32px] bg-gradient-to-b from-[#15151a] via-[#0d0d10] to-[#070709] border border-white/[0.1] shadow-[0_24px_60px_rgba(0,0,0,0.95)] p-3 sm:p-4 flex items-center justify-center overflow-visible">
+              <div className="keep-dark relative w-full h-full rounded-[32px] bg-gradient-to-b from-[#15151a] via-[#0d0d10] to-[#070709] border border-white/[0.1] shadow-[0_24px_60px_rgba(0,0,0,0.95)] p-3 sm:p-4 flex items-center justify-center overflow-visible">
                 {/* Turntable Deck Details */}
                 <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[9px] font-mono font-bold text-zinc-400 uppercase tracking-widest pointer-events-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent-theme animate-pulse" />

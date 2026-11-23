@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -33,10 +34,10 @@
   html.light {
     /* Light Theme ("Warm Vinyl Studio") */
     --bg-primary: #F5F4F8;
-    --bg-card: rgba(255, 255, 255, 0.95);
-    --bg-elevated: rgba(236, 234, 242, 0.80);
+    --bg-card: rgba(255, 255, 255, 0.96);
+    --bg-elevated: rgba(236, 234, 242, 0.85);
     --text-primary: #12101B;
-    --text-secondary: #646073;
+    --text-secondary: #5B576A;
     --border-subtle: #E4E2EC;
   }
 
@@ -48,7 +49,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, .font-heading {
@@ -58,7 +59,10 @@
 }
 
 /* ============================================================================
-   WARM VINYL STUDIO LIGHT MODE ADAPTIVE SURFACE & TEXT OVERRIDES
+   WARM VINYL STUDIO LIGHT MODE ADAPTIVE OVERRIDES (FOR LEGACY DARK-ONLY VIEWS)
+   Note: Components using native Tailwind `dark:` variants now work natively via
+   `@custom-variant dark` above. These rules adapt remaining dark-only cards
+   cleanly without breaking light-mode surfaces or gradients.
    ============================================================================ */
 html.light body {
   background-color: #F5F4F8;
@@ -83,143 +87,143 @@ html.light .bg-\[\#0A0A0C\] {
   border-color: #E4E2EC !important;
 }
 
-/* Elevated Cards & Primary Content Surfaces */
-html.light .bg-\[\#14121E\],
-html.light .bg-\[\#14121E\]\/80,
-html.light .bg-\[\#14121E\]\/90,
-html.light .bg-\[\#14121E\]\/95,
-html.light .bg-\[\#181622\],
-html.light .bg-\[\#1E1B2E\],
-html.light .bg-\[\#1E1B2E\]\/75,
-html.light .bg-\[\#1E1B2E\]\/80,
-html.light .bg-\[\#1E1B2E\]\/90,
-html.light .bg-\[\#1E1B2E\]\/95,
-html.light .bg-zinc-950,
-html.light .bg-zinc-950\/95,
-html.light .bg-zinc-950\/90,
-html.light .bg-zinc-950\/85,
-html.light .bg-zinc-950\/80,
-html.light .bg-zinc-950\/70,
-html.light .bg-zinc-950\/40,
-html.light .bg-zinc-900,
-html.light .bg-zinc-900\/95,
-html.light .bg-zinc-900\/90,
-html.light .bg-zinc-900\/80,
-html.light .bg-zinc-900\/60,
-html.light .bg-zinc-900\/50,
-html.light .bg-zinc-900\/40,
-html.light .bg-zinc-900\/30,
-html.light .bg-zinc-800,
-html.light .bg-zinc-800\/90,
-html.light .bg-zinc-800\/80,
-html.light .bg-zinc-800\/60,
-html.light .bg-zinc-800\/50,
-html.light .bg-neutral-900,
-html.light .bg-neutral-900\/90,
-html.light .bg-neutral-900\/80,
-html.light .bg-neutral-900\/60 {
+/* Elevated Dark-Only Cards & Legacy Surfaces (scoped away from .keep-dark and its descendants) */
+html.light .bg-\[\#14121E\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#14121E\]\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#14121E\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#14121E\]\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#181622\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#1E1B2E\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#1E1B2E\]\/75:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#1E1B2E\]\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#1E1B2E\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#1E1B2E\]\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/85:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/70:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-950\/40:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/60:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/50:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/40:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900\/30:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-800:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-800\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-800\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-800\/60:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-800\/50:not(.keep-dark):not(.keep-dark *),
+html.light .bg-neutral-950:not(.keep-dark):not(.keep-dark *),
+html.light .bg-neutral-900:not(.keep-dark):not(.keep-dark *),
+html.light .bg-neutral-900\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-neutral-900\/80:not(.keep-dark):not(.keep-dark *),
+html.light .bg-neutral-900\/60:not(.keep-dark):not(.keep-dark *) {
   background-color: rgba(255, 255, 255, 0.96) !important;
   color: #12101B !important;
   border-color: #E4E2EC !important;
   box-shadow: 0 4px 20px rgba(20, 18, 30, 0.05) !important;
 }
 
-/* Secondary Inset Surfaces, Pill Containers & Sub-Cards */
-html.light .bg-black\/20,
-html.light .bg-black\/25,
-html.light .bg-black\/30,
-html.light .bg-black\/35,
-html.light .bg-black\/40,
-html.light .bg-black\/50,
-html.light .bg-black\/60,
-html.light .bg-white\/\[0\.02\],
-html.light .bg-white\/\[0\.025\],
-html.light .bg-white\/\[0\.03\],
-html.light .bg-white\/\[0\.04\],
-html.light .bg-white\/\[0\.05\],
-html.light .bg-white\/\[0\.06\],
-html.light .bg-white\/\[0\.07\],
-html.light .bg-white\/\[0\.08\],
-html.light .bg-white\/\[0\.1\] {
+/* Secondary Inset Surfaces & Sub-Cards (exclude absolute album-art scrims & .keep-dark zones) */
+html.light .bg-black\/20:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/25:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/30:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/35:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/40:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/50:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-black\/60:not(.absolute):not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.02\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.025\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.03\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *) {
   background-color: rgba(238, 236, 244, 0.85) !important;
   border-color: #DFDCE8 !important;
 }
 
 /* Form inputs & text fields in light mode */
-html.light input:not([type='range']),
-html.light textarea,
-html.light select {
+html.light input:not([type='range']):not(.keep-dark *),
+html.light textarea:not(.keep-dark *),
+html.light select:not(.keep-dark *) {
   background-color: #FFFFFF !important;
   color: #12101B !important;
-  border-color: #E4E2EC !important;
+  border-color: #DFDCE8 !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #8C889B !important;
+  color: #7D788E !important;
 }
 
-/* Text Colors */
-html.light .text-white,
-html.light .text-zinc-50,
-html.light .text-zinc-100,
-html.light .text-zinc-200,
-html.light .text-neutral-100,
-html.light .text-neutral-200 {
+/* Text Colors for legacy dark-only blocks */
+html.light .text-white:not(.text-force-white):not(.keep-dark):not(.keep-dark *),
+html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *),
+html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *),
+html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *),
+html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *),
+html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *) {
   color: #12101B !important;
 }
 
-/* Keep white text inside vibrant brand/semantic action buttons, tags & gradients */
+/* Preserve crisp white text ONLY on explicit solid brand surfaces & .text-force-white */
 html.light .bg-accent-theme,
 html.light .bg-accent-theme *,
-html.light .bg-gradient-to-r *,
-html.light .bg-gradient-to-tr *,
-html.light .bg-gradient-to-br *,
 html.light .bg-purple-600,
 html.light .bg-purple-600 *,
-html.light .bg-emerald-500,
-html.light .bg-emerald-500 *,
 html.light .bg-rose-500,
 html.light .bg-rose-500 *,
+html.light .keep-dark,
+html.light .keep-dark .text-white,
 html.light .text-force-white,
 html.light .text-force-white * {
   color: #ffffff !important;
 }
 
-html.light .text-zinc-300,
-html.light .text-zinc-400,
-html.light .text-neutral-400,
-html.light .text-\[\#9E9AA8\] {
-  color: #646073 !important;
+html.light .text-zinc-300:not(.keep-dark *),
+html.light .text-zinc-400:not(.keep-dark *),
+html.light .text-neutral-300:not(.keep-dark *),
+html.light .text-neutral-400:not(.keep-dark *),
+html.light .text-\[\#9E9AA8\]:not(.keep-dark *) {
+  color: #5B576A !important;
 }
 
-html.light .text-zinc-500,
-html.light .text-neutral-500 {
-  color: #7A7589 !important;
+html.light .text-zinc-500:not(.keep-dark *),
+html.light .text-neutral-500:not(.keep-dark *) {
+  color: #6E6A7E !important;
 }
 
 /* Borders */
-html.light .border-zinc-800,
-html.light .border-zinc-800\/80,
-html.light .border-zinc-700,
-html.light .border-zinc-700\/80,
-html.light .border-white\/\[0\.04\],
-html.light .border-white\/\[0\.05\],
-html.light .border-white\/\[0\.06\],
-html.light .border-white\/\[0\.07\],
-html.light .border-white\/\[0\.08\],
-html.light .border-white\/\[0\.09\],
-html.light .border-white\/\[0\.1\],
-html.light .border-white\/10,
-html.light .border-white\/15,
-html.light .border-white\/20 {
+html.light .border-zinc-800:not(.keep-dark):not(.keep-dark *),
+html.light .border-zinc-800\/80:not(.keep-dark):not(.keep-dark *),
+html.light .border-zinc-700:not(.keep-dark):not(.keep-dark *),
+html.light .border-zinc-700\/80:not(.keep-dark):not(.keep-dark *),
+html.light .border-neutral-800:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.09\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/10:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/15:not(.keep-dark):not(.keep-dark *),
+html.light .border-white\/20:not(.keep-dark):not(.keep-dark *) {
   border-color: #E4E2EC !important;
 }
 
-html.light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.08\] > :not([hidden]) ~ :not([hidden]) {
+html.light .divide-zinc-800:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
+html.light .divide-white\/\[0\.05\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
+html.light .divide-white\/\[0\.06\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
+html.light .divide-white\/\[0\.08\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]) {
   border-color: #E4E2EC !important;
 }
 
@@ -258,7 +262,7 @@ html.light .text-accent-theme {
 }
 
 html.light .surface-card {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.96);
   border: 1px solid #E4E2EC;
   box-shadow: 0 8px 24px rgba(20, 18, 30, 0.06);
   color: #12101B;
@@ -270,7 +274,7 @@ html.light .surface-card {
 }
 
 html.light .surface-inner {
-  background-color: rgba(236, 234, 242, 0.80);
+  background-color: rgba(236, 234, 242, 0.85);
   border: 1px solid #DFDCE8;
   color: #1E1B2E;
 }

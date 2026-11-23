@@ -1,24 +1,21 @@
-import { initializeApp } from 'firebase/app';
 import {
-  getAuth,
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
   signOut,
   User,
 } from 'firebase/auth';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { auth } from '../firebase';
 import { UserPlaylist, Song, SubscribedChannelDetail } from '../types';
 import { isMusicArtistOrChannel, cleanNonMusicArtists } from './artistFilterService';
+
+export { auth };
 
 export const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/youtube.readonly',
 ];
-
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
 SCOPES.forEach((scope) => provider.addScope(scope));

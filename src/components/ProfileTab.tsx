@@ -142,6 +142,7 @@ interface Props {
   onClearSyncError?: () => void;
   themeMode?: ThemeMode;
   onChangeThemeMode?: (mode: ThemeMode) => void;
+  onLoadPopularCollection?: () => void;
 }
 
 const PlaylistRowItem = React.memo<{
@@ -457,6 +458,7 @@ export const ProfileTab: React.FC<Props> = ({
   onClearSyncError,
   themeMode,
   onChangeThemeMode,
+  onLoadPopularCollection,
 }) => {
   const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
   const currentTheme = themeMode || localTheme;
@@ -481,11 +483,72 @@ export const ProfileTab: React.FC<Props> = ({
   const [isSyncingNow, setIsSyncingNow] = useState(false);
   const [tempName, setTempName] = useState(userProfile.youtubeAccount?.name || userProfile.name);
   const [tempEmail, setTempEmail] = useState(
-    userProfile.youtubeAccount?.email || userProfile.email || 'contact.yasincelebi@gmail.com'
+    userProfile.youtubeAccount?.email || userProfile.email || ''
   );
-  const [tempHandle, setTempHandle] = useState(userProfile.youtubeAccount?.handle || '@yasincelebi');
+  const [tempHandle, setTempHandle] = useState(
+    userProfile.youtubeAccount?.handle ||
+      (userProfile.name ? `@${userProfile.name.toLowerCase().replace(/[^a-z0-9]/g, '')}` : '@muziksever')
+  );
   const [tempBio, setTempBio] = useState(userProfile.bio);
   const [tempCity, setTempCity] = useState(userProfile.city);
+
+  const handleLoadPopularCollection = () => {
+    triggerHaptic(25);
+    if (onLoadPopularCollection) {
+      onLoadPopularCollection();
+      return;
+    }
+    const samplePls: UserPlaylist[] = [
+      {
+        id: 'pl-turkce-rock-klasikler',
+        title: '🎸 Türkçe Rock & Grunge Frekansları',
+        description: 'Duman, Mor ve Ötesi, Teoman ve döneme damgasını vuran kült riff’ler.',
+        coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500&auto=format&fit=crop&q=80',
+        trackCount: 4,
+        duration: '14:20',
+        genre: 'Türkçe Rock',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[0], SAMPLE_SONGS[1], SAMPLE_SONGS[4], SAMPLE_SONGS[2]],
+        isFavorite: true,
+        updatedAt: 'Az önce',
+      },
+      {
+        id: 'pl-gece-indie-darkwave',
+        title: '⚡ Gece Yarısı Indie & Darkwave',
+        description: 'She Past Away, Jakuzi, Arctic Monkeys ile post-punk ve synth dalgaları.',
+        coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+        trackCount: 3,
+        duration: '11:45',
+        genre: 'Indie & Darkwave',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[5], SAMPLE_SONGS[3], SAMPLE_SONGS[2]],
+        isFavorite: true,
+        updatedAt: 'Az önce',
+      },
+      {
+        id: 'pl-kadikoy-akustik-lofi',
+        title: '☕ Kadıköy Akustik & Lo-Fi Odası',
+        description: 'Yağmurlu Moda sokakları, analog gitarlar ve derin melodi rezonansı.',
+        coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
+        trackCount: 3,
+        duration: '10:50',
+        genre: 'Lo-Fi & Akustik',
+        source: 'custom',
+        tracks: [SAMPLE_SONGS[4], SAMPLE_SONGS[0], SAMPLE_SONGS[3]],
+        isFavorite: false,
+        updatedAt: 'Az önce',
+      },
+    ];
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('harmoniq_user_playlists', JSON.stringify(samplePls));
+      localStorage.setItem('harmoniq_user_favorite_songs', JSON.stringify(SAMPLE_SONGS.slice(0, 4)));
+    }
+    setToastNotice('🔥 Popüler Rock & Indie koleksiyonu kütüphanene eklendi!');
+    setTimeout(() => setToastNotice(null), 3500);
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationStatusMessage, setLocationStatusMessage] = useState<string | null>(null);
@@ -1459,9 +1522,12 @@ export const ProfileTab: React.FC<Props> = ({
   const openEditProfileModal = () => {
     setTempName(userProfile.youtubeAccount?.name || userProfile.name);
     setTempEmail(
-      userProfile.youtubeAccount?.email || userProfile.email || 'contact.yasincelebi@gmail.com'
+      userProfile.youtubeAccount?.email || userProfile.email || ''
     );
-    setTempHandle(userProfile.youtubeAccount?.handle || '@yasincelebi');
+    setTempHandle(
+      userProfile.youtubeAccount?.handle ||
+        (userProfile.name ? `@${userProfile.name.toLowerCase().replace(/[^a-z0-9]/g, '')}` : '@muziksever')
+    );
     setTempBio(userProfile.bio);
     setTempCity(userProfile.city);
     setTempPrivacy(userProfile.privacyMode || 'public');
@@ -1477,9 +1543,9 @@ export const ProfileTab: React.FC<Props> = ({
 
   return (
     <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6 relative">
-      {/* Toast Notice Banner */}
+      {/* Toast Notice Banner (bottom-36 to avoid overlapping BottomNav) */}
       {toastNotice && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-zinc-950/95 border border-purple-500/50 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
+        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-zinc-950/95 border border-purple-500/50 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
           <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
           <span>{toastNotice}</span>
         </div>
@@ -1558,8 +1624,15 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
 
             <div className="text-xs text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-zinc-300 truncate max-w-[210px]" title={userProfile.youtubeAccount?.email || userProfile.email || ''}>
-                {userProfile.youtubeAccount?.email || userProfile.email || ''}
+              <span
+                className={`truncate max-w-[240px] text-xs ${
+                  userProfile.youtubeAccount?.email || userProfile.email
+                    ? 'text-zinc-300'
+                    : 'text-amber-400/90 font-medium'
+                }`}
+                title={userProfile.youtubeAccount?.email || userProfile.email || 'Google / YouTube Music ile doğrulanmadı'}
+              >
+                {userProfile.youtubeAccount?.email || userProfile.email || 'Google / YouTube Music ile doğrulanmadı'}
               </span>
               <span className="text-zinc-600">·</span>
               <span>{syncedPlaylists.length} liste</span>
@@ -2200,17 +2273,37 @@ export const ProfileTab: React.FC<Props> = ({
           return (
             <div className="space-y-4">
               {syncedPlaylists.length === 0 ? (
-                <div className="py-10 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] text-center space-y-3">
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                    Henüz çalma listesi bulunmuyor. YouTube Music hesabından listelerini tek tıkla senkronize edebilirsin.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleSyncYouTubeLibrary}
-                    className="px-4 py-2 rounded-xl bg-white text-zinc-950 font-semibold text-xs transition cursor-pointer"
-                  >
-                    YouTube Music'ten Senkronize Et
-                  </button>
+                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white/[0.04] to-purple-950/[0.08] border border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-600/20">
+                    <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
+                  </div>
+                  <div className="space-y-1.5 relative z-10">
+                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                      Henüz kütüphanen senkronize edilmedi
+                    </h3>
+                    <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+                      YouTube Music çalma listelerini bağlayarak frekansını eşle veya popüler koleksiyonla hemen başla.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
+                    <button
+                      type="button"
+                      onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                    >
+                      <Link2 className="w-4 h-4 text-purple-400" />
+                      <span>🔗 YouTube Music Linki / Hesabı Bağla</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLoadPopularCollection}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>🔥 Popüler Rock & Indie Koleksiyonunu Yükle</span>
+                    </button>
+                  </div>
                 </div>
               ) : filteredPlaylists.length === 0 ? (
                 <div className="py-8 text-center text-xs text-zinc-500">
@@ -2306,17 +2399,37 @@ export const ProfileTab: React.FC<Props> = ({
               )}
 
               {favoriteSongs.length === 0 ? (
-                <div className="py-10 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] text-center space-y-3">
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                    Henüz favori şarkı görünmüyor. YouTube Music hesabını senkronize ederek beğendiğin parçaları aktarabilirsin.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleSyncYouTubeLibrary}
-                    className="px-4 py-2 rounded-xl bg-white text-zinc-950 font-semibold text-xs transition cursor-pointer"
-                  >
-                    Beğendiğim Müzikleri Çek
-                  </button>
+                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white/[0.04] to-purple-950/[0.08] border border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-600/20">
+                    <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
+                  </div>
+                  <div className="space-y-1.5 relative z-10">
+                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                      Henüz favori parçaların senkronize edilmedi
+                    </h3>
+                    <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+                      YouTube Music'te beğendiğin parçaları aktararak müzik kimliğini derinleştir veya popüler koleksiyonu tek tıkla yükle.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
+                    <button
+                      type="button"
+                      onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                    >
+                      <Link2 className="w-4 h-4 text-purple-400" />
+                      <span>🔗 YouTube Music Linki / Hesabı Bağla</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLoadPopularCollection}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>🔥 Popüler Rock & Indie Koleksiyonunu Yükle</span>
+                    </button>
+                  </div>
                 </div>
               ) : filteredSongs.length === 0 ? (
                 <div className="py-8 text-center text-xs text-zinc-500">

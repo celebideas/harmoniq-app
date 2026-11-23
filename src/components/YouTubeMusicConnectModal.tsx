@@ -59,9 +59,9 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
   onTogglePlay,
   onSelectSong,
   onShowToast,
-  isConnected = true,
+  isConnected = false,
   onToggleConnection,
-  account = { email: 'contact.yasincelebi@gmail.com', handle: '@yasincelebi', name: 'Yasin Çelebi' },
+  account = { email: '', handle: '@muziksever', name: 'Müzik Kaşifi' },
   onUpdateAccount,
   isTasteSynced = true,
   onSyncTaste,
@@ -419,7 +419,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   <span>"Erişim engellendi (Hata 403: access_denied)" ekranı çıkarsa:</span>
                 </div>
                 <p className="text-[10px] text-neutral-400 leading-relaxed">
-                  Google Cloud projeniz şu an <strong className="text-white">Test Modunda</strong> olduğu için aşağıdaki butona tıklayıp <strong className="text-lime-400">"Publish App" (Uygulamayı Yayınla)</strong> seçeneğine basabilir veya <strong className="text-white">Test users</strong> kısmına <code className="text-lime-300">contact.yasincelebi@gmail.com</code> adresini ekleyebilirsiniz. Ya da alttaki kutudan OAuth gerekmeden direkt liste linkini aktarabilirsiniz.
+                  Google Cloud projeniz şu an <strong className="text-white">Test Modunda</strong> olduğu için aşağıdaki butona tıklayıp <strong className="text-lime-400">"Publish App" (Uygulamayı Yayınla)</strong> seçeneğine basabilir veya <strong className="text-white">Test users</strong> kısmına kendi Google e-posta adresinizi ekleyebilirsiniz. Ya da alttaki kutudan OAuth gerekmeden direkt liste linkini aktarabilirsiniz.
                 </p>
                 <a
                   href="https://console.cloud.google.com/auth/audience?project=gen-lang-client-0416452568"

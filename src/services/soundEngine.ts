@@ -29,6 +29,7 @@ class RealMusicEngine {
   private onPrevTrackHandler: (() => void) | null = null;
   private onNextTrackHandler: (() => void) | null = null;
   private onTogglePlayHandler: (() => void) | null = null;
+  private onPlayPauseHandler: ((play: boolean) => void) | null = null;
   private onSeekHandler: ((sec: number) => void) | null = null;
 
   // Tiny silent audio payload to keep system MediaSession notification alive during YouTube playback
@@ -79,11 +80,13 @@ class RealMusicEngine {
     onPrevTrack?: () => void;
     onNextTrack?: () => void;
     onTogglePlay?: () => void;
+    onPlayPause?: (play: boolean) => void;
     onSeek?: (sec: number) => void;
   }) {
     this.onPrevTrackHandler = handlers.onPrevTrack || null;
     this.onNextTrackHandler = handlers.onNextTrack || null;
     this.onTogglePlayHandler = handlers.onTogglePlay || null;
+    this.onPlayPauseHandler = handlers.onPlayPause || null;
     this.onSeekHandler = handlers.onSeek || null;
     this.initMediaSessionOnce();
   }
@@ -104,10 +107,7 @@ class RealMusicEngine {
       const artworks: { src: string; sizes: string; type: string }[] = [];
       if (song.coverUrl) {
         artworks.push(
-          { src: song.coverUrl, sizes: '96x96', type: 'image/jpeg' },
-          { src: song.coverUrl, sizes: '128x128', type: 'image/jpeg' },
-          { src: song.coverUrl, sizes: '192x192', type: 'image/jpeg' },
-          { src: song.coverUrl, sizes: '256x256', type: 'image/jpeg' },
+          { src: song.coverUrl, sizes: '300x300', type: 'image/jpeg' },
           { src: song.coverUrl, sizes: '512x512', type: 'image/jpeg' }
         );
       } else {
@@ -120,7 +120,7 @@ class RealMusicEngine {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.title,
         artist: song.artist,
-        album: song.album || 'Harmoniq Müzik Frekansı',
+        album: song.album || 'Harmoniq Canlı Frekans',
         artwork: artworks,
       });
 
@@ -140,7 +140,9 @@ class RealMusicEngine {
     try {
       // Play Action (Kalıcı ve sabit)
       navigator.mediaSession.setActionHandler('play', () => {
-        if (this.onTogglePlayHandler) {
+        if (this.onPlayPauseHandler) {
+          this.onPlayPauseHandler(true);
+        } else if (this.onTogglePlayHandler) {
           this.onTogglePlayHandler();
         } else {
           this.resume();
@@ -149,7 +151,9 @@ class RealMusicEngine {
 
       // Pause Action (Kalıcı ve sabit)
       navigator.mediaSession.setActionHandler('pause', () => {
-        if (this.onTogglePlayHandler) {
+        if (this.onPlayPauseHandler) {
+          this.onPlayPauseHandler(false);
+        } else if (this.onTogglePlayHandler) {
           this.onTogglePlayHandler();
         } else {
           this.pause();
