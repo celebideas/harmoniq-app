@@ -19,6 +19,9 @@ class YouTubePlayerController {
   private errorCallbacks: ((code: number) => void)[] = [];
   private isMessageListenerAttached: boolean = false;
   private timerLastTimestamp: number = 0;
+  private lastNotifiedPlaying: boolean | null = null;
+  private lastCommandTime: number = 0;
+  private expectedPlayingState: boolean | null = null;
 
   constructor() {
     this.attachMessageListener();
@@ -60,10 +63,25 @@ class YouTubePlayerController {
         }
 
         // YouTube player state updates
-        // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING
+        // -1 = UNSTARTED, 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
         if (data.event === 'onStateChange') {
-          if (data.info === 1) {
-            // Guard: If the user hasn't explicitly commanded play, pause immediately and do NOT set isPlaying!
+          const stateCode = data.info;
+
+          // Buffering (3), Unstarted (-1), or Cued (5): NEVER broadcast paused (false)
+          if (stateCode === 3 || stateCode === -1 || stateCode === 5) {
+            return;
+          }
+
+          const withinUserGuard =
+            this.expectedPlayingState !== null && Date.now() - this.lastCommandTime < 550;
+
+          if (stateCode === 1) {
+            // If user just explicitly paused, ignore stale PLAYING echo
+            if (withinUserGuard && this.expectedPlayingState === false) {
+              this.sendCommand('pauseVideo');
+              return;
+            }
+            // Guard: If the user hasn't explicitly commanded play, pause immediately
             if (!this.isPlaying) {
               this.sendCommand('pauseVideo');
               return;
@@ -71,13 +89,20 @@ class YouTubePlayerController {
             this.isPlaying = true;
             this.notifyState(true);
             this.startTimer();
-          } else if (data.info === 0) {
+          } else if (stateCode === 0) {
             // Track Ended: stop timer, notify state, trigger auto-advance
+            if (withinUserGuard && this.expectedPlayingState === true) {
+              return;
+            }
             this.isPlaying = false;
             this.notifyState(false);
             this.stopTimer();
             this.notifyEnded();
-          } else if (data.info === 2) {
+          } else if (stateCode === 2) {
+            // Real PAUSED: ignore stale pause echo right after user clicked Play
+            if (withinUserGuard && this.expectedPlayingState === true) {
+              return;
+            }
             this.isPlaying = false;
             this.notifyState(false);
             this.stopTimer();
@@ -144,6 +169,8 @@ class YouTubePlayerController {
 
   private notifyState(playing: boolean) {
     this.isPlaying = playing;
+    if (this.lastNotifiedPlaying === playing) return;
+    this.lastNotifiedPlaying = playing;
     this.stateCallbacks.forEach((cb) => cb(playing));
   }
 
@@ -161,14 +188,19 @@ class YouTubePlayerController {
   }
 
   public play(videoId?: string, startSecond: number = 0) {
-    const isNewVideo = videoId && videoId !== this.currentVideoId;
+    const isNewVideo = Boolean(videoId && videoId !== this.currentVideoId);
+    const shouldSeekSameVideo =
+      !isNewVideo && startSecond > 0 && Math.abs(startSecond - this.currentSecond) > 1;
+
     if (videoId) {
       this.currentVideoId = videoId;
     }
-    if (startSecond > 0 || isNewVideo) {
+    if (isNewVideo || shouldSeekSameVideo) {
       this.currentSecond = startSecond;
     }
 
+    this.lastCommandTime = Date.now();
+    this.expectedPlayingState = true;
     this.isPlaying = true;
 
     // Send play & un-mute commands
@@ -178,7 +210,7 @@ class YouTubePlayerController {
     if (isNewVideo && this.iframe) {
       this.sendCommand('loadVideoById', [{ videoId: this.currentVideoId, startSeconds: this.currentSecond }]);
     } else {
-      if (this.currentSecond > 0) {
+      if (shouldSeekSameVideo) {
         this.sendCommand('seekTo', [this.currentSecond, true]);
       }
       this.sendCommand('playVideo');
@@ -188,20 +220,28 @@ class YouTubePlayerController {
     this.notifyState(true);
   }
 
-  public pause() {
+  public pause(silent: boolean = false) {
+    this.lastCommandTime = Date.now();
+    this.expectedPlayingState = false;
     this.isPlaying = false;
     this.sendCommand('pauseVideo');
     this.stopTimer();
-    this.notifyState(false);
+    if (!silent) {
+      this.notifyState(false);
+    }
   }
 
-  public stop() {
+  public stop(silent: boolean = false) {
+    this.lastCommandTime = Date.now();
+    this.expectedPlayingState = false;
     this.isPlaying = false;
     this.sendCommand('stopVideo');
     this.sendCommand('pauseVideo');
     this.stopTimer();
     this.currentSecond = 0;
-    this.notifyState(false);
+    if (!silent) {
+      this.notifyState(false);
+    }
   }
 
   public seek(second: number) {

@@ -53,6 +53,7 @@ import {
   Zap,
   CheckCircle2,
   Download,
+  LogOut,
   Copy,
   Pencil,
 } from 'lucide-react';
@@ -143,6 +144,7 @@ interface Props {
   themeMode?: ThemeMode;
   onChangeThemeMode?: (mode: ThemeMode) => void;
   onLoadPopularCollection?: () => void;
+  onLogout?: () => void;
 }
 
 const PlaylistRowItem = React.memo<{
@@ -459,6 +461,7 @@ export const ProfileTab: React.FC<Props> = ({
   themeMode,
   onChangeThemeMode,
   onLoadPopularCollection,
+  onLogout,
 }) => {
   const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
   const currentTheme = themeMode || localTheme;
@@ -3699,12 +3702,27 @@ export const ProfileTab: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Close Button */}
-            <div className="pt-2">
+            {/* Account Session Logout & Close Buttons */}
+            <div className="pt-3 border-t border-white/[0.08] space-y-2.5">
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(18);
+                    setShowSettingsModal(false);
+                    onLogout();
+                  }}
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-rose-500/12 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Çıkış Yap (Oturumu Kapat)</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition cursor-pointer"
+                className="w-full min-h-[44px] py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition cursor-pointer"
               >
                 Tamam
               </button>

@@ -12,7 +12,6 @@ import {
   Share2,
   Radio,
   ListMusic,
-  Disc3,
   Sparkles,
   Volume2,
   VolumeX,
@@ -57,6 +56,177 @@ interface Props {
   isAudioLoading?: boolean;
 }
 
+const WAVY_WAVE_PATH = (() => {
+  const period = 24;
+  const half = period / 2;
+  const amp = 4.2;
+  const midY = 10;
+  let d = `M 0 ${midY}`;
+  for (let x = 0; x < 1248; x += period) {
+    d += ` Q ${x + half / 2} ${midY - amp}, ${x + half} ${midY} T ${x + period} ${midY}`;
+  }
+  return d;
+})();
+
+interface WavySeekBarProps {
+  progressSeconds: number;
+  durationSeconds: number;
+  isPlaying: boolean;
+  onSeek: (seconds: number) => void;
+}
+
+const WavySeekBar: React.FC<WavySeekBarProps> = ({
+  progressSeconds,
+  durationSeconds,
+  isPlaying,
+  onSeek,
+}) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const [dragPercent, setDragPercent] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const safeDuration = Math.max(1, durationSeconds || 1);
+  const livePercent = Math.min(100, Math.max(0, (progressSeconds / safeDuration) * 100));
+  const activePercent = dragPercent !== null ? dragPercent : livePercent;
+
+  const computeRatioFromClientX = (clientX: number): number => {
+    const el = trackRef.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    const ratio = computeRatioFromClientX(e.clientX);
+    setDragPercent(ratio * 100);
+    triggerHaptic(12);
+    onSeek(Math.round(ratio * safeDuration));
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const ratio = computeRatioFromClientX(e.clientX);
+    setDragPercent(ratio * 100);
+    onSeek(Math.round(ratio * safeDuration));
+  };
+
+  const finishDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const ratio = computeRatioFromClientX(e.clientX);
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    setDragPercent(null);
+    onSeek(Math.round(ratio * safeDuration));
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const showWave = isPlaying && !isDragging;
+
+  return (
+    <div
+      ref={trackRef}
+      role="slider"
+      aria-label="Şarkı ilerleme çubuğu"
+      aria-valuemin={0}
+      aria-valuemax={Math.round(safeDuration)}
+      aria-valuenow={Math.round((activePercent / 100) * safeDuration)}
+      tabIndex={0}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowRight') {
+          onSeek(Math.min(safeDuration, progressSeconds + 5));
+        } else if (e.key === 'ArrowLeft') {
+          onSeek(Math.max(0, progressSeconds - 5));
+        }
+      }}
+      className="relative h-11 flex items-center select-none touch-none cursor-pointer group/wavy"
+      title="Sarmak için dokun veya sürükle"
+    >
+      {/* Right Unplayed Track (clean straight subtle track after thumb) */}
+      <div
+        className="absolute right-0 h-1 rounded-full bg-zinc-300 dark:bg-white/20 transition-all duration-150"
+        style={{
+          left: `min(100%, calc(${activePercent}% + 6px))`,
+        }}
+      />
+
+      {/* Left Played Segment (0% to activePercent%) */}
+      <div
+        className="absolute left-0 top-1/2 -translate-y-1/2 h-5 overflow-hidden pointer-events-none"
+        style={{
+          width: `max(0px, calc(${activePercent}% - 4px))`,
+        }}
+      >
+        {/* Flowing Material You Sine Wave when playing */}
+        <div
+          className={`absolute inset-0 flex items-center transition-all duration-300 ${
+            showWave ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
+          }`}
+        >
+          <svg
+            width="1248"
+            height="20"
+            viewBox="0 0 1248 20"
+            fill="none"
+            className={`max-w-none shrink-0 ${showWave ? 'animate-wavy-flow' : ''}`}
+          >
+            <defs>
+              <linearGradient id="harmoniqWavyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#9333EA" />
+                <stop offset="50%" stopColor="#D946EF" />
+                <stop offset="100%" stopColor="#EC4899" />
+              </linearGradient>
+            </defs>
+            <path
+              d={WAVY_WAVE_PATH}
+              stroke="url(#harmoniqWavyGradient)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+        </div>
+
+        {/* Calm Straight Gradient Line when paused or dragging */}
+        <div
+          className={`absolute inset-x-0 top-1/2 -translate-y-1/2 h-[3.5px] rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-opacity duration-300 ${
+            showWave ? 'opacity-0' : 'opacity-100'
+          }`}
+        />
+      </div>
+
+      {/* Material You Vertical Pill Thumb */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-20 transition-transform duration-150"
+        style={{ left: `${activePercent}%` }}
+      >
+        <div
+          className={`rounded-full bg-zinc-900 dark:bg-white shadow-[0_0_12px_rgba(168,85,247,0.65)] transition-all duration-150 ${
+            isDragging
+              ? 'w-2 h-6 ring-4 ring-purple-500/30'
+              : 'w-1.5 h-5 group-hover/wavy:h-5.5 group-hover/wavy:w-1.5'
+          }`}
+        />
+      </div>
+    </div>
+  );
+};
+
 export const NowPlayingModal: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -82,7 +252,7 @@ export const NowPlayingModal: React.FC<Props> = ({
   isAudioLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'queue' | 'radio' | 'lyrics'>('queue');
-  const [viewMode, setViewMode] = useState<'cover' | 'vinyl' | 'lyrics'>('cover');
+  const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover');
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(142);
   const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
@@ -96,7 +266,7 @@ export const NowPlayingModal: React.FC<Props> = ({
   const [isLoadingRadio, setIsLoadingRadio] = useState<boolean>(false);
 
   // Synchronized viewMode and activeTab management
-  const handleSelectViewMode = (mode: 'cover' | 'vinyl' | 'lyrics') => {
+  const handleSelectViewMode = (mode: 'cover' | 'lyrics') => {
     triggerHaptic(15);
     setViewMode(mode);
     if (mode === 'lyrics') {
@@ -163,8 +333,6 @@ export const NowPlayingModal: React.FC<Props> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const progressPercent = Math.min(100, (progressSeconds / (song.durationSeconds || 1)) * 100);
-
   // Dynamic 4-Section BÖLÜMLER recalculated on every song.id change (%8, %32, %62, %85)
   const effectiveMarkers: TimelineMarker[] = useMemo(() => {
     const dur = song.durationSeconds || 210;
@@ -196,34 +364,6 @@ export const NowPlayingModal: React.FC<Props> = ({
       setActiveHotspotNotice(null);
     }, 3200);
   };
-
-  // Generate 48-bar audio waveform profile with dynamic peaks at key musical moments
-  const waveformBars = useMemo(() => {
-    const barCount = 48;
-    const seed = (song.title + (song.artist || '')).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const dur = song.durationSeconds || 210;
-
-    return Array.from({ length: barCount }).map((_, i) => {
-      const fraction = i / barCount;
-      const barSecond = fraction * dur;
-
-      // Realistic acoustic curve: intro build, dramatic chorus & solo peaks, dynamic variation
-      const baseCurve = Math.sin(fraction * Math.PI) * 0.4 + 0.35;
-      const pseudoRand = Math.sin((seed + i * 7) * 0.45) * 0.22;
-
-      // Boost bars near key hotspots (gitar solosu, nakarat, patlama)
-      const isNearMarker = effectiveMarkers.some((m) => Math.abs(m.second - barSecond) < (dur * 0.07));
-      const boost = isNearMarker ? 0.28 : 0;
-
-      const heightPct = Math.min(100, Math.max(20, Math.round((baseCurve + pseudoRand + boost) * 100)));
-      return {
-        index: i,
-        second: barSecond,
-        heightPercent: heightPct,
-        isHotspot: isNearMarker,
-      };
-    });
-  }, [song.id, song.title, song.artist, song.durationSeconds, effectiveMarkers]);
 
   // 8-Line Synchronized Stage & Lyrics Stream
   const effectiveLyrics = useMemo(() => {
@@ -719,11 +859,11 @@ export const NowPlayingModal: React.FC<Props> = ({
             }}
           />
 
-          {/* Mode Switcher Pill (Kapak | Vinil | Sözler | Canlı Oda) */}
+          {/* Mode Switcher Pill (Kapak | Sözler | Canlı Oda) */}
           <div className="flex items-center gap-1 p-1 rounded-full bg-white/[0.06] border border-white/[0.08] backdrop-blur-md mb-3 shadow-inner z-10">
             <button
               onClick={() => handleSelectViewMode('cover')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 viewMode === 'cover'
                   ? 'bg-white text-zinc-950 font-bold shadow-md'
                   : 'text-zinc-400 hover:text-white'
@@ -733,19 +873,8 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Kapak</span>
             </button>
             <button
-              onClick={() => handleSelectViewMode('vinyl')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                viewMode === 'vinyl'
-                  ? 'bg-white text-zinc-950 font-bold shadow-md'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Disc3 className="w-3.5 h-3.5" />
-              <span>Vinil</span>
-            </button>
-            <button
               onClick={() => handleSelectViewMode('lyrics')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 viewMode === 'lyrics'
                   ? 'bg-white text-zinc-950 font-bold shadow-md'
                   : 'text-zinc-400 hover:text-white'
@@ -756,7 +885,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setShowListenersSheet(true)}
-              className="px-2.5 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 text-orange-400 hover:bg-orange-500/10 active:scale-95 ml-0.5 border border-orange-500/20"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 text-orange-400 hover:bg-orange-500/10 active:scale-95 ml-0.5 border border-orange-500/20 cursor-pointer"
               title="Odadaki dinleyicileri incele"
             >
               <Flame className="w-3.5 h-3.5 fill-current" />
@@ -799,154 +928,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* VIEW MODE 2: Realistic Interactive Turntable & Spinning Vinyl with Tonearm */}
-          {viewMode === 'vinyl' && (
-            <div className="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto flex items-center justify-center select-none py-1">
-              {/* Dynamic Album Ambient Platter Glow (Albüm renginde alt ışık) */}
-              <div
-                className="absolute inset-0 m-auto w-60 h-60 sm:w-72 sm:h-72 rounded-full blur-3xl opacity-40 transition-all duration-700 pointer-events-none"
-                style={{
-                  background: song.coverGradient
-                    ? `linear-gradient(135deg, var(--theme-accent), #38bdf8, #a855f7)`
-                    : 'var(--theme-accent)',
-                }}
-              />
-
-              {/* Turntable Platter Base (Obsidian & Metal Gövde) */}
-              <div className="keep-dark relative w-full h-full rounded-[32px] bg-gradient-to-b from-[#15151a] via-[#0d0d10] to-[#070709] border border-white/[0.1] shadow-[0_24px_60px_rgba(0,0,0,0.95)] p-3 sm:p-4 flex items-center justify-center overflow-visible">
-                {/* Turntable Deck Details */}
-                <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[9px] font-mono font-bold text-zinc-400 uppercase tracking-widest pointer-events-none">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-theme animate-pulse" />
-                  <span>33 ⅓ RPM · HARMONIQ DECK</span>
-                </div>
-
-                {/* Stroboscope / Beveled Platter Rim */}
-                <div className="relative w-56 h-56 sm:w-68 sm:h-68 rounded-full bg-[#050507] p-2 ring-4 ring-zinc-800/80 shadow-2xl flex items-center justify-center shrink-0">
-                  {/* Subtle rim highlight */}
-                  <div className="absolute inset-1 rounded-full border border-zinc-700/40 pointer-events-none" />
-
-                  {/* Spinning Vinyl Record with Grooves (Dokunmatik Plak) */}
-                  <div
-                    onClick={() => {
-                      triggerHaptic(20);
-                      onTogglePlay();
-                    }}
-                    className={`cursor-pointer relative w-full h-full rounded-full bg-[#0a0a0c] shadow-2xl flex items-center justify-center transition-transform active:scale-[0.98] overflow-hidden ${
-                      isPlaying ? 'animate-spin-slow' : ''
-                    }`}
-                    style={{
-                      background:
-                        'radial-gradient(circle, #0e0e11 20%, #17171b 24%, #0b0b0e 28%, #1c1c22 34%, #0b0b0e 40%, #18181e 48%, #0d0d10 56%, #1d1d24 64%, #09090c 74%, #16161c 84%, #08080a 100%)',
-                      animationPlayState: isPlaying ? 'running' : 'paused',
-                    }}
-                    title={isPlaying ? 'Durdurmak için dokun' : 'Plağı çalmak için dokun'}
-                  >
-                    {/* Realistic Specular Conic Sheen Overlays */}
-                    <div
-                      className="absolute inset-0 rounded-full pointer-events-none opacity-30"
-                      style={{
-                        background:
-                          'conic-gradient(from 40deg, transparent 0deg, rgba(255,255,255,0.22) 35deg, transparent 75deg, transparent 180deg, rgba(255,255,255,0.22) 215deg, transparent 255deg)',
-                      }}
-                    />
-
-                    {/* Concentric Plak Olukları (Grooves) */}
-                    <div className="absolute inset-3 rounded-full border border-neutral-700/35 pointer-events-none" />
-                    <div className="absolute inset-6 rounded-full border border-neutral-700/25 pointer-events-none" />
-                    <div className="absolute inset-9 rounded-full border border-neutral-700/20 pointer-events-none" />
-                    <div className="absolute inset-13 rounded-full border border-neutral-700/25 pointer-events-none" />
-                    <div className="absolute inset-17 rounded-full border border-neutral-700/20 pointer-events-none" />
-
-                    {/* Center Vinyl Label with Album Cover */}
-                    <div className="relative w-22 h-22 sm:w-26 sm:h-26 rounded-full overflow-hidden border-2 border-zinc-600/80 shadow-inner flex items-center justify-center">
-                      {song.coverUrl ? (
-                        <img
-                          src={song.coverUrl}
-                          alt={song.album}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div
-                          className={`w-full h-full bg-gradient-to-tr ${song.coverGradient} flex items-center justify-center`}
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center p-1 text-center backdrop-blur-[0.5px]">
-                        <span className="text-[7px] font-black text-accent-theme tracking-widest uppercase">
-                          HARMONIQ
-                        </span>
-                        <span className="text-[8.5px] font-bold text-white truncate max-w-[70px] leading-tight">
-                          {song.title}
-                        </span>
-                        <span className="text-[7.5px] text-zinc-300 truncate max-w-[70px]">
-                          {song.artist}
-                        </span>
-                        {/* Metallic Center Spindle Hole */}
-                        <div className="w-3 h-3 rounded-full bg-zinc-950 border-2 border-zinc-400 mt-1 shadow-inner" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mechanical Pikap Kolu (Calibrated Tonearm resting on black vinyl grooves outside center label) */}
-                <div
-                  onClick={() => {
-                    triggerHaptic(20);
-                    onTogglePlay();
-                  }}
-                  className={`absolute top-4 right-4 w-20 sm:w-24 h-48 sm:h-52 pointer-events-auto cursor-pointer z-30 transition-transform duration-700 ease-out origin-top-right group/tonearm ${
-                    isPlaying ? 'rotate-[18deg]' : 'rotate-0 -translate-y-1'
-                  }`}
-                  title={isPlaying ? 'Pikap kolunu kaldır (Durdur)' : 'Pikap kolunu indir (Çal)'}
-                >
-                  {/* Gimbal Base with chrome gimbal ring & counterweight */}
-                  <div className="absolute top-0 right-0 w-10 h-10 rounded-full bg-gradient-to-br from-zinc-200 via-zinc-400 to-zinc-700 shadow-xl border border-zinc-300 flex items-center justify-center">
-                    <div className="w-5 h-5 rounded-full bg-zinc-950 border border-zinc-400 shadow-inner flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-purple-500" />
-                    </div>
-                  </div>
-
-                  {/* Calibrated Chrome Tonearm Tube */}
-                  <svg
-                    className="absolute top-5 right-3 w-16 h-38 pointer-events-none drop-shadow-[2px_6px_8px_rgba(0,0,0,0.8)]"
-                    viewBox="0 0 60 140"
-                    fill="none"
-                  >
-                    <path
-                      d="M 48 4 Q 44 50 40 96 Q 38 118 28 132"
-                      stroke="url(#armGradient)"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                    />
-                    <defs>
-                      <linearGradient id="armGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#f4f4f5" />
-                        <stop offset="45%" stopColor="#71717a" />
-                        <stop offset="100%" stopColor="#e4e4e7" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-
-                  {/* Headshell & Cartridge with Stylus Needle resting cleanly on the outer/middle black groove */}
-                  <div
-                    className="absolute bottom-2 left-5 w-4 h-8 rounded-sm bg-zinc-900 border border-zinc-600 shadow-2xl flex flex-col items-center justify-between p-0.5 group-hover/tonearm:border-purple-400 transition-colors"
-                    style={{ transform: 'rotate(-20deg)' }}
-                  >
-                    <span className="w-2 h-1 rounded-full bg-purple-400" />
-                    <span className="w-1.5 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse" />
-                  </div>
-
-                  {/* Park Status Badge */}
-                  {!isPlaying && (
-                    <div className="absolute top-20 right-0 text-[9px] font-mono text-zinc-400 whitespace-nowrap bg-black/75 px-1.5 py-0.5 rounded border border-white/10 pointer-events-none shadow-md">
-                      Park Edildi
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW MODE 3: Synchronized 8-Line Stage & Lyrics Stream */}
+          {/* VIEW MODE 2: Synchronized 8-Line Stage & Lyrics Stream */}
           {viewMode === 'lyrics' && (
             <div className="relative w-full max-w-md h-64 sm:h-72 rounded-2xl bg-white/95 dark:bg-black/50 border border-zinc-200 dark:border-white/[0.08] overflow-hidden flex flex-col shadow-inner">
               <div
@@ -1029,8 +1011,8 @@ export const NowPlayingModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* 3. INTERACTIVE AUDIO WAVEFORM SCRUBBER WITH DIAMOND HOTSPOTS */}
-        <div className="space-y-2 pt-1">
+        {/* 3. ANDROID MATERIAL YOU WAVY SEEK BAR */}
+        <div className="space-y-1.5 pt-1">
           {/* Hotspot Flash Announcement Banner */}
           {activeHotspotNotice && (
             <div className="flex items-center justify-center animate-in zoom-in-95 fade-in duration-200">
@@ -1045,104 +1027,16 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Interactive Waveform Container */}
-          <div className="relative group/scrubber py-1">
-            <div
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-                const targetSec = Math.round(ratio * (song.durationSeconds || 1));
-                triggerHaptic(15);
-                onSeek(targetSec);
-              }}
-              className="relative h-12 flex items-end justify-between gap-[2px] sm:gap-[3px] p-1.5 rounded-2xl bg-black/60 border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer backdrop-blur-xl shadow-inner overflow-hidden select-none"
-              title="Şarkıda istediğin saniyeye atlamak için dalgaya dokun"
-            >
-              {/* Subtle ambient audio glow */}
-              <div className="absolute inset-0 bg-gradient-to-t from-accent-theme/[0.04] to-transparent pointer-events-none" />
+          {/* Material You Wavy Seek Bar */}
+          <WavySeekBar
+            progressSeconds={progressSeconds}
+            durationSeconds={song.durationSeconds || 1}
+            isPlaying={isPlaying}
+            onSeek={onSeek}
+          />
 
-              {/* 48 Dynamic Audio Waveform Bars */}
-              {waveformBars.map((bar) => {
-                const isPast = progressSeconds >= bar.second;
-                return (
-                  <div
-                    key={bar.index}
-                    className="relative flex-1 flex items-end justify-center h-full group/bar"
-                  >
-                    <div
-                      className={`w-full rounded-full transition-all duration-150 ${
-                        isPast
-                          ? 'bg-gradient-to-t from-accent-theme/70 via-accent-theme to-white shadow-[0_0_8px_var(--theme-accent-glow)]'
-                          : 'bg-white/[0.12] group-hover/scrubber:bg-white/[0.22]'
-                      } ${bar.isHotspot ? 'ring-1 ring-accent-theme/40' : ''}`}
-                      style={{
-                        height: `${bar.heightPercent}%`,
-                        minHeight: '4px',
-                      }}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Active Glow Playhead Line */}
-              <div
-                className="absolute top-0 bottom-0 w-[2px] bg-white shadow-[0_0_12px_#fff] pointer-events-none z-20 transition-all duration-150"
-                style={{ left: `${progressPercent}%` }}
-              >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white shadow-[0_0_8px_var(--theme-accent-glow)]" />
-              </div>
-
-              {/* Glowing Diamond Hotspot Pins (Müzikal Yoğunluk & Solo Sıcak Noktaları) */}
-              {effectiveMarkers.map((marker, idx) => {
-                const markerPercent = Math.min(
-                  98,
-                  Math.max(2, (marker.second / (song.durationSeconds || 1)) * 100)
-                );
-                const isPast = progressSeconds >= marker.second;
-                return (
-                  <div
-                    key={idx}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleHotspotClick(marker);
-                    }}
-                    title={`${marker.emoji} ${marker.label} (${formatTime(marker.second)}) - Sıcak Noktaya Atla`}
-                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-pointer z-30 group/hotspot p-2 hover:scale-125 transition-transform"
-                    style={{ left: `${markerPercent}%` }}
-                  >
-                    {/* Glowing Diamond */}
-                    <div
-                      className={`w-3.5 h-3.5 rotate-45 rounded-[2px] transition-all duration-300 border shadow-lg flex items-center justify-center ${
-                        isPast
-                          ? 'bg-accent-theme border-white shadow-[0_0_14px_var(--theme-accent-glow)]'
-                          : 'bg-zinc-950/90 border-accent-theme/80 hover:bg-accent-theme/40 shadow-[0_0_10px_rgba(0,0,0,0.9)]'
-                      }`}
-                    >
-                      <span
-                        className={`w-1 h-1 rounded-full pointer-events-none ${
-                          isPast ? 'bg-zinc-950' : 'bg-accent-theme'
-                        }`}
-                      />
-                    </div>
-
-                    {/* Tooltip on hover */}
-                    <div className="opacity-0 group-hover/hotspot:opacity-100 transition-opacity pointer-events-none absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-xl bg-zinc-950/95 border border-white/20 text-xs text-white whitespace-nowrap shadow-2xl z-40 flex items-center gap-1.5 backdrop-blur-xl">
-                      <span className="text-sm">{marker.emoji}</span>
-                      <span className="font-bold text-accent-theme">{marker.label}</span>
-                      <span className="text-zinc-400 font-mono text-[10px]">
-                        [{formatTime(marker.second)}]
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-neutral-400 tabular-nums">
+          <div className="flex items-center justify-between text-xs text-neutral-400 tabular-nums -mt-1">
             <span className="text-accent-theme font-bold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-theme animate-pulse" />
               <span>{formatTime(progressSeconds)}</span>
             </span>
             <span className="text-zinc-400 font-mono">{formatTime(song.durationSeconds)}</span>

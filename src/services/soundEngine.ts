@@ -34,6 +34,10 @@ class RealMusicEngine {
 
   // Tiny silent audio payload to keep system MediaSession notification alive during YouTube playback
   private silentAudioUri: string = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+  private isUsingSilentAudio: boolean = false;
+  private lastUserActionTime: number = 0;
+  private expectedPlayingState: boolean | null = null;
+  private lastNotifiedPlaying: boolean | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -44,12 +48,16 @@ class RealMusicEngine {
     // Connect YouTube controller events
     ytController.onTimeUpdate((sec) => {
       if (this.currentSong?.youtubeVideoId) {
+        this.simulatedSecond = sec;
         this.notifyTimeUpdate(sec);
       }
     });
 
     ytController.onStateChange((playing) => {
       if (this.currentSong?.youtubeVideoId) {
+        if (this.shouldIgnoreExternalState(playing)) {
+          return;
+        }
         this.isPlaying = playing;
         this.notifyStateChange(playing);
         this.syncMediaSessionPlaybackState(playing);
@@ -257,7 +265,7 @@ class RealMusicEngine {
     this.audio.crossOrigin = 'anonymous';
 
     this.audio.addEventListener('timeupdate', () => {
-      if (!this.audio || this.currentSong?.youtubeVideoId) return;
+      if (!this.audio || this.isUsingSilentAudio || this.currentSong?.youtubeVideoId) return;
       const sec = Math.floor(this.audio.currentTime);
       this.notifyTimeUpdate(sec);
 
@@ -275,6 +283,15 @@ class RealMusicEngine {
     });
 
     this.audio.addEventListener('ended', () => {
+      // Silent MediaSession WAV guard: keep looping silently during YouTube playback without ending track or flipping state
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        if (this.isPlaying && this.audio) {
+          this.audio.loop = true;
+          this.audio.currentTime = 0;
+          this.audio.play().catch(() => {});
+        }
+        return;
+      }
       if (!this.hasTriggeredEndForCurrentSong) {
         this.hasTriggeredEndForCurrentSong = true;
         this.handleTrackEnded();
@@ -282,33 +299,50 @@ class RealMusicEngine {
     });
 
     this.audio.addEventListener('play', () => {
-      if (!this.currentSong?.youtubeVideoId) {
-        this.isPlaying = true;
-        this.setIsLoading(false);
-        this.notifyStateChange(true);
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
       }
+      if (this.shouldIgnoreExternalState(true)) return;
+      this.isPlaying = true;
+      this.setIsLoading(false);
+      this.notifyStateChange(true);
     });
 
     this.audio.addEventListener('playing', () => {
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
+      }
       this.setIsLoading(false);
     });
 
     this.audio.addEventListener('pause', () => {
-      if (!this.currentSong?.youtubeVideoId) {
-        this.isPlaying = false;
-        this.notifyStateChange(false);
+      // Silent MediaSession WAV guard: NEVER emit notifyStateChange(false) when silent WAV pauses
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
       }
+      if (this.shouldIgnoreExternalState(false)) return;
+      this.isPlaying = false;
+      this.notifyStateChange(false);
     });
 
     this.audio.addEventListener('waiting', () => {
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
+      }
       this.setIsLoading(true);
     });
 
     this.audio.addEventListener('canplay', () => {
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
+      }
       this.setIsLoading(false);
     });
 
     this.audio.addEventListener('error', (e) => {
+      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+        return;
+      }
       console.warn('Real audio stream notice:', e);
       this.setIsLoading(false);
       if (this.currentSong && !this.currentSong.youtubeVideoId) {
@@ -373,11 +407,24 @@ class RealMusicEngine {
     }
   }
 
+  private shouldIgnoreExternalState(incomingPlaying: boolean): boolean {
+    if (
+      this.expectedPlayingState !== null &&
+      Date.now() - this.lastUserActionTime < 500 &&
+      incomingPlaying !== this.expectedPlayingState
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   private notifyTimeUpdate(sec: number) {
     this.timeUpdateCallbacks.forEach((cb) => cb(sec));
   }
 
   private notifyStateChange(playing: boolean) {
+    if (this.lastNotifiedPlaying === playing) return;
+    this.lastNotifiedPlaying = playing;
     this.stateChangeCallbacks.forEach((cb) => cb(playing));
   }
 
@@ -416,28 +463,35 @@ class RealMusicEngine {
     const playbackId = `pb_${requestId}_${song.id}_${Date.now()}`;
     this.activePlaybackId = playbackId;
     this.hasTriggeredEndForCurrentSong = false;
+
+    // Lock expected playing state immediately so teardown of previous track never triggers a false flicker
+    this.lastUserActionTime = Date.now();
+    this.expectedPlayingState = true;
+
     this.initAudioElement();
     this.setIsLoading(true);
 
-    // Stop and unload previous native audio to avoid overlapping audio
+    // Stop and unload previous native audio silently to avoid overlapping audio
+    const switchingToYouTube = Boolean(song.youtubeVideoId);
     if (this.audio) {
       try {
-        this.audio.pause();
-        this.audio.removeAttribute('src');
-        this.audio.load();
+        if (!switchingToYouTube || this.audio.src !== this.silentAudioUri) {
+          this.isUsingSilentAudio = true; // suppress pause callback while tearing down
+          this.audio.pause();
+          this.audio.removeAttribute('src');
+          this.audio.load();
+        }
       } catch {}
     }
 
-    // Strictly stop previous YouTube playback
-    ytController.stop();
-    ytController.pause();
-    ytController.sendCommand('stopVideo');
-    ytController.sendCommand('pauseVideo');
+    // Strictly stop previous YouTube playback silently (without emitting paused state)
+    ytController.stop(true);
+    ytController.pause(true);
 
     this.stopSimulatedTimer();
 
     this.currentSong = song;
-    this.updateMediaSession(song);
+    this.updateMediaSession(song, true);
 
     // CASE 1: YouTube Track
     if (song.youtubeVideoId) {
@@ -446,14 +500,15 @@ class RealMusicEngine {
       }
 
       // Play a silent audio loop so iOS / Android browser media session stays pinned in notification tray
+      this.isUsingSilentAudio = true;
       if (this.audio) {
         try {
           if (this.audio.src !== this.silentAudioUri) {
             this.audio.src = this.silentAudioUri;
-            this.audio.loop = true;
-            this.audio.volume = 0.001;
-            this.audio.play().catch(() => {});
           }
+          this.audio.loop = true;
+          this.audio.volume = 0.001;
+          this.audio.play().catch(() => {});
         } catch {}
       }
 
@@ -470,6 +525,7 @@ class RealMusicEngine {
     }
 
     // CASE 2: Native Audio Track (MP3/AAC/M4A/iTunes preview)
+    this.isUsingSilentAudio = false;
     let url = song.audioUrl;
     if (!url) {
       const found = SAMPLE_SONGS.find((s) => s.id === song.id);
@@ -552,10 +608,13 @@ class RealMusicEngine {
   }
 
   public pause(): void {
+    this.lastUserActionTime = Date.now();
+    this.expectedPlayingState = false;
+    this.setIsLoading(false);
     if (this.audio && !this.audio.paused) {
       this.audio.pause();
     }
-    ytController.pause();
+    ytController.pause(true);
     this.stopSimulatedTimer();
     this.isPlaying = false;
     this.notifyStateChange(false);
@@ -563,30 +622,45 @@ class RealMusicEngine {
   }
 
   public resume(): void {
+    this.lastUserActionTime = Date.now();
+    this.expectedPlayingState = true;
     if (this.currentSong?.youtubeVideoId) {
-      ytController.play(this.currentSong.youtubeVideoId, this.simulatedSecond);
+      this.isUsingSilentAudio = true;
+      const resumeSec = ytController.getCurrentTime() || this.simulatedSecond || 0;
+      ytController.play(this.currentSong.youtubeVideoId, resumeSec);
       if (this.audio) {
+        if (this.audio.src !== this.silentAudioUri) {
+          this.audio.src = this.silentAudioUri;
+        }
+        this.audio.loop = true;
+        this.audio.volume = 0.001;
         this.audio.play().catch(() => {});
       }
     } else if (this.currentSong?.audioUrl && this.audio) {
+      this.isUsingSilentAudio = false;
       this.audio.play().catch((err) => console.warn('Audio resume:', err));
     } else {
       this.startSimulatedTimer(this.simulatedSecond, this.currentSong?.durationSeconds || 240);
     }
     this.isPlaying = true;
+    this.setIsLoading(false);
     this.notifyStateChange(true);
     this.syncMediaSessionPlaybackState(true);
   }
 
   public stop(): void {
+    this.lastUserActionTime = Date.now();
+    this.expectedPlayingState = false;
     this.activePlaybackId = '';
+    this.setIsLoading(false);
     if (this.audio) {
       this.audio.pause();
       this.audio.removeAttribute('src');
       this.audio.currentTime = 0;
     }
-    ytController.stop();
-    ytController.pause();
+    this.isUsingSilentAudio = false;
+    ytController.stop(true);
+    ytController.pause(true);
     this.stopSimulatedTimer();
     this.simulatedSecond = 0;
     this.isPlaying = false;
@@ -625,6 +699,10 @@ class RealMusicEngine {
 
   public getIsPlaying(): boolean {
     return this.isPlaying;
+  }
+
+  public getCurrentSongId(): string | null {
+    return this.currentSong?.id || null;
   }
 
   public setVolume(volume: number): void {

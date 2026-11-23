@@ -12,6 +12,13 @@ import { NowPlayingModal } from './components/NowPlayingModal';
 import { LiveRoomListenersModal } from './components/LiveRoomListenersModal';
 import { YouTubeMusicConnectModal } from './components/YouTubeMusicConnectModal';
 import { OnboardingModal } from './components/OnboardingModal';
+import {
+  AuthScreen,
+  AuthSession,
+  getStoredAuthSession,
+  saveAuthSession,
+  clearAuthSession,
+} from './components/AuthScreen';
 import { realtimePresence } from './services/realtimePresenceService';
 import {
   SAMPLE_SONGS,
@@ -386,8 +393,12 @@ export default function App() {
     };
   });
 
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession());
+
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
+      const existingSession = getStoredAuthSession();
+      if (!existingSession || existingSession.isGuest) return false;
       return !localStorage.getItem('harmoniq_onboarding_completed');
     }
     return false;
@@ -403,9 +414,11 @@ export default function App() {
     genres: string[];
     city: string;
   }) => {
+    const resolvedEmail = authSession?.email || youtubeAccount.email || '';
+    const resolvedHandle = `@${data.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'kesif'}`;
     const acc = {
-      email: '',
-      handle: `@${data.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'kesif'}`,
+      email: resolvedEmail,
+      handle: resolvedHandle,
       name: data.name,
     };
     setYoutubeAccount(acc);
@@ -413,6 +426,16 @@ export default function App() {
     setManualLocation(data.city);
     if (data.avatarUrl) {
       setUserAvatarUrl(data.avatarUrl);
+    }
+    if (authSession) {
+      const updatedSession: AuthSession = {
+        ...authSession,
+        name: data.name,
+        handle: resolvedHandle,
+        avatarUrl: data.avatarUrl || authSession.avatarUrl,
+      };
+      setAuthSession(updatedSession);
+      saveAuthSession(updatedSession);
     }
     setPersonalTaste((prev) => ({
       ...prev,
@@ -427,6 +450,7 @@ export default function App() {
       localStorage.setItem('harmoniq_user_city', data.city);
     }
     setShowOnboardingModal(false);
+    setActiveTab('lounge');
     setToastMessage(`⚡ Frekans kimliğin hazır! Hoş geldin, ${data.name}.`);
     setTimeout(() => setToastMessage(null), 3500);
   };
@@ -436,8 +460,47 @@ export default function App() {
       localStorage.setItem('harmoniq_onboarding_completed', 'true');
     }
     setShowOnboardingModal(false);
+    setActiveTab('lounge');
     setToastMessage('Misafir modunda frekansa bağlandınız.');
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAuthSuccess = (session: AuthSession, isNewSignup: boolean) => {
+    setAuthSession(session);
+    const updatedAcc = {
+      name: session.name,
+      email: session.email,
+      handle: session.handle,
+    };
+    setYoutubeAccount(updatedAcc);
+    if (session.avatarUrl) {
+      setUserAvatarUrl(session.avatarUrl);
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('harmoniq_user_account', JSON.stringify(updatedAcc));
+      if (session.avatarUrl) {
+        localStorage.setItem('harmoniq_user_avatar', session.avatarUrl);
+      }
+    }
+
+    setActiveTab('lounge');
+    if (isNewSignup) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('harmoniq_onboarding_completed');
+      }
+      setShowOnboardingModal(true);
+    } else {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('harmoniq_onboarding_completed', 'true');
+      }
+      setShowOnboardingModal(false);
+      setToastMessage(
+        session.isGuest
+          ? 'Misafir olarak frekansa bağlandın.'
+          : `Tekrar hoş geldin, ${session.name}!`
+      );
+      setTimeout(() => setToastMessage(null), 3000);
+    }
   };
 
   const handleLoadPopularCollection = () => {
@@ -626,12 +689,18 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
+  const lastPlayIntentRef = useRef<{ playing: boolean; time: number }>({ playing: false, time: 0 });
+
   useEffect(() => {
     const unsubTime = soundEngine.onTimeUpdate((sec) => {
       setMySecond(sec);
     });
     const unsubState = soundEngine.onStateChange((playing) => {
-      setIsPlaying(playing);
+      const elapsed = Date.now() - lastPlayIntentRef.current.time;
+      if (elapsed < 550 && playing !== lastPlayIntentRef.current.playing) {
+        return;
+      }
+      setIsPlaying((prev) => (prev === playing ? prev : playing));
     });
     const unsubLoading = soundEngine.onLoadingChange((loading) => {
       setIsAudioLoading(loading);
@@ -687,12 +756,17 @@ export default function App() {
       onNextTrack: () => handleNextSong(),
       onTogglePlay: () => handleTogglePlay(),
       onPlayPause: (play) => {
+        lastPlayIntentRef.current = { playing: play, time: Date.now() };
         if (play) {
-          soundEngine.resume();
           setIsPlaying(true);
+          if (soundEngine.getCurrentSongId() === currentSong.id) {
+            soundEngine.resume();
+          } else {
+            soundEngine.playSong(currentSong, mySecond);
+          }
         } else {
-          soundEngine.pause();
           setIsPlaying(false);
+          soundEngine.pause();
         }
       },
       onSeek: (sec) => handleSeekSecond(sec),
@@ -1586,13 +1660,95 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const handleAuthGoogleContinue = async (): Promise<{
+    success?: boolean;
+    user?: { name: string; email: string; photoUrl?: string };
+    errorMessage?: string;
+  }> => {
+    setIsGoogleLoading(true);
+    try {
+      const res = await signInWithGoogle(true);
+      if (res?.user) {
+        const u = res.user;
+        setFirebaseUser(u);
+        setIsGoogleAuthenticated(true);
+        setGoogleUser({
+          name: u.displayName || 'Müzik Kaşifi',
+          email: u.email || '',
+          photoUrl: u.photoURL || undefined,
+        });
+        const handleStr = u.email ? `@${u.email.split('@')[0]}` : '@muziksever';
+        savePersistentYouTubeAccount({
+          name: u.displayName || 'Müzik Kaşifi',
+          email: u.email || '',
+          avatar: u.photoURL || undefined,
+          handle: handleStr,
+          authMode: 'oauth',
+        });
+        setIsYouTubeConnected(true);
+        if (res.accessToken) {
+          setHasActiveYouTubeToken(true);
+          void syncFromYouTubeAccessToken(res.accessToken).catch(() => {});
+        }
+        return {
+          success: true,
+          user: {
+            name: u.displayName || 'Müzik Kaşifi',
+            email: u.email || '',
+            photoUrl: u.photoURL || undefined,
+          },
+        };
+      }
+      return {
+        success: false,
+        errorMessage:
+          res?.userFacingError ||
+          'Google ile giriş tamamlanamadı. E-posta veya Misafir moduyla devam edebilirsin.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        errorMessage:
+          err?.message || 'Google bağlantısı başarısız oldu. E-posta ile giriş yapabilirsin.',
+      };
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleFullLogout = async () => {
+    soundEngine.pause();
+    lastPlayIntentRef.current = { playing: false, time: Date.now() };
+    setIsPlaying(false);
+    setShowNowPlayingModal(false);
+    setShowRoomListenersModal(false);
+    setShowSongPickerModal(false);
+    setShowYouTubeConnectModal(false);
+    setSelectedDrawerUser(null);
+    setActiveChatUser(null);
+    clearAuthSession();
+    if (firebaseUser || isGoogleAuthenticated) {
+      await handleGoogleSignOut();
+    }
+    setAuthSession(null);
+    setShowOnboardingModal(false);
+    setActiveTab('lounge');
+  };
+
   const handleTogglePlay = () => {
+    const now = Date.now();
     if (isPlaying) {
-      soundEngine.pause();
+      lastPlayIntentRef.current = { playing: false, time: now };
       setIsPlaying(false);
+      soundEngine.pause();
     } else {
+      lastPlayIntentRef.current = { playing: true, time: now };
       setIsPlaying(true);
-      soundEngine.playSong(currentSong, mySecond);
+      if (soundEngine.getCurrentSongId() === currentSong.id) {
+        soundEngine.resume();
+      } else {
+        soundEngine.playSong(currentSong, mySecond);
+      }
     }
   };
 
@@ -1631,6 +1787,7 @@ export default function App() {
     playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
     setMySecond(0);
     if (autoPlay || isPlaying) {
+      lastPlayIntentRef.current = { playing: true, time: Date.now() };
       setIsPlaying(true);
       soundEngine.playSong(playableSong, 0);
     }
@@ -2419,6 +2576,16 @@ export default function App() {
     cloudIncomingRequests.length;
   const isLight = effectiveTheme === 'light';
 
+  if (!authSession) {
+    return (
+      <AuthScreen
+        onAuthSuccess={handleAuthSuccess}
+        onGoogleContinue={handleAuthGoogleContinue}
+        isGoogleLoading={isGoogleLoading}
+      />
+    );
+  }
+
   return (
     <div
       className={`min-h-screen ${
@@ -2657,6 +2824,7 @@ export default function App() {
               themeMode={themeMode}
               onChangeThemeMode={handleThemeModeChange}
               onLoadPopularCollection={handleLoadPopularCollection}
+              onLogout={handleFullLogout}
             />
           )}
         </main>
@@ -2905,6 +3073,7 @@ export default function App() {
               s.artist.toLowerCase() === currentSong.artist.toLowerCase())
         )}
         onToggleFavorite={handleToggleFavoriteSong}
+        isAudioLoading={isAudioLoading}
       />
 
       <LiveRoomListenersModal
@@ -2976,6 +3145,7 @@ export default function App() {
 
       <OnboardingModal
         isOpen={showOnboardingModal}
+        initialName={authSession?.name}
         onComplete={handleOnboardingComplete}
         onSkipAsGuest={handleOnboardingSkip}
       />

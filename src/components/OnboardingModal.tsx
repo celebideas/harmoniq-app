@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, MapPin, Music, Check, Headphones, Compass, ArrowRight, X } from 'lucide-react';
 import { requestNativeGpsLocation } from '../services/locationService';
 
 interface OnboardingModalProps {
   isOpen: boolean;
+  initialName?: string;
   onComplete: (data: {
     name: string;
     avatarUrl?: string;
@@ -66,10 +67,11 @@ const QUICK_CITIES = ['İstanbul', 'İzmir', 'Ankara', 'Antalya', 'Eskişehir'];
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
+  initialName,
   onComplete,
   onSkipAsGuest,
 }) => {
-  const [name, setName] = useState('Müzik Kaşifi');
+  const [name, setName] = useState(initialName || 'Müzik Kaşifi');
   const [selectedAvatarId, setSelectedAvatarId] = useState(PRESET_AVATARS[0].id);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([
     'Türkçe Rock',
@@ -77,6 +79,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   ]);
   const [city, setCity] = useState('İstanbul, Kadıköy');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && initialName && initialName.trim()) {
+      setName(initialName.trim());
+    }
+  }, [isOpen, initialName]);
 
   if (!isOpen) return null;
 
