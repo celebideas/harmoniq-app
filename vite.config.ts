@@ -10,9 +10,13 @@ export default defineConfig(() => {
       tailwindcss(),
     ],
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(import.meta.dirname || '.', '.'),
       },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-dom/client', 'leaflet'],
     },
     server: {
       port: 3000,
