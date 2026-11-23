@@ -113,6 +113,272 @@ export function formatGoogleApiErrorForUser(
   return `${contextLabel}${status ? ` (HTTP ${status})` : ''}: ${apiMessage}`;
 }
 
+export interface PersistentYouTubeAccount {
+  name: string;
+  email: string;
+  avatar?: string;
+  handle: string;
+  channelId?: string;
+  syncedPlaylistIds: string[];
+  connectedAt: string;
+  authMode: 'oauth' | 'channel_link';
+}
+
+export interface PersistentYouTubeLibrary {
+  playlists: UserPlaylist[];
+  favoriteSongs: Song[];
+  favoriteArtists: string[];
+  lastSyncedAt: string;
+}
+
+export const YT_ACCOUNT_STORAGE_KEY = 'harmoniq_yt_connected_account';
+export const YT_LIBRARY_STORAGE_KEY = 'harmoniq_yt_synced_library';
+
+export function extractYouTubePlaylistId(input: string): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  const listMatch = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (listMatch?.[1]) return listMatch[1];
+  if (/^(PL|RD|OLAK5uy_|UU|FL|LL|WL)[a-zA-Z0-9_-]{8,}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const ytPrefixMatch = trimmed.match(/^yt-pl-([a-zA-Z0-9_-]+)$/);
+  if (ytPrefixMatch?.[1]) return ytPrefixMatch[1];
+  return null;
+}
+
+export function getPersistentYouTubeAccount(): PersistentYouTubeAccount | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(YT_ACCOUNT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistentYouTubeAccount;
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (parsed.email === 'contact.yasincelebi@gmail.com') return null;
+    return {
+      name: parsed.name || 'Müzik Kaşifi',
+      email: parsed.email || '',
+      avatar: parsed.avatar,
+      handle: parsed.handle || '@muziksever',
+      channelId: parsed.channelId,
+      syncedPlaylistIds: Array.isArray(parsed.syncedPlaylistIds) ? parsed.syncedPlaylistIds : [],
+      connectedAt: parsed.connectedAt || new Date().toISOString(),
+      authMode: parsed.authMode === 'channel_link' ? 'channel_link' : 'oauth',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function savePersistentYouTubeAccount(
+  account: Partial<PersistentYouTubeAccount> & { name?: string; handle?: string }
+): PersistentYouTubeAccount {
+  const existing = getPersistentYouTubeAccount();
+  const mergedIds = Array.from(
+    new Set([
+      ...(existing?.syncedPlaylistIds || []),
+      ...(account.syncedPlaylistIds || []),
+    ].filter(Boolean))
+  );
+  const next: PersistentYouTubeAccount = {
+    name: account.name || existing?.name || 'Müzik Kaşifi',
+    email: account.email !== undefined ? account.email : existing?.email || '',
+    avatar: account.avatar !== undefined ? account.avatar : existing?.avatar,
+    handle: account.handle || existing?.handle || '@muziksever',
+    channelId: account.channelId !== undefined ? account.channelId : existing?.channelId,
+    syncedPlaylistIds: mergedIds,
+    connectedAt: existing?.connectedAt || new Date().toISOString(),
+    authMode: account.authMode || existing?.authMode || 'channel_link',
+  };
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(YT_ACCOUNT_STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem('harmoniq_youtube_connected', 'true');
+      localStorage.setItem(
+        'harmoniq_user_account',
+        JSON.stringify({ name: next.name, email: next.email, handle: next.handle })
+      );
+    } catch {
+      // ignore storage quota errors
+    }
+  }
+  return next;
+}
+
+export function registerSyncedPlaylistIds(playlistIds: string[]): PersistentYouTubeAccount | null {
+  const cleanIds = playlistIds
+    .map((id) => extractYouTubePlaylistId(id) || id)
+    .filter((id) => Boolean(id) && !id.startsWith('pl-'));
+  if (cleanIds.length === 0) return getPersistentYouTubeAccount();
+  return savePersistentYouTubeAccount({
+    syncedPlaylistIds: cleanIds,
+  });
+}
+
+export function clearPersistentYouTubeAccount(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(YT_ACCOUNT_STORAGE_KEY);
+    localStorage.removeItem('harmoniq_youtube_connected');
+  } catch {
+    // ignore
+  }
+}
+
+export function getPersistentYouTubeLibrary(): PersistentYouTubeLibrary | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(YT_LIBRARY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistentYouTubeLibrary;
+    if (!parsed || typeof parsed !== 'object') return null;
+    return {
+      playlists: Array.isArray(parsed.playlists) ? parsed.playlists : [],
+      favoriteSongs: Array.isArray(parsed.favoriteSongs) ? parsed.favoriteSongs : [],
+      favoriteArtists: Array.isArray(parsed.favoriteArtists) ? parsed.favoriteArtists : [],
+      lastSyncedAt: parsed.lastSyncedAt || new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function savePersistentYouTubeLibrary(library: {
+  playlists?: UserPlaylist[];
+  favoriteSongs?: Song[];
+  favoriteArtists?: string[];
+}): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = getPersistentYouTubeLibrary();
+    const next: PersistentYouTubeLibrary = {
+      playlists: library.playlists ?? existing?.playlists ?? [],
+      favoriteSongs: library.favoriteSongs ?? existing?.favoriteSongs ?? [],
+      favoriteArtists: library.favoriteArtists ?? existing?.favoriteArtists ?? [],
+      lastSyncedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(YT_LIBRARY_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+/**
+ * Silently refreshes saved YouTube / YT Music playlists in the background via /api/youtube-playlist
+ * without requiring any Google OAuth token or interactive popup.
+ */
+export async function fetchSilentPlaylistUpdates(
+  playlistIds: string[],
+  currentPlaylists: UserPlaylist[]
+): Promise<{
+  updatedPlaylists: UserPlaylist[];
+  addedTracksCount: number;
+  freshSongs: Song[];
+  freshArtists: string[];
+}> {
+  const uniqueIds = Array.from(
+    new Set(
+      playlistIds
+        .map((raw) => extractYouTubePlaylistId(raw))
+        .filter((id): id is string => Boolean(id))
+    )
+  ).slice(0, 6);
+
+  if (uniqueIds.length === 0) {
+    return { updatedPlaylists: currentPlaylists, addedTracksCount: 0, freshSongs: [], freshArtists: [] };
+  }
+
+  let addedTracksCount = 0;
+  const freshSongs: Song[] = [];
+  const freshArtistsSet = new Set<string>();
+  const playlistMap = new Map<string, UserPlaylist>();
+  currentPlaylists.forEach((p) => playlistMap.set(p.id, p));
+
+  for (const ytListId of uniqueIds) {
+    try {
+      const res = await fetch(`/api/youtube-playlist?list=${encodeURIComponent(ytListId)}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const rawTracks: any[] = Array.isArray(data?.tracks) ? data.tracks : [];
+      if (rawTracks.length === 0) continue;
+
+      const mappedTracks: Song[] = rawTracks.map((t: any, idx: number) => ({
+        id: t.id || `yt-track-${ytListId}-${t.videoId || idx}`,
+        title: t.title || 'Bilinmeyen Parça',
+        artist: t.artist || 'YouTube Music',
+        album: data?.title || 'YouTube Music',
+        rawMediaTitle: `${t.artist || 'YouTube Music'} - ${t.title || 'Bilinmeyen Parça'}`,
+        durationSeconds: Number(t.durationSeconds) || 215,
+        coverUrl:
+          t.coverUrl ||
+          (t.videoId ? `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg` : ''),
+        coverGradient: 'from-purple-900 via-zinc-900 to-black',
+        genre: 'YouTube Music',
+        bpm: 118,
+        keyNote: 'Am',
+        catalogNumber: `YT-${ytListId.slice(0, 6).toUpperCase()}-${idx + 1}`,
+        releaseYear: new Date().getFullYear(),
+        soundType: 'indie',
+        timelineMarkers: [],
+        youtubeVideoId: t.videoId || t.youtubeVideoId,
+      }));
+
+      const normalizedId = `yt-pl-${ytListId}`;
+      const existing =
+        playlistMap.get(normalizedId) ||
+        playlistMap.get(ytListId) ||
+        Array.from(playlistMap.values()).find((p) => extractYouTubePlaylistId(p.id) === ytListId);
+
+      const existingVideoKeys = new Set(
+        (existing?.tracks || []).map((t) => t.youtubeVideoId || `${t.artist}-${t.title}`.toLowerCase())
+      );
+
+      const newlyAdded = mappedTracks.filter(
+        (t) => !existingVideoKeys.has(t.youtubeVideoId || `${t.artist}-${t.title}`.toLowerCase())
+      );
+
+      if (newlyAdded.length > 0) {
+        addedTracksCount += newlyAdded.length;
+        newlyAdded.forEach((song) => {
+          freshSongs.push(song);
+          if (song.artist && song.artist !== 'YouTube Music') {
+            freshArtistsSet.add(song.artist);
+          }
+        });
+      }
+
+      const totalSeconds = mappedTracks.reduce((acc, s) => acc + (s.durationSeconds || 215), 0);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+
+      const updatedPlaylist: UserPlaylist = {
+        id: existing?.id || normalizedId,
+        title: data?.title || existing?.title || 'YouTube Music Listesi',
+        description: existing?.description || 'YouTube Music arka plan senkronizasyonu ile güncel tutulur.',
+        coverUrl: data?.coverUrl || mappedTracks[0]?.coverUrl || existing?.coverUrl || '',
+        trackCount: mappedTracks.length,
+        duration: `${mins}:${secs.toString().padStart(2, '0')}`,
+        genre: existing?.genre || 'YouTube Music',
+        source: 'youtube_music',
+        tracks: mappedTracks,
+        isFavorite: existing?.isFavorite ?? true,
+        updatedAt: 'Az önce güncellendi',
+      };
+
+      playlistMap.set(updatedPlaylist.id, updatedPlaylist);
+    } catch {
+      // Silent background sync: ignore network/endpoint errors quietly
+    }
+  }
+
+  return {
+    updatedPlaylists: Array.from(playlistMap.values()),
+    addedTracksCount,
+    freshSongs,
+    freshArtists: cleanNonMusicArtists(Array.from(freshArtistsSet), freshSongs),
+  };
+}
+
 export const signInWithGoogle = async (
   includeYouTubeScope = true
 ): Promise<GoogleAuthResult> => {
@@ -135,6 +401,17 @@ export const signInWithGoogle = async (
     const result = await signInWithPopup(auth, freshProvider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     cachedAccessToken = credential?.accessToken || null;
+
+    if (result.user) {
+      savePersistentYouTubeAccount({
+        name: result.user.displayName || 'Müzik Kaşifi',
+        email: result.user.email || '',
+        avatar: result.user.photoURL || undefined,
+        handle: result.user.email ? `@${result.user.email.split('@')[0]}` : '@muziksever',
+        channelId: result.user.uid,
+        authMode: 'oauth',
+      });
+    }
 
     if (!cachedAccessToken && includeYouTubeScope) {
       const msg =

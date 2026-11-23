@@ -23,8 +23,6 @@ interface Props {
   privacyMode: PrivacyMode;
   onChangePrivacyMode: (mode: PrivacyMode) => void;
   onOpenInstallModal: () => void;
-  isMobileFrameView?: boolean;
-  onToggleMobileFrame?: () => void;
   userProfile?: UserProfile;
   themeMode?: 'dark' | 'light';
   onToggleTheme?: () => void;

@@ -132,7 +132,7 @@ interface Props {
   isGoogleAuthenticated?: boolean;
   hasActiveYouTubeToken?: boolean;
   isGoogleLoading?: boolean;
-  onGoogleSignIn?: () => Promise<void>;
+  onGoogleSignIn?: () => Promise<{ errorCode?: string; success?: boolean } | void>;
   onGoogleSignOut?: () => Promise<void>;
   googleUser?: { name: string; email: string; photoUrl?: string } | null;
   onUpdateAccount?: (acc: { email: string; handle: string; name: string }) => void;
@@ -471,6 +471,7 @@ export const ProfileTab: React.FC<Props> = ({
       onChangeThemeMode(mode);
     }
   };
+  const [profileSection, setProfileSection] = useState<'library' | 'insights'>('library');
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showTrustScoreModal, setShowTrustScoreModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -1506,7 +1507,7 @@ export const ProfileTab: React.FC<Props> = ({
     const artistsList = sortedWeeklyArtists.map((a) => `#${a.rank} ${a.name}`).join(' · ');
     const summaryText = `🎧 Harmoniq · Haftalık Müzik Özeti\n👤 ${
       userProfile.youtubeAccount?.name || userProfile.name
-    } (${userProfile.youtubeAccount?.handle || '@yasincelebi'})\n🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\n⏱ Toplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\n⚡ Müzik Personası: ${weeklyPersona}\n📊 En Çok Dinlenen Türler: ${genresList}\n👑 Zirvedeki Sanatçılar: ${artistsList}\n🔥 Haftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}\n✨ Frekansı keşfet: https://gen-lang-client-0416452568.firebaseapp.com`;
+    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\n🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\n⏱ Toplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\n⚡ Müzik Personası: ${weeklyPersona}\n📊 En Çok Dinlenen Türler: ${genresList}\n👑 Zirvedeki Sanatçılar: ${artistsList}\n🔥 Haftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}\n✨ Frekansı keşfet: https://harmoniq-app-fawn.vercel.app`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(summaryText);
@@ -1542,18 +1543,18 @@ export const ProfileTab: React.FC<Props> = ({
   const activeProfileAvatar = draftAvatar || userProfile.avatarUrl;
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6 relative">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-4xl mx-auto w-full space-y-6 relative">
       {/* Toast Notice Banner (bottom-36 to avoid overlapping BottomNav) */}
       {toastNotice && (
-        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-zinc-950/95 border border-purple-500/50 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
-          <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-950/95 border border-purple-500/40 text-zinc-900 dark:text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
+          <Sparkles className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
           <span>{toastNotice}</span>
         </div>
       )}
       {/* =====================================================================
           1. MINIMALIST PROFILE HEADER
          ===================================================================== */}
-      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 border-b border-white/[0.06]">
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-5 border-b border-[#E4E2EC] dark:border-white/[0.06]">
         <div className="flex items-center gap-4 min-w-0">
           <div
             className="relative group cursor-pointer shrink-0"
@@ -1563,44 +1564,41 @@ export const ProfileTab: React.FC<Props> = ({
               <img
                 src={activeProfileAvatar}
                 alt={userProfile.name}
-                className="w-16 h-16 rounded-full object-cover ring-1 ring-white/15 group-hover:ring-lime-400 transition"
+                className="w-16 h-16 rounded-full object-cover ring-1 ring-zinc-300 dark:ring-white/15 group-hover:ring-purple-500 transition"
               />
             ) : (
               <div
-                className={`w-16 h-16 rounded-full bg-gradient-to-tr ${userProfile.avatarGradient} flex items-center justify-center text-white font-heading font-bold text-xl ring-1 ring-white/15 group-hover:ring-lime-400 transition`}
+                className={`w-16 h-16 rounded-full bg-gradient-to-tr ${userProfile.avatarGradient} flex items-center justify-center text-force-white font-heading font-bold text-xl ring-1 ring-white/15 group-hover:ring-purple-500 transition`}
               >
                 {userProfile.avatarSeed}
               </div>
             )}
-            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-zinc-900 border border-white/15 text-zinc-200 flex items-center justify-center group-hover:bg-lime-400 group-hover:text-zinc-950 transition">
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-zinc-900 border border-white/15 text-force-white flex items-center justify-center group-hover:bg-purple-600 transition">
               <Camera className="w-3 h-3" />
             </div>
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-heading font-bold text-white truncate">
+              <h1 className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
                 {userProfile.youtubeAccount?.name || userProfile.name}
               </h1>
               <span className="text-xs text-zinc-500 font-normal truncate">
-                {userProfile.youtubeAccount?.handle || '@yasincelebi'}
+                {userProfile.youtubeAccount?.handle || '@muziksever'}
               </span>
             </div>
 
-            {/* Trust Shield Badge & Live Location Pills */}
+            {/* Interactive Trust Shield & Location Controls */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <button
                 type="button"
                 onClick={() => setShowTrustScoreModal(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition cursor-pointer shadow-[0_0_16px_rgba(16,185,129,0.12)] group"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold transition cursor-pointer group"
                 title="Şeffaf Güven Kalkanı Detaylarını İncele"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span>🛡️ Güven Puanı: {userProfile.trustScore || 98}/100</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-medium hidden sm:inline">
-                  Doğrulanmış Dinleyici
-                </span>
-                <ChevronRight className="w-3 h-3 text-emerald-500/60 group-hover:translate-x-0.5 transition-transform" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="tabular-nums">Güven Puanı: {userProfile.trustScore || 98}/100</span>
+                <ChevronRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               <button
@@ -1609,38 +1607,36 @@ export const ProfileTab: React.FC<Props> = ({
                   setManualCityInput(userProfile.city);
                   setShowLocationModal(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 border border-white/[0.08] text-zinc-200 hover:text-white transition cursor-pointer text-xs group"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] active:scale-95 border border-[#E4E2EC] dark:border-white/[0.08] text-zinc-700 dark:text-zinc-200 transition cursor-pointer text-xs group"
                 title="Konumu anlık güncelle veya elle gir"
               >
-                <MapPin className="w-3.5 h-3.5 text-accent-theme group-hover:scale-110 transition-transform shrink-0" />
-                <span className="font-semibold text-white">{userProfile.city}</span>
-                {isAutoLocation ? (
-                  <span className="text-[10px] text-accent-theme font-medium">· Canlı GPS</span>
-                ) : (
-                  <span className="text-[10px] text-zinc-500 font-medium">· Manuel</span>
-                )}
-                <ChevronDown className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 ml-0.5" />
+                <MapPin className="w-3.5 h-3.5 text-accent-theme shrink-0" />
+                <span className="font-semibold text-zinc-900 dark:text-white">{userProfile.city}</span>
+                <span className="text-[10px] text-zinc-500 font-medium">
+                  · {isAutoLocation ? 'Canlı GPS' : 'Manuel'}
+                </span>
+                <ChevronDown className="w-3 h-3 text-zinc-500 ml-0.5" />
               </button>
             </div>
 
-            <div className="text-xs text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
               <span
                 className={`truncate max-w-[240px] text-xs ${
                   userProfile.youtubeAccount?.email || userProfile.email
-                    ? 'text-zinc-300'
-                    : 'text-amber-400/90 font-medium'
+                    ? 'text-zinc-600 dark:text-zinc-300'
+                    : 'text-amber-600 dark:text-amber-400/90 font-medium'
                 }`}
-                title={userProfile.youtubeAccount?.email || userProfile.email || 'Google / YouTube Music ile doğrulanmadı'}
+                title={userProfile.youtubeAccount?.email || userProfile.email || 'Hesap bağlanmadı'}
               >
-                {userProfile.youtubeAccount?.email || userProfile.email || 'Google / YouTube Music ile doğrulanmadı'}
+                {userProfile.youtubeAccount?.email || userProfile.email || 'Hesap bağlanmadı'}
               </span>
-              <span className="text-zinc-600">·</span>
-              <span>{syncedPlaylists.length} liste</span>
-              <span className="text-zinc-600">·</span>
-              <span>{favoriteSongs.length} favori</span>
+              <span aria-hidden="true">·</span>
+              <span className="tabular-nums">{syncedPlaylists.length} liste</span>
+              <span aria-hidden="true">·</span>
+              <span className="tabular-nums">{favoriteSongs.length} favori</span>
             </div>
 
-            <p className="text-xs text-zinc-400 mt-1.5 line-clamp-1">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-1">
               {userProfile.bio}
             </p>
           </div>
@@ -1650,134 +1646,73 @@ export const ProfileTab: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setShowSettingsModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white text-xs font-semibold transition cursor-pointer min-h-[38px] flex items-center gap-1.5 border border-white/[0.08] active:scale-95 group shadow-sm"
-            title="Ayarlar, Tema ve Senkronizasyon (Ayarlar & Hesap)"
+            className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-semibold transition cursor-pointer min-h-[40px] flex items-center gap-1.5 border border-[#E4E2EC] dark:border-white/[0.08] active:scale-95 group shadow-xs whitespace-nowrap shrink-0"
+            title="Ayarlar, Tema ve Hesap Bağlantıları"
           >
-            <Settings className="w-3.5 h-3.5 text-lime-400 group-hover:rotate-45 transition-transform" />
-            <span>⚙️ Ayarlar & Hesap</span>
+            <Settings className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:rotate-45 transition-transform" />
+            <span>Ayarlar & Hesap</span>
           </button>
 
           <button
             type="button"
             onClick={openEditProfileModal}
-            className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-zinc-200 text-xs font-medium transition cursor-pointer min-h-[38px] flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.09] text-zinc-700 dark:text-zinc-200 text-xs font-medium transition cursor-pointer min-h-[40px] flex items-center gap-1.5 border border-[#E4E2EC] dark:border-white/[0.06] whitespace-nowrap shrink-0"
           >
-            <UserIcon className="w-3.5 h-3.5 text-zinc-400" />
+            <UserIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
             <span className="hidden sm:inline">Düzenle</span>
           </button>
         </div>
       </section>
 
       {/* =====================================================================
-          2. MÜZİKAL AURA & DİNLEME REZONANSI
+          SEGMENTED SWITCHER: KÜTÜPHANEM | MÜZİK ÖZETİ
          ===================================================================== */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900/90 via-zinc-950/90 to-zinc-900/90 border border-emerald-500/25 p-5 sm:p-6 shadow-[0_12px_40px_rgba(16,185,129,0.08)] backdrop-blur-xl space-y-4">
-        {/* Subtle Ambient Aura Glow */}
-        <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold">
-                <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
-                <span>Müzikal Aura</span>
-              </span>
-              <span className="text-[11px] text-zinc-400">Canlı Akış & Dinleme İmzası</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight pt-0.5">
-              {weeklyPersona}
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-lg leading-relaxed">
-              {weeklyPersonaDesc}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowStoryCardModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95"
-              title="Müzikal Aura Hikaye Kartını Aç & Paylaş"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Aura'yı Paylaş</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 3 Aura Pillars (Vibe Metrics) */}
-        <div className="grid grid-cols-3 gap-2.5 pt-1 relative z-10">
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col justify-between">
-            <div className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-400" />
-              <span>Dinamik Enerji</span>
-            </div>
-            <div className="text-lg font-heading font-black text-amber-300 pt-1">
-              %94
-            </div>
-            <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
-              Yüksek ritim & rifler
-            </div>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col justify-between">
-            <div className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <Activity className="w-3 h-3 text-cyan-400" />
-              <span>Melankolik Doku</span>
-            </div>
-            <div className="text-lg font-heading font-black text-cyan-300 pt-1">
-              %88
-            </div>
-            <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
-              Derin sözler & indie
-            </div>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col justify-between">
-            <div className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Frekans Uyumu</span>
-            </div>
-            <div className="text-lg font-heading font-black text-emerald-300 pt-1">
-              %98
-            </div>
-            <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
-              Doğrulanmış zevk
-            </div>
-          </div>
-        </div>
-
-        {/* Acoustic Vibe Tags */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 relative z-10">
-          <span className="text-[11px] text-zinc-500 font-medium mr-1">Tınılar:</span>
-          {[topGenreName, 'Analog Sound', 'Gece Akışı', 'Yoğun Gitar Rifleri', 'Şiirsel Lirikler'].map((tag, idx) => (
-            <span
-              key={idx}
-              className="text-[10px] px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-zinc-300 font-medium"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      </section>
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] max-w-sm">
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic(10);
+            setProfileSection('library');
+          }}
+          className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+            profileSection === 'library'
+              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white shadow-sm'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          Kütüphanem
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic(10);
+            setProfileSection('insights');
+          }}
+          className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+            profileSection === 'insights'
+              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white shadow-sm'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          Müzik Özeti & Aura
+        </button>
+      </div>
 
       {/* =====================================================================
-          3. 📌 İMZA PARÇALARIM (TOP 4 FREKANS VİTRİNİ)
+          2. İMZA PARÇALARIM (TOP 4 VİTRİN) — SHOWN IN KÜTÜPHANEM TAB
          ===================================================================== */}
+      {profileSection === 'library' && (
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm sm:text-base font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
-              📌 İmza Parçalarım (Top 4 Vitrin)
-            </h2>
-          </div>
+          <h2 className="text-sm sm:text-base font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
+            İmza Parçalarım (Top 4)
+          </h2>
           <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] font-medium">
             Dokun ve anında çal
           </span>
         </div>
 
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {displayedTop4Tracks.map((track, idx) => {
             const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
             const rank = idx + 1;
@@ -1804,11 +1739,11 @@ export const ProfileTab: React.FC<Props> = ({
                     setEditingTop4Slot(idx);
                     setTop4SearchQuery('');
                   }}
-                  className="absolute top-2 left-2 w-6 h-6 rounded-lg bg-black/60 hover:bg-purple-600 text-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
+                  className="absolute top-2 left-2 w-6 h-6 rounded-lg bg-black/60 hover:bg-purple-600 text-force-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
                   title={`#${rank} Vitrin Parçasını Değiştir`}
                   aria-label={`Vitrin ${rank} parçasını değiştir`}
                 >
-                  <Pencil className="w-3 h-3 text-white" />
+                  <Pencil className="w-3 h-3 text-force-white" />
                 </button>
 
                 {track.coverUrl ? (
@@ -1833,7 +1768,7 @@ export const ProfileTab: React.FC<Props> = ({
                   className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold shadow-md ${
                     rank === 1
                       ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-black/70 backdrop-blur-md text-white border border-white/15'
+                      : 'bg-black/70 backdrop-blur-md text-force-white border border-white/15'
                   }`}
                 >
                   #{rank}
@@ -1845,17 +1780,17 @@ export const ProfileTab: React.FC<Props> = ({
                     isCurrentlyPlaying ? 'opacity-100 bg-black/25' : 'opacity-0 group-hover:opacity-100 bg-black/30'
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white flex items-center justify-center shadow-lg">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white flex items-center justify-center shadow-lg">
                     <Play className="w-4 h-4 fill-current ml-0.5" />
                   </div>
                 </div>
 
                 {/* Bottom Song Title & Artist */}
                 <div className="absolute bottom-2 left-2 right-2 z-10">
-                  <div className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">
+                  <div className="text-[11px] font-bold text-force-white leading-tight line-clamp-2 drop-shadow">
                     {track.title}
                   </div>
-                  <div className="text-[9px] text-zinc-300 truncate mt-0.5">
+                  <div className="text-[9px] text-zinc-200 truncate mt-0.5">
                     {track.artist}
                   </div>
                 </div>
@@ -1864,38 +1799,43 @@ export const ProfileTab: React.FC<Props> = ({
           })}
         </div>
       </section>
+      )}
 
       {/* =====================================================================
-          4. HAFTALIK MÜZİK ÖZETİ (WEEKLY MUSIC PULSE & RECAP)
+          3. UNIFIED MÜZİK ÖZETİ & AURA — SHOWN IN MÜZİK ÖZETİ TAB (ZERO DUPLICATION)
          ===================================================================== */}
-      <section className="rounded-3xl bg-zinc-950/70 border border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl">
-        {/* Ambient Top Glow Accent */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-lime-400/[0.08] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-cyan-400/[0.06] rounded-full blur-3xl pointer-events-none" />
-
+      {profileSection === 'insights' && (
+      <section className="rounded-3xl bg-white/95 dark:bg-zinc-950/75 border border-[#E4E2EC] dark:border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-400">
-              <span className="text-zinc-200 font-medium">Haftalık Müzik Nabzı</span>
-              <span>·</span>
-              <span>19 – 25 Ekim</span>
-              <span>·</span>
-              <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-zinc-400" />
-                <span>{weeklyPersona}</span>
-              </span>
+            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Müzikal Aura</span>
+              <span aria-hidden="true">·</span>
+              <span>Haftalık Müzik Özeti</span>
+              <span aria-hidden="true">·</span>
+              <span>{topGenreName}</span>
             </div>
-            <h2 className="text-xl font-heading font-bold text-white tracking-tight pt-1">
-              Haftalık Müzik Özeti
+            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight pt-0.5">
+              {weeklyPersona}
             </h2>
-            <p className="text-xs text-zinc-400 max-w-lg leading-relaxed">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
               {weeklyPersonaDesc}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowStoryCardModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.12] text-zinc-800 dark:text-zinc-200 border border-[#E4E2EC] dark:border-white/[0.08] transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95"
+              title="Müzikal Aura Hikaye Kartını Aç & Paylaş"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <span>Aura'yı Paylaş</span>
+            </button>
+
             {/* Filter Toggle */}
-            <div className="p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-1 text-xs">
+            <div className="p-1 rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-[#E4E2EC] dark:border-white/[0.08] flex items-center gap-1 text-xs">
               <button
                 type="button"
                 onClick={() => setWeeklyFilter('all')}
@@ -2185,10 +2125,12 @@ export const ProfileTab: React.FC<Props> = ({
           </div>
         )}
       </section>
+      )}
 
       {/* =====================================================================
-          5. KİŞİSEL MÜZİK KÜTÜPHANEM (BORDERLESS CLEAN LIST ARCHITECTURE)
+          4. KİŞİSEL MÜZİK KÜTÜPHANEM (SHOWN IN KÜTÜPHANEM TAB)
          ===================================================================== */}
+      {profileSection === 'library' && (
       <section className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -2273,27 +2215,27 @@ export const ProfileTab: React.FC<Props> = ({
           return (
             <div className="space-y-4">
               {syncedPlaylists.length === 0 ? (
-                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white/[0.04] to-purple-950/[0.08] border border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-white/[0.04] dark:via-white/[0.02] dark:to-purple-950/[0.12] border border-[#E4E2EC] dark:border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-600/20">
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 dark:from-purple-600/30 dark:to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-lg shadow-purple-600/20">
                     <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
                   </div>
                   <div className="space-y-1.5 relative z-10">
-                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
                       Henüz kütüphanen senkronize edilmedi
                     </h3>
-                    <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      YouTube Music çalma listelerini bağlayarak frekansını eşle veya popüler koleksiyonla hemen başla.
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+                      YouTube Music çalma listelerini bağlayarak frekansını eşle veya örnek koleksiyonla hemen başla.
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
                     <button
                       type="button"
                       onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-[#E4E2EC] dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
                     >
-                      <Link2 className="w-4 h-4 text-purple-400" />
-                      <span>🔗 YouTube Music Linki / Hesabı Bağla</span>
+                      <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>🔗 YouTube Music Hesabı / Linki Bağla</span>
                     </button>
                     <button
                       type="button"
@@ -2301,7 +2243,7 @@ export const ProfileTab: React.FC<Props> = ({
                       className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>🔥 Popüler Rock & Indie Koleksiyonunu Yükle</span>
+                      <span>🔥 Örnek Rock & Indie Koleksiyonu Yükle</span>
                     </button>
                   </div>
                 </div>
@@ -2399,27 +2341,27 @@ export const ProfileTab: React.FC<Props> = ({
               )}
 
               {favoriteSongs.length === 0 ? (
-                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white/[0.04] to-purple-950/[0.08] border border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-white/[0.04] dark:via-white/[0.02] dark:to-purple-950/[0.12] border border-[#E4E2EC] dark:border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-600/20">
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 dark:from-purple-600/30 dark:to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-lg shadow-purple-600/20">
                     <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
                   </div>
                   <div className="space-y-1.5 relative z-10">
-                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                      Henüz favori parçaların senkronize edilmedi
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
+                      Henüz kütüphanen senkronize edilmedi
                     </h3>
-                    <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      YouTube Music'te beğendiğin parçaları aktararak müzik kimliğini derinleştir veya popüler koleksiyonu tek tıkla yükle.
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+                      YouTube Music'te beğendiğin parçaları aktararak müzik kimliğini derinleştir veya örnek koleksiyonu tek tıkla yükle.
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
                     <button
                       type="button"
                       onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-[#E4E2EC] dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
                     >
-                      <Link2 className="w-4 h-4 text-purple-400" />
-                      <span>🔗 YouTube Music Linki / Hesabı Bağla</span>
+                      <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>🔗 YouTube Music Hesabı / Linki Bağla</span>
                     </button>
                     <button
                       type="button"
@@ -2427,7 +2369,7 @@ export const ProfileTab: React.FC<Props> = ({
                       className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>🔥 Popüler Rock & Indie Koleksiyonunu Yükle</span>
+                      <span>🔥 Örnek Rock & Indie Koleksiyonu Yükle</span>
                     </button>
                   </div>
                 </div>
@@ -2652,104 +2594,6 @@ export const ProfileTab: React.FC<Props> = ({
           </div>
         )}
       </section>
-
-      {/* =====================================================================
-          4. ARKADAŞLARIM & İSTEKLER (CLEAN BORDERLESS ROWS)
-         ===================================================================== */}
-      {(friendRequests.length > 0 || pendingSentUsers.length > 0 || friendsList.length > 0) && (
-        <section className="space-y-4 pt-4 border-t border-white/[0.06]">
-          <h3 className="text-sm font-heading font-semibold text-white">
-            Sosyal Çevre & Arkadaşlar ({friendsList.length})
-          </h3>
-
-          {friendRequests.length > 0 && (
-            <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-              {friendRequests.map((req) => (
-                <div key={req.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-tr ${req.fromUser.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
-                      {req.fromUser.avatarSeed}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-white truncate">
-                        {req.fromUser.name} · <span className="text-lime-400 font-normal">İstek gönderdi</span>
-                      </div>
-                      <div className="text-xs text-zinc-500 truncate">
-                        {req.songContext || req.fromUser.city}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {onAcceptFriendRequest && (
-                      <button
-                        onClick={() => onAcceptFriendRequest(req.id)}
-                        className="px-3 py-1.5 rounded-xl bg-lime-400 text-zinc-950 text-xs font-semibold cursor-pointer"
-                      >
-                        Kabul Et
-                      </button>
-                    )}
-                    {onDeclineFriendRequest && (
-                      <button
-                        onClick={() => onDeclineFriendRequest(req.id)}
-                        className="p-1.5 text-zinc-500 hover:text-white cursor-pointer"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {friendsList.length > 0 && (
-            <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-              {friendsList.map((friend) => (
-                <div key={friend.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-tr ${friend.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
-                      {friend.avatarSeed}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-white truncate">
-                        {friend.name}
-                      </div>
-                      <div className="text-xs text-zinc-500 truncate">
-                        {friend.city} ·{' '}
-                        {friend.platform === 'youtube_music'
-                          ? 'YouTube Music'
-                          : friend.platform === 'apple_music'
-                          ? 'Apple Music'
-                          : 'Spotify'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    {onStartChatWithFriend && (
-                      <button
-                        onClick={() => onStartChatWithFriend(friend)}
-                        className="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span>Mesaj</span>
-                      </button>
-                    )}
-                    {onToggleFriend && (
-                      <button
-                        onClick={() => onToggleFriend(friend)}
-                        className="p-2 text-zinc-500 hover:text-rose-400 transition cursor-pointer"
-                        title="Arkadaşlıktan Çıkar"
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
       )}
 
       {/* =====================================================================
@@ -3020,7 +2864,7 @@ export const ProfileTab: React.FC<Props> = ({
                     type="text"
                     value={tempHandle}
                     onChange={(e) => setTempHandle(e.target.value)}
-                    placeholder="@yasincelebi"
+                    placeholder="@kullaniciadi"
                     className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
                   />
                 </div>
@@ -3601,10 +3445,10 @@ export const ProfileTab: React.FC<Props> = ({
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-white flex items-center gap-2">
                     <Youtube className="w-4 h-4 text-rose-500" />
-                    <span>Platform Senkronizasyonu & Hesaplar</span>
+                    <span>Google Hesabı & Müzik Senkronizasyonu</span>
                   </h4>
                   <p className="text-[11px] text-zinc-400">
-                    YouTube Music, Spotify ve Apple Music katalog & dinleme uyumu
+                    Tek Google oturumuyla canlı sohbet, arkadaşlık ve YouTube Music listelerini senkronize et
                   </p>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -3919,7 +3763,7 @@ export const ProfileTab: React.FC<Props> = ({
                       {userProfile.youtubeAccount?.name || userProfile.name}
                     </div>
                     <div className="text-[10px] text-zinc-400 truncate">
-                      {userProfile.youtubeAccount?.handle || '@yasincelebi'}
+                      {userProfile.youtubeAccount?.handle || '@muziksever'}
                     </div>
                     <div className="inline-flex items-center gap-1 mt-0.5 text-[9px] font-semibold text-emerald-400">
                       <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />

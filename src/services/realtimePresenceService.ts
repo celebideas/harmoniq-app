@@ -12,7 +12,9 @@ export interface PresencePayload {
   currentSecond: number;
   trustScore: number;
   statusBubble?: string;
+  statusNote?: string;
   lastSeen: number;
+  isRealUser: true;
 }
 
 const PRESENCE_TTL_MS = 45000; // 45 seconds timeout
@@ -58,6 +60,7 @@ class RealtimePresenceService {
     this.listeners.set(payload.userId, {
       ...payload,
       lastSeen: payload.lastSeen || Date.now(),
+      isRealUser: true,
     });
     this.notifySubscribers();
   }
@@ -90,6 +93,7 @@ class RealtimePresenceService {
     currentSecond: number;
     trustScore: number;
     statusBubble?: string;
+    statusNote?: string;
   }) {
     this.currentUserId = payload.userId;
     this.currentSongFilter = payload.currentSong.id;
@@ -105,8 +109,10 @@ class RealtimePresenceService {
       currentSongTitle: payload.currentSong.title,
       currentSecond: payload.currentSecond,
       trustScore: payload.trustScore || 99,
-      statusBubble: payload.statusBubble,
+      statusBubble: payload.statusBubble || payload.statusNote,
+      statusNote: payload.statusNote || payload.statusBubble,
       lastSeen: Date.now(),
+      isRealUser: true,
     };
 
     this.broadcastPulse();

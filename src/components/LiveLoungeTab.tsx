@@ -7,11 +7,9 @@ import {
   Search,
   Loader2,
   X,
-  Music,
   Youtube,
   Radio,
   ExternalLink,
-  ArrowRight,
   MapPin,
   Clock,
   Compass,
@@ -25,10 +23,9 @@ import {
   MessageCircle,
   Send,
 } from 'lucide-react';
-import { Song, LoungeUser, PlatformType, PrivacyMode, SongPrediction } from '../types';
+import { Song, LoungeUser, PlatformType, PrivacyMode } from '../types';
 import { TimelineTrack } from './TimelineTrack';
 import { ProximityDensityMap, DistanceFilter } from './ProximityDensityMap';
-import { getSongPredictions, resolveMusicLinkOrQuery } from '../services/musicResolver';
 import { ytController } from '../services/youtubePlayerController';
 import { triggerHaptic } from '../services/themeService';
 
@@ -196,17 +193,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
   const [distanceFilter, setDistanceFilter] = useState<DistanceFilter>('all');
   const [loungeViewMode, setLoungeViewMode] = useState<'timeline' | 'map'>('timeline');
 
-  // Search & Prediction State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [predictions, setPredictions] = useState<SongPrediction[]>([]);
-  const [showPredictions, setShowPredictions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
   // Video / Klip Mode Toggle in Song Console
   const [showKlipMode, setShowKlipMode] = useState(false);
-
-  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const displayUsers =
     privacyMode === 'friends_only'
@@ -219,79 +207,6 @@ export const LiveLoungeTab: React.FC<Props> = ({
     if (distanceFilter === 'city') return u.distanceKm <= 15.0;
     return true;
   });
-
-  // Close prediction dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowPredictions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Handle live prediction queries as user types
-  useEffect(() => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed || trimmed.length < 2) {
-      setPredictions([]);
-      setShowPredictions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const results = await getSongPredictions(trimmed, allowExplicit);
-        setPredictions(results);
-        setShowPredictions(results.length > 0);
-      } catch {
-        // graceful
-      }
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, allowExplicit]);
-
-  const handleSelectPrediction = async (prediction: SongPrediction) => {
-    setIsSearching(true);
-    setSearchError(null);
-    setShowPredictions(false);
-
-    try {
-      const query = prediction.isArtistProfile
-        ? prediction.title
-        : `${prediction.artist} ${prediction.title}`;
-
-      const resolved = await resolveMusicLinkOrQuery(query, allowExplicit);
-      onSelectSong(resolved);
-      setSearchQuery('');
-      setIsSearching(false);
-    } catch (err: any) {
-      setIsSearching(false);
-      setSearchError(err?.message || 'Şarkı bağlanamadı.');
-    }
-  };
-
-  const handleSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-
-    setIsSearching(true);
-    setSearchError(null);
-    setShowPredictions(false);
-
-    try {
-      const resolved = await resolveMusicLinkOrQuery(query, allowExplicit);
-      onSelectSong(resolved);
-      setSearchQuery('');
-      setIsSearching(false);
-    } catch (err: any) {
-      setIsSearching(false);
-      setSearchError(err?.message || 'Şarkı veya link bulunamadı.');
-    }
-  };
 
   const handleSaveStatus = (e: React.FormEvent) => {
     e.preventDefault();
@@ -651,31 +566,44 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 {currentSong.artist} • {currentSong.album}
               </p>
 
-              {/* Side-by-side 2 non-truncated badges */}
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                <span className="bg-purple-500/15 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-md text-[11px] font-semibold">
+              {/* Clean typographic metadata (genre & active listener count) */}
+              <div className="flex items-center gap-2 mt-1.5 text-[11px] font-medium">
+                <span className="text-purple-600 dark:text-purple-300 truncate">
                   {(currentSong.genre || 'Türkçe Rock').split(/[·,\/]/)[0].trim() || 'Türkçe Rock'}
                 </span>
-                <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[11px] font-semibold">
-                  🔥 {distanceFilteredUsers.length + 1} Dinleyici Rayda
+                <span className="text-zinc-400 dark:text-zinc-600" aria-hidden="true">·</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums whitespace-nowrap">
+                  {distanceFilteredUsers.length + 1} dinleyici rayda
                 </span>
               </div>
             </div>
 
-            {/* Right: Play/Pause Button (w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-500) */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* Right: Quick Song Picker + Play/Pause Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(12);
+                  onOpenSongPicker();
+                }}
+                className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.12] border border-[#E4E2EC] dark:border-white/[0.08] text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                title="Şarkı veya oda değiştir"
+                aria-label="Şarkı ara veya değiştir"
+              >
+                <Search className="w-4 h-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic(20);
                   onTogglePlay();
                 }}
-                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg flex items-center justify-center transition active:scale-95 cursor-pointer"
+                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-500 text-force-white shadow-lg flex items-center justify-center transition active:scale-95 cursor-pointer"
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
                 aria-label={isPlaying ? 'Şarkıyı duraklat' : 'Şarkıyı oynat'}
               >
                 {isAudioLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  <Loader2 className="w-5 h-5 animate-spin text-force-white" />
                 ) : isPlaying ? (
                   <Pause className="w-5 h-5 fill-current" />
                 ) : (
@@ -699,120 +627,6 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </div>
         </div>
       </section>
-
-      {/* =========================================================================
-          2. COMPACT SEARCH & LINK BAR (INSTANT PREDICTIONS)
-         ========================================================================= */}
-      <div ref={searchContainerRef} className="relative z-30 space-y-1.5">
-        <form onSubmit={handleSearchSubmit} className="relative">
-          <div className="relative flex items-center">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (predictions.length > 0) setShowPredictions(true);
-              }}
-              placeholder="Şarkı, sanatçı veya YouTube Music linki ara..."
-              className="w-full pl-10 pr-10 py-2.5 bg-white/[0.03] border border-white/[0.07] focus:border-accent-theme/40 rounded-xl sm:rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none transition font-medium backdrop-blur-xl"
-            />
-            <div className="absolute right-2.5 flex items-center">
-              {isSearching ? (
-                <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
-              ) : searchQuery.trim() ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setShowPredictions(false);
-                  }}
-                  className="p-1 rounded-lg text-zinc-400 hover:text-white transition active:scale-95 cursor-pointer"
-                  aria-label="Aramayı temizle"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </form>
-
-        {searchError && (
-          <div className="text-xs text-rose-400 px-2">
-            {searchError}
-          </div>
-        )}
-
-        {/* Predictions Dropdown */}
-        {showPredictions && predictions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#0C0C0E]/95 border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-2xl max-h-72 overflow-y-auto no-scrollbar divide-y divide-white/[0.05]">
-            {predictions.map((pred) => {
-              if (pred.isArtistProfile) {
-                return (
-                  <div
-                    key={pred.id}
-                    onClick={() => handleSelectPrediction(pred)}
-                    className="p-3 hover:bg-white/[0.04] cursor-pointer transition flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-accent-theme text-zinc-950 flex items-center justify-center font-heading font-bold text-xs shrink-0">
-                        {pred.title.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-heading font-semibold text-white group-hover:text-accent-theme transition truncate">
-                            {pred.title}
-                          </span>
-                          <span className="text-[10px] text-zinc-500">· Sanatçı</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-500 truncate mt-0.5">
-                          {pred.artist}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-accent-theme text-zinc-950 shrink-0 flex items-center gap-1">
-                      <span>Radyo</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  key={pred.id}
-                  onClick={() => handleSelectPrediction(pred)}
-                  className="p-2.5 sm:p-3 hover:bg-white/[0.04] cursor-pointer transition flex items-center justify-between gap-3 group"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 shrink-0 flex items-center justify-center">
-                      {pred.coverUrl ? (
-                        <img src={pred.coverUrl} alt={pred.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <Music className="w-4 h-4 text-zinc-500" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium text-white group-hover:text-accent-theme transition truncate">
-                        {pred.title}
-                      </div>
-                      <div className="text-[11px] text-zinc-500 truncate mt-0.5">
-                        {pred.artist} {pred.album ? `· ${pred.album}` : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  {pred.durationSeconds && (
-                    <span className="text-[11px] text-zinc-500 tabular-nums shrink-0">
-                      {formatTime(pred.durationSeconds)}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       {/* =========================================================================
           3. LIVE PRESENCE, DISTANCE FILTER & VISUALIZATION LAYER
@@ -1147,16 +961,31 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     <div
                       key={u.id}
                       onClick={() => onSelectUser(u)}
-                      title={`${u.name} (${u.distanceKm} km)`}
-                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${u.avatarGradient} ring-2 ring-[#000000] flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform`}
+                      title={`${u.name}${u.isRealUser ? ' · 🟢 GERÇEK CANLI' : ''} (${u.distanceKm} km)`}
+                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform overflow-hidden ${
+                        u.isRealUser
+                          ? 'ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.75)] z-10'
+                          : 'ring-2 ring-[#000000]'
+                      }`}
                     >
-                      {u.avatarSeed}
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
+                      ) : (
+                        u.avatarSeed
+                      )}
                     </div>
                   ))}
                 </div>
-                <span className="text-xs text-zinc-400 truncate">
-                  {distanceFilteredUsers.length} kişi şu anda bu odada dinliyor
-                </span>
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <span className="text-xs text-zinc-400 truncate">
+                    {distanceFilteredUsers.length} kişi şu anda bu odada dinliyor
+                  </span>
+                  {distanceFilteredUsers.some((u) => u.isRealUser) && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/45 text-emerald-400 text-[10px] font-extrabold tracking-wide shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
+                      🟢 GERÇEK CANLI
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Auto-Radio Toggle */}

@@ -14,8 +14,8 @@ export const SYNCED_PLAYLISTS_PRESETS: UserPlaylist[] = [];
 
 export const DEFAULT_PERSONAL_TASTE: PersonalMusicTaste = {
   syncedAt: 'Henüz Senkronize Edilmedi',
-  accountName: 'Yasin Çelebi',
-  accountHandle: '@yasincelebi',
+  accountName: 'Müzik Kaşifi',
+  accountHandle: '@muziksever',
   totalPlaylistsCount: 0,
   totalTracksAnalyzed: 0,
   topArtists: [],
@@ -111,8 +111,8 @@ export function derivePersonalTasteFromData(
 
   return {
     syncedAt: allTracks.length > 0 || favoriteArtists.length > 0 ? 'YouTube Music ile Senkronize' : 'Henüz Senkronize Edilmedi',
-    accountName: accountName || 'Yasin Çelebi',
-    accountHandle: accountHandle || '@yasincelebi',
+    accountName: accountName || 'Müzik Kaşifi',
+    accountHandle: accountHandle || '@muziksever',
     totalPlaylistsCount: playlists.length,
     totalTracksAnalyzed: allTracks.length,
     topArtists: sortedArtists.slice(0, 15),

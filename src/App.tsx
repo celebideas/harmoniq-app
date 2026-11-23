@@ -57,6 +57,14 @@ import {
   fetchAllUserYouTubeMusicData,
   initAuth,
   getCachedAccessToken,
+  getPersistentYouTubeAccount,
+  savePersistentYouTubeAccount,
+  clearPersistentYouTubeAccount,
+  getPersistentYouTubeLibrary,
+  savePersistentYouTubeLibrary,
+  registerSyncedPlaylistIds,
+  extractYouTubePlaylistId,
+  fetchSilentPlaylistUpdates,
 } from './services/googleAuthService';
 import {
   PublicProfileDoc,
@@ -192,6 +200,10 @@ export default function App() {
 
   const [syncedPlaylists, setSyncedPlaylists] = useState<UserPlaylist[]>(() => {
     if (typeof window !== 'undefined') {
+      const persistedLib = getPersistentYouTubeLibrary();
+      if (persistedLib && persistedLib.playlists.length > 0) {
+        return persistedLib.playlists.filter((p: UserPlaylist) => !isTemplatePlaylist(p.id));
+      }
       const saved = localStorage.getItem('harmoniq_user_playlists');
       if (saved) {
         try {
@@ -209,6 +221,10 @@ export default function App() {
 
   const [favoriteSongs, setFavoriteSongs] = useState<Song[]>(() => {
     if (typeof window !== 'undefined') {
+      const persistedLib = getPersistentYouTubeLibrary();
+      if (persistedLib && persistedLib.favoriteSongs.length > 0) {
+        return persistedLib.favoriteSongs.filter((s: Song) => !isTemplateSong(s.id));
+      }
       const saved = localStorage.getItem('harmoniq_user_favorite_songs');
       if (saved) {
         try {
@@ -226,6 +242,10 @@ export default function App() {
 
   const [favoriteArtists, setFavoriteArtists] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
+      const persistedLib = getPersistentYouTubeLibrary();
+      if (persistedLib && persistedLib.favoriteArtists.length > 0) {
+        return cleanNonMusicArtists(persistedLib.favoriteArtists);
+      }
       const saved = localStorage.getItem('harmoniq_user_favorite_artists');
       if (saved) {
         try {
@@ -329,12 +349,24 @@ export default function App() {
 
   const [isYouTubeConnected, setIsYouTubeConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('harmoniq_youtube_connected') === 'true';
+      const persisted = getPersistentYouTubeAccount();
+      return Boolean(persisted) || localStorage.getItem('harmoniq_youtube_connected') === 'true';
     }
     return false;
   });
+  const [silentSyncNotice, setSilentSyncNotice] = useState<string | null>(null);
+  const silentSyncExecutedRef = useRef<boolean>(false);
+
   const [youtubeAccount, setYoutubeAccount] = useState<{ email: string; handle: string; name: string }>(() => {
     if (typeof window !== 'undefined') {
+      const persisted = getPersistentYouTubeAccount();
+      if (persisted) {
+        return {
+          email: persisted.email || '',
+          handle: persisted.handle || '@muziksever',
+          name: persisted.name || 'Müzik Kaşifi',
+        };
+      }
       const saved = localStorage.getItem('harmoniq_user_account');
       if (saved) {
         try {
@@ -536,7 +568,6 @@ export default function App() {
   const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
   const [showYouTubeConnectModal, setShowYouTubeConnectModal] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isMobileFrameView, setIsMobileFrameView] = useState<boolean>(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseAuthUser | null>(null);
   const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState<boolean>(false);
   const [hasActiveYouTubeToken, setHasActiveYouTubeToken] = useState<boolean>(false);
@@ -666,7 +697,8 @@ export default function App() {
       },
       onSeek: (sec) => handleSeekSecond(sec),
     });
-    soundEngine.updateMediaSession(currentSong);
+    soundEngine.updateMediaSession(currentSong, isPlaying);
+    soundEngine.syncMediaSessionPlaybackState(isPlaying);
   }, [currentSong, isPlaying, activeQueue]);
 
   // Real-time High Compatibility Toast Detector for Live Lounge listeners:
@@ -975,8 +1007,8 @@ export default function App() {
           }
         }
 
-        const name = userName || googleUser?.name || 'Yasin Çelebi';
-        const handle = userEmail ? `@${userEmail.split('@')[0]}` : '@yasincelebi';
+        const name = userName || googleUser?.name || youtubeAccount.name || 'Müzik Kaşifi';
+        const handle = userEmail ? `@${userEmail.split('@')[0]}` : youtubeAccount.handle || '@muziksever';
         const updatedTaste = derivePersonalTasteFromData(
           name,
           handle,
@@ -986,6 +1018,19 @@ export default function App() {
         );
         setPersonalTaste(updatedTaste);
         setIsTasteSynced(true);
+        setIsYouTubeConnected(true);
+
+        savePersistentYouTubeLibrary({
+          playlists: finalPlaylists,
+          favoriteSongs: finalFavoriteSongs,
+          favoriteArtists: finalFavoriteArtists,
+        });
+        const ytIds = finalPlaylists
+          .map((p) => extractYouTubePlaylistId(p.id))
+          .filter((id): id is string => Boolean(id));
+        if (ytIds.length > 0) {
+          registerSyncedPlaylistIds(ytIds);
+        }
 
         const allArtists = [
           ...finalFavoriteArtists,
@@ -1034,8 +1079,8 @@ export default function App() {
     [googleUser, syncedPlaylists, favoriteSongs, favoriteArtists]
   );
 
-  // Google OAuth Sign In & Profile Sync (Detailed try-catch & descriptive user-facing error messages)
-  const handleGoogleSignIn = async () => {
+  // Google OAuth Sign In & Profile Sync (Detailed try-catch & returns errorCode for Vercel/popup dual-mode fallback)
+  const handleGoogleSignIn = async (): Promise<{ errorCode?: string; success?: boolean }> => {
     setIsGoogleLoading(true);
     setSyncDiagnosticError(null);
     setToastMessage('Google hesabı bağlanıyor...');
@@ -1044,6 +1089,7 @@ export default function App() {
       if (res && res.user) {
         const authedUser = res.user;
         setIsGoogleAuthenticated(true);
+        setIsYouTubeConnected(true);
         setHasActiveYouTubeToken(Boolean(res.accessToken));
         const userData = {
           name: authedUser.displayName || 'Google Kullanıcısı',
@@ -1055,14 +1101,21 @@ export default function App() {
         if (authedUser.photoURL) {
           handleUpdateAvatar(authedUser.photoURL);
         }
-        if (authedUser.displayName) {
-          setYoutubeAccount((prev) => ({
-            ...prev,
-            name: authedUser.displayName || prev.name,
-            email: authedUser.email || prev.email,
-            handle: authedUser.email ? `@${authedUser.email.split('@')[0]}` : prev.handle,
-          }));
-        }
+        const nextHandle = authedUser.email ? `@${authedUser.email.split('@')[0]}` : youtubeAccount.handle;
+        setYoutubeAccount((prev) => ({
+          ...prev,
+          name: authedUser.displayName || prev.name,
+          email: authedUser.email || prev.email,
+          handle: nextHandle,
+        }));
+        savePersistentYouTubeAccount({
+          name: userData.name,
+          email: userData.email,
+          avatar: userData.photoUrl,
+          handle: nextHandle,
+          channelId: authedUser.uid,
+          authMode: 'oauth',
+        });
 
         if (res.accessToken) {
           await syncFromYouTubeAccessToken(res.accessToken, userData.name, userData.email);
@@ -1073,26 +1126,78 @@ export default function App() {
           setSyncDiagnosticError(errMsg);
           setToastMessage(errMsg);
         }
+        return { success: true };
       } else {
-        const errMsg =
-          res?.userFacingError ||
-          'Google OAuth bağlantısı tamamlanamadı. Hata 403 (Test Modu) gördüyseniz aşağıdaki rehberden hesabınızı yetkilendirebilir veya direkt liste linki yapıştırabilirsiniz.';
-        setSyncDiagnosticError(errMsg);
-        setToastMessage(errMsg);
+        const errorCode = res?.errorCode;
+        if (errorCode === 'auth/unauthorized-domain' || errorCode === 'auth/popup-blocked') {
+          setToastMessage('Kalıcı YouTube Kanal & Liste bağlantısı açıldı.');
+        } else {
+          const errMsg =
+            res?.userFacingError ||
+            'Google OAuth bağlantısı tamamlanamadı. Kanal adı veya çalma listesi linkiyle kalıcı bağlanabilirsiniz.';
+          setSyncDiagnosticError(errMsg);
+          setToastMessage(errMsg);
+        }
+        return { errorCode, success: false };
       }
     } catch (err: any) {
+      const code = err?.code;
       const errMsg = `Google oturumu açılırken beklenmeyen hata: ${err?.message || 'Lütfen tekrar deneyin.'}`;
       console.info('[Harmoniq Sync Diagnostic] Exception in handleGoogleSignIn:', {
         timestamp: new Date().toISOString(),
-        code: err?.code,
+        code,
         message: err?.message,
       });
       setSyncDiagnosticError(errMsg);
       setToastMessage(errMsg);
+      return { errorCode: code, success: false };
     } finally {
       setIsGoogleLoading(false);
-      setTimeout(() => setToastMessage(null), 5000);
+      setTimeout(() => setToastMessage(null), 4500);
     }
+  };
+
+  // Dual-mode persistent YouTube / YT Music connection via @handle and/or playlist URL (works seamlessly on Vercel)
+  const handlePersistentChannelConnect = async (data: {
+    name?: string;
+    handle: string;
+    playlistUrl?: string;
+  }): Promise<boolean> => {
+    const cleanHandle = data.handle.startsWith('@') ? data.handle : `@${data.handle}`;
+    const displayName =
+      data.name ||
+      (youtubeAccount.name && youtubeAccount.name !== 'Müzik Kaşifi'
+        ? youtubeAccount.name
+        : cleanHandle.replace(/^@/, ''));
+
+    const extractedListId = data.playlistUrl ? extractYouTubePlaylistId(data.playlistUrl) : null;
+
+    savePersistentYouTubeAccount({
+      name: displayName,
+      email: youtubeAccount.email || '',
+      avatar: userAvatarUrl || undefined,
+      handle: cleanHandle,
+      syncedPlaylistIds: extractedListId ? [extractedListId] : [],
+      authMode: 'channel_link',
+    });
+
+    setYoutubeAccount((prev) => ({
+      ...prev,
+      name: displayName,
+      handle: cleanHandle,
+    }));
+    setIsYouTubeConnected(true);
+    setIsTasteSynced(true);
+
+    if (data.playlistUrl) {
+      await handleImportPlaylistUrl(data.playlistUrl);
+    } else if (cleanHandle) {
+      await handleImportPlaylistUrl(cleanHandle);
+    }
+
+    setToastMessage(`✓ ${cleanHandle} kalıcı olarak bağlandı! Kütüphanen otomatik güncel kalacak.`);
+    setTimeout(() => setToastMessage(null), 4000);
+    return true;
   };
 
   // Automated background sync: updates playlists, taste and room compatibility periodically
@@ -1125,8 +1230,8 @@ export default function App() {
         }
 
         const updatedTaste = derivePersonalTasteFromData(
-          googleUser?.name || 'Yasin Çelebi',
-          googleUser?.email ? `@${googleUser.email.split('@')[0]}` : '@yasincelebi',
+          googleUser?.name || youtubeAccount.name || 'Müzik Kaşifi',
+          googleUser?.email ? `@${googleUser.email.split('@')[0]}` : youtubeAccount.handle || '@muziksever',
           ytData.playlists.length > 0 ? ytData.playlists : syncedPlaylists,
           ytData.favoriteSongs.length > 0 ? ytData.favoriteSongs : favoriteSongs,
           ytData.favoriteArtists.length > 0 ? ytData.favoriteArtists : favoriteArtists
@@ -1205,6 +1310,82 @@ export default function App() {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [autoSyncUserData]);
+
+  // Silent OAuth-free background auto-sync on app mount:
+  // Checks saved syncedPlaylistIds via /api/youtube-playlist without EVER prompting a Google popup
+  useEffect(() => {
+    if (silentSyncExecutedRef.current) return;
+    silentSyncExecutedRef.current = true;
+
+    const persistedAcc = getPersistentYouTubeAccount();
+    const playlistIdsFromState = syncedPlaylists
+      .map((p) => extractYouTubePlaylistId(p.id))
+      .filter((id): id is string => Boolean(id));
+    const allTargetIds = Array.from(
+      new Set([...(persistedAcc?.syncedPlaylistIds || []), ...playlistIdsFromState])
+    );
+
+    if (!persistedAcc && allTargetIds.length === 0) return;
+
+    // Ensure connected status is restored silently on mount
+    if (persistedAcc) {
+      setIsYouTubeConnected(true);
+    }
+
+    if (allTargetIds.length === 0) return;
+
+    let cancelled = false;
+    fetchSilentPlaylistUpdates(allTargetIds, syncedPlaylists)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.updatedPlaylists.length > 0) {
+          setSyncedPlaylists(res.updatedPlaylists);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('harmoniq_user_playlists', JSON.stringify(res.updatedPlaylists));
+          }
+        }
+        if (res.freshSongs.length > 0) {
+          setFavoriteSongs((prev) => {
+            const existingKeys = new Set(
+              prev.map((s) => s.youtubeVideoId || `${s.artist}-${s.title}`.toLowerCase())
+            );
+            const brandNew = res.freshSongs.filter(
+              (s) => !existingKeys.has(s.youtubeVideoId || `${s.artist}-${s.title}`.toLowerCase())
+            );
+            const merged = [...brandNew, ...prev];
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('harmoniq_user_favorite_songs', JSON.stringify(merged));
+            }
+            return merged;
+          });
+        }
+        if (res.freshArtists.length > 0) {
+          setFavoriteArtists((prev) => {
+            const merged = Array.from(new Set([...res.freshArtists, ...prev]));
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('harmoniq_user_favorite_artists', JSON.stringify(merged));
+            }
+            return merged;
+          });
+        }
+        savePersistentYouTubeLibrary({
+          playlists: res.updatedPlaylists,
+        });
+
+        // Only notify the user subtly if genuinely new tracks were discovered
+        if (res.addedTracksCount > 0) {
+          setSilentSyncNotice('✓ YouTube Music kütüphanen güncellendi');
+          setTimeout(() => setSilentSyncNotice(null), 4000);
+        }
+      })
+      .catch(() => {
+        // Silent background check: never disrupt the user
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Synchronize and refresh personal taste from YouTube Music
   const handleSyncTaste = async () => {
@@ -1290,6 +1471,21 @@ export default function App() {
           setLoungeUsers((prev) => calculateLoungeCompatibilityWithTaste(result.artists, prev));
         }
 
+        const importedYtIds = [
+          extractYouTubePlaylistId(urlOrId),
+          ...result.playlists.map((p) => extractYouTubePlaylistId(p.id)),
+        ].filter((id): id is string => Boolean(id));
+
+        if (importedYtIds.length > 0) {
+          registerSyncedPlaylistIds(importedYtIds);
+          setIsYouTubeConnected(true);
+        }
+        savePersistentYouTubeLibrary({
+          playlists: result.playlists.length > 0 ? [...result.playlists, ...syncedPlaylists.filter((p) => !result.playlists.some((np) => np.id === p.id))] : syncedPlaylists,
+          favoriteSongs: result.songs.length > 0 ? [...result.songs, ...favoriteSongs] : favoriteSongs,
+          favoriteArtists: result.artists.length > 0 ? Array.from(new Set([...result.artists, ...favoriteArtists])) : favoriteArtists,
+        });
+
         setToastMessage(
           `${result.playlists.length} çalma listesi, ${result.songs.length} şarkı ve ${result.artists.length} sanatçı kütüphanene aktarıldı.`
         );
@@ -1374,8 +1570,10 @@ export default function App() {
       await markProfileOffline(firebaseUser.uid);
     }
     await logoutGoogle();
+    clearPersistentYouTubeAccount();
     setFirebaseUser(null);
     setIsGoogleAuthenticated(false);
+    setIsYouTubeConnected(false);
     setHasActiveYouTubeToken(false);
     setGoogleUser(null);
     setCloudProfiles([]);
@@ -1384,7 +1582,7 @@ export default function App() {
     setCloudFriendships([]);
     setCloudConversations([]);
     setActiveCloudMessages([]);
-    setToastMessage('Google oturumu kapatıldı.');
+    setToastMessage('Oturum ve bağlı YouTube Music hesabı kapatıldı.');
     setTimeout(() => setToastMessage(null), 3000);
   };
 
@@ -2225,9 +2423,7 @@ export default function App() {
     <div
       className={`min-h-screen ${
         isLight ? 'bg-[#F5F4F8] text-[#14121E]' : 'bg-[#0A090F] text-[#F4F3F8]'
-      } flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden ${
-        isMobileFrameView ? 'lg:py-8 lg:px-4 lg:items-center lg:justify-center' : ''
-      }`}
+      } flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden`}
     >
       {/* Top Ceiling Ambient Glow (Velvet Pitch & Electric Resonance) */}
       <div
@@ -2255,13 +2451,7 @@ export default function App() {
       <div
         className={`w-full flex-1 flex flex-col ${
           isLight ? 'bg-[#F5F4F8]/95 shadow-sm' : 'bg-[#0A090F]/90'
-        } relative z-10 transition-all duration-300 ${
-          isMobileFrameView
-            ? isLight
-              ? 'lg:max-w-[420px] lg:h-[890px] lg:rounded-[44px] lg:border-[6px] lg:border-zinc-300 lg:shadow-2xl lg:overflow-hidden'
-              : 'lg:max-w-[420px] lg:h-[890px] lg:rounded-[44px] lg:border-[6px] lg:border-zinc-800 lg:shadow-2xl lg:overflow-hidden'
-            : ''
-        }`}
+        } relative z-10 transition-all duration-300`}
       >
         <TopHeader
           currentSong={currentSong}
@@ -2275,8 +2465,6 @@ export default function App() {
             setPrivacyMode(mode);
           }}
           onOpenInstallModal={() => setShowInstallModal(true)}
-          isMobileFrameView={isMobileFrameView}
-          onToggleMobileFrame={() => setIsMobileFrameView(!isMobileFrameView)}
           userProfile={currentUserProfile}
           themeMode={effectiveTheme}
           onToggleTheme={handleToggleTheme}
@@ -2609,9 +2797,15 @@ export default function App() {
         )}
 
         {toastMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[80] pointer-events-none bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border border-[#E4E2EC] dark:border-white/10 text-zinc-900 dark:text-zinc-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-150">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{toastMessage}</span>
+          <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[80] pointer-events-none bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border border-[#E4E2EC] dark:border-white/10 text-zinc-900 dark:text-zinc-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 max-w-[90vw]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="truncate">{toastMessage}</span>
+          </div>
+        )}
+
+        {silentSyncNotice && !toastMessage && (
+          <div className="fixed bottom-36 right-4 z-[75] pointer-events-none bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 px-3.5 py-2 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <span>{silentSyncNotice}</span>
           </div>
         )}
 
@@ -2619,7 +2813,7 @@ export default function App() {
           activeTab={activeTab}
           onSelectTab={handleSelectTab}
           unreadCount={totalUnread}
-          liveCount={privacyMode === 'friends_only' ? friendsList.length + 1 : loungeUsers.length}
+          liveCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
           currentSong={currentSong}
           isPlaying={isPlaying}
           currentSecond={mySecond}
@@ -2695,7 +2889,7 @@ export default function App() {
         onOpenRoomListeners={() => {
           setShowRoomListenersModal(true);
         }}
-        listeners={loungeUsers}
+        listeners={combinedLoungeUsers}
         onSelectUser={(user) => {
           setSelectedDrawerUser(user);
         }}
@@ -2717,7 +2911,7 @@ export default function App() {
         isOpen={showRoomListenersModal}
         onClose={() => setShowRoomListenersModal(false)}
         song={currentSong}
-        listeners={loungeUsers}
+        listeners={combinedLoungeUsers}
         onSelectUser={(user) => {
           setSelectedDrawerUser(user);
           setShowRoomListenersModal(false);
@@ -2743,15 +2937,36 @@ export default function App() {
           setTimeout(() => setToastMessage(null), 3000);
         }}
         isConnected={isYouTubeConnected}
-        onToggleConnection={(conn) => setIsYouTubeConnected(conn)}
+        onToggleConnection={(conn) => {
+          setIsYouTubeConnected(conn);
+          if (conn) {
+            savePersistentYouTubeAccount({
+              name: youtubeAccount.name,
+              email: youtubeAccount.email,
+              handle: youtubeAccount.handle,
+              avatar: userAvatarUrl || undefined,
+              authMode: isGoogleAuthenticated ? 'oauth' : 'channel_link',
+            });
+          } else {
+            clearPersistentYouTubeAccount();
+          }
+        }}
         account={youtubeAccount}
-        onUpdateAccount={(acc) => setYoutubeAccount(acc)}
+        onUpdateAccount={(acc) => {
+          setYoutubeAccount(acc);
+          savePersistentYouTubeAccount({
+            name: acc.name,
+            email: acc.email,
+            handle: acc.handle,
+          });
+        }}
         isTasteSynced={isTasteSynced}
         onSyncTaste={handleSyncTaste}
         onStartPersonalRadio={handleStartPersonalRadio}
         syncedPlaylistsCount={syncedPlaylists.length}
         syncedPlaylists={syncedPlaylists}
         onImportPlaylist={handleImportPlaylistUrl}
+        onPersistentChannelConnect={handlePersistentChannelConnect}
         isGoogleAuthenticated={isGoogleAuthenticated}
         onGoogleSignIn={handleGoogleSignIn}
         onGoogleSignOut={handleGoogleSignOut}

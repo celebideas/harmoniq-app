@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Radio,
@@ -43,11 +43,16 @@ interface Props {
   onStartPersonalRadio?: () => void;
   syncedPlaylistsCount?: number;
   isGoogleAuthenticated?: boolean;
-  onGoogleSignIn?: () => Promise<void>;
+  onGoogleSignIn?: () => Promise<{ errorCode?: string; success?: boolean } | void>;
   onGoogleSignOut?: () => Promise<void>;
   googleUser?: { name: string; email: string; photoUrl?: string } | null;
   isGoogleLoading?: boolean;
   onImportPlaylist?: (urlOrId: string) => Promise<boolean>;
+  onPersistentChannelConnect?: (data: {
+    name?: string;
+    handle: string;
+    playlistUrl?: string;
+  }) => Promise<boolean>;
   syncedPlaylists?: UserPlaylist[];
 }
 
@@ -73,6 +78,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
   googleUser,
   isGoogleLoading = false,
   onImportPlaylist,
+  onPersistentChannelConnect,
   syncedPlaylists = [],
 }) => {
   const [googleAccount, setGoogleAccount] = useState(account.email);
@@ -92,7 +98,97 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
   const [syncStatus, setSyncStatus] = useState<'connected' | 'syncing' | 'idle'>(isConnected ? 'connected' : 'idle');
   const [showVideoEmbed, setShowVideoEmbed] = useState(false);
 
+  // Dual-mode persistent fallback when Vercel / popup-blocked prevents Firebase OAuth popup
+  const [channelLinkMode, setChannelLinkMode] = useState(false);
+  const [channelLinkReason, setChannelLinkReason] = useState<string | null>(null);
+  const [channelHandleInput, setChannelHandleInput] = useState(
+    account.handle && account.handle !== '@muziksever' ? account.handle : ''
+  );
+  const [channelPlaylistInput, setChannelPlaylistInput] = useState('');
+  const [isConnectingChannel, setIsConnectingChannel] = useState(false);
+
+  useEffect(() => {
+    setGoogleAccount(account.email || '');
+    setYtHandle(account.handle || '@muziksever');
+    if (account.handle && account.handle !== '@muziksever') {
+      setChannelHandleInput(account.handle);
+    }
+  }, [account.email, account.handle]);
+
+  useEffect(() => {
+    setSyncStatus(isConnected ? 'connected' : 'idle');
+  }, [isConnected]);
+
   if (!isOpen) return null;
+
+  const handleSafeGoogleSignIn = async () => {
+    if (!onGoogleSignIn) return;
+    try {
+      const result = await onGoogleSignIn();
+      const code = result && typeof result === 'object' ? result.errorCode : undefined;
+      if (
+        code === 'auth/unauthorized-domain' ||
+        code === 'auth/popup-blocked' ||
+        code === 'auth/operation-not-supported-in-this-environment'
+      ) {
+        setChannelLinkMode(true);
+        setChannelLinkReason(
+          code === 'auth/unauthorized-domain'
+            ? 'Bu alan adında Google penceresi yerine kalıcı kanal/liste bağlantısı etkinleştirildi.'
+            : 'Tarayıcı açılır pencereyi engelledi. Kalıcı kanal & liste bağlantısıyla tek seferde bağlanabilirsiniz.'
+        );
+      }
+    } catch {
+      setChannelLinkMode(true);
+      setChannelLinkReason('Kalıcı YouTube / YT Music kanal & liste bağlantısı etkinleştirildi.');
+    }
+  };
+
+  const handleSubmitPersistentChannel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const rawHandle = channelHandleInput.trim();
+    const rawPlaylist = channelPlaylistInput.trim();
+    if (!rawHandle && !rawPlaylist) {
+      setPlaylistImportError('Lütfen bir YouTube @kullanıcıadı veya çalma listesi linki girin.');
+      return;
+    }
+
+    setIsConnectingChannel(true);
+    setPlaylistImportError(null);
+    try {
+      const normalizedHandle = rawHandle
+        ? rawHandle.startsWith('@')
+          ? rawHandle
+          : `@${rawHandle.replace(/^https?:\/\/(www\.|music\.)?youtube\.com\/@?/i, '').split(/[/?]/)[0]}`
+        : ytHandle || '@muziksever';
+
+      if (onPersistentChannelConnect) {
+        await onPersistentChannelConnect({
+          handle: normalizedHandle,
+          playlistUrl: rawPlaylist || undefined,
+        });
+      } else {
+        onUpdateAccount?.({
+          ...account,
+          handle: normalizedHandle,
+        });
+        onToggleConnection?.(true);
+        if (rawPlaylist && onImportPlaylist) {
+          await onImportPlaylist(rawPlaylist);
+        }
+      }
+
+      setYtHandle(normalizedHandle);
+      setChannelPlaylistInput('');
+      setChannelLinkMode(false);
+      setChannelLinkReason(null);
+      setSyncStatus('connected');
+    } catch (err: any) {
+      setPlaylistImportError(err?.message || 'Kalıcı bağlantı kurulamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setIsConnectingChannel(false);
+    }
+  };
 
   const handleToggleConnect = () => {
     const nextState = !isConnected;
@@ -226,11 +322,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
-                      <span>{account.name || 'Yasin Çelebi'}</span>
+                      <span>{account.name || 'Müzik Kaşifi'}</span>
                       <span className="text-neutral-400 font-normal">({ytHandle})</span>
                     </div>
                     <div className="text-[11px] text-neutral-400 truncate mt-0.5">
-                      {googleAccount}
+                      {googleAccount || 'Kalıcı Kanal & Liste Bağlantısı Aktif'}
                     </div>
                   </div>
                 </div>
@@ -291,8 +387,16 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               />
               <button
                 onClick={() => {
+                  const normalized = ytHandle.trim().startsWith('@')
+                    ? ytHandle.trim()
+                    : `@${ytHandle.trim() || 'muziksever'}`;
+                  setYtHandle(normalized);
+                  onUpdateAccount?.({
+                    ...account,
+                    handle: normalized,
+                  });
                   setIsEditingHandle(false);
-                  if (onShowToast) onShowToast('YouTube Music kanal adı güncellendi! ✅');
+                  if (onShowToast) onShowToast('YouTube Music kanal adı kalıcı olarak güncellendi! ✅');
                 }}
                 className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition"
               >
@@ -370,11 +474,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                     <button
                       type="button"
                       disabled={isGoogleLoading}
-                      onClick={onGoogleSignIn}
+                      onClick={handleSafeGoogleSignIn}
                       className="py-2 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-xs text-neutral-200 transition cursor-pointer min-h-[44px]"
                       title="Farklı bir Google hesabı seç"
                     >
-                      Farklı Hesap
+                      Hesap Değiştir
                     </button>
                   )}
                   {onGoogleSignOut && (
@@ -389,47 +493,108 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                 </div>
               </div>
             </div>
+          ) : channelLinkMode ? (
+            <form onSubmit={handleSubmitPersistentChannel} className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
+                <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>Kalıcı YouTube / YT Music Kanal & Liste Bağlantısı</span>
+                </div>
+                <p className="text-[11px] text-neutral-300 leading-relaxed">
+                  {channelLinkReason ||
+                    'Bir kez kanal adını veya çalma listesi linkini yapıştır; hesabın cihazına kalıcı olarak bağlansın ve sonraki her girişinde otomatik güncel kalsın.'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-neutral-400 mb-1">
+                    YouTube / YT Music Kullanıcı Adı (@handle)
+                  </label>
+                  <input
+                    type="text"
+                    value={channelHandleInput}
+                    onChange={(e) => setChannelHandleInput(e.target.value)}
+                    placeholder="Örn: @muziksever"
+                    className="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-neutral-400 mb-1">
+                    YouTube Music Çalma Listesi Linki (Otomatik Güncellenir)
+                  </label>
+                  <input
+                    type="text"
+                    value={channelPlaylistInput}
+                    onChange={(e) => setChannelPlaylistInput(e.target.value)}
+                    placeholder="https://music.youtube.com/playlist?list=PL..."
+                    className="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={isConnectingChannel || (!channelHandleInput.trim() && !channelPlaylistInput.trim())}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                >
+                  {isConnectingChannel ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Bağlanıyor & Senkronize Ediliyor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Kalıcı Olarak Bağla</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChannelLinkMode(false)}
+                  className="py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-xs text-neutral-300 transition cursor-pointer min-h-[44px]"
+                >
+                  Geri
+                </button>
+              </div>
+            </form>
           ) : (
             <div className="space-y-2.5">
               <p className="text-[11px] text-neutral-300 leading-relaxed">
-                Google profil resminiz, adınız ve hesabınız Harmoniq ile 1-tıkla güvenle bağlanır.
+                YouTube Music hesabını bir kez bağla; sonraki her girişinde tekrar izin istemeden kütüphanen sessizce güncel kalsın.
               </p>
 
-              {onGoogleSignIn && (
+              <div className="grid grid-cols-1 gap-2">
+                {onGoogleSignIn && (
+                  <button
+                    type="button"
+                    disabled={isGoogleLoading}
+                    onClick={handleSafeGoogleSignIn}
+                    className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98 min-h-[44px]"
+                  >
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    <span>{isGoogleLoading ? 'Google Oturumu Açılıyor...' : 'Google ile 1-Tıkla Kalıcı Bağlan'}</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  disabled={isGoogleLoading}
-                  onClick={onGoogleSignIn}
-                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98 min-h-[44px]"
+                  onClick={() => {
+                    setChannelLinkMode(true);
+                    setChannelLinkReason(null);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-emerald-500/35 text-emerald-300 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                 >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 48 48">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  </svg>
-                  <span>{isGoogleLoading ? 'Google Oturumu Açılıyor...' : 'Google ile 1-Tıkla Giriş Yap (Harmoniq)'}</span>
+                  <Link2 className="w-4 h-4 shrink-0" />
+                  <span>Kanal Adı (@handle) veya Liste Linki ile Kalıcı Bağla</span>
                 </button>
-              )}
-
-              {/* Helpful guidance for Google's 403: access_denied test mode prompt */}
-              <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] text-neutral-400 space-y-2">
-                <div className="flex items-center gap-1.5 text-neutral-200 font-semibold text-[11px]">
-                  <span>💡</span>
-                  <span>"Erişim engellendi (Hata 403: access_denied)" ekranı çıkarsa:</span>
-                </div>
-                <p className="text-[10px] text-neutral-400 leading-relaxed">
-                  Google Cloud projeniz şu an <strong className="text-white">Test Modunda</strong> olduğu için aşağıdaki butona tıklayıp <strong className="text-lime-400">"Publish App" (Uygulamayı Yayınla)</strong> seçeneğine basabilir veya <strong className="text-white">Test users</strong> kısmına kendi Google e-posta adresinizi ekleyebilirsiniz. Ya da alttaki kutudan OAuth gerekmeden direkt liste linkini aktarabilirsiniz.
-                </p>
-                <a
-                  href="https://console.cloud.google.com/auth/audience?project=gen-lang-client-0416452568"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-semibold text-[10px] transition"
-                >
-                  <ExternalLink className="w-3 h-3 text-lime-400" />
-                  <span>Google Cloud OAuth Test Kullanıcısı / Yayınla Ekranını Aç</span>
-                </a>
               </div>
             </div>
           )}

@@ -91,14 +91,16 @@ class RealMusicEngine {
     this.initMediaSessionOnce();
   }
 
-  public updateMediaSession(song: Song) {
+  public updateMediaSession(song: Song, playingState?: boolean) {
     if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
 
     this.initMediaSessionOnce();
 
+    const effectivePlaying = playingState !== undefined ? playingState : this.isPlaying;
+
     // Only update metadata when track changes to prevent OS notification buttons from flickering
     if (this.lastMetadataSongId === song.id) {
-      this.syncMediaSessionPlaybackState(this.isPlaying);
+      this.syncMediaSessionPlaybackState(effectivePlaying);
       return;
     }
     this.lastMetadataSongId = song.id;
@@ -124,9 +126,9 @@ class RealMusicEngine {
         artwork: artworks,
       });
 
-      this.syncMediaSessionPlaybackState(this.isPlaying);
+      this.syncMediaSessionPlaybackState(effectivePlaying);
       if (song.durationSeconds) {
-        this.updatePositionState(0, song.durationSeconds);
+        this.updatePositionState(this.getCurrentTime(), song.durationSeconds);
       }
     } catch (e) {
       console.warn('MediaSession metadata notice:', e);

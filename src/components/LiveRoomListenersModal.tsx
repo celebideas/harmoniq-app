@@ -233,7 +233,11 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
               return (
                 <div
                   key={user.id}
-                  className="p-3.5 rounded-2xl bg-neutral-900/80 border border-neutral-800/80 hover:border-neutral-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                  className={`p-3.5 rounded-2xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group border ${
+                    user.isRealUser
+                      ? 'bg-emerald-950/30 border-emerald-500/45 shadow-[0_0_20px_rgba(16,185,129,0.12)]'
+                      : 'bg-neutral-900/80 border-neutral-800/80 hover:border-neutral-700'
+                  }`}
                 >
                   {/* Left: User Avatar & Metadata */}
                   <div
@@ -244,12 +248,32 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                     className="flex items-start gap-3 min-w-0 cursor-pointer flex-1"
                   >
                     <div className="relative shrink-0">
-                      <div
-                        className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-sm shadow`}
-                      >
-                        {user.avatarSeed}
-                      </div>
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime-400 border-2 border-neutral-950" />
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={user.name}
+                          className={`w-11 h-11 rounded-2xl object-cover shadow ${
+                            user.isRealUser
+                              ? 'ring-2 ring-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.65)]'
+                              : ''
+                          }`}
+                        />
+                      ) : (
+                        <div
+                          className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-sm shadow ${
+                            user.isRealUser
+                              ? 'ring-2 ring-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.65)]'
+                              : ''
+                          }`}
+                        >
+                          {user.avatarSeed}
+                        </div>
+                      )}
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-neutral-950 ${
+                          user.isRealUser ? 'bg-emerald-400 animate-pulse' : 'bg-lime-400'
+                        }`}
+                      />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -257,6 +281,12 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                         <span className="text-sm font-bold text-white group-hover:text-lime-300 transition-colors truncate">
                           {user.name}, {user.age}
                         </span>
+
+                        {user.isRealUser && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-400/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] tracking-wide">
+                            🟢 GERÇEK CANLI
+                          </span>
+                        )}
 
                         {user.friendStatus === 'friends' && (
                           <span className="text-[10px] px-2 py-0.2 rounded-full bg-lime-400/20 text-lime-400 font-bold border border-lime-400/30">
