@@ -376,3 +376,48 @@ html.light .surface-inner {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Harmoniq Interactive Leaflet Map Styles */
+.harmoniq-leaflet-map .leaflet-control-attribution {
+  background: rgba(10, 9, 15, 0.65) !important;
+  color: rgba(212, 212, 216, 0.72) !important;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  border-top-right-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+
+html.light .harmoniq-leaflet-map .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: rgba(63, 63, 70, 0.78) !important;
+}
+
+.harmoniq-leaflet-map .leaflet-control-attribution a {
+  color: inherit !important;
+}
+
+.harmoniq-leaflet-marker,
+.harmoniq-user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+@keyframes harmoniq-map-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.75);
+    opacity: 0.85;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(2.15);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.15);
+    opacity: 0;
+  }
+}
+
+.harmoniq-user-pulse-ring {
+  animation: harmoniq-map-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+

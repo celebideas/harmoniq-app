@@ -1012,14 +1012,14 @@ export const NowPlayingModal: React.FC<Props> = ({
         </div>
 
         {/* 3. ANDROID MATERIAL YOU WAVY SEEK BAR */}
-        <div className="space-y-1.5 pt-1">
-          {/* Hotspot Flash Announcement Banner */}
+        <div className="relative space-y-1.5 pt-1">
+          {/* Hotspot Flash Announcement Banner (Zero-Layout-Shift Floating Overlay) */}
           {activeHotspotNotice && (
-            <div className="flex items-center justify-center animate-in zoom-in-95 fade-in duration-200">
-              <div className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-accent-theme/25 via-emerald-500/25 to-cyan-500/25 border border-accent-theme/60 text-accent-theme text-xs font-bold shadow-[0_0_24px_var(--theme-accent-glow)] flex items-center gap-2 backdrop-blur-2xl">
-                <span className="text-sm animate-bounce">{activeHotspotNotice.emoji}</span>
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 pointer-events-none whitespace-nowrap animate-in zoom-in-95 fade-in duration-200">
+              <div className="px-3 py-1 rounded-full bg-zinc-950/90 border border-purple-500/50 text-purple-300 text-xs font-bold shadow-[0_6px_24px_rgba(147,51,234,0.35)] flex items-center gap-1.5 backdrop-blur-xl">
+                <span className="text-xs">{activeHotspotNotice.emoji}</span>
                 <span className="text-white">{activeHotspotNotice.label}</span>
-                <span className="text-accent-theme font-mono text-[11px]">
+                <span className="text-purple-300 font-mono text-[11px] tabular-nums">
                   [{formatTime(activeHotspotNotice.second)}]
                 </span>
                 <span className="text-[10px] text-zinc-300 font-medium">· Sıcak Nokta ⚡</span>

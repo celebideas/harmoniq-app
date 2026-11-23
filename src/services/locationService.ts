@@ -761,38 +761,38 @@ export const CITY_CLUSTER_NAMES: Record<
   selcuk: {
     high: 'Selçuk Merkez',
     medium: 'Şirince',
-    low: 'Efes / Pamucak',
-    remote: 'Alsancak',
+    low: 'Efes & Pamucak',
+    remote: 'Diğer Şehirler',
   },
   izmir: {
-    high: 'Alsancak / Kordon',
-    medium: 'Karşıyaka / Bostanlı',
+    high: 'Alsancak',
+    medium: 'Karşıyaka',
     low: 'Bornova',
-    remote: 'Selçuk / Efes',
+    remote: 'Diğer Şehirler',
   },
   antalya: {
-    high: 'Kaleiçi / Konyaaltı',
-    medium: 'Lara / Şirinyalı',
-    low: 'Kültür / Kepez',
-    remote: 'Kaş / Kemer',
+    high: 'Kaleiçi',
+    medium: 'Konyaaltı',
+    low: 'Lara',
+    remote: 'Diğer Şehirler',
   },
   ankara: {
-    high: 'Tunalı / Çankaya',
-    medium: 'Kavaklıdere / Emek',
-    low: 'Bahçelievler 7. Cad',
-    remote: 'Bilkent / ODTÜ',
+    high: 'Çankaya & Tunalı',
+    medium: 'Bahçelievler',
+    low: 'Kızılay',
+    remote: 'Diğer Şehirler',
   },
   istanbul: {
-    high: 'Kadıköy / Moda',
+    high: 'Kadıköy & Moda',
     medium: 'Beşiktaş',
     low: 'Cihangir',
-    remote: 'Şişli',
+    remote: 'Diğer Şehirler',
   },
   custom: {
     high: 'Merkez & Çarşı',
     medium: 'Bulvar & Sahil',
     low: 'Kampüs & Çevre',
-    remote: 'Diğer Semtler',
+    remote: 'Diğer Şehirler',
   },
 };
 
@@ -853,7 +853,7 @@ export function buildCityClusters(users: LoungeUser[], rawCity?: string): CityCl
           high: `${baseCity} Merkez`,
           medium: `${baseCity} Meydan`,
           low: `${baseCity} Çevre`,
-          remote: `${baseCity} Kampüs`,
+          remote: 'Diğer Şehirler',
         }
       : CITY_CLUSTER_NAMES[key];
 
