@@ -804,12 +804,11 @@ export default function App() {
         const target = pendingStartSecondRef.current;
         const elapsed = Date.now() - pendingStartTimestampRef.current;
         // Ignore transient 0s/1s reset ticks while a timestamped seek is buffering/loading
-        if (target > 2 && sec < 2 && elapsed < 4500) {
+        if (target > 2 && sec < 2 && elapsed < 3500) {
           return;
         }
-        if (Math.abs(sec - target) <= 4 || elapsed >= 4500) {
-          pendingStartSecondRef.current = null;
-        }
+        // Clear immediately on the very first valid time update
+        pendingStartSecondRef.current = null;
       }
       setMySecond(sec);
     });

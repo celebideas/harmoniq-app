@@ -85,13 +85,10 @@ class YouTubePlayerController {
           this.notifyError(code);
         }
 
-        // YouTube player ready event: enforce pendingSeekSecond immediately on fresh iframe mount
+        // YouTube player ready event: unmute and start playback (single guaranteed seek runs on first PLAYING)
         if (data.event === 'onReady') {
           this.sendCommand('unMute');
           this.sendCommand('setVolume', [100]);
-          if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 0) {
-            this.sendCommand('seekTo', [this.pendingSeekSecond, true]);
-          }
           if (this.isPlaying) {
             this.sendCommand('playVideo');
           } else {
@@ -133,6 +130,7 @@ class YouTubePlayerController {
             this.isPlaying = true;
             if (this.pendingSeekSecond !== null) {
               const targetSec = this.pendingSeekSecond;
+              // Clear BEFORE seekTo so subsequent buffering -> playing transition never loops!
               this.pendingSeekSecond = null;
               this.currentSecond = targetSec;
               this.sendCommand('seekTo', [targetSec, true]);
@@ -188,9 +186,6 @@ class YouTubePlayerController {
         this.sendCommand('listening');
         this.sendCommand('unMute');
         this.sendCommand('setVolume', [100]);
-        if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 0) {
-          this.sendCommand('seekTo', [this.pendingSeekSecond, true]);
-        }
         if (this.isPlaying) {
           this.sendCommand('playVideo');
         } else {

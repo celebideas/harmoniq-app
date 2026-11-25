@@ -585,44 +585,47 @@ class RealMusicEngine {
         this.audio.loop = false;
         this.audio.volume = 1;
 
-        let hasSeekedSuccessfully = false;
+        let pendingStart: number | null = safeStart > 0 ? safeStart : null;
 
         const applyNativeSeek = () => {
           if (!this.audio || this.activePlaybackId !== playbackId) return;
-          if (safeStart <= 0) {
+          if (pendingStart === null || pendingStart <= 0) {
             this.isPendingMetadataSeek = false;
             return;
           }
+
+          // Clear pending target and detach both listeners BEFORE setting currentTime
+          // so browser-emitted canplay/seeked events can NEVER trigger an infinite seek loop!
+          const target = pendingStart;
+          pendingStart = null;
+          this.isPendingMetadataSeek = false;
+          this.audio.removeEventListener('loadedmetadata', applyNativeSeek);
+          this.audio.removeEventListener('canplay', applyNativeSeek);
+
           const dur = this.audio.duration;
           if (Number.isFinite(dur) && dur > 0) {
-            if (dur > safeStart) {
+            if (dur > target) {
               this.previewTimeOffset = 0;
-              if (!hasSeekedSuccessfully || this.audio.currentTime < 1) {
-                this.audio.currentTime = safeStart;
-              }
-            } else if (dur <= 35 && safeStart >= dur) {
+              this.audio.currentTime = target;
+            } else if (dur <= 35 && target >= dur) {
               const proportionalSec = Math.max(
                 0,
-                Math.min(dur - 2, Math.floor((safeStart / (song.durationSeconds || 240)) * dur))
+                Math.min(dur - 2, Math.floor((target / (song.durationSeconds || 240)) * dur))
               );
-              this.previewTimeOffset = safeStart - proportionalSec;
-              if (!hasSeekedSuccessfully || (proportionalSec > 1 && this.audio.currentTime < 1)) {
-                this.audio.currentTime = proportionalSec;
-              }
+              this.previewTimeOffset = target - proportionalSec;
+              this.audio.currentTime = proportionalSec;
             } else {
               this.previewTimeOffset = 0;
               this.audio.currentTime = Math.max(0, dur - 2);
             }
-            hasSeekedSuccessfully = true;
           }
-          this.isPendingMetadataSeek = false;
-          this.simulatedSecond = safeStart;
-          this.notifyTimeUpdate(safeStart);
+          this.simulatedSecond = target;
+          this.notifyTimeUpdate(target);
         };
 
         const isNewSrc = this.audio.src !== url;
         if (isNewSrc) {
-          if (safeStart > 0) {
+          if (pendingStart !== null) {
             this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
             this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
           } else {
@@ -630,12 +633,9 @@ class RealMusicEngine {
           }
           this.audio.src = url;
           this.audio.load();
-        } else if (safeStart > 0) {
+        } else if (pendingStart !== null) {
           if (this.audio.readyState >= 1) {
             applyNativeSeek();
-            if (this.audio.readyState < 3) {
-              this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
-            }
           } else {
             this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
             this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
@@ -645,7 +645,7 @@ class RealMusicEngine {
         }
 
         await this.audio.play();
-        if (safeStart > 0 && this.activePlaybackId === playbackId && this.audio.currentTime < 1) {
+        if (pendingStart !== null && this.activePlaybackId === playbackId) {
           applyNativeSeek();
         }
 

@@ -150,6 +150,100 @@ export async function searchITunesAudio(
 }
 
 /**
+ * Live catalog search returning complete playable Song objects
+ * Merges Apple Music/iTunes global & TR catalogs and supports YouTube URLs.
+ */
+export async function searchTracks(
+  query: string,
+  limit: number = 12,
+  allowExplicit: boolean = true
+): Promise<Song[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) return [];
+
+  const results: Song[] = [];
+  const seenKeys = new Set<string>();
+
+  const pushUnique = (song: Song) => {
+    const key = `${song.artist.trim().toLowerCase()}::${song.title.trim().toLowerCase()}`;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    results.push(song);
+  };
+
+  // Direct YouTube link support
+  const ytId = extractYouTubeVideoId(trimmed);
+  if (ytId) {
+    try {
+      const resolved = await resolveMusicLinkOrQuery(trimmed, allowExplicit);
+      pushUnique(resolved);
+    } catch {
+      // fallback to catalog search below
+    }
+  }
+
+  const fetchCatalog = async (countryParam: string) => {
+    try {
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(trimmed)}&entity=song&limit=${limit}${countryParam}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.results) ? data.results : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [trItems, globalItems] = await Promise.all([
+    fetchCatalog('&country=TR'),
+    fetchCatalog(''),
+  ]);
+
+  const combined = [...trItems, ...globalItems];
+  const gradients = [
+    'from-purple-600 via-fuchsia-700 to-indigo-950',
+    'from-indigo-600 via-purple-800 to-zinc-950',
+    'from-rose-600 via-pink-800 to-zinc-950',
+    'from-emerald-600 via-teal-800 to-zinc-950',
+    'from-amber-600 via-orange-800 to-zinc-950',
+  ];
+
+  combined.forEach((item: any, idx: number) => {
+    if (!item?.trackName || !item?.artistName) return;
+    const isExplicit = item.trackExplicitness === 'explicit';
+    const resolvedTitle =
+      allowExplicit || !item.trackCensoredName ? item.trackName : item.trackCensoredName;
+    const artwork = item.artworkUrl100
+      ? item.artworkUrl100.replace('100x100bb', '600x600bb')
+      : item.artworkUrl60;
+    const durationSec = Math.max(30, Math.round((item.trackTimeMillis || 210000) / 1000));
+    const releaseYear = item.releaseDate ? Number(String(item.releaseDate).slice(0, 4)) || 2024 : 2024;
+
+    pushUnique({
+      id: `itunes-track-${item.trackId}`,
+      title: resolvedTitle,
+      artist: item.artistName,
+      album: item.collectionName || 'Single',
+      genre: item.primaryGenreName || 'Pop',
+      rawMediaTitle: `${item.artistName} - ${resolvedTitle}`,
+      coverUrl: artwork,
+      coverGradient: gradients[idx % gradients.length],
+      durationSeconds: durationSec,
+      bpm: 112,
+      keyNote: 'A Minor',
+      releaseYear,
+      catalogNumber: `IT-${item.trackId}`,
+      soundType: 'indie',
+      audioUrl: item.previewUrl,
+      isExplicit,
+      timelineMarkers: buildDynamicTimelineMarkers(durationSec, item.primaryGenreName),
+    });
+  });
+
+  return results.slice(0, limit);
+}
+
+/**
  * Real-time Predictions / Autocomplete
  * Supports:
  * 1) Artist Profile Detection (e.g. "Joyner Lucas" -> returns Artist Profile Card + top predicted tracks)

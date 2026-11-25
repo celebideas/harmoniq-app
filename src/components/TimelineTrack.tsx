@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Song, LoungeUser, PrivacyMode, TimelineMarker } from '../types';
+import { Song, LoungeUser, PrivacyMode } from '../types';
 import {
   X,
   Users,
-  Clock,
   Zap,
   Link2,
   Shield,
@@ -82,29 +81,6 @@ export const TimelineTrack: React.FC<Props> = ({
   const getPercent = (sec: number) => {
     return Math.min(100, Math.max(0, (sec / duration) * 100));
   };
-
-  // Dynamic 4-section markers scaled to current song duration & genre
-  const dynamicMarkers: TimelineMarker[] = useMemo(() => {
-    const dur = song.durationSeconds || 210;
-    const genreLower = (song.genre || '').toLowerCase();
-    const isElectronicOrPop =
-      genreLower.includes('synth') ||
-      genreLower.includes('electronic') ||
-      genreLower.includes('pop') ||
-      genreLower.includes('rap') ||
-      genreLower.includes('hip-hop');
-
-    return [
-      { second: Math.round(dur * 0.08), label: 'Giriş Melodisi', emoji: '⚡' },
-      { second: Math.round(dur * 0.32), label: 'Nakarat', emoji: '🔥' },
-      {
-        second: Math.round(dur * 0.62),
-        label: isElectronicOrPop ? 'Synth / Bass Drop' : 'Gitar Solosu',
-        emoji: isElectronicOrPop ? '🎹' : '🎸',
-      },
-      { second: Math.round(dur * 0.85), label: 'Final Akışı', emoji: '✨' },
-    ];
-  }, [song.id, song.durationSeconds, song.genre]);
 
   // Filter based on privacy mode
   const visibleUsers = useMemo(() => {
@@ -192,26 +168,27 @@ export const TimelineTrack: React.FC<Props> = ({
       }}
       className="surface-card rounded-2xl p-4 sm:p-5 space-y-3.5 select-none relative overflow-hidden"
     >
-      {/* 1. Header: Şarkı Zaman Rayı & Canlı Zaman Bilgisi */}
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-          <span className="font-heading font-bold text-zinc-900 dark:text-white text-xs sm:text-sm">
+      {/* 1. Minimal Header: Şarkı Zaman Rayı + X kişi rayda + 00:00 / 04:12 */}
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="font-heading font-bold text-zinc-900 dark:text-white text-xs sm:text-sm truncate">
             Şarkı Zaman Rayı
           </span>
-          <span className="text-zinc-400">·</span>
-          <span className="text-[#646073] dark:text-[#9E9AA8] font-medium">
-            {privacyMode === 'private'
-              ? '👻 Hayalet Mod'
-              : `${visibleUsers.length + 1} Dinleyici Rayda`}
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>
+              {privacyMode === 'private'
+                ? 'Hayalet Mod'
+                : `${visibleUsers.length + 1} kişi rayda`}
+            </span>
           </span>
         </div>
 
-        <div className="font-mono text-xs tabular-nums text-[#646073] dark:text-[#9E9AA8]">
-          <span className="text-purple-600 dark:text-purple-400 font-bold">
+        <div className="text-[11px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400 shrink-0">
+          <span className="text-zinc-900 dark:text-white font-semibold">
             {formatTime(mySecond)}
           </span>
-          <span className="mx-1">/</span>
+          <span className="mx-1 opacity-60">/</span>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
@@ -241,8 +218,8 @@ export const TimelineTrack: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 2. Etkileşimli Zaman Rayı (00:00 - Süre) */}
-      <div className="relative pt-11 pb-6 px-1">
+      {/* 2. Sleek Minimal Timeline Rail (00:00 - Duration) */}
+      <div className="relative pt-10 pb-5 px-2">
         <div
           onClick={(e) => {
             if (!onSeekSecond) return;
@@ -254,40 +231,27 @@ export const TimelineTrack: React.FC<Props> = ({
             setActiveClusterId(null);
             setWhisperUserId(null);
           }}
-          className="relative h-2.5 bg-zinc-200 dark:bg-[#1E1B2E] rounded-full cursor-pointer border border-zinc-300/80 dark:border-white/[0.09] hover:border-purple-500/40 transition shadow-inner group/rail"
+          className="relative h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/15 cursor-pointer transition group/rail"
           title="Şarkıda istediğin saniyeye atlamak için dokun"
         >
-          {/* Çalan Kısım İlerleme Şeridi (Electric Violet Gradient) */}
+          {/* Played Track Progress */}
           <div
-            className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 rounded-full transition-all duration-200 shadow-[0_0_12px_rgba(147,51,234,0.45)]"
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-[width] duration-200"
             style={{ width: `${getPercent(mySecond)}%` }}
           />
 
           {/* Senkron Bağ Çizgisi */}
           {syncedUser && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 h-3 pointer-events-none z-15 flex items-center transition-all duration-300"
+              className="absolute top-1/2 -translate-y-1/2 h-2 pointer-events-none z-15 flex items-center transition-all duration-300"
               style={{
                 left: `${Math.min(getPercent(mySecond), getPercent(syncedUser.currentSecond))}%`,
                 width: `${Math.max(2, Math.abs(getPercent(mySecond) - getPercent(syncedUser.currentSecond)))}%`,
               }}
             >
-              <div className="w-full h-1.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.9)] animate-pulse" />
+              <div className="w-full h-1 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse" />
             </div>
           )}
-
-          {/* Şarkı Zirve / Solo Noktaları (Warm Amber #F59E0B) */}
-          {dynamicMarkers.map((marker, idx) => {
-            const leftPct = getPercent(marker.second);
-            return (
-              <div
-                key={idx}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-3.5 bg-amber-500 rounded-full pointer-events-none shadow-[0_0_8px_rgba(245,158,11,0.75)] z-10"
-                style={{ left: `${leftPct}%` }}
-                title={`${marker.emoji} ${marker.label} (${formatTime(marker.second)})`}
-              />
-            );
-          })}
 
           {/* CLUSTERED LISTENER AVATAR PINS (12s Proximity Grouping -> +3, +10) */}
           {clusters.map((cluster) => {
@@ -365,12 +329,9 @@ export const TimelineTrack: React.FC<Props> = ({
             style={{ left: `${getPercent(mySecond)}%` }}
           >
             <div className="relative flex flex-col items-center">
-              <span className="absolute -inset-1 rounded-full bg-purple-500/40 animate-ping pointer-events-none" />
-              <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-force-white text-[10px] font-black shadow-[0_0_14px_rgba(147,51,234,0.5)] flex items-center gap-1 relative z-10">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                <span>Sen</span>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-force-white text-[9px] font-extrabold shadow-md ring-2 ring-white dark:ring-[#12111A] flex items-center justify-center relative z-10">
+                Sen
               </div>
-              <div className="w-2.5 h-2.5 rounded-full bg-purple-500 border-2 border-zinc-950 mt-0.5 relative z-10 shadow-sm" />
             </div>
           </div>
         </div>
@@ -583,43 +544,6 @@ export const TimelineTrack: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 4. Şarkının Dinamik Bölümleri (Warm Amber Solo Vurgusu) */}
-      <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pr-6 py-0.5 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]">
-          <span className="text-[11px] text-[#646073] dark:text-[#9E9AA8] font-semibold shrink-0 mr-1 flex items-center gap-1">
-            <Clock className="w-3 h-3 text-amber-500" />
-            <span>Bölümler:</span>
-          </span>
-          {dynamicMarkers.map((marker) => {
-            const isActive = Math.abs(mySecond - marker.second) < 12;
-            const isSolo = marker.label.toLowerCase().includes('solo') || marker.label.toLowerCase().includes('drop');
-            return (
-              <button
-                key={`${song.id}-${marker.second}`}
-                type="button"
-                onClick={() => {
-                  triggerHaptic(15);
-                  onSeekSecond?.(marker.second);
-                }}
-                className={`px-2.5 py-1 rounded-xl text-xs font-medium shrink-0 flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
-                  isActive
-                    ? 'bg-amber-500 text-zinc-950 font-bold shadow-xs'
-                    : isSolo
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold'
-                    : 'bg-black/5 dark:bg-white/[0.04] hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-white/[0.06]'
-                }`}
-                title={`${marker.label} anına atla`}
-              >
-                <span>{marker.emoji}</span>
-                <span>{marker.label}</span>
-                <span className="text-[10px] opacity-75 font-mono tabular-nums">
-                  {formatTime(marker.second)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 };

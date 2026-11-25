@@ -145,7 +145,7 @@ export const DesktopSidebar: React.FC<Props> = ({
               ListenHub
             </span>
             <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] block mt-1">
-              Canlı Frekans Ağı
+              Canlı Müzik Ağı
             </span>
           </div>
         </div>

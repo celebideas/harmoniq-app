@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, Music, Check, Disc3, Link2, Loader2, Sparkles } from 'lucide-react';
 import { Song } from '../types';
 import { SAMPLE_SONGS } from '../data/mockData';
-import { resolveMusicLinkOrQuery } from '../services/musicResolver';
+import { resolveMusicLinkOrQuery, searchTracks } from '../services/musicResolver';
 
 interface Props {
   isOpen: boolean;
@@ -20,15 +20,72 @@ export const SongPickerModal: React.FC<Props> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isResolving, setIsResolving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [remoteSongs, setRemoteSongs] = useState<Song[]>([]);
+  const [isSearchingCatalog, setIsSearchingCatalog] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setRemoteSongs([]);
+      setIsSearchingCatalog(false);
+      return;
+    }
+    const q = searchTerm.trim();
+    if (q.length < 2) {
+      setRemoteSongs([]);
+      setIsSearchingCatalog(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchingCatalog(true);
+    const timer = setTimeout(() => {
+      searchTracks(q, 12)
+        .then((tracks) => {
+          if (!cancelled) {
+            setRemoteSongs(tracks);
+            setIsSearchingCatalog(false);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteSongs([]);
+            setIsSearchingCatalog(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isOpen, searchTerm]);
+
+  const filteredSongs = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    const localMatches = SAMPLE_SONGS.filter(
+      (s) =>
+        !q ||
+        s.title.toLowerCase().includes(q) ||
+        s.artist.toLowerCase().includes(q) ||
+        s.genre.toLowerCase().includes(q)
+    );
+    if (q.length < 2) return localMatches;
+
+    const merged: Song[] = [];
+    const seen = new Set<string>();
+    const pushUnique = (song: Song) => {
+      const key = `${song.artist.trim().toLowerCase()}::${song.title.trim().toLowerCase()}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(song);
+    };
+
+    localMatches.forEach(pushUnique);
+    remoteSongs.forEach(pushUnique);
+    return merged;
+  }, [searchTerm, remoteSongs]);
 
   if (!isOpen) return null;
-
-  const filteredSongs = SAMPLE_SONGS.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.genre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleResolveAndPlay = async (queryText?: string) => {
     const text = (queryText || searchTerm).trim();
@@ -165,9 +222,23 @@ export const SongPickerModal: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="text-[11px] font-semibold text-neutral-400 px-1 mb-1">
-            Önerilen Parçalar:
+          <div className="flex items-center justify-between px-1 mb-1">
+            <span className="text-[11px] font-semibold text-neutral-400">
+              {searchTerm.trim().length >= 2 ? 'Canlı Katalog Sonuçları:' : 'Önerilen Parçalar:'}
+            </span>
+            {isSearchingCatalog && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-lime-400 font-medium">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>Aranıyor...</span>
+              </span>
+            )}
           </div>
+
+          {!isSearchingCatalog && searchTerm.trim().length >= 2 && filteredSongs.length === 0 && (
+            <div className="py-6 text-center text-xs text-neutral-400">
+              "{searchTerm.trim()}" için sonuç bulunamadı. Yukarıdaki Eşle butonuyla doğrudan arayabilirsin.
+            </div>
+          )}
 
           {filteredSongs.map((song) => {
             const isSelected = song.id === currentSong.id;

@@ -23,6 +23,7 @@ import {
   Cloud,
 } from 'lucide-react';
 import { LoungeConversation, LoungeUser, Song, FriendRequest } from '../types';
+import { searchTracks } from '../services/musicResolver';
 
 type SocialPaneTab = 'chats' | 'friends' | 'requests';
 
@@ -92,11 +93,51 @@ export const ChatTab: React.FC<Props> = ({
   const [inputText, setInputText] = useState('');
   const [showSongPickerModal, setShowSongPickerModal] = useState(false);
   const [songSearchTerm, setSongSearchTerm] = useState('');
+  const [remoteShareSongs, setRemoteShareSongs] = useState<Song[]>([]);
+  const [isSearchingShareSongs, setIsSearchingShareSongs] = useState(false);
   const [selectedSongToShare, setSelectedSongToShare] = useState<Song | null>(null);
   const [songComment, setSongComment] = useState('');
   const [shareTimestampSecond, setShareTimestampSecond] = useState<number>(0);
   const [isCoListeningActive, setIsCoListeningActive] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Live 350ms debounced catalog search for "An Ekle / Ses Kartı Paylaş"
+  useEffect(() => {
+    if (!showSongPickerModal) {
+      setRemoteShareSongs([]);
+      setIsSearchingShareSongs(false);
+      return;
+    }
+    const q = songSearchTerm.trim();
+    if (q.length < 2) {
+      setRemoteShareSongs([]);
+      setIsSearchingShareSongs(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchingShareSongs(true);
+    const timer = setTimeout(() => {
+      searchTracks(q, 12)
+        .then((tracks) => {
+          if (!cancelled) {
+            setRemoteShareSongs(tracks);
+            setIsSearchingShareSongs(false);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteShareSongs([]);
+            setIsSearchingShareSongs(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [showSongPickerModal, songSearchTerm]);
 
   const activeConv = useMemo(
     () => conversations.find((c) => activeChatUser && c.user.id === activeChatUser.id),
@@ -196,16 +237,30 @@ export const ChatTab: React.FC<Props> = ({
     [recentListeners]
   );
 
-  const filteredShareSongs = useMemo(
-    () =>
-      allSongs.filter(
-        (s) =>
-          s.title.toLowerCase().includes(songSearchTerm.toLowerCase()) ||
-          s.artist.toLowerCase().includes(songSearchTerm.toLowerCase()) ||
-          s.genre.toLowerCase().includes(songSearchTerm.toLowerCase())
-      ),
-    [allSongs, songSearchTerm]
-  );
+  const filteredShareSongs = useMemo(() => {
+    const q = songSearchTerm.trim().toLowerCase();
+    const localMatches = allSongs.filter(
+      (s) =>
+        !q ||
+        s.title.toLowerCase().includes(q) ||
+        s.artist.toLowerCase().includes(q) ||
+        s.genre.toLowerCase().includes(q)
+    );
+    if (q.length < 2) return localMatches;
+
+    const merged: Song[] = [];
+    const seen = new Set<string>();
+    const pushUnique = (song: Song) => {
+      const key = `${song.artist.trim().toLowerCase()}::${song.title.trim().toLowerCase()}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(song);
+    };
+
+    localMatches.forEach(pushUnique);
+    remoteShareSongs.forEach(pushUnique);
+    return merged;
+  }, [allSongs, songSearchTerm, remoteShareSongs]);
 
   const renderUserAvatar = (user: LoungeUser, sizeClass = 'w-11 h-11') => (
     <div className="relative shrink-0">
@@ -1289,36 +1344,94 @@ export const ChatTab: React.FC<Props> = ({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={songSearchTerm}
-                  onChange={(e) => setSongSearchTerm(e.target.value)}
-                  placeholder="Başka bir şarkı ara..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/[0.08] text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                  {filteredShareSongs.slice(0, 15).map((song) => (
+              <div className="space-y-2.5">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={songSearchTerm}
+                    onChange={(e) => setSongSearchTerm(e.target.value)}
+                    placeholder="İstediğin şarkı, sanatçı veya YouTube linki ara..."
+                    className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/[0.08] text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                  />
+                  {isSearchingShareSongs ? (
+                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                  ) : songSearchTerm.trim().length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setSongSearchTerm('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
+                      aria-label="Aramayı temizle"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                  {isSearchingShareSongs && filteredShareSongs.length === 0 && (
+                    <div className="py-6 flex items-center justify-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
+                      <span>Katalogda aranıyor...</span>
+                    </div>
+                  )}
+
+                  {!isSearchingShareSongs &&
+                    songSearchTerm.trim().length >= 2 &&
+                    filteredShareSongs.length === 0 && (
+                      <div className="py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                        "{songSearchTerm.trim()}" için eşleşen şarkı bulunamadı.
+                      </div>
+                    )}
+
+                  {filteredShareSongs.slice(0, 18).map((song) => (
                     <button
                       key={song.id}
                       type="button"
                       onClick={() => {
                         setSelectedSongToShare(song);
-                        setShareTimestampSecond(0);
-                        setSongComment(`${song.artist} - ${song.title} parçasını dinlemelisin!`);
+                        const isSameAsNow =
+                          currentSong &&
+                          (currentSong.id === song.id ||
+                            (currentSong.title.toLowerCase() === song.title.toLowerCase() &&
+                              currentSong.artist.toLowerCase() === song.artist.toLowerCase()));
+                        const initialSec = isSameAsNow ? Math.max(0, Math.floor(currentSecond)) : 0;
+                        setShareTimestampSecond(initialSec);
+                        setSongComment(
+                          initialSec > 0
+                            ? `Bu şarkının ${formatTime(initialSec)} saniyesini dinle!`
+                            : `${song.artist} - ${song.title} parçasını dinlemelisin!`
+                        );
                       }}
-                      className={`w-full text-left p-2.5 rounded-xl flex items-center justify-between gap-2.5 transition cursor-pointer border ${
+                      className={`w-full text-left p-2 rounded-xl flex items-center justify-between gap-2.5 transition cursor-pointer border ${
                         selectedSongToShare?.id === song.id
                           ? 'bg-emerald-500/12 border-emerald-500/40'
                           : 'bg-zinc-50 dark:bg-white/[0.02] border-transparent hover:bg-zinc-100 dark:hover:bg-white/[0.05]'
                       }`}
                     >
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
-                          {song.title}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10">
+                          {song.coverUrl ? (
+                            <img
+                              src={song.coverUrl}
+                              alt={song.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className={`w-full h-full bg-gradient-to-tr ${song.coverGradient} flex items-center justify-center`}
+                            >
+                              <Music className="w-4 h-4 text-white/80" />
+                            </div>
+                          )}
                         </div>
-                        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                          {song.artist}
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
+                            {song.title}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            {song.artist}
+                          </div>
                         </div>
                       </div>
                       <span className="text-[11px] text-zinc-500 tabular-nums shrink-0">
