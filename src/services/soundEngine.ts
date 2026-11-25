@@ -40,6 +40,8 @@ class RealMusicEngine {
   private lastNotifiedPlaying: boolean | null = null;
   private isLoadingTrack: boolean = false;
   private trackLoadTimeout: ReturnType<typeof setTimeout> | null = null;
+  private previewTimeOffset: number = 0;
+  private isPendingMetadataSeek: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -292,7 +294,9 @@ class RealMusicEngine {
 
     this.audio.addEventListener('timeupdate', () => {
       if (!this.audio || this.isUsingSilentAudio || this.currentSong?.youtubeVideoId) return;
-      const sec = Math.floor(this.audio.currentTime);
+      if (this.isPendingMetadataSeek) return;
+      const sec = Math.floor(this.audio.currentTime + this.previewTimeOffset);
+      this.simulatedSecond = sec;
       this.notifyTimeUpdate(sec);
 
       // 30-Second Preview Auto-Advance:
@@ -495,10 +499,14 @@ class RealMusicEngine {
    * Strictly enforces activePlaybackId lock to prevent overlapping audio on rapid track skips.
    */
   public async playSong(song: Song, startSecond: number = 0): Promise<boolean> {
+    const safeStart = Math.max(0, Math.floor(startSecond || 0));
     const requestId = ++this.currentRequestId;
     const playbackId = `pb_${requestId}_${song.id}_${Date.now()}`;
     this.activePlaybackId = playbackId;
     this.hasTriggeredEndForCurrentSong = false;
+    this.previewTimeOffset = 0;
+    this.simulatedSecond = safeStart;
+    this.isPendingMetadataSeek = safeStart > 0 && !song.youtubeVideoId;
 
     // Lock expected playing state and track loading immediately so teardown/load of previous track never flickers UI
     this.startTrackLoadingLock();
@@ -529,6 +537,9 @@ class RealMusicEngine {
 
     this.currentSong = song;
     this.updateMediaSession(song, true);
+    if (safeStart > 0) {
+      this.notifyTimeUpdate(safeStart);
+    }
 
     // CASE 1: YouTube Track
     if (song.youtubeVideoId) {
@@ -556,7 +567,7 @@ class RealMusicEngine {
       this.isPlaying = true;
       this.notifyStateChange(true);
       this.syncMediaSessionPlaybackState(true);
-      ytController.play(song.youtubeVideoId, startSecond);
+      ytController.play(song.youtubeVideoId, safeStart);
       this.setIsLoading(false);
       return true;
     }
@@ -573,27 +584,48 @@ class RealMusicEngine {
       try {
         this.audio.loop = false;
         this.audio.volume = 1;
-        if (this.audio.src !== url) {
+
+        const applyNativeSeek = () => {
+          if (!this.audio || this.activePlaybackId !== playbackId) return;
+          const dur = this.audio.duration;
+          if (Number.isFinite(dur) && dur > 0 && safeStart > 0) {
+            if (dur > safeStart) {
+              this.previewTimeOffset = 0;
+              this.audio.currentTime = safeStart;
+            } else if (dur <= 35 && safeStart >= dur) {
+              const proportionalSec = Math.max(
+                0,
+                Math.min(dur - 2, Math.floor((safeStart / (song.durationSeconds || 240)) * dur))
+              );
+              this.previewTimeOffset = safeStart - proportionalSec;
+              this.audio.currentTime = proportionalSec;
+            } else {
+              this.previewTimeOffset = 0;
+              this.audio.currentTime = Math.max(0, dur - 2);
+            }
+          }
+          this.isPendingMetadataSeek = false;
+          this.simulatedSecond = safeStart;
+          this.notifyTimeUpdate(safeStart);
+        };
+
+        const isNewSrc = this.audio.src !== url;
+        if (isNewSrc) {
+          if (safeStart > 0) {
+            this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
+          } else {
+            this.isPendingMetadataSeek = false;
+          }
           this.audio.src = url;
           this.audio.load();
-        }
-
-        if (startSecond > 0 && !isNaN(startSecond)) {
-          const safeTime = this.audio.duration && startSecond >= this.audio.duration ? 0 : startSecond;
-          try {
-            this.audio.currentTime = safeTime;
-          } catch {
-            this.audio.addEventListener(
-              'loadedmetadata',
-              () => {
-                if (this.audio && this.activePlaybackId === playbackId) {
-                  const safe = this.audio.duration && startSecond >= this.audio.duration ? 0 : startSecond;
-                  this.audio.currentTime = safe;
-                }
-              },
-              { once: true }
-            );
+        } else if (safeStart > 0) {
+          if (this.audio.readyState >= 1) {
+            applyNativeSeek();
+          } else {
+            this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
           }
+        } else {
+          this.isPendingMetadataSeek = false;
         }
 
         await this.audio.play();
@@ -616,6 +648,7 @@ class RealMusicEngine {
       } catch (err: any) {
         if (this.activePlaybackId !== playbackId) return false;
         console.warn('Audio play request notice:', err);
+        this.isPendingMetadataSeek = false;
         this.clearTrackLoadingLock();
         this.setIsLoading(false);
 
@@ -628,6 +661,7 @@ class RealMusicEngine {
       }
     } else {
       if (this.activePlaybackId !== playbackId) return false;
+      this.isPendingMetadataSeek = false;
       if (this.audio) {
         this.audio.pause();
         this.audio.removeAttribute('src');
@@ -636,7 +670,7 @@ class RealMusicEngine {
       this.isPlaying = true;
       this.notifyStateChange(true);
       this.syncMediaSessionPlaybackState(true);
-      this.startSimulatedTimer(startSecond, song.durationSeconds || 240);
+      this.startSimulatedTimer(safeStart, song.durationSeconds || 240);
       this.setIsLoading(false);
       return true;
     }
@@ -710,15 +744,41 @@ class RealMusicEngine {
     this.syncMediaSessionPlaybackState(false);
   }
 
+  public seekTo(second: number): void {
+    this.seek(second);
+  }
+
   public seek(second: number): void {
-    const safeSec = Math.max(0, isNaN(second) ? 0 : second);
+    const safeSec = Math.max(0, isNaN(second) ? 0 : Math.floor(second));
     this.simulatedSecond = safeSec;
+    this.isPendingMetadataSeek = false;
 
     if (this.currentSong?.youtubeVideoId) {
       ytController.seek(safeSec);
-    } else if (this.audio && this.audio.src) {
+    } else if (this.audio && this.audio.src && !this.isUsingSilentAudio) {
       try {
-        this.audio.currentTime = safeSec;
+        const dur = this.audio.duration;
+        if (Number.isFinite(dur) && dur > 0) {
+          if (dur > safeSec) {
+            this.previewTimeOffset = 0;
+            this.audio.currentTime = safeSec;
+          } else if (dur <= 35 && safeSec >= dur) {
+            const proportionalSec = Math.max(
+              0,
+              Math.min(
+                dur - 2,
+                Math.floor((safeSec / (this.currentSong?.durationSeconds || 240)) * dur)
+              )
+            );
+            this.previewTimeOffset = safeSec - proportionalSec;
+            this.audio.currentTime = proportionalSec;
+          } else {
+            this.previewTimeOffset = 0;
+            this.audio.currentTime = Math.max(0, dur - 2);
+          }
+        } else {
+          this.audio.currentTime = safeSec;
+        }
       } catch (err) {
         console.warn('Audio seek error:', err);
       }
@@ -733,8 +793,8 @@ class RealMusicEngine {
     if (this.currentSong?.youtubeVideoId) {
       return ytController.getCurrentTime();
     }
-    if (this.audio && this.audio.src && !this.audio.paused) {
-      return Math.floor(this.audio.currentTime);
+    if (this.audio && this.audio.src && !this.audio.paused && !this.isUsingSilentAudio) {
+      return Math.floor(this.audio.currentTime + this.previewTimeOffset);
     }
     return this.simulatedSecond;
   }

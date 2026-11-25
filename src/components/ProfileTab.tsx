@@ -3,7 +3,6 @@ import {
   Music,
   Globe,
   Users,
-  EyeOff,
   UserMinus,
   MessageCircle,
   RefreshCw,
@@ -84,16 +83,14 @@ import {
   SubscribedChannelDetail,
 } from '../types';
 import { cleanNonMusicArtists, getArtistArtwork, purgeNonMusicFromLocalStorage } from '../services/artistFilterService';
+import {
+  getListeningHistory,
+  subscribeListeningHistory,
+  computeWeeklyHistoryStats,
+  resolveSongGenre,
+  ListeningHistoryStore,
+} from '../services/listeningHistoryService';
 import { SAMPLE_SONGS } from '../data/mockData';
-
-const PRESET_AVATARS = [
-  { id: 'rocker', label: 'Rock & Indie', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
-  { id: 'headphones', label: 'Stüdyo Kulaklık', url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&auto=format&fit=crop&q=80' },
-  { id: 'vinyl', label: 'Vinil Tutkunu', url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80' },
-  { id: 'neon', label: 'Synthwave & DJ', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80' },
-  { id: 'guitar', label: 'Akustik Melodi', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
-  { id: 'lofi', label: 'Lo-Fi Chill', url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80' },
-];
 
 interface Props {
   userProfile: UserProfile;
@@ -428,7 +425,6 @@ export const ProfileTab: React.FC<Props> = ({
   onAcceptFriendRequest,
   onDeclineFriendRequest,
   onCancelSentRequest,
-  onUpdatePrivacyMode,
   onToggleFriend,
   onStartChatWithFriend,
   onOpenYouTubeConnect,
@@ -476,9 +472,9 @@ export const ProfileTab: React.FC<Props> = ({
     }
   };
   const [profileSection, setProfileSection] = useState<'library' | 'insights'>('library');
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showTrustScoreModal, setShowTrustScoreModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'account'>('profile');
   const [showStoryCardModal, setShowStoryCardModal] = useState(false);
   const [isGeneratingStoryImage, setIsGeneratingStoryImage] = useState(false);
   const [storyActionSuccess, setStoryActionSuccess] = useState<string | null>(null);
@@ -629,7 +625,6 @@ export const ProfileTab: React.FC<Props> = ({
     setShowLocationModal(false);
   };
 
-  const [tempPrivacy, setTempPrivacy] = useState<PrivacyMode>(userProfile.privacyMode || 'public');
   const [draftAvatar, setDraftAvatar] = useState<string | null>(() => {
     if (userProfile.avatarUrl) return userProfile.avatarUrl;
     if (typeof window !== 'undefined') {
@@ -638,7 +633,6 @@ export const ProfileTab: React.FC<Props> = ({
     return null;
   });
   const tempAvatarUrl = draftAvatar;
-  const setTempAvatarUrl = setDraftAvatar;
 
   React.useEffect(() => {
     setDraftAvatar(userProfile.avatarUrl || null);
@@ -670,37 +664,43 @@ export const ProfileTab: React.FC<Props> = ({
   const [newArtistName, setNewArtistName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const privacyOptions: { id: PrivacyMode; icon: React.ReactNode; title: string; desc: string }[] = [
-    {
-      id: 'public',
-      icon: <Globe className="w-4 h-4 text-emerald-400" />,
-      title: 'Herkese Açık',
-      desc: 'Canlı odalarda ve zaman çizelgesinde herkes seni görebilir.',
-    },
-    {
-      id: 'friends_only',
-      icon: <Users className="w-4 h-4 text-lime-400" />,
-      title: 'Sadece Arkadaşlar',
-      desc: 'Yalnızca arkadaş listendekiler seni odada görür.',
-    },
-    {
-      id: 'private',
-      icon: <EyeOff className="w-4 h-4 text-zinc-400" />,
-      title: 'Gizli Mod',
-      desc: 'Tamamen görünmezsin. Şarkıları iz bırakmadan dinlersin.',
-    },
-  ];
-
+  // Automatic 256x256 center-cropped canvas compression before saving avatar to localStorage
   const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        applyAvatarImmediately(reader.result);
-      }
+      const rawDataUrl = typeof reader.result === 'string' ? reader.result : null;
+      if (!rawDataUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const targetSize = 256;
+          const canvas = document.createElement('canvas');
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            applyAvatarImmediately(rawDataUrl);
+            return;
+          }
+          const minSide = Math.min(img.width, img.height);
+          const sx = Math.max(0, (img.width - minSide) / 2);
+          const sy = Math.max(0, (img.height - minSide) / 2);
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize);
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          applyAvatarImmediately(compressed);
+        } catch {
+          applyAvatarImmediately(rawDataUrl);
+        }
+      };
+      img.onerror = () => {
+        applyAvatarImmediately(rawDataUrl);
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleSyncYouTubeLibrary = async () => {
@@ -789,33 +789,45 @@ export const ProfileTab: React.FC<Props> = ({
     return { gradient: grad, initials };
   };
 
-  // Compute all available tracks for authentic weekly pulse analysis
+  // Live Real-Time Listening History subscribed to listenhub_play_history
+  const [playHistory, setPlayHistory] = useState<ListeningHistoryStore>(() => getListeningHistory());
+
+  React.useEffect(() => {
+    return subscribeListeningHistory(setPlayHistory);
+  }, []);
+
+  const liveWeeklyHistory = useMemo(
+    () => computeWeeklyHistoryStats(playHistory),
+    [playHistory]
+  );
+
+  // Authentic library tracks synced by user (YouTube Music / custom playlists / favorites)
   const allWeeklyTracks = [
     ...syncedPlaylists.flatMap((p) => p.tracks || []),
     ...favoriteSongs,
   ];
 
-  // Frequency map for genres
-  const genreTally = new Map<string, number>();
-  allWeeklyTracks.forEach((track) => {
-    const g = track.genre?.trim();
-    if (g && g !== 'YouTube Music' && g !== 'Favoriler' && g !== 'Genel' && g !== 'Audio') {
-      genreTally.set(g, (genreTally.get(g) || 0) + 1);
-    }
-  });
+  const hasHistoryPlays =
+    liveWeeklyHistory.weeklySeconds > 0 || liveWeeklyHistory.weeklyScrobbles > 0;
+  const hasSyncedLibraryData =
+    allWeeklyTracks.length > 0 || sanitizedFavoriteArtists.length > 0;
+  const hasRealListeningData = hasHistoryPlays || hasSyncedLibraryData;
 
-  if (genreTally.size === 0) {
-    if (userProfile.topGenres && userProfile.topGenres.length > 0) {
-      userProfile.topGenres.forEach((g, idx) => {
-        genreTally.set(g, Math.max(1, (userProfile.topGenres.length - idx) * 4));
-      });
-    } else {
-      genreTally.set('Alternatif & Indie', 18);
-      genreTally.set('Anadolu Rock', 12);
-      genreTally.set('Synthwave & Darkwave', 8);
-      genreTally.set('Post-Punk & New Wave', 5);
-      genreTally.set('Lo-Fi & Akustik', 3);
-    }
+  // Genre breakdown strictly from REAL play history first, then genuine synced library (zero fake defaults)
+  const genreTally = new Map<string, number>();
+  if (liveWeeklyHistory.topGenres.length > 0) {
+    liveWeeklyHistory.topGenres.forEach((g) => {
+      const weight = Math.max(1, g.plays || Math.ceil(g.seconds / 15));
+      genreTally.set(g.genre, (genreTally.get(g.genre) || 0) + weight);
+    });
+  }
+  if (allWeeklyTracks.length > 0) {
+    allWeeklyTracks.forEach((track) => {
+      const resolvedGenre = resolveSongGenre(track);
+      if (resolvedGenre) {
+        genreTally.set(resolvedGenre, (genreTally.get(resolvedGenre) || 0) + 1);
+      }
+    });
   }
 
   const totalGenreScore = Array.from(genreTally.values()).reduce((a, b) => a + b, 0);
@@ -823,37 +835,37 @@ export const ProfileTab: React.FC<Props> = ({
     {
       bar: 'bg-lime-400',
       glow: 'shadow-[0_0_12px_rgba(163,230,53,0.35)]',
-      text: 'text-lime-300',
+      text: 'text-lime-500 dark:text-lime-300',
       dot: 'bg-lime-400',
-      badge: 'bg-lime-400/10 text-lime-400 border-lime-400/20',
+      badge: 'bg-lime-400/10 text-lime-500 dark:text-lime-400 border-lime-400/20',
     },
     {
       bar: 'bg-cyan-400',
       glow: 'shadow-[0_0_12px_rgba(34,211,238,0.35)]',
-      text: 'text-cyan-300',
+      text: 'text-cyan-500 dark:text-cyan-300',
       dot: 'bg-cyan-400',
-      badge: 'bg-cyan-400/10 text-cyan-400 border-cyan-400/20',
+      badge: 'bg-cyan-400/10 text-cyan-500 dark:text-cyan-400 border-cyan-400/20',
     },
     {
       bar: 'bg-amber-400',
       glow: 'shadow-[0_0_12px_rgba(251,191,36,0.35)]',
-      text: 'text-amber-300',
+      text: 'text-amber-500 dark:text-amber-300',
       dot: 'bg-amber-400',
-      badge: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+      badge: 'bg-amber-400/10 text-amber-500 dark:text-amber-400 border-amber-400/20',
     },
     {
       bar: 'bg-rose-400',
       glow: 'shadow-[0_0_12px_rgba(251,113,133,0.35)]',
-      text: 'text-rose-300',
+      text: 'text-rose-500 dark:text-rose-300',
       dot: 'bg-rose-400',
-      badge: 'bg-rose-400/10 text-rose-400 border-rose-400/20',
+      badge: 'bg-rose-400/10 text-rose-500 dark:text-rose-400 border-rose-400/20',
     },
     {
       bar: 'bg-purple-400',
       glow: 'shadow-[0_0_12px_rgba(192,132,252,0.35)]',
-      text: 'text-purple-300',
+      text: 'text-purple-500 dark:text-purple-300',
       dot: 'bg-purple-400',
-      badge: 'bg-purple-400/10 text-purple-400 border-purple-400/20',
+      badge: 'bg-purple-400/10 text-purple-500 dark:text-purple-400 border-purple-400/20',
     },
   ];
 
@@ -870,90 +882,135 @@ export const ProfileTab: React.FC<Props> = ({
       };
     });
 
-  // Frequency map for artists (strictly filtered for verified music artists)
-  const artistTally = new Map<string, { count: number; sampleSong?: Song }>();
+  // Top Artists strictly from REAL play history first, then genuine synced library (zero fake Duman 24 fallback)
+  const artistTally = new Map<string, { count: number; playedSeconds: number; sampleSong?: Song }>();
+  liveWeeklyHistory.topArtists.forEach((a) => {
+    const cleanName = a.name.trim();
+    if (!cleanName || cleanName === 'Bilinmeyen Sanatçı') return;
+    const sampleRec = a.sampleTrack;
+    const sampleSong: Song | undefined = sampleRec
+      ? {
+          id: sampleRec.id,
+          title: sampleRec.title,
+          artist: sampleRec.artist,
+          album: sampleRec.album || 'Single',
+          genre: sampleRec.genre,
+          rawMediaTitle: `${sampleRec.artist} - ${sampleRec.title}`,
+          coverUrl: sampleRec.coverUrl,
+          coverGradient: sampleRec.coverGradient || 'from-purple-600 to-fuchsia-600',
+          durationSeconds: sampleRec.durationSeconds || 210,
+          bpm: 118,
+          keyNote: 'Am',
+          catalogNumber: 'LH-LIVE',
+          timelineMarkers: [],
+          audioUrl: sampleRec.audioUrl,
+          youtubeVideoId: sampleRec.youtubeVideoId,
+          releaseYear: new Date().getFullYear(),
+          soundType: 'indie',
+        }
+      : undefined;
+    artistTally.set(cleanName, {
+      count: Math.max(1, a.plays || Math.ceil(a.seconds / 15)),
+      playedSeconds: a.seconds,
+      sampleSong,
+    });
+  });
+
   allWeeklyTracks.forEach((track) => {
     const a = track.artist?.trim();
     if (a && a !== 'YouTube Music' && a !== 'Bilinmeyen Sanatçı') {
       const isClean = cleanNonMusicArtists([a], []).length > 0;
       if (!isClean) return;
-      const existing = artistTally.get(a) || { count: 0 };
+      const existing = artistTally.get(a) || { count: 0, playedSeconds: 0 };
       artistTally.set(a, {
         count: existing.count + 1,
+        playedSeconds: existing.playedSeconds,
         sampleSong: existing.sampleSong || track,
       });
     }
   });
 
-  // Use strictly sanitized favorite music artists (clean of tech/review channels)
   sanitizedFavoriteArtists.forEach((a) => {
     const clean = a.trim();
     if (!clean) return;
-    const existing = artistTally.get(clean) || { count: 0 };
+    const existing = artistTally.get(clean) || { count: 0, playedSeconds: 0 };
     artistTally.set(clean, {
       ...existing,
-      count: existing.count + 3,
+      count: existing.count + 2,
     });
   });
 
-  if (artistTally.size === 0) {
-    if (userProfile.topArtists && userProfile.topArtists.length > 0) {
-      userProfile.topArtists.forEach((a, idx) => {
-        artistTally.set(a, { count: Math.max(2, (userProfile.topArtists.length - idx) * 5) });
-      });
-    } else {
-      artistTally.set('Duman', { count: 24 });
-      artistTally.set('Kaan Tangöze', { count: 20 });
-      artistTally.set('Adamlar', { count: 18 });
-      artistTally.set('Mor ve Ötesi', { count: 15 });
-      artistTally.set('Arctic Monkeys', { count: 12 });
-      artistTally.set('Jakuzi', { count: 10 });
-      artistTally.set('Teoman', { count: 8 });
-    }
-  }
-
   const sortedWeeklyArtists = Array.from(artistTally.entries())
-    .sort((a, b) => b[1].count - a[1].count)
+    .sort((a, b) => b[1].playedSeconds - a[1].playedSeconds || b[1].count - a[1].count)
     .slice(0, 5)
     .map(([artist, data], idx) => ({
       rank: idx + 1,
       name: artist,
       tracksCount: data.count,
+      playedSeconds: data.playedSeconds,
       sampleSong: data.sampleSong,
     }));
 
-  // Gerçekçi ve Tutarlı Haftalık Dinleme Hesaplaması (18 saat 42 dk – 34 saat 15 dk bandı, 240–420 parça)
-  const totalLibraryCount = totalLibraryTracks || allWeeklyTracks.length || 1071;
-  // Haftalık aktif dinleme parçaları (Scrobbles):
-  const weeklyScrobbleCount = Math.min(
-    380,
-    Math.max(248, Math.round(Math.min(totalLibraryCount, 1200) * 0.28) + 36)
-  );
-  // Ortalama şarkı uzunluğu ~215 saniye (3.58 dakika)
-  const weeklyTotalSeconds = weeklyScrobbleCount * 215;
+  // 100% Authentic Weekly Duration & Scrobble Counters (zero synthetic 22 saat / 1071 fallback)
+  const totalLibraryCount = totalLibraryTracks;
+  const weeklyScrobbleCount = liveWeeklyHistory.weeklyScrobbles;
+  const weeklyTotalSeconds = liveWeeklyHistory.weeklySeconds;
   const weeklyHours = Math.floor(weeklyTotalSeconds / 3600);
   const weeklyRemainingMinutes = Math.floor((weeklyTotalSeconds % 3600) / 60);
+  const weeklyRemainingSeconds = Math.floor(weeklyTotalSeconds % 60);
 
-  const topGenreName = sortedWeeklyGenres[0]?.genre || 'Alternatif & Indie';
-  const topArtistName = sortedWeeklyArtists[0]?.name || 'Duman';
+  const topGenreName = sortedWeeklyGenres[0]?.genre || 'Henüz belirlenmedi';
+  const topArtistName = sortedWeeklyArtists[0]?.name || 'Henüz yok';
 
-  let weeklyPersona = 'Eklektik Kaşif';
-  let weeklyPersonaDesc = 'Farklı müzikal dönemler ve soundlar arasında sezgisel bir denge kuruyor.';
-  if (topGenreName.toLowerCase().includes('rock')) {
-    weeklyPersona = 'Gece Rockerı';
-    weeklyPersonaDesc = 'Gitar rifleri, analog davul vuruşları ve yüksek dinamizmli parçalar bu hafta zirvede.';
-  } else if (topGenreName.toLowerCase().includes('synth') || topGenreName.toLowerCase().includes('wave')) {
-    weeklyPersona = 'Synthwave Gezgini';
-    weeklyPersonaDesc = 'Analog synth tınıları ve retro fütürist melodiler bu haftaki odaklanma akışını oluşturdu.';
-  } else if (topGenreName.toLowerCase().includes('indie') || topGenreName.toLowerCase().includes('alternatif')) {
-    weeklyPersona = 'İndie Melankolisti';
-    weeklyPersonaDesc = 'Derin lirikler, lo-fi dokular ve bağımsız alternatif melodiler bu hafta başrolde.';
-  } else if (topGenreName.toLowerCase().includes('anadolu')) {
-    weeklyPersona = 'Anadolu Saykodelik';
-    weeklyPersonaDesc = 'Geleneksel motifler ile modern psikedelik rock tınılarının kusursuz uyumu.';
+  let weeklyPersona = 'Yeni Frekans Kaşifi';
+  let weeklyPersonaDesc = 'Dinlediğin her parça ile müzikal auran canlı olarak şekilleniyor.';
+  if (hasRealListeningData) {
+    weeklyPersona = 'Eklektik Kaşif';
+    weeklyPersonaDesc = 'Farklı müzikal dönemler ve soundlar arasında sezgisel bir denge kuruyor.';
+    const lowerTop = topGenreName.toLowerCase();
+    if (lowerTop.includes('anadolu')) {
+      weeklyPersona = 'Anadolu Saykodelik';
+      weeklyPersonaDesc = 'Geleneksel motifler ile modern psikedelik rock tınılarının kusursuz uyumu.';
+    } else if (lowerTop.includes('rock') || lowerTop.includes('grunge')) {
+      weeklyPersona = 'Gece Rockerı';
+      weeklyPersonaDesc = 'Gitar rifleri, analog davul vuruşları ve yüksek dinamizmli parçalar bu hafta zirvede.';
+    } else if (lowerTop.includes('synth') || lowerTop.includes('wave') || lowerTop.includes('elektronik')) {
+      weeklyPersona = 'Synthwave Gezgini';
+      weeklyPersonaDesc = 'Analog synth tınıları ve retro fütürist melodiler bu haftaki odaklanma akışını oluşturdu.';
+    } else if (lowerTop.includes('indie') || lowerTop.includes('alternatif')) {
+      weeklyPersona = 'İndie Melankolisti';
+      weeklyPersonaDesc = 'Derin lirikler, lo-fi dokular ve bağımsız alternatif melodiler bu hafta başrolde.';
+    } else if (lowerTop.includes('akustik') || lowerTop.includes('lo-fi')) {
+      weeklyPersona = 'Akustik Gece Yolcusu';
+      weeklyPersonaDesc = 'Sakin analog tınılar, sıcak vokaller ve odaklanma ritimleri bu haftanın imzası.';
+    }
   }
 
+  const topPlayedRecord = liveWeeklyHistory.topTracks[0]?.record;
+  const topPlayedSong: Song | undefined = topPlayedRecord
+    ? {
+        id: topPlayedRecord.id,
+        title: topPlayedRecord.title,
+        artist: topPlayedRecord.artist,
+        album: topPlayedRecord.album || 'Single',
+        genre: topPlayedRecord.genre,
+        rawMediaTitle: `${topPlayedRecord.artist} - ${topPlayedRecord.title}`,
+        coverUrl: topPlayedRecord.coverUrl,
+        coverGradient: topPlayedRecord.coverGradient || 'from-purple-600 to-pink-600',
+        durationSeconds: topPlayedRecord.durationSeconds || 210,
+        bpm: 118,
+        keyNote: 'Am',
+        catalogNumber: 'LH-LIVE',
+        timelineMarkers: [],
+        audioUrl: topPlayedRecord.audioUrl,
+        youtubeVideoId: topPlayedRecord.youtubeVideoId,
+        releaseYear: new Date().getFullYear(),
+        soundType: 'indie',
+      }
+    : undefined;
+
   const weeklyAnthemSong: Song =
+    topPlayedSong ||
     favoriteSongs[0] ||
     allWeeklyTracks[0] ||
     sortedWeeklyArtists[0]?.sampleSong ||
@@ -1510,7 +1567,7 @@ export const ProfileTab: React.FC<Props> = ({
     }
   };
 
-  const openEditProfileModal = () => {
+  const openSettingsModal = (initialTab: 'profile' | 'account' = 'profile') => {
     setTempName(userProfile.youtubeAccount?.name || userProfile.name);
     setTempEmail(
       userProfile.youtubeAccount?.email || userProfile.email || ''
@@ -1521,13 +1578,54 @@ export const ProfileTab: React.FC<Props> = ({
     );
     setTempBio(userProfile.bio);
     setTempCity(userProfile.city);
-    setTempPrivacy(userProfile.privacyMode || 'public');
     setDraftAvatar(
       userProfile.avatarUrl ||
         (typeof window !== 'undefined' ? localStorage.getItem('harmoniq_user_avatar') : null) ||
         null
     );
-    setShowEditProfileModal(true);
+    setSettingsTab(initialTab);
+    setShowSettingsModal(true);
+  };
+
+  const handleSaveSettingsChanges = () => {
+    const formattedHandle = tempHandle.trim()
+      ? tempHandle.trim().startsWith('@')
+        ? tempHandle.trim()
+        : `@${tempHandle.trim()}`
+      : '@muziksever';
+    const nextName = tempName.trim() || userProfile.name;
+    const nextEmail = tempEmail.trim();
+
+    userProfile.name = nextName;
+    userProfile.bio = tempBio;
+    userProfile.city = tempCity;
+    userProfile.email = nextEmail;
+    userProfile.avatarUrl = draftAvatar || undefined;
+    if (!userProfile.youtubeAccount) {
+      userProfile.youtubeAccount = {
+        name: nextName,
+        email: nextEmail,
+        handle: formattedHandle,
+      };
+    } else {
+      userProfile.youtubeAccount.name = nextName;
+      userProfile.youtubeAccount.email = nextEmail;
+      userProfile.youtubeAccount.handle = formattedHandle;
+    }
+
+    if (onUpdateAccount) {
+      onUpdateAccount({
+        name: nextName,
+        email: nextEmail,
+        handle: formattedHandle,
+      });
+    }
+    if (onUpdateBio) onUpdateBio(tempBio);
+    if (onUpdateCity) onUpdateCity(tempCity);
+    applyAvatarImmediately(draftAvatar);
+    setShowSettingsModal(false);
+    setToastNotice('Değişiklikler kaydedildi.');
+    setTimeout(() => setToastNotice(null), 2800);
   };
 
   const activeProfileAvatar = draftAvatar || userProfile.avatarUrl;
@@ -1559,7 +1657,7 @@ export const ProfileTab: React.FC<Props> = ({
             <div className="flex items-start gap-4 min-w-0">
               <div
                 className="relative group cursor-pointer shrink-0"
-                onClick={openEditProfileModal}
+                onClick={() => openSettingsModal('profile')}
               >
                 {activeProfileAvatar ? (
                   <img
@@ -1643,25 +1741,16 @@ export const ProfileTab: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Centralized Action Bar (44px touch targets) */}
-            <div className="flex items-center gap-2 pt-3 border-t border-zinc-200/80 dark:border-white/[0.07]">
+            {/* Single Centralized Settings & Account Button (44px touch target) */}
+            <div className="pt-3 border-t border-zinc-200/80 dark:border-white/[0.07]">
               <button
                 type="button"
-                onClick={() => setShowSettingsModal(true)}
-                className="flex-1 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.11] text-zinc-900 dark:text-zinc-100 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border border-zinc-200 dark:border-white/[0.08] active:scale-95 group whitespace-nowrap"
-                title="Ayarlar, Tema ve Tüm Hesap Bağlantıları"
+                onClick={() => openSettingsModal('profile')}
+                className="w-full px-4 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.11] text-zinc-900 dark:text-zinc-100 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 border border-zinc-200 dark:border-white/[0.08] active:scale-[0.98] group whitespace-nowrap"
+                title="Profil Bilgileri, Tema ve Müzik Servisi Ayarları"
               >
                 <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:rotate-45 transition-transform" />
                 <span>Ayarlar & Hesap</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={openEditProfileModal}
-                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border border-zinc-200 dark:border-white/[0.07] active:scale-95 whitespace-nowrap shrink-0"
-              >
-                <UserIcon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                <span>Düzenle</span>
               </button>
             </div>
           </section>
@@ -1698,9 +1787,38 @@ export const ProfileTab: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* 3. UNIFIED MÜZİK ÖZETİ & AURA — ALWAYS VISIBLE IN LEFT COL ON DESKTOP, TABBED ON MOBILE */}
+          {/* 3. UNIFIED MÜZİK ÖZETİ & AURA — LIVE REAL LISTENING ANALYTICS */}
           <div className={profileSection === 'insights' ? 'block' : 'hidden lg:block'}>
           <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
+        {!hasRealListeningData ? (
+          <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400">
+              <Headphones className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5 max-w-md">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                Müzikal Aura · Haftalık Müzik Özeti
+              </div>
+              <h2 className="text-base sm:text-lg font-heading font-extrabold text-zinc-900 dark:text-white">
+                Henüz dinleme verisi yok
+              </h2>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Henüz dinleme verisi yok — ilk parçanı açtığında haftalık özetin ve auran canlı olarak oluşacak.
+              </p>
+            </div>
+            {onPlaySong && (
+              <button
+                type="button"
+                onClick={() => onPlaySong(SAMPLE_SONGS[0])}
+                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white text-xs font-bold shadow-md hover:opacity-95 transition active:scale-95 flex items-center gap-2 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>İlk Parçayı Başlat</span>
+              </button>
+            )}
+          </div>
+        ) : (
+        <>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 dark:text-zinc-400">
@@ -1726,7 +1844,7 @@ export const ProfileTab: React.FC<Props> = ({
               title="Müzikal Aura Hikaye Kartını Aç & Paylaş"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span>Aura'yı Paylaş</span>
+              <span>Aura&apos;yı Paylaş</span>
             </button>
 
             {/* Filter Toggle */}
@@ -1737,7 +1855,7 @@ export const ProfileTab: React.FC<Props> = ({
                 className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
                   weeklyFilter === 'all'
                     ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
                 Genel
@@ -1748,7 +1866,7 @@ export const ProfileTab: React.FC<Props> = ({
                 className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
                   weeklyFilter === 'genres'
                     ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
                 Türler
@@ -1759,85 +1877,103 @@ export const ProfileTab: React.FC<Props> = ({
                 className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
                   weeklyFilter === 'artists'
                     ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
                 Sanatçılar
               </button>
             </div>
-
-            {/* Share / Open Story Card */}
-            <button
-              type="button"
-              onClick={() => setShowStoryCardModal(true)}
-              className="p-2 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 group"
-              title="Haftalık müzikal aura ve frekans hikaye kartını aç"
-            >
-              <Share2 className="w-3.5 h-3.5 text-lime-400 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Hikaye Olarak Paylaş</span>
-              <span className="sm:hidden">Paylaş</span>
-            </button>
           </div>
         </div>
 
-        {/* 3 Metric Highlight Pillars */}
+        {/* 3 Real-Time Metric Highlight Pillars */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 relative z-10">
-          <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-medium">
-              <Headphones className="w-3.5 h-3.5 text-lime-400" />
+          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
+            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
+              <Headphones className="w-3.5 h-3.5 text-lime-500 dark:text-lime-400" />
               <span>Haftalık Dinleme Süresi</span>
             </div>
-            <div className="text-xl font-heading font-bold text-white">
-              {weeklyHours} <span className="text-xs font-normal text-zinc-400">saat</span> {weeklyRemainingMinutes} <span className="text-xs font-normal text-zinc-400">dk</span>
+            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white tabular-nums">
+              {weeklyHours > 0 ? (
+                <>
+                  {weeklyHours} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">saat</span>{' '}
+                  {weeklyRemainingMinutes} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>
+                </>
+              ) : weeklyRemainingMinutes > 0 ? (
+                <>
+                  {weeklyRemainingMinutes} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>{' '}
+                  {weeklyRemainingSeconds} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">sn</span>
+                </>
+              ) : weeklyTotalSeconds > 0 ? (
+                <>
+                  {weeklyTotalSeconds} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">sn</span>
+                </>
+              ) : (
+                <>
+                  0 <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>
+                </>
+              )}
             </div>
             <div className="text-[11px] text-zinc-500 flex flex-col gap-0.5 pt-0.5">
-              <span className="text-zinc-300 font-medium">{weeklyScrobbleCount} haftalık parça dinlendi</span>
-              <span className="text-[10px] text-zinc-500">Kütüphane Toplamı: {totalLibraryCount} parça</span>
+              <span className="text-zinc-700 dark:text-zinc-300 font-medium tabular-nums">
+                {weeklyScrobbleCount > 0
+                  ? `${weeklyScrobbleCount} parça dinlendi`
+                  : 'Canlı oynatma kaydediliyor'}
+              </span>
+              {totalLibraryCount > 0 && (
+                <span className="text-[10px] text-zinc-500 tabular-nums">
+                  Kütüphane Toplamı: {totalLibraryCount} parça
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-medium">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
+            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
+              <Trophy className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
               <span>Haftanın Zirvesi</span>
             </div>
-            <div className="text-xl font-heading font-bold text-white truncate">
+            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
               {topArtistName}
             </div>
-            <div className="text-[11px] text-zinc-500">
-              {sortedWeeklyArtists[0]?.tracksCount || 24} parça ile en çok dinlenen
+            <div className="text-[11px] text-zinc-500 tabular-nums">
+              {sortedWeeklyArtists[0]
+                ? `${sortedWeeklyArtists[0].tracksCount} dinleme/parça skoru`
+                : 'İlk sanatçını dinle'}
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-medium">
-              <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
+            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
+              <BarChart3 className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
               <span>Baskın Müzik Türü</span>
             </div>
-            <div className="text-xl font-heading font-bold text-white truncate">
+            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
               {topGenreName}
             </div>
-            <div className="text-[11px] text-zinc-500">
-              Haftalık akışın %{sortedWeeklyGenres[0]?.percentage || 42}'si
+            <div className="text-[11px] text-zinc-500 tabular-nums">
+              {sortedWeeklyGenres[0]
+                ? `Haftalık akışın %${sortedWeeklyGenres[0].percentage}'i`
+                : 'Dinledikçe hesaplanır'}
             </div>
           </div>
         </div>
 
         {/* Dynamic Visual Breakdown: Genres */}
-        {(weeklyFilter === 'all' || weeklyFilter === 'genres') && (
-          <div className="space-y-3.5 pt-2 border-t border-white/[0.06] relative z-10">
+        {(weeklyFilter === 'all' || weeklyFilter === 'genres') && sortedWeeklyGenres.length > 0 && (
+          <div className="space-y-3.5 pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-                <BarChart3 className="w-3.5 h-3.5 text-lime-400" />
+              <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                <BarChart3 className="w-3.5 h-3.5 text-lime-500 dark:text-lime-400" />
                 <span>En Çok Dinlenen Türler (% Dağılımı)</span>
               </h3>
               <span className="text-[11px] text-zinc-500">
-                5 Temel Akım
+                {sortedWeeklyGenres.length} Aktif Tür
               </span>
             </div>
 
             {/* Proportional Stacked Multi-Color Segmented Bar */}
-            <div className="flex h-3.5 w-full rounded-full overflow-hidden bg-white/[0.04] p-0.5 gap-1 shadow-inner">
+            <div className="flex h-3.5 w-full rounded-full overflow-hidden bg-zinc-200/70 dark:bg-white/[0.04] p-0.5 gap-1 shadow-inner">
               {sortedWeeklyGenres.map((item, idx) => (
                 <div
                   key={idx}
@@ -1849,23 +1985,23 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
 
             {/* Clean Genre Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
               {sortedWeeklyGenres.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between space-y-1 hover:border-white/15 transition"
+                  className="p-2.5 rounded-xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] flex flex-col justify-between space-y-1 hover:border-purple-500/30 transition"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${item.palette.dot} shrink-0`} />
-                    <span className="text-xs font-semibold text-white truncate" title={item.genre}>
+                    <span className="text-xs font-semibold text-zinc-900 dark:text-white truncate" title={item.genre}>
                       {item.genre}
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between text-[11px] pt-1 border-t border-white/[0.04]">
+                  <div className="flex items-baseline justify-between text-[11px] pt-1 border-t border-zinc-200/60 dark:border-white/[0.04]">
                     <span className={`font-bold font-mono ${item.palette.text}`}>
                       %{item.percentage}
                     </span>
-                    <span className="text-[10px] text-zinc-500">
+                    <span className="text-[10px] text-zinc-500 tabular-nums">
                       {item.count} parça
                     </span>
                   </div>
@@ -1876,15 +2012,15 @@ export const ProfileTab: React.FC<Props> = ({
         )}
 
         {/* Dynamic Visual Breakdown: Top Artists */}
-        {(weeklyFilter === 'all' || weeklyFilter === 'artists') && (
-          <div className="space-y-3 pt-2 border-t border-white/[0.06] relative z-10">
+        {(weeklyFilter === 'all' || weeklyFilter === 'artists') && sortedWeeklyArtists.length > 0 && (
+          <div className="space-y-3 pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>Haftanın Zirvedeki Sanatçıları</span>
               </h3>
               <span className="text-[11px] text-zinc-500">
-                Sıklık ve Dinleme Skoruna Göre
+                Gerçek Dinleme Verisi
               </span>
             </div>
 
@@ -1897,21 +2033,19 @@ export const ProfileTab: React.FC<Props> = ({
                     key={artist.name}
                     className={`flex items-center justify-between p-3 rounded-2xl border transition group ${
                       isFirst
-                        ? 'bg-amber-500/[0.06] border-amber-500/30 hover:border-amber-500/50'
-                        : 'bg-white/[0.02] border-white/[0.06] hover:border-white/15'
+                        ? 'bg-amber-500/[0.08] border-amber-500/30 hover:border-amber-500/50'
+                        : 'bg-zinc-50 dark:bg-white/[0.02] border-zinc-200/80 dark:border-white/[0.06] hover:border-purple-500/30'
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
-                      {/* Rank Indicator */}
                       <span
                         className={`w-7 text-center font-mono font-bold text-xs shrink-0 ${
-                          isFirst ? 'text-amber-400' : 'text-zinc-500'
+                          isFirst ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-500'
                         }`}
                       >
                         {isFirst ? '👑 1' : `#${artist.rank}`}
                       </span>
 
-                      {/* Real High-Res Artist Portrait (300x300bb) */}
                       {avatarInfo.url ? (
                         <img
                           src={avatarInfo.url}
@@ -1926,8 +2060,8 @@ export const ProfileTab: React.FC<Props> = ({
                         <div
                           className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-xs ring-1 shrink-0 ${
                             isFirst
-                              ? 'bg-gradient-to-tr from-amber-500/20 to-amber-600/10 text-amber-300 ring-amber-400/30'
-                              : 'bg-zinc-900 text-zinc-300 ring-white/10'
+                              ? 'bg-gradient-to-tr from-amber-500/20 to-amber-600/10 text-amber-600 dark:text-amber-300 ring-amber-400/30'
+                              : 'bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 ring-zinc-300 dark:ring-white/10'
                           }`}
                         >
                           {avatarInfo.initials}
@@ -1936,19 +2070,23 @@ export const ProfileTab: React.FC<Props> = ({
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-purple-300 transition">
+                          <div className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-500 dark:group-hover:text-purple-300 transition">
                             {artist.name}
                           </div>
                           {isFirst && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold shrink-0">
+                            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold shrink-0">
                               #1 Zirve
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-2">
-                          <span>{artist.tracksCount} haftalık parça dinlendi</span>
-                          <span className="text-zinc-600">·</span>
-                          <span className="text-zinc-400">Özel Frekans</span>
+                        <div className="text-[11px] text-zinc-500 flex items-center gap-2 tabular-nums">
+                          <span>
+                            {artist.playedSeconds > 0
+                              ? `${Math.max(1, Math.round(artist.playedSeconds / 60))} dk dinlendi`
+                              : `${artist.tracksCount} parça`}
+                          </span>
+                          <span className="text-zinc-400 dark:text-zinc-600">·</span>
+                          <span className="text-zinc-500 dark:text-zinc-400">Canlı Frekans</span>
                         </div>
                       </div>
                     </div>
@@ -1958,11 +2096,11 @@ export const ProfileTab: React.FC<Props> = ({
                         <button
                           type="button"
                           onClick={() => onStartArtistRadio(artist.name)}
-                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer min-h-[34px]"
+                          className="px-3 py-1.5 rounded-xl bg-zinc-200/70 dark:bg-white/[0.06] hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-zinc-800 dark:text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer min-h-[34px]"
                           title={`${artist.name} radyosunu başlat`}
                         >
-                          <Radio className="w-3.5 h-3.5 text-purple-400 group-hover:text-white transition" />
-                          <span className="hidden sm:inline">Radyoyu Başlat</span>
+                          <Radio className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 group-hover:text-white transition" />
+                          <span className="hidden sm:inline">Radyo</span>
                         </button>
                       )}
                     </div>
@@ -1975,8 +2113,8 @@ export const ProfileTab: React.FC<Props> = ({
 
         {/* Highlight: Haftanın Parçası (Weekly Anthem) */}
         {weeklyFilter === 'all' && (
-          <div className="pt-2 border-t border-white/[0.06] relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-white/[0.03] to-white/[0.01] border border-white/[0.06]">
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-gradient-to-r dark:from-white/[0.03] dark:to-white/[0.01] border border-zinc-200/80 dark:border-white/[0.06]">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-white/15 shrink-0">
                   {weeklyAnthemSong.coverUrl ? (
@@ -1994,13 +2132,13 @@ export const ProfileTab: React.FC<Props> = ({
                 </div>
 
                 <div className="min-w-0">
-                  <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                    <span>Haftanın En Çok Tekrarlanan Şarkısı</span>
+                  <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                    <span>En Çok Tekrarlanan Şarkı</span>
                   </div>
-                  <div className="text-xs sm:text-sm font-bold text-white truncate">
+                  <div className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white truncate">
                     {weeklyAnthemSong.title}
                   </div>
-                  <div className="text-[11px] text-zinc-400 truncate">
+                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
                     {weeklyAnthemSong.artist} · {weeklyAnthemSong.album}
                   </div>
                 </div>
@@ -2018,6 +2156,8 @@ export const ProfileTab: React.FC<Props> = ({
               )}
             </div>
           </div>
+        )}
+        </>
         )}
           </section>
           </div>
@@ -2718,279 +2858,7 @@ export const ProfileTab: React.FC<Props> = ({
         </div>
       )}
 
-      {/* =====================================================================
-          MODAL: EDIT PROFILE & PRIVACY
-         ===================================================================== */}
-      {showEditProfileModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-zinc-950 border border-white/[0.08] rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-heading font-bold text-white">
-                Profili Düzenle
-              </h3>
-              <button
-                onClick={() => setShowEditProfileModal(false)}
-                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="flex items-center gap-3.5">
-                {tempAvatarUrl ? (
-                  <img
-                    src={tempAvatarUrl}
-                    alt="Önizleme"
-                    className="w-14 h-14 rounded-full object-cover ring-1 ring-white/20"
-                  />
-                ) : (
-                  <div
-                    className={`w-14 h-14 rounded-full bg-gradient-to-tr ${userProfile.avatarGradient} flex items-center justify-center text-white font-heading font-bold text-lg`}
-                  >
-                    {userProfile.avatarSeed}
-                  </div>
-                )}
-                <div className="flex-1 space-y-1.5">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarFileUpload}
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white font-medium flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Fotoğraf Seç</span>
-                    </button>
-                    {draftAvatar && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          applyAvatarImmediately(null);
-                        }}
-                        className="px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 cursor-pointer"
-                      >
-                        Kaldır
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-6 gap-2">
-                {PRESET_AVATARS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      applyAvatarImmediately(preset.url);
-                    }}
-                    className={`rounded-xl overflow-hidden aspect-square border transition cursor-pointer ${
-                      draftAvatar === preset.url
-                        ? 'border-emerald-400 ring-2 ring-emerald-400/50 scale-[1.03]'
-                        : 'border-white/10'
-                    }`}
-                  >
-                    <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 font-medium flex items-center gap-1.5">
-                    <UserIcon className="w-3.5 h-3.5 text-lime-400" />
-                    <span>Görünen İsim</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    placeholder="İsminiz"
-                    className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-zinc-400 font-medium flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-lime-400" />
-                    <span>E-posta Adresi</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={tempEmail}
-                    onChange={(e) => setTempEmail(e.target.value)}
-                    placeholder="ornek@gmail.com"
-                    className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 font-medium flex items-center gap-1.5">
-                    <AtSign className="w-3.5 h-3.5 text-lime-400" />
-                    <span>YouTube Kullanıcı Adı</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={tempHandle}
-                    onChange={(e) => setTempHandle(e.target.value)}
-                    placeholder="@kullaniciadi"
-                    className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-zinc-400 font-medium block">Şehir / Konum</label>
-                    <button
-                      type="button"
-                      disabled={isDetectingLocation}
-                      onClick={async () => {
-                        const loc = await handleDetectLiveLocation();
-                        if (loc) {
-                          setTempCity(loc.fullLocation);
-                        }
-                      }}
-                      className="text-[11px] text-lime-400 hover:text-lime-300 font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <Navigation className={`w-3 h-3 ${isDetectingLocation ? 'animate-spin' : ''}`} />
-                      <span>{isDetectingLocation ? 'Bulunuyor...' : 'Canlı GPS Al'}</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={tempCity}
-                    onChange={(e) => setTempCity(e.target.value)}
-                    placeholder="Örn: Selçuk, İzmir veya Kadıköy"
-                    className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
-                  />
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {[
-                      { label: 'Selçuk', value: 'Selçuk, İzmir' },
-                      { label: 'İzmir', value: 'İzmir, Alsancak' },
-                      { label: 'Antalya', value: 'Antalya, Muratpaşa' },
-                      { label: 'Ankara', value: 'Ankara, Çankaya' },
-                      { label: 'İstanbul', value: 'İstanbul, Kadıköy' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.label}
-                        type="button"
-                        onClick={() => setTempCity(opt.value)}
-                        className="px-2 py-0.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.08] text-[10px] text-zinc-300 hover:text-white transition cursor-pointer"
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  {locationStatusMessage && (
-                    <p className="text-[11px] text-zinc-400">{locationStatusMessage}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-zinc-400 font-medium block">Hakkımda</label>
-                <textarea
-                  rows={2}
-                  value={tempBio}
-                  onChange={(e) => setTempBio(e.target.value)}
-                  className="w-full p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-white/25"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-zinc-400 font-medium block">Görünürlük</label>
-                <div className="space-y-1.5">
-                  {privacyOptions.map((opt) => {
-                    const isSelected = tempPrivacy === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setTempPrivacy(opt.id)}
-                        className={`w-full p-3 rounded-xl border text-left transition flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-white/[0.06] border-lime-400/50 text-white'
-                            : 'bg-white/[0.02] border-white/[0.06] text-zinc-400'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          {opt.icon}
-                          <div>
-                            <div className="font-medium text-white">{opt.title}</div>
-                            <div className="text-[11px] text-zinc-500">{opt.desc}</div>
-                          </div>
-                        </div>
-                        {isSelected && <Check className="w-4 h-4 text-lime-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="sticky bottom-0 pt-3 pb-1 bg-white dark:bg-zinc-900 flex gap-2 border-t border-zinc-200 dark:border-white/10 z-20">
-                <button
-                  type="button"
-                  onClick={() => setShowEditProfileModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.1] text-zinc-700 dark:text-zinc-300 font-semibold cursor-pointer transition"
-                >
-                  İptal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const formattedHandle = tempHandle.trim()
-                      ? tempHandle.trim().startsWith('@')
-                        ? tempHandle.trim()
-                        : `@${tempHandle.trim()}`
-                      : '@kullanici';
-                    userProfile.name = tempName.trim() || userProfile.name;
-                    userProfile.bio = tempBio;
-                    userProfile.city = tempCity;
-                    userProfile.email = tempEmail.trim();
-                    userProfile.avatarUrl = draftAvatar || undefined;
-                    if (!userProfile.youtubeAccount) {
-                      userProfile.youtubeAccount = {
-                        name: tempName.trim() || userProfile.name,
-                        email: tempEmail.trim(),
-                        handle: formattedHandle,
-                      };
-                    } else {
-                      userProfile.youtubeAccount.name = tempName.trim() || userProfile.youtubeAccount.name;
-                      userProfile.youtubeAccount.email = tempEmail.trim();
-                      userProfile.youtubeAccount.handle = formattedHandle;
-                    }
-
-                    if (onUpdateAccount) {
-                      onUpdateAccount({
-                        name: tempName.trim() || userProfile.name,
-                        email: tempEmail.trim(),
-                        handle: formattedHandle,
-                      });
-                    }
-                    if (onUpdateBio) onUpdateBio(tempBio);
-                    if (onUpdateCity) onUpdateCity(tempCity);
-                    onUpdatePrivacyMode(tempPrivacy);
-                    applyAvatarImmediately(draftAvatar);
-                    setShowEditProfileModal(false);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold cursor-pointer shadow-lg shadow-emerald-500/25 transition active:scale-95"
-                >
-                  Değişiklikleri Kaydet
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* (Profili Düzenle bölümü artık merkezi Ayarlar & Hesap modalının içinde yer alıyor) */}
 
       {/* Quick Location Settings Modal */}
       {showLocationModal && (
@@ -3337,369 +3205,462 @@ export const ProfileTab: React.FC<Props> = ({
       )}
 
       {/* =====================================================================
-          MODAL: AYARLAR, TEMA VE SENKRONİZASYON
+          MODAL: MERKEZİ AYARLAR & HESAP (2 SEKMELİ — PROFİL BİLGİLERİ & HESAP)
          ===================================================================== */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg bg-zinc-950 border border-white/[0.08] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto no-scrollbar">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-zinc-300">
-                  <Settings className="w-5 h-5 text-lime-400" />
-                </div>
-                <div>
-                  <h3 className="text-base font-heading font-bold text-white">
-                    Ayarlar & Hesap
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    Görünüm, YouTube Music hesabı ve gizlilik kontrolleri
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Section 1: Görünüm ve Tema */}
-            <div className="space-y-3">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150"
+          onClick={() => setShowSettingsModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white dark:bg-[#14121E] border border-zinc-200 dark:border-white/[0.08] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Fixed Modal Header + 2-Tab Switcher */}
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-200 dark:border-white/[0.08] space-y-4 shrink-0">
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <h4 className="text-xs font-semibold text-white flex items-center gap-2">
-                    <Sun className="w-4 h-4 text-accent-theme" />
-                    <span>Görünüm ve Tema</span>
-                  </h4>
-                  <p className="text-[11px] text-zinc-400">
-                    Göz yormayan obsidyen gece veya ferah stüdyo açık modu
-                  </p>
-                </div>
-                <span className="text-[10px] font-semibold text-accent-theme px-2 py-0.5 rounded-full bg-accent-subtle">
-                  {currentTheme === 'dark' ? 'Obsidyen Gece' : currentTheme === 'light' ? 'Stüdyo Gündüz' : 'Otomatik Sistem'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'dark' as ThemeMode, label: 'Karanlık', desc: 'Obsidyen Siyah', icon: <Moon className="w-4 h-4 text-indigo-400" /> },
-                  { id: 'light' as ThemeMode, label: 'Aydınlık', desc: 'Minimalist Stüdyo', icon: <Sun className="w-4 h-4 text-amber-400" /> },
-                  { id: 'system' as ThemeMode, label: 'Sistem', desc: 'Cihaza Duyarlı', icon: <Monitor className="w-4 h-4 text-cyan-400" /> },
-                ].map((themeOpt) => {
-                  const isSelected = currentTheme === themeOpt.id;
-                  return (
-                    <button
-                      key={themeOpt.id}
-                      type="button"
-                      onClick={() => handleThemeChange(themeOpt.id)}
-                      className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1.5 active:scale-95 ${
-                        isSelected
-                          ? 'bg-white/[0.08] border-accent-theme text-white shadow-sm ring-1 ring-accent-theme/30'
-                          : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      {themeOpt.icon}
-                      <div className="min-w-0">
-                        <div className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
-                          {themeOpt.label}
-                        </div>
-                        <div className="text-[10px] text-zinc-500 hidden sm:block mt-0.5">
-                          {themeOpt.desc}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Section 2: Platform Senkronizasyonu (YouTube Music, Spotify, Apple Music) */}
-            <div className="space-y-3 pt-3 border-t border-white/[0.08]">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <h4 className="text-xs font-semibold text-white flex items-center gap-2">
-                    <Youtube className="w-4 h-4 text-rose-500" />
-                    <span>Google Hesabı & Müzik Senkronizasyonu</span>
-                  </h4>
-                  <p className="text-[11px] text-zinc-400">
-                    Tek Google oturumuyla canlı sohbet, arkadaşlık ve YouTube Music listelerini senkronize et
-                  </p>
-                </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  isGoogleAuthenticated
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-zinc-800 text-zinc-400'
-                }`}>
-                  {isGoogleAuthenticated ? 'Bağlı' : 'Hazır'}
-                </span>
-              </div>
-
-              {/* 3 Resmi Platform Rozeti: YouTube Music · Spotify · Apple Music */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center gap-2">
-                  <Youtube className="w-4 h-4 text-rose-400 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-white truncate">YouTube Music</div>
-                    <div className="text-[9px] text-rose-300 truncate">Canlı Senkron</div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                    <Settings className="w-5 h-5" />
                   </div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2">
-                  <Disc3 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-white truncate">Spotify</div>
-                    <div className="text-[9px] text-emerald-300 truncate">Oda & Link Uyumu</div>
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/25 flex items-center gap-2">
-                  <Music className="w-4 h-4 text-pink-400 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-white truncate">Apple Music</div>
-                    <div className="text-[9px] text-pink-300 truncate">Katalog & Ses</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {isGoogleAuthenticated && googleUser?.photoUrl ? (
-                    <img
-                      src={googleUser.photoUrl}
-                      alt={googleUser.name}
-                      className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-zinc-400 shrink-0">
-                      <Youtube className="w-4 h-4" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white truncate">
-                      {isGoogleAuthenticated && googleUser?.name
-                        ? googleUser.name
-                        : userProfile.youtubeAccount?.name || userProfile.name}
-                    </div>
-                    <div className="text-[11px] text-zinc-400 truncate">
-                      {isGoogleAuthenticated && googleUser?.email
-                        ? googleUser.email
-                        : userProfile.youtubeAccount?.email || userProfile.email || 'Giriş yapılmadı'}
-                    </div>
+                  <div>
+                    <h3 className="text-base font-heading font-bold text-zinc-900 dark:text-white">
+                      Ayarlar & Hesap
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Profil bilgilerin, görünüm ve müzik servisleri
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.06]">
-                  {isGoogleAuthenticated ? (
-                    <>
-                      <button
-                        type="button"
-                        disabled={isGoogleLoading || isSyncingNow}
-                        onClick={handleSyncYouTubeLibrary}
-                        className="flex-1 py-2 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer min-h-[36px]"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isSyncingNow ? 'animate-spin text-lime-400' : ''}`} />
-                        <span>{isSyncingNow ? 'Senkronize Ediliyor...' : 'Kütüphaneyi Yenile'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={isGoogleLoading || isSyncingNow}
-                        onClick={onGoogleSignIn}
-                        className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 text-xs font-medium transition cursor-pointer min-h-[36px]"
-                        title="Farklı bir hesap seç"
-                      >
-                        <span>Hesap Değiştir</span>
-                      </button>
-
-                      {onGoogleSignOut && (
-                        <button
-                          type="button"
-                          disabled={isGoogleLoading}
-                          onClick={onGoogleSignOut}
-                          className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium transition cursor-pointer min-h-[36px]"
-                          title="Oturumu kapat"
-                        >
-                          <span>Çıkış</span>
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isGoogleLoading}
-                      onClick={onGoogleSignIn}
-                      className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                    >
-                      {isGoogleLoading ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Bağlanıyor...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Youtube className="w-4 h-4 fill-current text-rose-600" />
-                          <span>Google ile Giriş Yap</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {syncDiagnosticError && (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 flex items-center justify-between gap-2">
-                  <span>{syncDiagnosticError}</span>
-                  {onClearSyncError && (
-                    <button
-                      type="button"
-                      onClick={onClearSyncError}
-                      className="text-zinc-400 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Section 3: Site İzinleri & Cihaz Konumu (Telefon / Web) */}
-            <div className="space-y-3 pt-3 border-t border-white/[0.08]">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <h4 className="text-xs font-semibold text-white flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-lime-400" />
-                    <span>Site İzinleri & Cihaz Konumu (Telefon / Web)</span>
-                  </h4>
-                  <p className="text-[11px] text-zinc-400">
-                    Tarayıcı ve telefon site ayarlarında Konum (GPS) iznini etkinleştirin
-                  </p>
-                </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  geoPermissionState === 'granted'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : geoPermissionState === 'denied'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    : 'bg-lime-400/20 text-lime-300 border border-lime-400/30'
-                }`}>
-                  {geoPermissionState === 'granted'
-                    ? 'GPS İzni Açık'
-                    : geoPermissionState === 'denied'
-                    ? 'Şebeke/IP Aktif'
-                    : 'İzin Hazır'}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-400">Aktif Şehir & Semt:</span>
-                  <span className="font-semibold text-white flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-lime-400" />
-                    {userProfile.city || 'İstanbul, Kadıköy'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    disabled={isDetectingLocation}
-                    onClick={async () => {
-                      await handleDetectLiveLocation();
-                    }}
-                    className="py-2.5 px-3 rounded-xl bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                  >
-                    <Navigation className={`w-3.5 h-3.5 ${isDetectingLocation ? 'animate-spin' : ''}`} />
-                    <span>
-                      {isDetectingLocation
-                        ? 'İzin İsteniyor...'
-                        : 'Site Konum İznini İste (GPS)'}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSettingsModal(false);
-                      setShowLocationModal(true);
-                    }}
-                    className="py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer border border-white/[0.08]"
-                  >
-                    <Compass className="w-3.5 h-3.5 text-lime-400" />
-                    <span>Şehir & Semt Seçenekleri</span>
-                  </button>
-                </div>
-
-                {locationStatusMessage && (
-                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[11px] text-zinc-300">
-                    {locationStatusMessage}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Section 4: Gizlilik ve Görünürlük */}
-            <div className="space-y-3 pt-3 border-t border-white/[0.08]">
-              <h4 className="text-xs font-semibold text-white flex items-center gap-2">
-                <Globe className="w-4 h-4 text-emerald-400" />
-                <span>Canlı Odalarda Görünürlük</span>
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {privacyOptions.map((opt) => {
-                  const isSelected = userProfile.privacyMode === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => onUpdatePrivacyMode(opt.id as PrivacyMode)}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
-                        isSelected
-                          ? 'bg-white/[0.08] border-lime-400 text-white ring-1 ring-lime-400/30'
-                          : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        {opt.icon}
-                        {isSelected && <Check className="w-3.5 h-3.5 text-lime-400" />}
-                      </div>
-                      <div>
-                        <div className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
-                          {opt.title}
-                        </div>
-                        <div className="text-[10px] text-zinc-500 mt-0.5 line-clamp-2">
-                          {opt.desc}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Account Session Logout & Close Buttons */}
-            <div className="pt-3 border-t border-white/[0.08] space-y-2.5">
-              {onLogout && (
                 <button
                   type="button"
-                  onClick={() => {
-                    triggerHaptic(18);
-                    setShowSettingsModal(false);
-                    onLogout();
-                  }}
-                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-rose-500/12 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="p-2 rounded-xl text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
+                  aria-label="Kapat"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Çıkış Yap (Oturumu Kapat)</span>
+                  <X className="w-5 h-5" />
                 </button>
-              )}
+              </div>
 
+              {/* Clean 2-Tab Selector */}
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.07]">
+                <button
+                  type="button"
+                  onClick={() => setSettingsTab('profile')}
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    settingsTab === 'profile'
+                      ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  <UserIcon className="w-3.5 h-3.5" />
+                  <span>Profil Bilgileri</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettingsTab('account')}
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    settingsTab === 'account'
+                      ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Youtube className="w-3.5 h-3.5" />
+                  <span>Hesap & Müzik Servisleri</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-5 space-y-5 text-xs">
+              {settingsTab === 'profile' ? (
+                <>
+                  {/* Clean Uploadable Avatar Area (Zero Preset Stock Photos, Auto 256x256 Compression) */}
+                  <div className="flex flex-col items-center text-center space-y-3 py-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="relative group cursor-pointer focus:outline-none"
+                      title="Cihazından profil fotoğrafı yükle"
+                    >
+                      <div className="w-24 h-24 rounded-full border-2 border-dashed border-purple-500/50 p-1 group-hover:border-purple-500 transition flex items-center justify-center bg-zinc-100/80 dark:bg-white/[0.03]">
+                        {tempAvatarUrl ? (
+                          <img
+                            src={tempAvatarUrl}
+                            alt="Profil Fotoğrafı"
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="avatar-circle w-full h-full rounded-full bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center text-white font-heading font-bold text-2xl">
+                            {userProfile.avatarSeed || <UserIcon className="w-8 h-8" />}
+                          </div>
+                        )}
+                      </div>
+                      <span className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white border-2 border-white dark:border-[#14121E] flex items-center justify-center shadow-lg group-hover:scale-105 transition">
+                        {tempAvatarUrl ? <Camera className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
+                      </span>
+                    </button>
+
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.07] hover:bg-zinc-200 dark:hover:bg-white/[0.12] border border-zinc-200 dark:border-white/[0.08] text-zinc-800 dark:text-white font-semibold flex items-center gap-1.5 cursor-pointer transition"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                        <span>Fotoğraf Yükle</span>
+                      </button>
+
+                      {draftAvatar && (
+                        <button
+                          type="button"
+                          onClick={() => applyAvatarImmediately(null)}
+                          className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-500 dark:text-rose-400 font-semibold flex items-center gap-1 cursor-pointer transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Kaldır</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Profile Fields: Name, @handle, Bio, City */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
+                        <UserIcon className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                        <span>Görünen İsim</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={tempName}
+                        onChange={(e) => setTempName(e.target.value)}
+                        placeholder="İsminiz"
+                        className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
+                        <AtSign className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                        <span>Kullanıcı Adı</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={tempHandle}
+                        onChange={(e) => setTempHandle(e.target.value)}
+                        placeholder="@kullaniciadi"
+                        className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-semibold block">
+                      Hakkımda (Bio)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={tempBio}
+                      onChange={(e) => setTempBio(e.target.value)}
+                      placeholder="Müzik zevkinden veya favori türlerinden kısaca bahset..."
+                      className="w-full p-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500 resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                        <span>Şehir / Konum</span>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={isDetectingLocation}
+                        onClick={async () => {
+                          const loc = await handleDetectLiveLocation();
+                          if (loc) {
+                            setTempCity(loc.fullLocation);
+                          }
+                        }}
+                        className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <Navigation className={`w-3 h-3 ${isDetectingLocation ? 'animate-spin' : ''}`} />
+                        <span>{isDetectingLocation ? 'Bulunuyor...' : 'Canlı GPS Al'}</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={tempCity}
+                      onChange={(e) => setTempCity(e.target.value)}
+                      placeholder="Örn: İstanbul, Kadıköy"
+                      className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                    />
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {[
+                        { label: 'İstanbul', value: 'İstanbul, Kadıköy' },
+                        { label: 'İzmir', value: 'İzmir, Alsancak' },
+                        { label: 'Ankara', value: 'Ankara, Çankaya' },
+                        { label: 'Antalya', value: 'Antalya, Muratpaşa' },
+                        { label: 'Eskişehir', value: 'Eskişehir, Tepebaşı' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => setTempCity(opt.value)}
+                          className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200 dark:hover:bg-white/[0.1] border border-zinc-200 dark:border-white/[0.08] text-[11px] text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    {locationStatusMessage && (
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pt-0.5">
+                        {locationStatusMessage}
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Section 1: Görünüm ve Tema */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <h4 className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                          <Sun className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                          <span>Görünüm ve Tema</span>
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          Göz yormayan karanlık veya ferah aydınlık mod
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full bg-purple-500/10">
+                        {currentTheme === 'dark' ? 'Karanlık' : currentTheme === 'light' ? 'Aydınlık' : 'Sistem'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'dark' as ThemeMode, label: 'Karanlık', desc: 'Obsidyen Gece', icon: <Moon className="w-4 h-4 text-indigo-500 dark:text-indigo-400" /> },
+                        { id: 'light' as ThemeMode, label: 'Aydınlık', desc: 'Stüdyo Gündüz', icon: <Sun className="w-4 h-4 text-amber-500 dark:text-amber-400" /> },
+                        { id: 'system' as ThemeMode, label: 'Sistem', desc: 'Cihaza Duyarlı', icon: <Monitor className="w-4 h-4 text-cyan-500 dark:text-cyan-400" /> },
+                      ].map((themeOpt) => {
+                        const isSelected = currentTheme === themeOpt.id;
+                        return (
+                          <button
+                            key={themeOpt.id}
+                            type="button"
+                            onClick={() => handleThemeChange(themeOpt.id)}
+                            className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1.5 active:scale-95 ${
+                              isSelected
+                                ? 'bg-purple-500/10 border-purple-500 text-zinc-900 dark:text-white shadow-sm ring-1 ring-purple-500/30'
+                                : 'bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                            }`}
+                          >
+                            {themeOpt.icon}
+                            <div className="min-w-0">
+                              <div className={`text-xs font-semibold ${isSelected ? 'text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                                {themeOpt.label}
+                              </div>
+                              <div className="text-[10px] text-zinc-500 hidden sm:block mt-0.5">
+                                {themeOpt.desc}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section 2: Müzik Servisleri (YouTube Music, Spotify, Apple Music) */}
+                  <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-white/[0.08]">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <h4 className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                          <Youtube className="w-4 h-4 text-rose-500" />
+                          <span>Müzik Servisleri & Google Hesabı</span>
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          YouTube Music, Spotify ve Apple Music bağlantıları
+                        </p>
+                      </div>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        isGoogleAuthenticated
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                      }`}>
+                        {isGoogleAuthenticated ? 'Bağlı' : 'Hazır'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center gap-2">
+                        <Youtube className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">YouTube Music</div>
+                          <div className="text-[9px] text-rose-600 dark:text-rose-300 truncate">Canlı Senkron</div>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2">
+                        <Disc3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">Spotify</div>
+                          <div className="text-[9px] text-emerald-700 dark:text-emerald-300 truncate">Oda & Link</div>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/25 flex items-center gap-2">
+                        <Music className="w-4 h-4 text-pink-600 dark:text-pink-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">Apple Music</div>
+                          <div className="text-[9px] text-pink-700 dark:text-pink-300 truncate">Katalog</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200 dark:border-white/[0.06] space-y-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {isGoogleAuthenticated && googleUser?.photoUrl ? (
+                          <img
+                            src={googleUser.photoUrl}
+                            alt={googleUser.name}
+                            className="w-10 h-10 rounded-full object-cover ring-1 ring-zinc-300 dark:ring-white/10 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-zinc-200/80 dark:bg-white/[0.05] border border-zinc-300 dark:border-white/[0.08] flex items-center justify-center text-zinc-500 dark:text-zinc-400 shrink-0">
+                            <Youtube className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
+                            {isGoogleAuthenticated && googleUser?.name
+                              ? googleUser.name
+                              : userProfile.youtubeAccount?.name || userProfile.name}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            {isGoogleAuthenticated && googleUser?.email
+                              ? googleUser.email
+                              : userProfile.youtubeAccount?.email || userProfile.email || 'Google hesabı bağlanmadı'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-200 dark:border-white/[0.06]">
+                        {isGoogleAuthenticated ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isGoogleLoading || isSyncingNow}
+                              onClick={handleSyncYouTubeLibrary}
+                              className="flex-1 py-2 px-3 rounded-xl bg-zinc-200/80 dark:bg-white/[0.06] hover:bg-zinc-300/70 dark:hover:bg-white/[0.12] text-zinc-900 dark:text-zinc-200 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer min-h-[38px]"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingNow ? 'animate-spin text-purple-500' : ''}`} />
+                              <span>{isSyncingNow ? 'Senkronize Ediliyor...' : 'Kütüphaneyi Yenile'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isGoogleLoading || isSyncingNow}
+                              onClick={onGoogleSignIn}
+                              className="py-2 px-3 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 text-xs font-medium transition cursor-pointer min-h-[38px]"
+                            >
+                              Hesap Değiştir
+                            </button>
+
+                            {onGoogleSignOut && (
+                              <button
+                                type="button"
+                                disabled={isGoogleLoading}
+                                onClick={onGoogleSignOut}
+                                className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 text-xs font-medium transition cursor-pointer min-h-[38px]"
+                              >
+                                Bağlantıyı Kes
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isGoogleLoading}
+                            onClick={onGoogleSignIn}
+                            className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 dark:bg-white hover:opacity-90 text-white dark:text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer min-h-[40px]"
+                          >
+                            {isGoogleLoading ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Bağlanıyor...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Youtube className="w-4 h-4 fill-current text-rose-500" />
+                                <span>Google & YouTube Music Bağla</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {syncDiagnosticError && (
+                      <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-500 dark:text-rose-300 flex items-center justify-between gap-2">
+                        <span>{syncDiagnosticError}</span>
+                        {onClearSyncError && (
+                          <button
+                            type="button"
+                            onClick={onClearSyncError}
+                            className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section 3: Account Sign-Out */}
+                  {onLogout && (
+                    <div className="pt-4 border-t border-zinc-200 dark:border-white/[0.08]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(18);
+                          setShowSettingsModal(false);
+                          onLogout();
+                        }}
+                        className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-rose-500/12 hover:bg-rose-500/20 border border-rose-500/30 text-rose-600 dark:text-rose-400 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Çıkış Yap</span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Sticky Bottom Footer: Değişiklikleri Kaydet */}
+            <div className="sticky bottom-0 px-6 py-3.5 bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/[0.08] flex items-center gap-2.5 shrink-0 z-20">
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="w-full min-h-[44px] py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition cursor-pointer"
+                className="px-4 min-h-[44px] py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.11] text-zinc-700 dark:text-zinc-300 font-semibold text-xs transition cursor-pointer"
               >
-                Tamam
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSettingsChanges}
+                className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition active:scale-[0.98] cursor-pointer"
+              >
+                Değişiklikleri Kaydet
               </button>
             </div>
           </div>

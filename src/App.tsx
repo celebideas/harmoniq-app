@@ -59,6 +59,11 @@ import {
   derivePersonalTasteFromData,
   calculateSongCompatibilityWithUser,
 } from './services/tasteSyncService';
+import {
+  recordListeningPulse,
+  recordTrackScrobble,
+  clearListeningHistory,
+} from './services/listeningHistoryService';
 import { User as FirebaseAuthUser } from 'firebase/auth';
 import {
   signInWithGoogle,
@@ -470,6 +475,7 @@ export default function App() {
   const purgeAllUserSessionData = useCallback(() => {
     clearAuthSession();
     clearPersistentYouTubeAccount();
+    clearListeningHistory();
 
     if (typeof window !== 'undefined') {
       const keysToRemove = [
@@ -482,6 +488,7 @@ export default function App() {
         'harmoniq_youtube_connected',
         'harmoniq_yt_connected_account',
         'harmoniq_yt_synced_library',
+        'listenhub_play_history',
         ...Object.values(STORAGE_KEYS),
       ];
       keysToRemove.forEach((key) => {
@@ -816,6 +823,50 @@ export default function App() {
       unsubLoading();
     };
   }, []);
+
+  // Real-time listening analytics tracker (persists every 5s + scrobbles at >=10s into listenhub_play_history)
+  const trackedSongRef = useRef<Song>(currentSong);
+  const unsavedPlaySecRef = useRef<number>(0);
+  const trackSessionSecRef = useRef<number>(0);
+  const trackScrobbledRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    trackedSongRef.current = currentSong;
+  }, [currentSong]);
+
+  useEffect(() => {
+    trackSessionSecRef.current = 0;
+    trackScrobbledRef.current = false;
+  }, [currentSong.id]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const activeSongSnapshot = trackedSongRef.current;
+
+    const timer = window.setInterval(() => {
+      const songNow = trackedSongRef.current;
+      unsavedPlaySecRef.current += 1;
+      trackSessionSecRef.current += 1;
+
+      if (unsavedPlaySecRef.current >= 5) {
+        recordListeningPulse(songNow, unsavedPlaySecRef.current);
+        unsavedPlaySecRef.current = 0;
+      }
+
+      if (!trackScrobbledRef.current && trackSessionSecRef.current >= 10) {
+        recordTrackScrobble(songNow);
+        trackScrobbledRef.current = true;
+      }
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+      if (unsavedPlaySecRef.current > 0) {
+        recordListeningPulse(activeSongSnapshot, unsavedPlaySecRef.current);
+        unsavedPlaySecRef.current = 0;
+      }
+    };
+  }, [isPlaying, currentSong.id]);
 
   useEffect(() => {
     fetchArtistRadio(SAMPLE_SONGS[0])
@@ -1889,7 +1940,8 @@ export default function App() {
     setActiveTab(tab);
   };
 
-  const handleSelectSong = async (song: Song, autoPlay = true) => {
+  const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
+    const safeStart = Math.max(0, Math.floor(startSecond || 0));
     let playableSong = song;
     if (!song.youtubeVideoId && song.artist && song.title) {
       try {
@@ -1913,11 +1965,11 @@ export default function App() {
 
     setCurrentSong(playableSong);
     playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
-    setMySecond(0);
+    setMySecond(safeStart);
     if (autoPlay || isPlaying) {
       lastPlayIntentRef.current = { playing: true, time: Date.now() };
       setIsPlaying(true);
-      soundEngine.playSong(playableSong, 0);
+      soundEngine.playSong(playableSong, safeStart);
     }
   };
 
@@ -2337,12 +2389,27 @@ export default function App() {
   };
 
   const handlePlayMoment = (track: Song, second: number) => {
-    handleSelectSong(track, true);
-    setTimeout(() => {
-      handleSeekSecond(second);
-    }, 150);
-    const m = Math.floor(second / 60);
-    const s = Math.floor(second % 60);
+    const targetSecond = Math.max(0, Math.floor(second || 0));
+    setMySecond(targetSecond);
+
+    const isSameTrack =
+      currentSong.id === track.id ||
+      (currentSong.title.trim().toLowerCase() === track.title.trim().toLowerCase() &&
+        currentSong.artist.trim().toLowerCase() === track.artist.trim().toLowerCase());
+
+    if (isSameTrack && soundEngine.getCurrentSongId() === currentSong.id) {
+      soundEngine.seekTo(targetSecond);
+      if (!isPlaying || !soundEngine.getIsPlaying()) {
+        lastPlayIntentRef.current = { playing: true, time: Date.now() };
+        setIsPlaying(true);
+        soundEngine.resume();
+      }
+    } else {
+      void handleSelectSong(track, true, targetSecond);
+    }
+
+    const m = Math.floor(targetSecond / 60);
+    const s = Math.floor(targetSecond % 60);
     const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
     setToastMessage(`"${track.title}" ${timeStr} anından çalınıyor.`);
     setTimeout(() => setToastMessage(null), 3000);

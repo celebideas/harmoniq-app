@@ -24,6 +24,7 @@ class YouTubePlayerController {
   private expectedPlayingState: boolean | null = null;
   private isStartingPlayback: boolean = false;
   private startPlaybackTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pendingSeekSecond: number | null = null;
 
   constructor() {
     this.attachMessageListener();
@@ -116,6 +117,13 @@ class YouTubePlayerController {
             }
             this.clearStartingPlaybackLock();
             this.isPlaying = true;
+            if (this.pendingSeekSecond !== null) {
+              const targetSec = this.pendingSeekSecond;
+              this.pendingSeekSecond = null;
+              this.currentSecond = targetSec;
+              this.sendCommand('seekTo', [targetSec, true]);
+              this.notifyTime(targetSec);
+            }
             this.notifyState(true);
             this.startTimer();
           } else if (stateCode === 0) {
@@ -143,6 +151,10 @@ class YouTubePlayerController {
         if (data.event === 'infoDelivery' && data.info) {
           if (typeof data.info.currentTime === 'number') {
             const sec = Math.floor(data.info.currentTime);
+            // Ignore transient 0s echo before pendingSeekSecond executes on PLAYING
+            if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 3 && sec < 3) {
+              return;
+            }
             this.notifyTime(sec);
           }
         }
@@ -218,16 +230,19 @@ class YouTubePlayerController {
   }
 
   public play(videoId?: string, startSecond: number = 0) {
+    const safeStart = Math.max(0, Math.floor(startSecond || 0));
     const isNewVideo = Boolean(videoId && videoId !== this.currentVideoId);
     const shouldSeekSameVideo =
-      !isNewVideo && startSecond > 0 && Math.abs(startSecond - this.currentSecond) > 1;
+      !isNewVideo && safeStart > 0 && Math.abs(safeStart - this.currentSecond) > 1;
 
     if (videoId) {
       this.currentVideoId = videoId;
     }
     if (isNewVideo || shouldSeekSameVideo) {
-      this.currentSecond = startSecond;
+      this.currentSecond = safeStart;
     }
+
+    this.pendingSeekSecond = safeStart > 0 ? safeStart : null;
 
     this.beginStartingPlaybackLock();
     this.lastCommandTime = Date.now();
@@ -239,12 +254,18 @@ class YouTubePlayerController {
     this.sendCommand('setVolume', [100]);
 
     if (isNewVideo && this.iframe) {
-      this.sendCommand('loadVideoById', [{ videoId: this.currentVideoId, startSeconds: this.currentSecond }]);
+      this.sendCommand('loadVideoById', [
+        { videoId: this.currentVideoId, startSeconds: safeStart },
+      ]);
     } else {
-      if (shouldSeekSameVideo) {
-        this.sendCommand('seekTo', [this.currentSecond, true]);
+      if (shouldSeekSameVideo || safeStart > 0) {
+        this.sendCommand('seekTo', [safeStart, true]);
       }
       this.sendCommand('playVideo');
+    }
+
+    if (isNewVideo || shouldSeekSameVideo) {
+      this.notifyTime(safeStart);
     }
 
     this.startTimer();
@@ -265,6 +286,7 @@ class YouTubePlayerController {
 
   public stop(silent: boolean = false) {
     this.clearStartingPlaybackLock();
+    this.pendingSeekSecond = null;
     this.lastCommandTime = Date.now();
     this.expectedPlayingState = false;
     this.isPlaying = false;
@@ -278,7 +300,8 @@ class YouTubePlayerController {
   }
 
   public seek(second: number) {
-    const safeSec = Math.max(0, isNaN(second) ? 0 : second);
+    const safeSec = Math.max(0, isNaN(second) ? 0 : Math.floor(second));
+    this.pendingSeekSecond = null;
     this.currentSecond = safeSec;
     this.sendCommand('seekTo', [safeSec, true]);
     this.notifyTime(safeSec);

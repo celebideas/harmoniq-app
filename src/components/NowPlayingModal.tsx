@@ -26,10 +26,16 @@ import {
   MessageCircle,
   UserCheck,
   Zap,
+  ExternalLink,
 } from 'lucide-react';
 import { Song, PlatformType, LoungeUser, TimelineMarker } from '../types';
 import { fetchArtistRadio } from '../services/musicResolver';
 import { triggerHaptic } from '../services/themeService';
+import {
+  fetchSongLyrics,
+  getGoogleLyricsSearchUrl,
+  LyricsResult,
+} from '../services/lyricsService';
 
 interface Props {
   isOpen: boolean;
@@ -365,45 +371,58 @@ export const NowPlayingModal: React.FC<Props> = ({
     }, 3200);
   };
 
-  // 8-Line Synchronized Stage & Lyrics Stream
-  const effectiveLyrics = useMemo(() => {
-    if (song.lyrics && song.lyrics.length >= 8) {
-      return song.lyrics;
-    }
-    const dur = song.durationSeconds || 210;
-    const g = (song.genre || '').toLowerCase();
-    const isSynth = g.includes('synth') || g.includes('electronic');
-    return [
-      { second: 0, text: `♪ ${song.artist} — ${song.title} (Enstrümantal Giriş) ♪` },
-      { second: Math.round(dur * 0.08), text: `⚡ İlk akorlar ve ritim frekansı yükseliyor...` },
-      { second: Math.round(dur * 0.20), text: `Gecenin içinden yükselen tanıdık melodi` },
-      { second: Math.round(dur * 0.32), text: `🔥 "${song.title}" nakaratında tüm oda aynı saniyede buluşuyor` },
-      { second: Math.round(dur * 0.48), text: `Ritim derinleşiyor, bas ve davul kusursuz akışta` },
-      { second: Math.round(dur * 0.62), text: isSynth ? `🎹 Synth & Bass Drop zirve noktası!` : `🎸 Efsane gitar solosu ve rifler yankılanıyor!` },
-      { second: Math.round(dur * 0.75), text: `Son nakarat öncesi duygusal köprü geçişi` },
-      { second: Math.round(dur * 0.85), text: `✨ Final akışı — ${song.artist} • ${song.album || 'Single'}` },
-    ];
-  }, [song.id, song.lyrics, song.durationSeconds, song.title, song.artist, song.genre, song.album]);
+  // Real LRCLIB synchronized & plain lyrics state (zero fabricated lyrics)
+  const [lyricsData, setLyricsData] = useState<LyricsResult | null>(null);
+  const [isLoadingLyrics, setIsLoadingLyrics] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setIsLoadingLyrics(true);
+    setLyricsData(null);
+
+    fetchSongLyrics({
+      id: song.id,
+      title: song.title,
+      artist: song.artist,
+    })
+      .then((result) => {
+        if (!cancelled) {
+          setLyricsData(result);
+          setIsLoadingLyrics(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLyricsData({ status: 'not_found', syncedLines: [], plainLines: [] });
+          setIsLoadingLyrics(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, song.id, song.title, song.artist]);
 
   // Auto scroll active lyric line into view in bottom tab
   useEffect(() => {
-    if (activeTab === 'lyrics' && lyricsContainerRef.current) {
+    if (activeTab === 'lyrics' && lyricsData?.status === 'synced' && lyricsContainerRef.current) {
       const activeEl = lyricsContainerRef.current.querySelector('.active-lyric-line');
       if (activeEl) {
         activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-  }, [progressSeconds, activeTab]);
+  }, [progressSeconds, activeTab, lyricsData?.status]);
 
   // Auto scroll active lyric line into view in Hero Lyrics Mode
   useEffect(() => {
-    if (viewMode === 'lyrics' && heroLyricsContainerRef.current) {
+    if (viewMode === 'lyrics' && lyricsData?.status === 'synced' && heroLyricsContainerRef.current) {
       const activeEl = heroLyricsContainerRef.current.querySelector('.hero-active-lyric');
       if (activeEl) {
         activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-  }, [progressSeconds, viewMode]);
+  }, [progressSeconds, viewMode, lyricsData?.status]);
 
   // Ensure there are 14 listeners for the room
   const activeRoomListeners: LoungeUser[] = useMemo(() => {
@@ -928,36 +947,83 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* VIEW MODE 2: Synchronized 8-Line Stage & Lyrics Stream */}
+          {/* VIEW MODE 2: Real LRCLIB Synchronized / Plain Lyrics */}
           {viewMode === 'lyrics' && (
             <div className="relative w-full max-w-md h-64 sm:h-72 rounded-2xl bg-white/95 dark:bg-black/50 border border-zinc-200 dark:border-white/[0.08] overflow-hidden flex flex-col shadow-inner">
-              <div
-                ref={heroLyricsContainerRef}
-                className="w-full h-full overflow-y-auto no-scrollbar py-10 px-5 text-center space-y-3 [mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]"
-              >
-                {effectiveLyrics.map((line, idx) => {
-                  const nextLine = effectiveLyrics[idx + 1];
-                  const isActive =
-                    progressSeconds >= line.second &&
-                    (!nextLine || progressSeconds < nextLine.second);
-                  return (
-                    <div
+              {isLoadingLyrics ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-2.5 px-6 text-center">
+                  <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                  <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                    Gerçek şarkı sözleri getiriliyor...
+                  </span>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate max-w-full">
+                    {song.artist} — {song.title}
+                  </span>
+                </div>
+              ) : lyricsData?.status === 'synced' ? (
+                <div
+                  ref={heroLyricsContainerRef}
+                  className="w-full h-full overflow-y-auto no-scrollbar py-10 px-5 text-center space-y-3 [mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]"
+                >
+                  {lyricsData.syncedLines.map((line, idx) => {
+                    const nextLine = lyricsData.syncedLines[idx + 1];
+                    const isActive =
+                      progressSeconds >= line.second &&
+                      (!nextLine || progressSeconds < nextLine.second);
+                    return (
+                      <div
+                        key={`${line.second}-${idx}`}
+                        onClick={() => onSeek(Math.floor(line.second))}
+                        className={`cursor-pointer transition-all duration-300 py-1.5 select-none ${
+                          isActive
+                            ? 'hero-active-lyric text-zinc-900 dark:text-white text-lg font-bold scale-[1.02] flex items-center justify-center gap-2'
+                            : 'text-sm font-medium text-zinc-400 dark:text-white/40 hover:text-zinc-700 dark:hover:text-white/80'
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shrink-0" />
+                        )}
+                        <span>{line.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : lyricsData?.status === 'plain' ? (
+                <div
+                  ref={heroLyricsContainerRef}
+                  className="w-full h-full overflow-y-auto no-scrollbar py-5 px-5 text-center space-y-2.5"
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-purple-500 dark:text-purple-400 pb-1">
+                    Şarkı Sözleri (Düz Metin)
+                  </div>
+                  {lyricsData.plainLines.map((line, idx) => (
+                    <p
                       key={idx}
-                      onClick={() => onSeek(line.second)}
-                      className={`cursor-pointer transition-all duration-300 py-1.5 select-none ${
-                        isActive
-                          ? 'hero-active-lyric text-zinc-900 dark:text-white text-lg font-bold scale-[1.02] flex items-center justify-center gap-2'
-                          : 'text-sm font-medium text-zinc-400 dark:text-white/40 hover:text-zinc-700 dark:hover:text-white/80'
-                      }`}
+                      className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed"
                     >
-                      {isActive && (
-                        <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shrink-0" />
-                      )}
-                      <span>{line.text}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                  <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500 dark:text-purple-400">
+                    <Mic2 className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 max-w-xs">
+                    Bu parça için senkronize şarkı sözü bulunamadı.
+                  </p>
+                  <a
+                    href={getGoogleLyricsSearchUrl(song.artist, song.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white text-xs font-bold shadow-md hover:opacity-95 transition active:scale-95"
+                  >
+                    <span>Sözleri Web&apos;de Ara</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1340,34 +1406,74 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Tab 3: Synchronized 8-Line Lyrics */}
+          {/* Tab 3: Real LRCLIB Synchronized & Plain Lyrics */}
           {activeTab === 'lyrics' && (
             <div
               ref={lyricsContainerRef}
               className="p-4 rounded-2xl bg-white/95 dark:bg-neutral-900/80 border border-zinc-200 dark:border-neutral-800 max-h-56 overflow-y-auto space-y-3 text-center no-scrollbar"
             >
-              <div className="text-[11px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-                Senkronize Sahne & Lirik Akışı
-              </div>
-              {effectiveLyrics.map((line, idx) => {
-                const nextLine = effectiveLyrics[idx + 1];
-                const isActive =
-                  progressSeconds >= line.second &&
-                  (!nextLine || progressSeconds < nextLine.second);
-                return (
-                  <p
-                    key={idx}
-                    onClick={() => onSeek(line.second)}
-                    className={`cursor-pointer transition-all duration-300 py-1 ${
-                      isActive
-                        ? 'active-lyric-line text-zinc-900 dark:text-white text-lg font-bold scale-[1.02]'
-                        : 'text-sm font-medium text-zinc-400 dark:text-neutral-500 hover:text-zinc-700 dark:hover:text-neutral-300'
-                    }`}
-                  >
-                    {line.text}
+              {isLoadingLyrics ? (
+                <div className="py-8 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                    Gerçek şarkı sözleri getiriliyor...
+                  </span>
+                </div>
+              ) : lyricsData?.status === 'synced' ? (
+                <>
+                  <div className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-2">
+                    Senkronize Şarkı Sözleri
+                  </div>
+                  {lyricsData.syncedLines.map((line, idx) => {
+                    const nextLine = lyricsData.syncedLines[idx + 1];
+                    const isActive =
+                      progressSeconds >= line.second &&
+                      (!nextLine || progressSeconds < nextLine.second);
+                    return (
+                      <p
+                        key={`${line.second}-${idx}`}
+                        onClick={() => onSeek(Math.floor(line.second))}
+                        className={`cursor-pointer transition-all duration-300 py-1 ${
+                          isActive
+                            ? 'active-lyric-line text-zinc-900 dark:text-white text-lg font-bold scale-[1.02]'
+                            : 'text-sm font-medium text-zinc-400 dark:text-neutral-500 hover:text-zinc-700 dark:hover:text-neutral-300'
+                        }`}
+                      >
+                        {line.text}
+                      </p>
+                    );
+                  })}
+                </>
+              ) : lyricsData?.status === 'plain' ? (
+                <>
+                  <div className="text-[11px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
+                    Şarkı Sözleri (Düz Metin)
+                  </div>
+                  {lyricsData.plainLines.map((line, idx) => (
+                    <p
+                      key={idx}
+                      className="text-sm font-medium text-zinc-700 dark:text-zinc-200 leading-relaxed"
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </>
+              ) : (
+                <div className="py-6 flex flex-col items-center justify-center gap-2.5">
+                  <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    Bu parça için senkronize şarkı sözü bulunamadı.
                   </p>
-                );
-              })}
+                  <a
+                    href={getGoogleLyricsSearchUrl(song.artist, song.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white text-xs font-bold shadow-sm hover:opacity-95 transition active:scale-95"
+                  >
+                    <span>Sözleri Web&apos;de Ara</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </div>
