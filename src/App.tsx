@@ -309,6 +309,11 @@ export default function App() {
     songArtist: string;
   } | null>(null);
   const notifiedMatchKeysRef = useRef<Set<string>>(new Set());
+  const appBootTimestampRef = useRef<number>(Date.now());
+  const lastToastTimestampRef = useRef<number>(0);
+  const sessionToastCountRef = useRef<number>(0);
+  const toastHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastToggleClickRef = useRef<number>(0);
   const [toastDragOffsetY, setToastDragOffsetY] = useState<number>(0);
   const toastTouchStartYRef = useRef<number | null>(null);
 
@@ -328,6 +333,11 @@ export default function App() {
   const handleToastTouchEnd = () => {
     if (toastDragOffsetY < -25) {
       triggerHaptic(15);
+      lastToastTimestampRef.current = Date.now();
+      if (toastHideTimerRef.current) {
+        clearTimeout(toastHideTimerRef.current);
+        toastHideTimerRef.current = null;
+      }
       setHighCompatibilityToast(null);
     }
     setToastDragOffsetY(0);
@@ -697,7 +707,7 @@ export default function App() {
     });
     const unsubState = soundEngine.onStateChange((playing) => {
       const elapsed = Date.now() - lastPlayIntentRef.current.time;
-      if (elapsed < 550 && playing !== lastPlayIntentRef.current.playing) {
+      if (elapsed < 1500 && playing !== lastPlayIntentRef.current.playing) {
         return;
       }
       setIsPlaying((prev) => (prev === playing ? prev : playing));
@@ -776,9 +786,19 @@ export default function App() {
   }, [currentSong, isPlaying, activeQueue]);
 
   // Real-time High Compatibility Toast Detector for Live Lounge listeners:
-  // Detects when a lounge listener has >= 85% affinity with the currently playing track
+  // Enforces strict global cooldowns so notifications stay rare, calm, and non-intrusive:
+  // 1) Never within first 20s after boot, 2) Min 3 min between toasts, 3) Max 2 per session, 4) Visible for 5s
   useEffect(() => {
     if (!currentSong || loungeUsers.length === 0) return;
+
+    const now = Date.now();
+    // Rule 1: Never show within the first 20 seconds of app boot
+    if (now - appBootTimestampRef.current < 20000) return;
+    // Rule 2: Minimum 3 minutes (180,000 ms) cooldown between toasts
+    if (lastToastTimestampRef.current > 0 && now - lastToastTimestampRef.current < 180000) return;
+    // Rule 3: Maximum 2 automatic toasts per session
+    if (sessionToastCountRef.current >= 2) return;
+
     const songKey = `${currentSong.id || currentSong.title}`;
 
     // Evaluate compatibility against currently playing track for each lounge user
@@ -803,15 +823,29 @@ export default function App() {
 
     // Detection delay (2s after song change or lounge load)
     const timer = setTimeout(() => {
+      const showTime = Date.now();
+      if (
+        showTime - appBootTimestampRef.current < 20000 ||
+        (lastToastTimestampRef.current > 0 && showTime - lastToastTimestampRef.current < 180000) ||
+        sessionToastCountRef.current >= 2
+      ) {
+        return;
+      }
+
       notifiedMatchKeysRef.current.add(`${songKey}-${topMatch.user.id}`);
+      lastToastTimestampRef.current = showTime;
+      sessionToastCountRef.current += 1;
       setHighCompatibilityToast(topMatch);
       triggerHaptic(25);
 
-      const hideTimer = setTimeout(() => {
+      if (toastHideTimerRef.current) {
+        clearTimeout(toastHideTimerRef.current);
+      }
+      // Rule 4: Stay visible for 5 seconds
+      toastHideTimerRef.current = setTimeout(() => {
         setHighCompatibilityToast((prev) => (prev?.user.id === topMatch.user.id ? null : prev));
-      }, 7000);
-
-      return () => clearTimeout(hideTimer);
+        toastHideTimerRef.current = null;
+      }, 5000);
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -1737,6 +1771,12 @@ export default function App() {
 
   const handleTogglePlay = () => {
     const now = Date.now();
+    // 250ms debounce guard to prevent accidental mobile double-tap toggles
+    if (now - lastToggleClickRef.current < 250) {
+      return;
+    }
+    lastToggleClickRef.current = now;
+
     if (isPlaying) {
       lastPlayIntentRef.current = { playing: false, time: now };
       setIsPlaying(false);
@@ -2866,12 +2906,12 @@ export default function App() {
               {/* Subtle emerald background aura */}
               <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-              {/* 7-Second Progress Bar (Right-to-Left / shrinking smoothly) */}
+              {/* 5-Second Progress Bar (Right-to-Left / shrinking smoothly) */}
               <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-emerald-500/15 overflow-hidden">
                 <div
                   className="h-full bg-emerald-400 origin-left"
                   style={{
-                    animation: 'toastProgress 7s linear forwards',
+                    animation: 'toastProgress 5s linear forwards',
                   }}
                 />
               </div>
@@ -2881,6 +2921,7 @@ export default function App() {
                 <div
                   onClick={() => {
                     triggerHaptic(15);
+                    lastToastTimestampRef.current = Date.now();
                     setSelectedDrawerUser(highCompatibilityToast.user);
                     setHighCompatibilityToast(null);
                   }}
@@ -2928,6 +2969,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     triggerHaptic(20);
+                    lastToastTimestampRef.current = Date.now();
                     handleSendFrequency(highCompatibilityToast.user);
                     setHighCompatibilityToast(null);
                   }}
@@ -2941,6 +2983,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     triggerHaptic(15);
+                    lastToastTimestampRef.current = Date.now();
                     setSelectedDrawerUser(highCompatibilityToast.user);
                     setHighCompatibilityToast(null);
                   }}
@@ -2952,6 +2995,11 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     triggerHaptic(10);
+                    lastToastTimestampRef.current = Date.now();
+                    if (toastHideTimerRef.current) {
+                      clearTimeout(toastHideTimerRef.current);
+                      toastHideTimerRef.current = null;
+                    }
                     setHighCompatibilityToast(null);
                   }}
                   className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"

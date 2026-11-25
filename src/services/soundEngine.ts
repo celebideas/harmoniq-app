@@ -38,6 +38,8 @@ class RealMusicEngine {
   private lastUserActionTime: number = 0;
   private expectedPlayingState: boolean | null = null;
   private lastNotifiedPlaying: boolean | null = null;
+  private isLoadingTrack: boolean = false;
+  private trackLoadTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -55,6 +57,9 @@ class RealMusicEngine {
 
     ytController.onStateChange((playing) => {
       if (this.currentSong?.youtubeVideoId) {
+        if (playing) {
+          this.clearTrackLoadingLock();
+        }
         if (this.shouldIgnoreExternalState(playing)) {
           return;
         }
@@ -68,17 +73,38 @@ class RealMusicEngine {
     });
 
     ytController.onEnded(() => {
+      this.clearTrackLoadingLock();
       if (this.currentSong?.youtubeVideoId && this.onNextTrackHandler) {
         this.onNextTrackHandler();
       }
     });
 
     ytController.onError((_code) => {
+      this.clearTrackLoadingLock();
       this.setIsLoading(false);
       if (this.currentSong?.youtubeVideoId) {
         this.triggerErrorFallback(this.currentSong);
       }
     });
+  }
+
+  private startTrackLoadingLock() {
+    this.isLoadingTrack = true;
+    if (this.trackLoadTimeout) {
+      clearTimeout(this.trackLoadTimeout);
+    }
+    this.trackLoadTimeout = setTimeout(() => {
+      this.isLoadingTrack = false;
+      this.trackLoadTimeout = null;
+    }, 3500);
+  }
+
+  private clearTrackLoadingLock() {
+    this.isLoadingTrack = false;
+    if (this.trackLoadTimeout) {
+      clearTimeout(this.trackLoadTimeout);
+      this.trackLoadTimeout = null;
+    }
   }
 
   private mediaSessionSetupDone: boolean = false;
@@ -302,6 +328,7 @@ class RealMusicEngine {
       if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
         return;
       }
+      this.clearTrackLoadingLock();
       if (this.shouldIgnoreExternalState(true)) return;
       this.isPlaying = true;
       this.setIsLoading(false);
@@ -312,12 +339,20 @@ class RealMusicEngine {
       if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
         return;
       }
+      this.clearTrackLoadingLock();
       this.setIsLoading(false);
     });
 
     this.audio.addEventListener('pause', () => {
-      // Silent MediaSession WAV guard: NEVER emit notifyStateChange(false) when silent WAV pauses
-      if (this.isUsingSilentAudio || this.currentSong?.youtubeVideoId || this.audio?.src === this.silentAudioUri) {
+      // Ignore synthetic pause events fired while loading a new track or when silent MediaSession WAV pauses
+      if (
+        this.isLoadingTrack ||
+        !this.audio ||
+        this.audio.readyState < 2 ||
+        this.isUsingSilentAudio ||
+        this.currentSong?.youtubeVideoId ||
+        this.audio.src === this.silentAudioUri
+      ) {
         return;
       }
       if (this.shouldIgnoreExternalState(false)) return;
@@ -344,6 +379,7 @@ class RealMusicEngine {
         return;
       }
       console.warn('Real audio stream notice:', e);
+      this.clearTrackLoadingLock();
       this.setIsLoading(false);
       if (this.currentSong && !this.currentSong.youtubeVideoId) {
         this.triggerErrorFallback(this.currentSong);
@@ -410,7 +446,7 @@ class RealMusicEngine {
   private shouldIgnoreExternalState(incomingPlaying: boolean): boolean {
     if (
       this.expectedPlayingState !== null &&
-      Date.now() - this.lastUserActionTime < 500 &&
+      Date.now() - this.lastUserActionTime < 1500 &&
       incomingPlaying !== this.expectedPlayingState
     ) {
       return true;
@@ -464,7 +500,8 @@ class RealMusicEngine {
     this.activePlaybackId = playbackId;
     this.hasTriggeredEndForCurrentSong = false;
 
-    // Lock expected playing state immediately so teardown of previous track never triggers a false flicker
+    // Lock expected playing state and track loading immediately so teardown/load of previous track never flickers UI
+    this.startTrackLoadingLock();
     this.lastUserActionTime = Date.now();
     this.expectedPlayingState = true;
 
@@ -570,6 +607,7 @@ class RealMusicEngine {
           return false;
         }
 
+        this.clearTrackLoadingLock();
         this.isPlaying = true;
         this.notifyStateChange(true);
         this.syncMediaSessionPlaybackState(true);
@@ -578,6 +616,7 @@ class RealMusicEngine {
       } catch (err: any) {
         if (this.activePlaybackId !== playbackId) return false;
         console.warn('Audio play request notice:', err);
+        this.clearTrackLoadingLock();
         this.setIsLoading(false);
 
         // If not deliberately cancelled by next click, trigger seamless fallback
@@ -593,6 +632,7 @@ class RealMusicEngine {
         this.audio.pause();
         this.audio.removeAttribute('src');
       }
+      this.clearTrackLoadingLock();
       this.isPlaying = true;
       this.notifyStateChange(true);
       this.syncMediaSessionPlaybackState(true);
@@ -608,6 +648,7 @@ class RealMusicEngine {
   }
 
   public pause(): void {
+    this.clearTrackLoadingLock();
     this.lastUserActionTime = Date.now();
     this.expectedPlayingState = false;
     this.setIsLoading(false);
@@ -649,6 +690,7 @@ class RealMusicEngine {
   }
 
   public stop(): void {
+    this.clearTrackLoadingLock();
     this.lastUserActionTime = Date.now();
     this.expectedPlayingState = false;
     this.activePlaybackId = '';

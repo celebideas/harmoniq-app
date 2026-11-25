@@ -22,10 +22,31 @@ class YouTubePlayerController {
   private lastNotifiedPlaying: boolean | null = null;
   private lastCommandTime: number = 0;
   private expectedPlayingState: boolean | null = null;
+  private isStartingPlayback: boolean = false;
+  private startPlaybackTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.attachMessageListener();
     this.attachVisibilityListener();
+  }
+
+  private beginStartingPlaybackLock() {
+    this.isStartingPlayback = true;
+    if (this.startPlaybackTimeout) {
+      clearTimeout(this.startPlaybackTimeout);
+    }
+    this.startPlaybackTimeout = setTimeout(() => {
+      this.isStartingPlayback = false;
+      this.startPlaybackTimeout = null;
+    }, 5000);
+  }
+
+  private clearStartingPlaybackLock() {
+    this.isStartingPlayback = false;
+    if (this.startPlaybackTimeout) {
+      clearTimeout(this.startPlaybackTimeout);
+      this.startPlaybackTimeout = null;
+    }
   }
 
   private attachVisibilityListener() {
@@ -58,6 +79,7 @@ class YouTubePlayerController {
 
         // YouTube player error events (e.g. 100, 101, 150 - video not embeddable)
         if (data.event === 'onError' || data.event === 'error') {
+          this.clearStartingPlaybackLock();
           const code = typeof data.info === 'number' ? data.info : 100;
           this.notifyError(code);
         }
@@ -72,8 +94,14 @@ class YouTubePlayerController {
             return;
           }
 
+          // While starting playback (before YouTube confirms real PLAYING state 1),
+          // completely ignore intermediate PAUSED (2) / transient events so the Play/Pause button never flickers
+          if (this.isStartingPlayback && stateCode === 2) {
+            return;
+          }
+
           const withinUserGuard =
-            this.expectedPlayingState !== null && Date.now() - this.lastCommandTime < 550;
+            this.expectedPlayingState !== null && Date.now() - this.lastCommandTime < 1500;
 
           if (stateCode === 1) {
             // If user just explicitly paused, ignore stale PLAYING echo
@@ -86,21 +114,23 @@ class YouTubePlayerController {
               this.sendCommand('pauseVideo');
               return;
             }
+            this.clearStartingPlaybackLock();
             this.isPlaying = true;
             this.notifyState(true);
             this.startTimer();
           } else if (stateCode === 0) {
             // Track Ended: stop timer, notify state, trigger auto-advance
-            if (withinUserGuard && this.expectedPlayingState === true) {
+            if (this.isStartingPlayback || (withinUserGuard && this.expectedPlayingState === true)) {
               return;
             }
+            this.clearStartingPlaybackLock();
             this.isPlaying = false;
             this.notifyState(false);
             this.stopTimer();
             this.notifyEnded();
           } else if (stateCode === 2) {
             // Real PAUSED: ignore stale pause echo right after user clicked Play
-            if (withinUserGuard && this.expectedPlayingState === true) {
+            if (this.isStartingPlayback || (withinUserGuard && this.expectedPlayingState === true)) {
               return;
             }
             this.isPlaying = false;
@@ -199,6 +229,7 @@ class YouTubePlayerController {
       this.currentSecond = startSecond;
     }
 
+    this.beginStartingPlaybackLock();
     this.lastCommandTime = Date.now();
     this.expectedPlayingState = true;
     this.isPlaying = true;
@@ -221,6 +252,7 @@ class YouTubePlayerController {
   }
 
   public pause(silent: boolean = false) {
+    this.clearStartingPlaybackLock();
     this.lastCommandTime = Date.now();
     this.expectedPlayingState = false;
     this.isPlaying = false;
@@ -232,6 +264,7 @@ class YouTubePlayerController {
   }
 
   public stop(silent: boolean = false) {
+    this.clearStartingPlaybackLock();
     this.lastCommandTime = Date.now();
     this.expectedPlayingState = false;
     this.isPlaying = false;

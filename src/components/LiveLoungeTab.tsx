@@ -671,7 +671,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </div>
 
           {/* Bottom Row: Mesafe Seçici: [1 km • Yürüme | 5 km • İlçe | Şehir • 15 km | Tümü] */}
-          <div className="grid grid-cols-4 gap-1 pt-1">
+          <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar whitespace-nowrap">
             {[
               { id: '1km' as DistanceFilter, label: '1 km • Yürüme', count: displayUsers.filter(u => u.distanceKm <= 1).length },
               { id: '5km' as DistanceFilter, label: '5 km • İlçe', count: displayUsers.filter(u => u.distanceKm <= 5).length },
@@ -684,14 +684,14 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   key={f.id}
                   type="button"
                   onClick={() => setDistanceFilter(f.id)}
-                  className={`py-1.5 px-1.5 rounded-lg text-center text-[11px] transition cursor-pointer flex items-center justify-center gap-1 active:scale-95 ${
+                  className={`py-1.5 px-3 rounded-lg text-center text-xs whitespace-nowrap shrink-0 transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
                     isSelected
                       ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 font-bold border border-purple-500/35 shadow-sm'
                       : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.04]'
                   }`}
                 >
-                  <span className="truncate">{f.label}</span>
-                  <span className={`text-[10px] px-1 rounded-full shrink-0 ${
+                  <span>{f.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 leading-none ${
                     isSelected ? 'bg-purple-600 text-white font-bold' : 'bg-zinc-200 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400'
                   }`}>
                     {f.count}

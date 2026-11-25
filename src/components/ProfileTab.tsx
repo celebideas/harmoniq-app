@@ -2147,7 +2147,7 @@ export const ProfileTab: React.FC<Props> = ({
         </div>
 
         {/* Minimalist Underline Navigation Tabs */}
-        <div className="flex items-center gap-6 border-b border-white/[0.06] overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 border-b border-white/[0.06] overflow-x-auto no-scrollbar whitespace-nowrap pb-1">
           {[
             { id: 'playlists' as const, label: `Çalma Listeleri (${syncedPlaylists.length})` },
             { id: 'favorites' as const, label: `Favori Parçalar (${favoriteSongs.length})` },
@@ -2162,7 +2162,7 @@ export const ProfileTab: React.FC<Props> = ({
                   setActiveLibraryTab(tab.id);
                   setLibrarySearchQuery('');
                 }}
-                className={`pb-3 text-xs font-medium whitespace-nowrap transition-colors relative cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors relative cursor-pointer ${
                   isActive
                     ? 'text-white font-semibold'
                     : 'text-zinc-500 hover:text-zinc-300'
@@ -2170,7 +2170,7 @@ export const ProfileTab: React.FC<Props> = ({
               >
                 {tab.label}
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-lime-400 rounded-full" />
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-lime-400 rounded-full" />
                 )}
               </button>
             );

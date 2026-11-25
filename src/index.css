@@ -42,6 +42,14 @@
   }
 
   html,
+  body,
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    overscroll-behavior-y: none;
+  }
+
+  html,
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -419,5 +427,14 @@ html.light .harmoniq-leaflet-map .leaflet-control-attribution {
 
 .harmoniq-user-pulse-ring {
   animation: harmoniq-map-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Dark Mode OpenStreetMap Tile Filter (ONLY tile-pane so markers & avatar pins retain true colors) */
+html.dark .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(86%) contrast(92%) saturate(75%);
+}
+
+html.dark .leaflet-container {
+  background: #0A090F !important;
 }
 

@@ -482,6 +482,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
     });
 
     map.attributionControl.setPrefix('');
+    tileLayerRef.current = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap',
+    }).addTo(map);
     listenerLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
@@ -500,27 +504,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
       listenerLayerRef.current = null;
     };
   }, []);
-
-  // 2. Switch CartoDB Tile Layer smoothly when Light/Dark theme changes
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    const tileUrl =
-      effectiveTheme === 'light'
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
-    if (tileLayerRef.current) {
-      map.removeLayer(tileLayerRef.current);
-    }
-
-    tileLayerRef.current = L.tileLayer(tileUrl, {
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-    }).addTo(map);
-  }, [effectiveTheme]);
 
   // 3. Update User Center Marker ("Sen"), Metric Radar Circle, and Smooth FlyTo on city/filter change
   useEffect(() => {
