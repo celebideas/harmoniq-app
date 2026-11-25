@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavTab, BottomNav } from './components/BottomNav';
 import { TopHeader } from './components/TopHeader';
+import { DesktopSidebar } from './components/DesktopSidebar';
+import { DesktopPlayerBar } from './components/DesktopPlayerBar';
 import { LiveLoungeTab } from './components/LiveLoungeTab';
 import { RoomsTab } from './components/RoomsTab';
 import { ChatTab } from './components/ChatTab';
@@ -465,17 +467,101 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const purgeAllUserSessionData = useCallback(() => {
+    clearAuthSession();
+    clearPersistentYouTubeAccount();
+
+    if (typeof window !== 'undefined') {
+      const keysToRemove = [
+        'harmoniq_auth_session',
+        'harmoniq_user_account',
+        'harmoniq_onboarding_completed',
+        'harmoniq_user_avatar',
+        'harmoniq_user_bio',
+        'harmoniq_user_city',
+        'harmoniq_youtube_connected',
+        'harmoniq_yt_connected_account',
+        'harmoniq_yt_synced_library',
+        ...Object.values(STORAGE_KEYS),
+      ];
+      keysToRemove.forEach((key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch {
+          // ignore storage errors
+        }
+      });
+    }
+
+    setYoutubeAccount({
+      email: '',
+      handle: '@muziksever',
+      name: 'Müzik Kaşifi',
+    });
+    setUserAvatarUrl(null);
+    setUserBio('Müzik ruhun gerçek frekansıdır.');
+    setUserCity('İstanbul, Kadıköy');
+    setIsYouTubeConnected(false);
+    setHasActiveYouTubeToken(false);
+    setSyncedPlaylists([]);
+    setFavoriteSongs([]);
+    setFavoriteArtists([]);
+    setSubscribedChannels([]);
+    setPersonalTaste(DEFAULT_PERSONAL_TASTE);
+    setIsTasteSynced(false);
+    setGoogleUser(null);
+    setIsGoogleAuthenticated(false);
+    setFirebaseUser(null);
+    setCloudProfiles([]);
+    setCloudIncomingRequests([]);
+    setCloudOutgoingRequests([]);
+    setCloudFriendships([]);
+    setCloudConversations([]);
+    setActiveCloudMessages([]);
+    silentSyncExecutedRef.current = false;
+  }, []);
+
   const handleOnboardingSkip = () => {
-    if (typeof localStorage !== 'undefined') {
+    if (typeof localStorage !== 'undefined' && authSession && !authSession.isGuest) {
       localStorage.setItem('harmoniq_onboarding_completed', 'true');
     }
     setShowOnboardingModal(false);
     setActiveTab('lounge');
-    setToastMessage('Misafir modunda frekansa bağlandınız.');
+    setToastMessage('Frekansa bağlandınız.');
     setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleAuthSuccess = (session: AuthSession, isNewSignup: boolean) => {
+    const storedAccountRaw =
+      typeof window !== 'undefined' ? localStorage.getItem('harmoniq_user_account') : null;
+    const hasGuestAccountRemnant =
+      Boolean(authSession?.isGuest) ||
+      Boolean(
+        storedAccountRaw &&
+          (storedAccountRaw.includes('Misafir Dinleyici') || storedAccountRaw.includes('@misafir'))
+      );
+
+    // If transitioning from Guest mode into a real account, wipe all guest remnants first
+    if (!session.isGuest && hasGuestAccountRemnant) {
+      if (typeof window !== 'undefined') {
+        [
+          'harmoniq_user_account',
+          'harmoniq_user_avatar',
+          'harmoniq_user_bio',
+          'harmoniq_onboarding_completed',
+          'harmoniq_youtube_connected',
+          'harmoniq_yt_connected_account',
+          'harmoniq_yt_synced_library',
+        ].forEach((k) => {
+          try {
+            localStorage.removeItem(k);
+          } catch {}
+        });
+      }
+      setUserAvatarUrl(null);
+      setUserBio('Müzik ruhun gerçek frekansıdır.');
+    }
+
     setAuthSession(session);
     const updatedAcc = {
       name: session.name,
@@ -483,18 +569,24 @@ export default function App() {
       handle: session.handle,
     };
     setYoutubeAccount(updatedAcc);
-    if (session.avatarUrl) {
-      setUserAvatarUrl(session.avatarUrl);
-    }
+    setUserAvatarUrl(session.avatarUrl || null);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('harmoniq_user_account', JSON.stringify(updatedAcc));
       if (session.avatarUrl) {
         localStorage.setItem('harmoniq_user_avatar', session.avatarUrl);
+      } else {
+        localStorage.removeItem('harmoniq_user_avatar');
       }
     }
 
     setActiveTab('lounge');
-    if (isNewSignup) {
+    if (session.isGuest) {
+      // Guest sessions MUST NEVER permanently lock onboarding for future real accounts
+      setShowOnboardingModal(false);
+      setToastMessage('Misafir olarak frekansa bağlandın.');
+      setTimeout(() => setToastMessage(null), 3000);
+    } else if (isNewSignup) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('harmoniq_onboarding_completed');
       }
@@ -504,11 +596,7 @@ export default function App() {
         localStorage.setItem('harmoniq_onboarding_completed', 'true');
       }
       setShowOnboardingModal(false);
-      setToastMessage(
-        session.isGuest
-          ? 'Misafir olarak frekansa bağlandın.'
-          : `Tekrar hoş geldin, ${session.name}!`
-      );
+      setToastMessage(`Tekrar hoş geldin, ${session.name}!`);
       setTimeout(() => setToastMessage(null), 3000);
     }
   };
@@ -1760,10 +1848,10 @@ export default function App() {
     setShowYouTubeConnectModal(false);
     setSelectedDrawerUser(null);
     setActiveChatUser(null);
-    clearAuthSession();
     if (firebaseUser || isGoogleAuthenticated) {
       await handleGoogleSignOut();
     }
+    purgeAllUserSessionData();
     setAuthSession(null);
     setShowOnboardingModal(false);
     setActiveTab('lounge');
@@ -2260,22 +2348,37 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const resolvedDisplayName =
+    googleUser?.name ||
+    (!authSession?.isGuest && authSession?.name ? authSession.name : '') ||
+    (youtubeAccount.name && youtubeAccount.name !== 'Yasin Çelebi' ? youtubeAccount.name : '') ||
+    authSession?.name ||
+    'Müzik Kaşifi';
+
   const currentUserProfile: UserProfile = {
     id: 'me',
-    name: googleUser?.name || (youtubeAccount.name && youtubeAccount.name !== 'Yasin Çelebi' ? youtubeAccount.name : 'Müzik Kaşifi'),
+    name: resolvedDisplayName,
     age: 24,
     city: userCity,
-    avatarGradient: 'from-zinc-700 to-zinc-900',
-    avatarSeed: (googleUser?.name || youtubeAccount.name || 'MK')
-      .split(' ')
-      .map((s) => s[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'MK',
-    avatarUrl: userAvatarUrl || googleUser?.photoUrl || undefined,
+    avatarGradient: 'from-purple-600 to-pink-500',
+    avatarSeed:
+      resolvedDisplayName
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((s) => s[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'MK',
+    avatarUrl: userAvatarUrl || googleUser?.photoUrl || authSession?.avatarUrl || undefined,
     isYouTubeConnected,
     youtubeAccount,
-    email: googleUser?.email || (youtubeAccount.email && youtubeAccount.email !== 'contact.yasincelebi@gmail.com' ? youtubeAccount.email : undefined),
+    email:
+      googleUser?.email ||
+      (!authSession?.isGuest && authSession?.email ? authSession.email : undefined) ||
+      (youtubeAccount.email && youtubeAccount.email !== 'contact.yasincelebi@gmail.com'
+        ? youtubeAccount.email
+        : undefined),
     bio: userBio,
     currentSong,
     songProgressSeconds: mySecond,
@@ -2473,8 +2576,8 @@ export default function App() {
             avatarUrl: summary.avatarUrl,
             platform: 'youtube_music',
             currentSecond: 0,
-            topArtists: ['Harmoniq'],
-            bio: 'Harmoniq arkadaşı.',
+            topArtists: ['ListenHub'],
+            bio: 'ListenHub arkadaşı.',
             trustScore: 98,
             lastHeartbeatAgoSeconds: 30,
             isOnline: false,
@@ -2504,8 +2607,8 @@ export default function App() {
             avatarUrl: r.fromAvatarUrl,
             platform: 'youtube_music',
             currentSecond: 0,
-            topArtists: ['Harmoniq'],
-            bio: 'Harmoniq dinleyicisi.',
+            topArtists: ['ListenHub'],
+            bio: 'ListenHub dinleyicisi.',
             trustScore: 98,
             lastHeartbeatAgoSeconds: 10,
             isOnline: true,
@@ -2533,14 +2636,14 @@ export default function App() {
       if (liveProfile) return publicProfileToLoungeUser(liveProfile, 'pending', 'outgoing');
       return {
         id: r.toUid,
-        name: 'Harmoniq Dinleyicisi',
+        name: 'ListenHub Dinleyicisi',
         age: 24,
         city: 'Türkiye',
-        avatarSeed: 'HD',
+        avatarSeed: 'LH',
         avatarGradient: 'from-emerald-500 to-teal-700',
         platform: 'youtube_music',
         currentSecond: 0,
-        topArtists: ['Harmoniq'],
+        topArtists: ['ListenHub'],
         bio: 'Bekleyen arkadaşlık isteği.',
         trustScore: 98,
         lastHeartbeatAgoSeconds: 15,
@@ -2630,7 +2733,7 @@ export default function App() {
     <div
       className={`min-h-screen ${
         isLight ? 'bg-[#F5F4F8] text-[#14121E]' : 'bg-[#0A090F] text-[#F4F3F8]'
-      } flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden`}
+      } flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-x-clip`}
     >
       {/* Top Ceiling Ambient Glow (Velvet Pitch & Electric Resonance) */}
       <div
@@ -2655,8 +2758,28 @@ export default function App() {
         </div>
       )}
 
+      {/* Desktop Left Sidebar (>= 1024px) */}
+      <DesktopSidebar
+        activeTab={activeTab}
+        onSelectTab={handleSelectTab}
+        unreadCount={totalUnread}
+        liveListenersCount={
+          privacyMode === 'friends_only'
+            ? mergedFriendsList.length + 1
+            : combinedLoungeUsers.length
+        }
+        isPlaying={isPlaying}
+        privacyMode={privacyMode}
+        onChangePrivacyMode={(mode) => {
+          setPrivacyMode(mode);
+        }}
+        userProfile={currentUserProfile}
+        themeMode={effectiveTheme}
+        onToggleTheme={handleToggleTheme}
+      />
+
       <div
-        className={`w-full flex-1 flex flex-col ${
+        className={`w-full flex-1 flex flex-col lg:pl-64 ${
           isLight ? 'bg-[#F5F4F8]/95 shadow-sm' : 'bg-[#0A090F]/90'
         } relative z-10 transition-all duration-300`}
       >
@@ -2678,11 +2801,7 @@ export default function App() {
           liveListenersCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
         />
 
-        <main
-          className={`flex-1 flex flex-col overflow-y-auto no-scrollbar transition-all duration-300 ${
-            activeTab === 'lounge' ? 'pb-24' : 'pb-40'
-          }`}
-        >
+        <main className="flex-1 flex flex-col transition-all duration-300 pb-36 lg:pb-28">
           <div className={activeTab === 'lounge' ? 'flex-1 flex flex-col' : 'hidden'}>
             <LiveLoungeTab
               currentSong={currentSong}
@@ -3039,6 +3158,25 @@ export default function App() {
           onOpenNowPlaying={() => setShowNowPlayingModal(true)}
           onSeekSecond={handleSeekSecond}
         />
+
+        <DesktopPlayerBar
+          currentSong={currentSong}
+          isPlaying={isPlaying}
+          isAudioLoading={isAudioLoading}
+          currentSecond={mySecond}
+          isFavorite={favoriteSongs.some(
+            (s) =>
+              s.id === currentSong.id ||
+              (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
+                s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+          )}
+          onTogglePlay={handleTogglePlay}
+          onNextSong={handleNextSong}
+          onPrevSong={handlePrevSong}
+          onSeekSecond={handleSeekSecond}
+          onToggleFavorite={handleToggleFavoriteSong}
+          onOpenNowPlaying={() => setShowNowPlayingModal(true)}
+        />
       </div>
 
       <MiniProfileDrawer
@@ -3073,7 +3211,7 @@ export default function App() {
         onClose={() => setShowInstallModal(false)}
         deferredPrompt={deferredPrompt}
         onInstallSuccess={() => {
-          setToastMessage('Harmoniq ana ekranınıza kuruldu.');
+          setToastMessage('ListenHub ana ekranınıza kuruldu.');
           setTimeout(() => setToastMessage(null), 3000);
         }}
         onCheckForUpdates={pwa.checkForUpdates}

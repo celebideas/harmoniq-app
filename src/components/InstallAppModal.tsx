@@ -141,7 +141,7 @@ export const InstallAppModal: React.FC<Props> = ({
               </span>
             </h3>
             <p className="text-xs text-neutral-400 mt-0.5">
-              Harmoniq'i akıllı telefonunda tam ekran, reklamsız ve bağımsız uygulama olarak kullanın.
+              ListenHub'ı akıllı telefonunda tam ekran, reklamsız ve bağımsız uygulama olarak kullanın.
             </p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export const InstallAppModal: React.FC<Props> = ({
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
-                  alt="Harmoniq Uygulaması QR Kodu"
+                  alt="ListenHub Uygulaması QR Kodu"
                   className="w-36 h-36 object-contain"
                 />
               ) : (

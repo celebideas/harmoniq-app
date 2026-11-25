@@ -401,7 +401,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col px-3.5 sm:px-6 py-3.5 sm:py-5 max-w-xl mx-auto w-full space-y-4 relative select-none">
+    <div className="flex-1 flex flex-col px-3.5 sm:px-6 py-3.5 sm:py-5 max-w-xl lg:max-w-6xl mx-auto w-full relative select-none">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+        {/* LEFT 7 COLUMNS (Desktop): Live Player Console + Timeline / Leaflet Map */}
+        <div className="lg:col-span-7 flex flex-col gap-4 min-w-0">
       {/* =========================================================================
           1. KOMPAKT "CANLI FREKANS SAHNESİ" KARTI (FOCAL ANCHOR)
          ========================================================================= */}
@@ -507,7 +510,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <iframe
                 ref={(el) => ytController.setIframe(el)}
                 src={`https://www.youtube.com/embed/${currentSong.youtubeVideoId}?autoplay=${isPlaying ? '1' : '0'}&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&widgetid=1`}
-                title="Harmoniq YouTube Music Player"
+                title="ListenHub YouTube Music Player"
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -755,259 +758,12 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setDistanceFilter('all')}
-                  className="mt-2 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-semibold text-white transition cursor-pointer"
+                  className="mt-2 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-semibold text-white transition cursor-pointer min-h-[44px] lg:min-h-0"
                 >
                   Tüm Dinleyicileri Göster
                 </button>
               </div>
             )}
-
-            {/* ===============================================================
-                CANLI SANİYE YORUMLARI & FREKANS NOTLARI (LIVE VIBE STREAM)
-               =============================================================== */}
-            <div className="space-y-3 pt-1 relative">
-              {/* Stream Title Bar */}
-              <div className="flex items-center justify-between px-1 text-xs">
-                <div className="flex items-center gap-1.5 text-white font-heading font-semibold">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-theme opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-theme" />
-                  </span>
-                  <span>Şarkının Bu Saniyesinde Bırakılan Frekans Notları</span>
-                </div>
-                <span className="text-[11px] text-zinc-400 font-medium hidden xs:inline">
-                  Tıkla ve o saniyeye sarıl 🎧
-                </span>
-              </div>
-
-              {/* Horizontal Scrollable Glass Cards Carousel */}
-              <div className="relative">
-                <div
-                  className="flex items-stretch gap-2.5 overflow-x-auto no-scrollbar pb-1 pt-0.5 scroll-smooth pr-8"
-                  style={{
-                    WebkitMaskImage: 'linear-gradient(to right, black 88%, transparent 100%)',
-                    maskImage: 'linear-gradient(to right, black 88%, transparent 100%)',
-                  }}
-                >
-                  {vibeNotes.map((vibe) => {
-                    const isNearCurrent = Math.abs(mySecond - vibe.second) < 8;
-                    return (
-                      <div
-                        key={vibe.id}
-                        onClick={() => handleVibeCardClick(vibe)}
-                        className={`min-w-[260px] sm:min-w-[280px] max-w-[290px] p-3 rounded-2xl transition-all flex flex-col justify-between shrink-0 shadow-lg cursor-pointer group/card border ${
-                          isNearCurrent
-                            ? 'bg-gradient-to-br from-accent-theme/20 via-white/[0.05] to-transparent border-accent-theme/50 ring-1 ring-accent-theme/30'
-                            : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.08] hover:border-white/20'
-                        }`}
-                        title="Tıkla: Şarkıyı bu saniyeye sar ve dinleyiciyi gör"
-                      >
-                        <div className="space-y-2">
-                          {/* Card Header: Initials, Name & Time Badge */}
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="relative shrink-0">
-                                <div
-                                  className={`w-7 h-7 rounded-full bg-gradient-to-tr ${vibe.avatarGradient} flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/20 shadow-sm`}
-                                >
-                                  {vibe.userInitials}
-                                </div>
-                                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-1 ring-[#0C0C0E]" />
-                              </div>
-                              <div className="min-w-0">
-                                <span className="text-xs font-semibold text-white block truncate group-hover/card:text-accent-theme transition-colors">
-                                  {vibe.userInitials} • {vibe.userName}
-                                </span>
-                                <span className="text-[10px] text-zinc-400 block truncate">
-                                  {vibe.isMine ? 'Senin notun' : 'Canlı dinleyici'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="px-2 py-0.5 rounded-full bg-accent-theme/15 border border-accent-theme/30 text-[10px] font-mono font-bold text-accent-theme">
-                                {formatTime(vibe.second)}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Card Note Content */}
-                          <div className="p-2 rounded-xl bg-black/40 border border-white/[0.04] min-h-[46px] flex items-center">
-                            <p className="line-clamp-2 italic text-zinc-200 text-xs leading-relaxed">
-                              "{vibe.note}"
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Card Actions Footer */}
-                        <div className="flex items-center justify-between gap-1.5 pt-2 mt-1.5 border-t border-white/[0.05] text-[11px]">
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleVibeLike(e, vibe.id)}
-                            className="px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-rose-400 font-medium transition cursor-pointer flex items-center gap-1 active:scale-95"
-                            title="Beğen"
-                          >
-                            <Heart className="w-3 h-3 text-rose-500 fill-current" />
-                            <span className="tabular-nums font-mono text-[10px]">{vibe.likes}</span>
-                          </button>
-
-                          <div className="flex items-center gap-1 text-accent-theme font-semibold group-hover/card:translate-x-0.5 transition-transform">
-                            <span>O Anı Dinle</span>
-                            <span>▶</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ===============================================================
-                  ANI YAKALA BARI (LIVE VIBE BAR)
-                 =============================================================== */}
-              <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-white/[0.04] via-accent-theme/[0.05] to-white/[0.02] border border-white/[0.08] backdrop-blur-xl space-y-2.5 shadow-lg">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-accent-theme fill-current" />
-                    <span className="font-heading font-bold text-white text-xs">Anı Yakala Barı</span>
-                    <span className="text-zinc-500 hidden xs:inline">·</span>
-                    <span className="text-[11px] text-zinc-400 hidden xs:inline">
-                      {formatTime(mySecond)} anına hissini fırlat
-                    </span>
-                  </div>
-
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-accent-theme/20 border border-accent-theme/30 text-accent-theme font-bold tabular-nums">
-                    ⏱️ {formatTime(mySecond)}
-                  </span>
-                </div>
-
-                {/* Reaction Pills Row */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                  {[
-                    { label: '⚡ Tüyler Diken' },
-                    { label: '🔥 Efsane Solo' },
-                    { label: '🎸 Ritim Harika' },
-                    { label: '🖤 Tam Modum' },
-                  ].map((rec) => (
-                    <button
-                      key={rec.label}
-                      type="button"
-                      onClick={() => triggerQuickReaction(rec.label)}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] active:bg-accent-theme active:text-zinc-950 border border-white/[0.08] hover:border-accent-theme/40 text-xs font-semibold text-zinc-200 hover:text-white transition cursor-pointer shrink-0 active:scale-95 shadow-sm"
-                    >
-                      {rec.label}
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(15);
-                      setIsWritingNote((prev) => !prev);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 active:scale-95 flex items-center gap-1 shadow-sm ${
-                      isWritingNote
-                        ? 'bg-accent-theme text-zinc-950'
-                        : 'bg-accent-theme/15 hover:bg-accent-theme/25 text-accent-theme border border-accent-theme/30'
-                    }`}
-                  >
-                    <span>✍️</span>
-                    <span>Saniyeye Not Bırak</span>
-                  </button>
-                </div>
-
-                {/* Inline Custom Note Writer */}
-                {isWritingNote && (
-                  <form
-                    onSubmit={handleSendCustomNote}
-                    className="pt-1.5 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200"
-                  >
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={customNoteText}
-                        onChange={(e) => setCustomNoteText(e.target.value)}
-                        placeholder={`${formatTime(mySecond)} anında ne hissettin? (Örn: Gitar geçişi kusursuz...)`}
-                        maxLength={80}
-                        autoFocus
-                        className="w-full py-1.5 px-3 bg-black/60 border border-accent-theme/50 rounded-xl text-xs text-white focus:outline-none placeholder-zinc-500 font-medium"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={!customNoteText.trim()}
-                      className="px-3.5 py-1.5 rounded-xl bg-accent-theme text-zinc-950 font-bold text-xs hover:brightness-110 active:scale-95 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
-                    >
-                      <span>Fırlat</span>
-                      <span>🚀</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsWritingNote(false)}
-                      className="p-1.5 rounded-xl text-zinc-400 hover:text-white transition cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-
-            {/* Minimalist Listener Strip & Auto Radio */}
-            <div className="py-2.5 border-y border-white/[0.06] flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex -space-x-1.5 shrink-0">
-                  {distanceFilteredUsers.slice(0, 4).map((u) => (
-                    <div
-                      key={u.id}
-                      onClick={() => onSelectUser(u)}
-                      title={`${u.name}${u.isRealUser ? ' · 🟢 GERÇEK CANLI' : ''} (${u.distanceKm} km)`}
-                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform overflow-hidden ${
-                        u.isRealUser
-                          ? 'ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.75)] z-10'
-                          : 'ring-2 ring-[#000000]'
-                      }`}
-                    >
-                      {u.avatarUrl ? (
-                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
-                      ) : (
-                        u.avatarSeed
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                  <span className="text-xs text-zinc-400 truncate">
-                    {distanceFilteredUsers.length} kişi şu anda bu odada dinliyor
-                  </span>
-                  {distanceFilteredUsers.some((u) => u.isRealUser) && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/45 text-emerald-400 text-[10px] font-extrabold tracking-wide shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
-                      🟢 GERÇEK CANLI
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Auto-Radio Toggle */}
-              <div className="flex items-center justify-end gap-2 text-xs shrink-0">
-                <span className="text-zinc-500 truncate max-w-[140px] hidden xs:inline">
-                  {nextRadioSong
-                    ? `Sıradaki: ${nextRadioSong.title}`
-                    : 'Sonsuz Radyo'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onToggleAutoRadio?.(!autoRadioEnabled)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
-                    autoRadioEnabled
-                      ? 'bg-accent-subtle text-accent-theme font-semibold'
-                      : 'bg-white/[0.04] text-zinc-500'
-                  }`}
-                >
-                  {autoRadioEnabled ? 'Radyo Açık' : 'Radyo Kapalı'}
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1029,7 +785,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setLoungeViewMode('timeline')}
-              className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2 border border-white/[0.06]"
+              className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.04] hover:bg-zinc-100 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2 border border-zinc-200 dark:border-white/[0.06] min-h-[44px]"
             >
               <Clock className="w-3.5 h-3.5" />
               <span>Zaman Çizelgesi Görünümüne Dön</span>
@@ -1037,6 +793,241 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </div>
         )}
       </section>
+        </div>
+
+        {/* RIGHT 5 COLUMNS (Desktop): Unified Saniye Notları & Hızlı Tepki Card + Room Listeners Summary */}
+        <aside className="lg:col-span-5 flex flex-col gap-4 min-w-0 lg:sticky lg:top-6">
+          {/* ===============================================================
+              BİRLEŞİK KART: SANİYE NOTLARI & HIZLI TEPKİ
+             =============================================================== */}
+          <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] backdrop-blur-xl space-y-3 shadow-lg">
+            {/* Header Row */}
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+                </span>
+                <h3 className="font-heading font-bold text-zinc-900 dark:text-white text-xs sm:text-sm truncate">
+                  Saniye Notları & Hızlı Tepki
+                </h3>
+              </div>
+
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-300 font-bold tabular-nums shrink-0">
+                ⏱️ {formatTime(mySecond)}
+              </span>
+            </div>
+
+            {/* Top: Single-Row Quick Reaction Chips with Smooth Right Fade */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pr-6 py-0.5 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]">
+              {[
+                { label: '⚡ Tüyler Diken' },
+                { label: '🔥 Efsane Solo' },
+                { label: '🎸 Ritim Harika' },
+                { label: '🖤 Tam Modum' },
+              ].map((rec) => (
+                <button
+                  key={rec.label}
+                  type="button"
+                  onClick={() => triggerQuickReaction(rec.label)}
+                  className="px-2.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200 dark:hover:bg-white/[0.1] border border-zinc-200 dark:border-white/[0.08] hover:border-purple-500/40 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition cursor-pointer shrink-0 active:scale-95 shadow-xs min-h-[36px]"
+                >
+                  {rec.label}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(15);
+                  setIsWritingNote((prev) => !prev);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 active:scale-95 flex items-center gap-1 shadow-xs min-h-[36px] ${
+                  isWritingNote
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
+                    : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                }`}
+              >
+                <span>✍️</span>
+                <span>Not Bırak</span>
+              </button>
+            </div>
+
+            {/* Inline Custom Note Writer */}
+            {isWritingNote && (
+              <form
+                onSubmit={handleSendCustomNote}
+                className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200"
+              >
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={customNoteText}
+                    onChange={(e) => setCustomNoteText(e.target.value)}
+                    placeholder={`${formatTime(mySecond)} anında ne hissettin?`}
+                    maxLength={80}
+                    autoFocus
+                    className="w-full py-2 px-3 bg-zinc-100 dark:bg-black/60 border border-purple-500/50 rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none placeholder-zinc-500 font-medium"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!customNoteText.trim()}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs hover:brightness-110 active:scale-95 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
+                >
+                  <span>Fırlat</span>
+                  <span>🚀</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsWritingNote(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            )}
+
+            {/* Bottom: Horizontally Scrollable Timestamp Note Cards */}
+            <div className="pt-1 border-t border-zinc-200/80 dark:border-white/[0.06]">
+              <div
+                className="flex items-stretch gap-2.5 overflow-x-auto no-scrollbar pb-1 pt-1.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]"
+              >
+                {vibeNotes.map((vibe) => {
+                  const isNearCurrent = Math.abs(mySecond - vibe.second) < 8;
+                  return (
+                    <div
+                      key={vibe.id}
+                      onClick={() => handleVibeCardClick(vibe)}
+                      className={`min-w-[235px] sm:min-w-[250px] max-w-[265px] p-2.5 rounded-2xl transition-all flex flex-col justify-between shrink-0 shadow-sm cursor-pointer group/card border ${
+                        isNearCurrent
+                          ? 'bg-purple-500/10 border-purple-500/45 ring-1 ring-purple-500/25'
+                          : 'bg-zinc-50 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.06] border-zinc-200/80 dark:border-white/[0.08]'
+                      }`}
+                      title="Tıkla: Şarkıyı bu saniyeye sar ve dinleyiciyi gör"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="relative shrink-0">
+                              <div
+                                className={`avatar-circle w-6 h-6 rounded-full bg-gradient-to-tr ${vibe.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] ring-1 ring-white/20 shadow-sm`}
+                              >
+                                {vibe.userInitials}
+                              </div>
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-1 ring-white dark:ring-[#14121E]" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-zinc-900 dark:text-white block truncate group-hover/card:text-purple-600 dark:group-hover/card:text-purple-400 transition-colors">
+                                {vibe.userName}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300 shrink-0">
+                            {formatTime(vibe.second)}
+                          </span>
+                        </div>
+
+                        <div className="p-2 rounded-xl bg-white/80 dark:bg-black/35 border border-zinc-200/70 dark:border-white/[0.04] min-h-[42px] flex items-center">
+                          <p className="line-clamp-2 italic text-zinc-700 dark:text-zinc-200 text-xs leading-relaxed">
+                            "{vibe.note}"
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-1.5 pt-2 mt-1.5 border-t border-zinc-200/70 dark:border-white/[0.05] text-[11px]">
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleVibeLike(e, vibe.id)}
+                          className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:text-rose-500 font-medium transition cursor-pointer flex items-center gap-1 active:scale-95"
+                          title="Beğen"
+                        >
+                          <Heart className="w-3 h-3 text-rose-500 fill-current" />
+                          <span className="tabular-nums font-mono text-[10px]">{vibe.likes}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-semibold group-hover/card:translate-x-0.5 transition-transform">
+                          <span>O Anı Dinle</span>
+                          <span>▶</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Room Listeners Summary & Auto-Radio Card */}
+          <div className="p-3.5 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-sm space-y-3">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex -space-x-1.5 shrink-0">
+                  {distanceFilteredUsers.slice(0, 4).map((u) => (
+                    <div
+                      key={u.id}
+                      onClick={() => onSelectUser(u)}
+                      title={`${u.name}${u.isRealUser ? ' · 🟢 GERÇEK CANLI' : ''} (${u.distanceKm} km)`}
+                      className={`avatar-circle w-8 h-8 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform overflow-hidden ${
+                        u.isRealUser
+                          ? 'ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.75)] z-10'
+                          : 'ring-2 ring-white dark:ring-[#14121E]'
+                      }`}
+                    >
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
+                      ) : (
+                        u.avatarSeed
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">
+                    Odadaki Dinleyiciler
+                  </div>
+                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {distanceFilteredUsers.length} kişi şu anda bu frekansta
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onOpenRoomListeners}
+                className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.12] text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition cursor-pointer shrink-0 min-h-[36px]"
+              >
+                Tümü ({distanceFilteredUsers.length + 1})
+              </button>
+            </div>
+
+            {distanceFilteredUsers.some((u) => u.isRealUser) && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/45 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold tracking-wide">
+                <span>🟢 GERÇEK CANLI DİNLEYİCİ BAĞLI</span>
+              </div>
+            )}
+
+            {/* Auto-Radio Toggle Row */}
+            <div className="pt-2.5 border-t border-zinc-200/80 dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
+              <span className="text-zinc-500 dark:text-zinc-400 truncate">
+                {nextRadioSong ? `Sıradaki: ${nextRadioSong.title}` : 'Sonsuz Radyo'}
+              </span>
+              <button
+                type="button"
+                onClick={() => onToggleAutoRadio?.(!autoRadioEnabled)}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition cursor-pointer shrink-0 ${
+                  autoRadioEnabled
+                    ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                    : 'bg-zinc-100 dark:bg-white/[0.05] text-zinc-500'
+                }`}
+              >
+                {autoRadioEnabled ? 'Radyo Açık' : 'Radyo Kapalı'}
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 };

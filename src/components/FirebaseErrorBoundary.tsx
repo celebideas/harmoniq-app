@@ -50,7 +50,7 @@ export class FirebaseErrorBoundary extends React.Component<
               </div>
               <div>
                 <h2 className="text-base font-bold text-white">Bağlantı Kesintisi</h2>
-                <p className="text-xs text-zinc-400">Harmoniq Bulut Senkronizasyonu</p>
+                <p className="text-xs text-zinc-400">ListenHub Bulut Senkronizasyonu</p>
               </div>
             </div>
             <p className="text-sm text-zinc-300 leading-relaxed">{this.state.errorMessage}</p>

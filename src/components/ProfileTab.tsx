@@ -156,44 +156,48 @@ const PlaylistRowItem = React.memo<{
 }>(({ playlist, isPlaying = false, onView, onPlay, onDelete }) => (
   <div
     onClick={() => onView(playlist)}
-    className={`py-3.5 flex items-center justify-between gap-4 group cursor-pointer px-2.5 -mx-2 rounded-xl transition ${
+    className={`p-3 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl transition border ${
       isPlaying
-        ? 'bg-purple-500/[0.08] border border-purple-500/35 shadow-sm'
-        : 'hover:bg-white/[0.02] border border-transparent'
+        ? 'bg-purple-500/10 border-purple-500/40 shadow-sm'
+        : 'bg-white/90 dark:bg-white/[0.03] border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 hover:bg-purple-50/40 dark:hover:bg-white/[0.05]'
     }`}
   >
-    <div className="flex items-center gap-3.5 min-w-0">
+    <div className="flex items-center gap-3 min-w-0">
       <div className="relative shrink-0">
         <img
           src={playlist.coverUrl}
           alt={playlist.title}
           loading="lazy"
           decoding="async"
-          className={`w-13 h-13 rounded-xl object-cover shrink-0 bg-zinc-900 border ${
-            isPlaying ? 'border-purple-500/50 ring-2 ring-purple-500/30' : 'border-white/[0.06]'
+          className={`w-12 h-12 rounded-xl object-cover shrink-0 bg-zinc-200 dark:bg-zinc-900 border ${
+            isPlaying ? 'border-purple-500/50 ring-2 ring-purple-500/30' : 'border-zinc-200 dark:border-white/[0.08]'
           }`}
         />
       </div>
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className={`text-sm font-semibold truncate transition ${
-            isPlaying ? 'text-purple-400 font-bold' : 'text-white group-hover:text-purple-300'
-          }`}>
+        <div className="flex items-center gap-1.5">
+          <h4
+            className={`text-sm font-semibold truncate transition ${
+              isPlaying
+                ? 'text-purple-600 dark:text-purple-400 font-bold'
+                : 'text-zinc-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300'
+            }`}
+          >
             {playlist.title}
           </h4>
           {isPlaying && (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
-              Aktif Liste
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
+              Aktif
             </span>
           )}
         </div>
-        <p className="text-xs text-zinc-500 truncate mt-0.5">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
           {playlist.tracks?.length || playlist.trackCount} parça · {playlist.duration}
         </p>
       </div>
     </div>
 
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex items-center gap-1.5 shrink-0">
       {onPlay && (
         <button
           type="button"
@@ -201,14 +205,14 @@ const PlaylistRowItem = React.memo<{
             e.stopPropagation();
             onPlay(playlist);
           }}
-          className={`px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+          className={`px-3 py-2 min-h-[38px] rounded-xl font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer ${
             isPlaying
               ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-md shadow-purple-500/20'
-              : 'bg-white/[0.06] hover:bg-purple-600 text-zinc-200 hover:text-white'
+              : 'bg-zinc-100 dark:bg-white/[0.07] hover:bg-purple-600 text-zinc-800 dark:text-zinc-200 hover:text-white'
           }`}
         >
           {isPlaying ? (
-            <span>ılı Çalıyor</span>
+            <span>ılı</span>
           ) : (
             <>
               <Play className="w-3 h-3 fill-current" />
@@ -224,7 +228,7 @@ const PlaylistRowItem = React.memo<{
             e.stopPropagation();
             onDelete(playlist.id);
           }}
-          className="p-2 rounded-xl text-zinc-500 hover:text-rose-400 transition cursor-pointer"
+          className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 transition cursor-pointer"
           title="Listeyi Kaldır"
         >
           <Trash2 className="w-4 h-4" />
@@ -242,33 +246,33 @@ const FavoriteSongRowItem = React.memo<{
 }>(({ song, formattedDuration, onPlay, onToggleFavorite }) => (
   <div
     onClick={() => onPlay && onPlay(song)}
-    className="py-3 flex items-center justify-between gap-3 group cursor-pointer hover:bg-white/[0.02] px-2 -mx-2 rounded-xl transition"
+    className="p-2.5 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl bg-white/90 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 hover:bg-purple-50/40 dark:hover:bg-white/[0.05] transition"
   >
-    <div className="flex items-center gap-3.5 min-w-0">
+    <div className="flex items-center gap-3 min-w-0">
       {song.coverUrl ? (
         <img
           src={song.coverUrl}
           alt={song.title}
           loading="lazy"
           decoding="async"
-          className="w-11 h-11 rounded-lg object-cover shrink-0 bg-zinc-900 border border-white/[0.06]"
+          className="w-11 h-11 rounded-xl object-cover shrink-0 bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.08]"
         />
       ) : (
-        <div className="w-11 h-11 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-500 shrink-0 border border-white/[0.06]">
+        <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 shrink-0 border border-zinc-200 dark:border-white/[0.08]">
           <Music className="w-4 h-4" />
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-sm font-medium text-white truncate group-hover:text-lime-300 transition">
+        <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-300 transition">
           {song.title}
         </div>
-        <div className="text-xs text-zinc-500 truncate mt-0.5">
+        <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
           {song.artist} {song.album ? `· ${song.album}` : ''}
         </div>
       </div>
     </div>
 
-    <div className="flex items-center gap-3 shrink-0">
+    <div className="flex items-center gap-2 shrink-0">
       <span className="text-xs text-zinc-500 tabular-nums">
         {formattedDuration}
       </span>
@@ -295,43 +299,40 @@ const FavoriteArtistRowItem = React.memo<{
   onStartRadio?: (name: string) => void;
   onToggleFavorite?: (name: string) => void;
 }>(({ artistName, avatarInfo, onStartRadio, onToggleFavorite }) => (
-  <div className="py-3 flex items-center justify-between gap-3 group">
-    <div className="flex items-center gap-3.5 min-w-0">
+  <div className="p-2.5 flex items-center justify-between gap-3 group rounded-2xl bg-white/90 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 transition">
+    <div className="flex items-center gap-3 min-w-0">
       {avatarInfo.url ? (
         <img
           src={avatarInfo.url}
           alt={artistName}
           loading="lazy"
           decoding="async"
-          className="w-11 h-11 rounded-xl object-cover shrink-0 ring-1 ring-white/10 bg-zinc-900"
+          className="w-11 h-11 rounded-xl object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-white/10 bg-zinc-200 dark:bg-zinc-900"
         />
       ) : (
         <div
-          className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${avatarInfo.gradient || 'from-emerald-900 to-zinc-950'} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/[0.08] relative overflow-hidden`}
+          className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${avatarInfo.gradient || 'from-purple-600 to-pink-500'} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/15 relative overflow-hidden`}
         >
-          <div className="absolute inset-0 bg-black/25 flex items-center justify-center opacity-40">
-            <Music className="w-3.5 h-3.5 text-white" />
-          </div>
           <span className="relative z-10">{avatarInfo.initials}</span>
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-sm font-medium text-white truncate flex items-center gap-1.5">
-          <span>{artistName}</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-lime-400" title="YouTube Music Doğrulanmış Sanatçı" />
+        <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate flex items-center gap-1.5">
+          <span className="truncate">{artistName}</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Doğrulanmış Sanatçı" />
         </div>
-        <div className="text-xs text-zinc-500 truncate mt-0.5">
-          YouTube Music Sanatçısı · Kişisel Radyo Hazır
+        <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+          Kişisel Radyo Hazır
         </div>
       </div>
     </div>
 
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex items-center gap-1.5 shrink-0">
       {onStartRadio && (
         <button
           type="button"
           onClick={() => onStartRadio(artistName)}
-          className="px-3 py-1.5 min-h-[36px] rounded-xl bg-white/[0.05] hover:bg-lime-400 text-zinc-200 hover:text-zinc-950 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+          className="px-3 py-1.5 min-h-[36px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-purple-600 text-zinc-800 dark:text-zinc-200 hover:text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
         >
           <Radio className="w-3.5 h-3.5" />
           <span>Radyo</span>
@@ -341,7 +342,7 @@ const FavoriteArtistRowItem = React.memo<{
         <button
           type="button"
           onClick={() => onToggleFavorite(artistName)}
-          className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-zinc-500 hover:text-rose-400 transition cursor-pointer active:scale-95"
+          className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-zinc-400 hover:text-rose-500 transition cursor-pointer active:scale-95"
           title="Kaldır"
         >
           <X className="w-4 h-4" />
@@ -640,9 +641,7 @@ export const ProfileTab: React.FC<Props> = ({
   const setTempAvatarUrl = setDraftAvatar;
 
   React.useEffect(() => {
-    if (userProfile.avatarUrl) {
-      setDraftAvatar(userProfile.avatarUrl);
-    }
+    setDraftAvatar(userProfile.avatarUrl || null);
   }, [userProfile.avatarUrl]);
 
   const applyAvatarImmediately = (newUrl: string | null) => {
@@ -1181,16 +1180,10 @@ export const ProfileTab: React.FC<Props> = ({
     ctx.lineWidth = 3;
     ctx.strokeRect(50, 50, 980, 1820);
 
-    // Top Header: HARMONIQ & Label
-    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+    // Top Header: LISTENHUB • FREKANS KİMLİK KARTI
+    ctx.font = 'bold 34px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#10b981';
-    ctx.fillText('🎧 HARMONIQ', 90, 125);
-
-    ctx.font = '600 24px system-ui, -apple-system, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-    ctx.textAlign = 'right';
-    ctx.fillText('FREKANS KİMLİK KARTI', 990, 125);
-    ctx.textAlign = 'left';
+    ctx.fillText('🎧 LISTENHUB • FREKANS KİMLİK KARTI', 90, 125);
 
     // User Profile Box
     fillRoundRect(90, 165, 900, 165, 28, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
@@ -1237,7 +1230,7 @@ export const ProfileTab: React.FC<Props> = ({
 
     ctx.font = '500 24px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText(userProfile.youtubeAccount?.handle || '@harmoniq_user', 245, 275);
+    ctx.fillText(userProfile.youtubeAccount?.handle || '@listenhub_user', 245, 275);
 
     // Trust Shield Badge
     fillRoundRect(245, 288, 380, 32, 16, 'rgba(16, 185, 129, 0.16)', 'rgba(16, 185, 129, 0.35)');
@@ -1412,7 +1405,7 @@ export const ProfileTab: React.FC<Props> = ({
     fillRoundRect(90, 1630, 900, 160, 28, 'rgba(0, 0, 0, 0.55)', 'rgba(255, 255, 255, 0.1)');
     ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('harmoniq.app · Canlı Rezonans & Sosyal Müzik', 130, 1695);
+    ctx.fillText('listenhub.app • Dinleme Frekansı', 130, 1695);
 
     ctx.font = '500 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
@@ -1446,10 +1439,7 @@ export const ProfileTab: React.FC<Props> = ({
       }
 
       const a = document.createElement('a');
-      const handleClean = (userProfile.youtubeAccount?.handle || userProfile.name || 'harmoniq')
-        .replace('@', '')
-        .trim();
-      a.download = `harmoniq-frekans-kart-${handleClean}-1080x1920.png`;
+      a.download = 'listenhub-aura-karti.png';
       a.href = dataUrl;
       document.body.appendChild(a);
       a.click();
@@ -1481,15 +1471,12 @@ export const ProfileTab: React.FC<Props> = ({
           setIsGeneratingStoryImage(false);
           return;
         }
-        const handleClean = (userProfile.youtubeAccount?.handle || userProfile.name || 'harmoniq')
-          .replace('@', '')
-          .trim();
-        const file = new File([blob], `harmoniq-frekans-kart-${handleClean}.png`, { type: 'image/png' });
+        const file = new File([blob], 'listenhub-aura-karti.png', { type: 'image/png' });
         if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
-              title: `Harmoniq Frekans Kimliği · ${weeklyPersona}`,
-              text: `🎧 Bu haftaki Harmoniq Müzikal Auram: ${weeklyPersona}! Toplam ${weeklyHours} saat dinleme, #1 sanatçı ${topArtistName}.`,
+              title: `ListenHub Frekans Kimliği · ${weeklyPersona}`,
+              text: `🎧 Bu haftaki ListenHub Müzikal Auram: ${weeklyPersona}! Toplam ${weeklyHours} saat dinleme, #1 sanatçı ${topArtistName}.`,
               files: [file],
             });
           } catch {
@@ -1508,9 +1495,9 @@ export const ProfileTab: React.FC<Props> = ({
   const handleCopyWeeklySummary = () => {
     const genresList = sortedWeeklyGenres.map((g) => `${g.genre} (%${g.percentage})`).join(', ');
     const artistsList = sortedWeeklyArtists.map((a) => `#${a.rank} ${a.name}`).join(' · ');
-    const summaryText = `🎧 Harmoniq · Haftalık Müzik Özeti\n👤 ${
+    const summaryText = `🎧 ListenHub · Haftalık Müzik Özeti\n👤 ${
       userProfile.youtubeAccount?.name || userProfile.name
-    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\n🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\n⏱ Toplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\n⚡ Müzik Personası: ${weeklyPersona}\n📊 En Çok Dinlenen Türler: ${genresList}\n👑 Zirvedeki Sanatçılar: ${artistsList}\n🔥 Haftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}\n✨ Frekansı keşfet: https://harmoniq-app-fawn.vercel.app`;
+    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\n🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\n⏱ Toplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\n⚡ Müzik Personası: ${weeklyPersona}\n📊 En Çok Dinlenen Türler: ${genresList}\n👑 Zirvedeki Sanatçılar: ${artistsList}\n🔥 Haftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}\n✨ Frekansı keşfet: https://listenhub.app`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(summaryText);
@@ -1544,271 +1531,176 @@ export const ProfileTab: React.FC<Props> = ({
   };
 
   const activeProfileAvatar = draftAvatar || userProfile.avatarUrl;
+  const connectedEmail = userProfile.youtubeAccount?.email || userProfile.email;
+  const isLibraryCompletelyEmpty =
+    syncedPlaylists.length === 0 &&
+    favoriteSongs.length === 0 &&
+    sanitizedFavoriteArtists.length === 0 &&
+    subscribedChannels.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-4xl mx-auto w-full space-y-6 relative">
-      {/* Toast Notice Banner (bottom-36 to avoid overlapping BottomNav) */}
+    <div className="flex-1 flex flex-col px-4 sm:px-6 py-5 lg:py-6 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
+      {/* Toast Notice Banner */}
       {toastNotice && (
-        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-950/95 border border-purple-500/40 text-zinc-900 dark:text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
+        <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-950/95 border border-purple-500/40 text-zinc-900 dark:text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
           <Sparkles className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
           <span>{toastNotice}</span>
         </div>
       )}
-      {/* =====================================================================
-          1. MINIMALIST PROFILE HEADER
-         ===================================================================== */}
-      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-5 border-b border-[#E4E2EC] dark:border-white/[0.06]">
-        <div className="flex items-center gap-4 min-w-0">
-          <div
-            className="relative group cursor-pointer shrink-0"
-            onClick={openEditProfileModal}
-          >
-            {activeProfileAvatar ? (
-              <img
-                src={activeProfileAvatar}
-                alt={userProfile.name}
-                className="w-16 h-16 rounded-full object-cover ring-1 ring-zinc-300 dark:ring-white/15 group-hover:ring-purple-500 transition"
-              />
-            ) : (
+
+      {/* Adaptive Dual-Layout: Single column on mobile (<1024px), 12-col split on desktop (>=1024px) */}
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+        {/* ===================================================================
+            LEFT 5 COLS ON DESKTOP: PROFILE HERO + TRUST SHIELD + MUSICAL AURA
+           =================================================================== */}
+        <div className="lg:col-span-5 space-y-5 min-w-0">
+          {/* 1. THEME-AWARE PROFILE HERO CARD */}
+          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/10 p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex items-start gap-4 min-w-0">
               <div
-                className={`w-16 h-16 rounded-full bg-gradient-to-tr ${userProfile.avatarGradient} flex items-center justify-center text-force-white font-heading font-bold text-xl ring-1 ring-white/15 group-hover:ring-purple-500 transition`}
+                className="relative group cursor-pointer shrink-0"
+                onClick={openEditProfileModal}
               >
-                {userProfile.avatarSeed}
-              </div>
-            )}
-            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-zinc-900 border border-white/15 text-force-white flex items-center justify-center group-hover:bg-purple-600 transition">
-              <Camera className="w-3 h-3" />
-            </div>
-          </div>
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
-                {userProfile.youtubeAccount?.name || userProfile.name}
-              </h1>
-              <span className="text-xs text-zinc-500 font-normal truncate">
-                {userProfile.youtubeAccount?.handle || '@muziksever'}
-              </span>
-            </div>
-
-            {/* Interactive Trust Shield & Location Controls */}
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <button
-                type="button"
-                onClick={() => setShowTrustScoreModal(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold transition cursor-pointer group"
-                title="Şeffaf Güven Kalkanı Detaylarını İncele"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="tabular-nums">Güven Puanı: {userProfile.trustScore || 98}/100</span>
-                <ChevronRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setManualCityInput(userProfile.city);
-                  setShowLocationModal(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] active:scale-95 border border-[#E4E2EC] dark:border-white/[0.08] text-zinc-700 dark:text-zinc-200 transition cursor-pointer text-xs group"
-                title="Konumu anlık güncelle veya elle gir"
-              >
-                <MapPin className="w-3.5 h-3.5 text-accent-theme shrink-0" />
-                <span className="font-semibold text-zinc-900 dark:text-white">{userProfile.city}</span>
-                <span className="text-[10px] text-zinc-500 font-medium">
-                  · {isAutoLocation ? 'Canlı GPS' : 'Manuel'}
-                </span>
-                <ChevronDown className="w-3 h-3 text-zinc-500 ml-0.5" />
-              </button>
-            </div>
-
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span
-                className={`truncate max-w-[240px] text-xs ${
-                  userProfile.youtubeAccount?.email || userProfile.email
-                    ? 'text-zinc-600 dark:text-zinc-300'
-                    : 'text-amber-600 dark:text-amber-400/90 font-medium'
-                }`}
-                title={userProfile.youtubeAccount?.email || userProfile.email || 'Hesap bağlanmadı'}
-              >
-                {userProfile.youtubeAccount?.email || userProfile.email || 'Hesap bağlanmadı'}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="tabular-nums">{syncedPlaylists.length} liste</span>
-              <span aria-hidden="true">·</span>
-              <span className="tabular-nums">{favoriteSongs.length} favori</span>
-            </div>
-
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-1">
-              {userProfile.bio}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-          <button
-            type="button"
-            onClick={() => setShowSettingsModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-semibold transition cursor-pointer min-h-[40px] flex items-center gap-1.5 border border-[#E4E2EC] dark:border-white/[0.08] active:scale-95 group shadow-xs whitespace-nowrap shrink-0"
-            title="Ayarlar, Tema ve Hesap Bağlantıları"
-          >
-            <Settings className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:rotate-45 transition-transform" />
-            <span>Ayarlar & Hesap</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={openEditProfileModal}
-            className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.09] text-zinc-700 dark:text-zinc-200 text-xs font-medium transition cursor-pointer min-h-[40px] flex items-center gap-1.5 border border-[#E4E2EC] dark:border-white/[0.06] whitespace-nowrap shrink-0"
-          >
-            <UserIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-            <span className="hidden sm:inline">Düzenle</span>
-          </button>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          SEGMENTED SWITCHER: KÜTÜPHANEM | MÜZİK ÖZETİ
-         ===================================================================== */}
-      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] max-w-sm">
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic(10);
-            setProfileSection('library');
-          }}
-          className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-            profileSection === 'library'
-              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white shadow-sm'
-              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          Kütüphanem
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic(10);
-            setProfileSection('insights');
-          }}
-          className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-            profileSection === 'insights'
-              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white shadow-sm'
-              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          Müzik Özeti & Aura
-        </button>
-      </div>
-
-      {/* =====================================================================
-          2. İMZA PARÇALARIM (TOP 4 VİTRİN) — SHOWN IN KÜTÜPHANEM TAB
-         ===================================================================== */}
-      {profileSection === 'library' && (
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm sm:text-base font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
-            İmza Parçalarım (Top 4)
-          </h2>
-          <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] font-medium">
-            Dokun ve anında çal
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {displayedTop4Tracks.map((track, idx) => {
-            const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
-            const rank = idx + 1;
-            return (
-              <div
-                key={track.id || idx}
-                onClick={() => {
-                  triggerHaptic(15);
-                  if (onPlaySong) onPlaySong(track);
-                }}
-                className={`aspect-[3/4] rounded-xl overflow-hidden relative border shadow-md group cursor-pointer transition-all active:scale-95 ${
-                  isCurrentlyPlaying
-                    ? 'border-purple-500 ring-2 ring-purple-500/40'
-                    : 'border-zinc-200 dark:border-white/10 hover:border-purple-500/50'
-                }`}
-                title={`${track.title} - ${track.artist} (Çalmak için dokun)`}
-              >
-                {/* ✎ Edit Slot Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerHaptic(20);
-                    setEditingTop4Slot(idx);
-                    setTop4SearchQuery('');
-                  }}
-                  className="absolute top-2 left-2 w-6 h-6 rounded-lg bg-black/60 hover:bg-purple-600 text-force-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
-                  title={`#${rank} Vitrin Parçasını Değiştir`}
-                  aria-label={`Vitrin ${rank} parçasını değiştir`}
-                >
-                  <Pencil className="w-3 h-3 text-force-white" />
-                </button>
-
-                {track.coverUrl ? (
+                {activeProfileAvatar ? (
                   <img
-                    src={track.coverUrl}
-                    alt={track.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    src={activeProfileAvatar}
+                    alt={userProfile.name}
+                    className="w-16 h-16 rounded-full object-cover ring-2 ring-purple-500/30 group-hover:ring-purple-500 transition"
                   />
                 ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${track.coverGradient || 'from-purple-900 via-zinc-900 to-black'} flex items-center justify-center`}>
-                    <Music className="w-6 h-6 text-white/60" />
+                  <div className="avatar-circle w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white font-heading font-bold text-xl ring-2 ring-purple-500/20 group-hover:ring-purple-500 transition shadow-md">
+                    {userProfile.avatarSeed}
                   </div>
                 )}
-
-                {/* Dark bottom gradient legibility veil */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
-
-                {/* Top-right Rank Badge (#1..#4) */}
-                <div
-                  className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold shadow-md ${
-                    rank === 1
-                      ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-black/70 backdrop-blur-md text-force-white border border-white/15'
-                  }`}
-                >
-                  #{rank}
-                </div>
-
-                {/* Hover/Active Play Overlay */}
-                <div
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                    isCurrentlyPlaying ? 'opacity-100 bg-black/25' : 'opacity-0 group-hover:opacity-100 bg-black/30'
-                  }`}
-                >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white flex items-center justify-center shadow-lg">
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  </div>
-                </div>
-
-                {/* Bottom Song Title & Artist */}
-                <div className="absolute bottom-2 left-2 right-2 z-10">
-                  <div className="text-[11px] font-bold text-force-white leading-tight line-clamp-2 drop-shadow">
-                    {track.title}
-                  </div>
-                  <div className="text-[9px] text-zinc-200 truncate mt-0.5">
-                    {track.artist}
-                  </div>
+                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-zinc-900 border border-white/20 text-white flex items-center justify-center group-hover:bg-purple-600 transition">
+                  <Camera className="w-3 h-3" />
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </section>
-      )}
 
-      {/* =====================================================================
-          3. UNIFIED MÜZİK ÖZETİ & AURA — SHOWN IN MÜZİK ÖZETİ TAB (ZERO DUPLICATION)
-         ===================================================================== */}
-      {profileSection === 'insights' && (
-      <section className="rounded-3xl bg-white/95 dark:bg-zinc-950/75 border border-[#E4E2EC] dark:border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-lg sm:text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
+                    {userProfile.youtubeAccount?.name || userProfile.name}
+                  </h1>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal truncate">
+                    {userProfile.youtubeAccount?.handle || '@muziksever'}
+                  </span>
+                </div>
+
+                {/* Interactive Trust Shield & Location Controls */}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTrustScoreModal(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold transition cursor-pointer group"
+                    title="Şeffaf Güven Kalkanı Detaylarını İncele"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="tabular-nums">Güven Puanı: {userProfile.trustScore || 98}/100</span>
+                    <ChevronRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualCityInput(userProfile.city);
+                      setShowLocationModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.09] active:scale-95 border border-zinc-200 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-200 transition cursor-pointer text-xs group"
+                    title="Konumu anlık güncelle veya elle gir"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <span className="font-semibold text-zinc-900 dark:text-white">{userProfile.city}</span>
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
+                      · {isAutoLocation ? 'Canlı GPS' : 'Manuel'}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-zinc-500 ml-0.5" />
+                  </button>
+                </div>
+
+                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {connectedEmail && (
+                    <>
+                      <span
+                        className="truncate max-w-[220px] text-xs text-zinc-600 dark:text-zinc-300 font-medium"
+                        title={connectedEmail}
+                      >
+                        {connectedEmail}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                    </>
+                  )}
+                  <span className="tabular-nums">{syncedPlaylists.length} liste</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="tabular-nums">{favoriteSongs.length} favori</span>
+                </div>
+
+                {userProfile.bio && (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 line-clamp-2">
+                    {userProfile.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Centralized Action Bar (44px touch targets) */}
+            <div className="flex items-center gap-2 pt-3 border-t border-zinc-200/80 dark:border-white/[0.07]">
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(true)}
+                className="flex-1 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.11] text-zinc-900 dark:text-zinc-100 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border border-zinc-200 dark:border-white/[0.08] active:scale-95 group whitespace-nowrap"
+                title="Ayarlar, Tema ve Tüm Hesap Bağlantıları"
+              >
+                <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:rotate-45 transition-transform" />
+                <span>Ayarlar & Hesap</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openEditProfileModal}
+                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border border-zinc-200 dark:border-white/[0.07] active:scale-95 whitespace-nowrap shrink-0"
+              >
+                <UserIcon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                <span>Düzenle</span>
+              </button>
+            </div>
+          </section>
+
+          {/* MOBILE-ONLY SEGMENTED SWITCHER (Hidden on desktop where both columns show together) */}
+          <div className="lg:hidden grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08]">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                setProfileSection('library');
+              }}
+              className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                profileSection === 'library'
+                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              Kütüphanem
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                setProfileSection('insights');
+              }}
+              className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                profileSection === 'insights'
+                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              Müzik Özeti & Aura
+            </button>
+          </div>
+
+          {/* 3. UNIFIED MÜZİK ÖZETİ & AURA — ALWAYS VISIBLE IN LEFT COL ON DESKTOP, TABBED ON MOBILE */}
+          <div className={profileSection === 'insights' ? 'block' : 'hidden lg:block'}>
+          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 dark:text-zinc-400">
@@ -2127,477 +2019,560 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
           </div>
         )}
-      </section>
-      )}
-
-      {/* =====================================================================
-          4. KİŞİSEL MÜZİK KÜTÜPHANEM (SHOWN IN KÜTÜPHANEM TAB)
-         ===================================================================== */}
-      {profileSection === 'library' && (
-      <section className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-heading font-bold text-white tracking-tight">
-              Kütüphanem
-            </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              Çalma listelerin · Favori müziklerin · Beğendiğin sanatçılar
-            </p>
+          </section>
           </div>
         </div>
 
-        {/* Minimalist Underline Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-white/[0.06] overflow-x-auto no-scrollbar whitespace-nowrap pb-1">
-          {[
-            { id: 'playlists' as const, label: `Çalma Listeleri (${syncedPlaylists.length})` },
-            { id: 'favorites' as const, label: `Favori Parçalar (${favoriteSongs.length})` },
-            { id: 'artists' as const, label: `Sanatçılar (${sanitizedFavoriteArtists.length})` },
-          ].map((tab) => {
-            const isActive = activeLibraryTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveLibraryTab(tab.id);
-                  setLibrarySearchQuery('');
-                }}
-                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors relative cursor-pointer ${
-                  isActive
-                    ? 'text-white font-semibold'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                {tab.label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-lime-400 rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search Input for the active tab */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={librarySearchQuery}
-            onChange={(e) => setLibrarySearchQuery(e.target.value)}
-            placeholder={
-              activeLibraryTab === 'playlists'
-                ? 'Çalma listelerinde ara...'
-                : activeLibraryTab === 'favorites'
-                ? 'Favori parçalarda ara...'
-                : 'Sanatçılarda ara...'
-            }
-            className="w-full pl-9 pr-8 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/20"
-          />
-          {librarySearchQuery && (
-            <button
-              type="button"
-              onClick={() => setLibrarySearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* ==================== SUB-TAB 1: ÇALMA LİSTELERİ ==================== */}
-        {activeLibraryTab === 'playlists' && (() => {
-          const filteredPlaylists = syncedPlaylists.filter((p) =>
-            librarySearchQuery
-              ? p.title.toLowerCase().includes(librarySearchQuery.toLowerCase())
-              : true
-          );
-          const visiblePlaylists = filteredPlaylists.slice(0, visiblePlaylistsLimit);
-          const hasMorePlaylists = filteredPlaylists.length > visiblePlaylistsLimit;
-          const remainingPlaylists = filteredPlaylists.length - visiblePlaylistsLimit;
-
-          return (
-            <div className="space-y-4">
-              {syncedPlaylists.length === 0 ? (
-                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-white/[0.04] dark:via-white/[0.02] dark:to-purple-950/[0.12] border border-[#E4E2EC] dark:border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 dark:from-purple-600/30 dark:to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-lg shadow-purple-600/20">
-                    <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
-                  </div>
-                  <div className="space-y-1.5 relative z-10">
-                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
-                      Henüz kütüphanen senkronize edilmedi
-                    </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      YouTube Music çalma listelerini bağlayarak frekansını eşle veya örnek koleksiyonla hemen başla.
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
-                    <button
-                      type="button"
-                      onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-[#E4E2EC] dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
-                    >
-                      <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span>🔗 YouTube Music Hesabı / Linki Bağla</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleLoadPopularCollection}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
-                    >
-                      <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>🔥 Örnek Rock & Indie Koleksiyonu Yükle</span>
-                    </button>
-                  </div>
-                </div>
-              ) : filteredPlaylists.length === 0 ? (
-                <div className="py-8 text-center text-xs text-zinc-500">
-                  Aramanızla eşleşen çalma listesi bulunamadı.
-                </div>
-              ) : (
-                <>
-                  <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-                    {visiblePlaylists.map((playlist) => {
-                      const isPlayingThisPlaylist =
-                        activePlayingPlaylistId === playlist.id ||
-                        Boolean(
-                          userProfile.currentSong &&
-                            playlist.tracks?.some((t) => t.id === userProfile.currentSong?.id)
-                        );
-                      return (
-                        <PlaylistRowItem
-                          key={playlist.id}
-                          playlist={playlist}
-                          isPlaying={isPlayingThisPlaylist}
-                          onView={(pl) => {
-                            setViewingPlaylist(pl);
-                            setPlaylistModalSearch('');
-                          }}
-                          onPlay={
-                            onPlayPlaylist
-                              ? (pl) => {
-                                  setActivePlayingPlaylistId(pl.id);
-                                  onPlayPlaylist(pl, false);
-                                }
-                              : undefined
-                          }
-                          onDelete={onDeletePlaylist}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {hasMorePlaylists && (
-                    <button
-                      type="button"
-                      onClick={() => setVisiblePlaylistsLimit((prev) => prev + 15)}
-                      className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <span>Daha Fazla Liste Göster (+{Math.min(15, remainingPlaylists)})</span>
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </>
-              )}
+        {/* ===================================================================
+            RIGHT 7 COLS ON DESKTOP: TOP 4 VİTRİN + KÜTÜPHANEM (2-COL GRID)
+           =================================================================== */}
+        <div className={`lg:col-span-7 space-y-6 min-w-0 ${profileSection === 'library' ? 'block' : 'hidden lg:block'}`}>
+          {/* 2. İMZA PARÇALARIM (TOP 4 VİTRİN) */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                İmza Parçalarım (Top 4)
+              </h2>
+              <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] font-medium">
+                Dokun ve anında çal
+              </span>
             </div>
-          );
-        })()}
 
-        {/* ==================== SUB-TAB 2: FAVORİ PARÇALAR ==================== */}
-        {activeLibraryTab === 'favorites' && (() => {
-          const filteredSongs = favoriteSongs.filter((song) =>
-            librarySearchQuery
-              ? song.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
-                song.artist.toLowerCase().includes(librarySearchQuery.toLowerCase())
-              : true
-          );
-          const visibleSongs = filteredSongs.slice(0, visibleFavoritesLimit);
-          const hasMoreSongs = filteredSongs.length > visibleFavoritesLimit;
-          const remainingSongs = filteredSongs.length - visibleFavoritesLimit;
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {displayedTop4Tracks.map((track, idx) => {
+                const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
+                const rank = idx + 1;
+                return (
+                  <div
+                    key={track.id || idx}
+                    onClick={() => {
+                      triggerHaptic(15);
+                      if (onPlaySong) onPlaySong(track);
+                    }}
+                    className={`keep-white-on-media aspect-[3/4] rounded-2xl overflow-hidden relative border shadow-md group cursor-pointer transition-all active:scale-95 ${
+                      isCurrentlyPlaying
+                        ? 'border-purple-500 ring-2 ring-purple-500/40'
+                        : 'border-zinc-200 dark:border-white/10 hover:border-purple-500/50'
+                    }`}
+                    title={`${track.title} - ${track.artist} (Çalmak için dokun)`}
+                  >
+                    {/* ✎ Edit Slot Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHaptic(20);
+                        setEditingTop4Slot(idx);
+                        setTop4SearchQuery('');
+                      }}
+                      className="absolute top-2 left-2 w-7 h-7 rounded-lg bg-black/65 hover:bg-purple-600 text-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
+                      title={`#${rank} Vitrin Parçasını Değiştir`}
+                      aria-label={`Vitrin ${rank} parçasını değiştir`}
+                    >
+                      <Pencil className="w-3 h-3 text-white" />
+                    </button>
 
-          return (
-            <div className="space-y-4">
-              {favoriteSongs.length > 0 && onPlaySongsList && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-zinc-400">
-                    {favoriteSongs.length} şarkı
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onPlaySongsList(favoriteSongs, true)}
-                      className="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Shuffle className="w-3.5 h-3.5 text-lime-400" />
-                      <span>Karışık</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onPlaySongsList(favoriteSongs, false)}
-                      className="px-3.5 py-1.5 rounded-xl bg-lime-400 hover:bg-lime-300 text-zinc-950 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Tümünü Çal</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {favoriteSongs.length === 0 ? (
-                <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-white/[0.04] dark:via-white/[0.02] dark:to-purple-950/[0.12] border border-[#E4E2EC] dark:border-white/[0.08] text-center space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 dark:from-purple-600/30 dark:to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-lg shadow-purple-600/20">
-                    <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
-                  </div>
-                  <div className="space-y-1.5 relative z-10">
-                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
-                      Henüz kütüphanen senkronize edilmedi
-                    </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      YouTube Music'te beğendiğin parçaları aktararak müzik kimliğini derinleştir veya örnek koleksiyonu tek tıkla yükle.
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
-                    <button
-                      type="button"
-                      onClick={onOpenYouTubeConnect || handleSyncYouTubeLibrary}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-[#E4E2EC] dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md"
-                    >
-                      <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span>🔗 YouTube Music Hesabı / Linki Bağla</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleLoadPopularCollection}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
-                    >
-                      <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>🔥 Örnek Rock & Indie Koleksiyonu Yükle</span>
-                    </button>
-                  </div>
-                </div>
-              ) : filteredSongs.length === 0 ? (
-                <div className="py-8 text-center text-xs text-zinc-500">
-                  Aramanızla eşleşen parça bulunamadı.
-                </div>
-              ) : (
-                <>
-                  <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-                    {visibleSongs.map((song, idx) => (
-                      <FavoriteSongRowItem
-                        key={song.id || idx}
-                        song={song}
-                        formattedDuration={formatDuration(song.durationSeconds)}
-                        onPlay={onPlaySong}
-                        onToggleFavorite={onToggleFavoriteSong}
+                    {track.coverUrl ? (
+                      <img
+                        src={track.coverUrl}
+                        alt={track.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    ))}
-                  </div>
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${track.coverGradient || 'from-purple-900 via-zinc-900 to-black'} flex items-center justify-center`}>
+                        <Music className="w-6 h-6 text-white/60" />
+                      </div>
+                    )}
 
-                  {hasMoreSongs && (
+                    {/* Strong dark bottom gradient legibility veil */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+
+                    {/* Top-right Rank Badge (#1..#4) */}
+                    <div
+                      className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold shadow-md ${
+                        rank === 1
+                          ? 'bg-amber-500 text-zinc-950'
+                          : 'bg-black/75 backdrop-blur-md text-white border border-white/15'
+                      }`}
+                    >
+                      #{rank}
+                    </div>
+
+                    {/* Hover/Active Play Overlay */}
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                        isCurrentlyPlaying ? 'opacity-100 bg-black/25' : 'opacity-0 group-hover:opacity-100 bg-black/30'
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white flex items-center justify-center shadow-lg">
+                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                      </div>
+                    </div>
+
+                    {/* Bottom Song Title & Artist — ALWAYS WHITE OVER DARK SCRIM */}
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+                      <div className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">
+                        {track.title}
+                      </div>
+                      <div className="text-[10px] text-white/80 truncate mt-0.5 drop-shadow-sm">
+                        {track.artist}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 4. KİŞİSEL MÜZİK KÜTÜPHANEM */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
+                  Kütüphanem
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Çalma listelerin · Favori müziklerin · Beğendiğin sanatçılar
+                </p>
+              </div>
+            </div>
+
+            {isLibraryCompletelyEmpty ? (
+              /* SINGLE UNIFIED EMPTY-LIBRARY CARD (NO SCATTERED DUPLICATES) */
+              <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-[#14121E] dark:via-[#14121E]/95 dark:to-purple-950/20 border border-zinc-200 dark:border-white/[0.08] text-center space-y-4 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-52 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-md">
+                  <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
+                </div>
+                <div className="space-y-1.5 relative z-10">
+                  <h3 className="text-base sm:text-lg font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
+                    Müzik Kütüphaneni Bağla
+                  </h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+                    YouTube Music veya Spotify çalma listelerini tek kapıdan bağlayıp frekansını eşle ya da örnek koleksiyonla hemen keşfet.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowSettingsModal(true)}
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                  >
+                    <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <span>Müzik Kütüphaneni Bağla</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLoadPopularCollection}
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-200" />
+                    <span>Örnek Koleksiyonu Yükle</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Minimalist Underline Navigation Tabs */}
+                <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/[0.07] overflow-x-auto no-scrollbar whitespace-nowrap pb-1 pr-6 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+                  {[
+                    { id: 'playlists' as const, label: `Çalma Listeleri (${syncedPlaylists.length})` },
+                    { id: 'favorites' as const, label: `Favori Parçalar (${favoriteSongs.length})` },
+                    { id: 'artists' as const, label: `Sanatçılar (${sanitizedFavoriteArtists.length})` },
+                  ].map((tab) => {
+                    const isActive = activeLibraryTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveLibraryTab(tab.id);
+                          setLibrarySearchQuery('');
+                        }}
+                        className={`px-3 py-2 min-h-[40px] text-xs font-medium whitespace-nowrap shrink-0 transition-colors relative cursor-pointer ${
+                          isActive
+                            ? 'text-zinc-900 dark:text-white font-bold'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                        }`}
+                      >
+                        {tab.label}
+                        {isActive && (
+                          <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-purple-600 dark:bg-lime-400 rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Search Input for the active tab */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={librarySearchQuery}
+                    onChange={(e) => setLibrarySearchQuery(e.target.value)}
+                    placeholder={
+                      activeLibraryTab === 'playlists'
+                        ? 'Çalma listelerinde ara...'
+                        : activeLibraryTab === 'favorites'
+                        ? 'Favori parçalarda ara...'
+                        : 'Sanatçılarda ara...'
+                    }
+                    className="w-full pl-9 pr-8 py-2.5 min-h-[42px] bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-purple-500/50"
+                  />
+                  {librarySearchQuery && (
                     <button
                       type="button"
-                      onClick={() => setVisibleFavoritesLimit((prev) => prev + 15)}
-                      className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
+                      onClick={() => setLibrarySearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
                     >
-                      <span>Daha Fazla Parça Göster (+{Math.min(15, remainingSongs)})</span>
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
-                </>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* ==================== SUB-TAB 3: SANATÇILAR ==================== */}
-        {activeLibraryTab === 'artists' && (
-          <div className="space-y-4">
-            {/* Filter Mode Selector: Müzik Sanatçıları vs Tüm YouTube Kanalları */}
-            {subscribedChannels.length > 0 && (
-              <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                <button
-                  type="button"
-                  onClick={() => setArtistFilterMode('music_only')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
-                    artistFilterMode === 'music_only'
-                      ? 'bg-lime-400 text-zinc-950 shadow'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <span>Müzik Sanatçıları</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-bold tabular-nums">
-                    {sanitizedFavoriteArtists.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setArtistFilterMode('all_channels')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
-                    artistFilterMode === 'all_channels'
-                      ? 'bg-white text-zinc-950 shadow'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <span>Tüm YouTube Kanalları</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-bold tabular-nums">
-                    {subscribedChannels.length}
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* Quick Add Custom Artist */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (newArtistName.trim() && onAddFavoriteArtist) {
-                  onAddFavoriteArtist(newArtistName.trim());
-                  setNewArtistName('');
-                }
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="text"
-                value={newArtistName}
-                onChange={(e) => setNewArtistName(e.target.value)}
-                placeholder="Özel sanatçı ekle (örn: Daft Punk, Duman)..."
-                className="flex-1 px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/20"
-              />
-              <button
-                type="submit"
-                disabled={!newArtistName.trim()}
-                className="px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] disabled:opacity-40 text-white font-medium text-xs transition cursor-pointer"
-              >
-                Ekle
-              </button>
-            </form>
-
-            {/* MODE 1: PURE MUSIC ARTISTS (DEFAULT) */}
-            {artistFilterMode === 'music_only' && (() => {
-              const filteredArtists = sanitizedFavoriteArtists.filter((a: string) =>
-                librarySearchQuery ? a.toLowerCase().includes(librarySearchQuery.toLowerCase()) : true
-              );
-              const visibleArtists = filteredArtists.slice(0, visibleArtistsLimit);
-              const hasMoreArtists = filteredArtists.length > visibleArtistsLimit;
-              const remainingArtists = filteredArtists.length - visibleArtistsLimit;
-
-              return (
-                <>
-                  {sanitizedFavoriteArtists.length === 0 ? (
-                    <div className="py-10 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] text-center space-y-3">
-                      <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                        Henüz müzik sanatçısı listelenmedi. Hesabınızı senkronize ettiğinizde abone olduğunuz resmi müzik kanalları ve dinlediğiniz sanatçılar otomatik eklenir.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleSyncYouTubeLibrary}
-                        className="px-4 py-2 rounded-xl bg-white text-zinc-950 font-semibold text-xs transition cursor-pointer"
-                      >
-                        Sanatçılarımı Çek
-                      </button>
-                    </div>
-                  ) : filteredArtists.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-zinc-500">
-                      Aramanızla eşleşen müzik sanatçısı bulunamadı.
-                    </div>
-                  ) : (
-                    <>
-                      <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-                        {visibleArtists.map((artistName: string, idx: number) => {
-                          const avatarInfo = getArtistAvatarInfo(artistName);
-                          return (
-                            <FavoriteArtistRowItem
-                              key={idx}
-                              artistName={artistName}
-                              avatarInfo={avatarInfo}
-                              onStartRadio={onStartArtistRadio}
-                              onToggleFavorite={onToggleFavoriteArtist}
-                            />
-                          );
-                        })}
-                      </div>
-
-                      {hasMoreArtists && (
-                        <button
-                          type="button"
-                          onClick={() => setVisibleArtistsLimit((prev) => prev + 15)}
-                          className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
-                        >
-                          <span>Daha Fazla Sanatçı Göster (+{Math.min(15, remainingArtists)})</span>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </>
-              );
-            })()}
-
-            {/* MODE 2: ALL SUBSCRIBED YOUTUBE CHANNELS WITH CLASSIFICATION */}
-            {artistFilterMode === 'all_channels' && (() => {
-              const filteredChannels = subscribedChannels.filter((ch) =>
-                librarySearchQuery
-                  ? ch.name.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
-                    ch.rawTitle.toLowerCase().includes(librarySearchQuery.toLowerCase())
-                  : true
-              );
-              const visibleChannels = filteredChannels.slice(0, visibleChannelsLimit);
-              const hasMoreChannels = filteredChannels.length > visibleChannelsLimit;
-              const remainingChannels = filteredChannels.length - visibleChannelsLimit;
-
-              return (
-                <div className="space-y-3">
-                  <div className="text-xs text-zinc-400 px-1">
-                    YouTube hesabınızda abone olduğunuz tüm kanallar ({subscribedChannels.length} kanal) ve ayrıştırma durumları:
-                  </div>
-
-                  {filteredChannels.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-zinc-500">
-                      Aramanızla eşleşen YouTube kanalı bulunamadı.
-                    </div>
-                  ) : (
-                    <>
-                      <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-                        {visibleChannels.map((ch, idx) => {
-                          const isAlreadyInFavorites = favoriteArtists.some(
-                            (a) => a.toLowerCase() === ch.name.toLowerCase()
-                          );
-
-                          return (
-                            <SubscribedChannelRowItem
-                              key={ch.channelId || idx}
-                              channel={ch}
-                              isAlreadyInFavorites={isAlreadyInFavorites}
-                              onStartRadio={onStartArtistRadio}
-                              onToggleFavorite={onToggleFavoriteArtist}
-                              onAddFavorite={onAddFavoriteArtist}
-                            />
-                          );
-                        })}
-                      </div>
-
-                      {hasMoreChannels && (
-                        <button
-                          type="button"
-                          onClick={() => setVisibleChannelsLimit((prev) => prev + 15)}
-                          className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
-                        >
-                          <span>Daha Fazla Kanal Göster (+{Math.min(15, remainingChannels)})</span>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </>
-                  )}
                 </div>
-              );
-            })()}
-          </div>
-        )}
-      </section>
-      )}
+
+                {/* ==================== SUB-TAB 1: ÇALMA LİSTELERİ ==================== */}
+                {activeLibraryTab === 'playlists' && (() => {
+                  const filteredPlaylists = syncedPlaylists.filter((p) =>
+                    librarySearchQuery
+                      ? p.title.toLowerCase().includes(librarySearchQuery.toLowerCase())
+                      : true
+                  );
+                  const visiblePlaylists = filteredPlaylists.slice(0, visiblePlaylistsLimit);
+                  const hasMorePlaylists = filteredPlaylists.length > visiblePlaylistsLimit;
+                  const remainingPlaylists = filteredPlaylists.length - visiblePlaylistsLimit;
+
+                  return (
+                    <div className="space-y-4">
+                      {syncedPlaylists.length === 0 ? (
+                        <div className="py-8 px-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] text-center space-y-2.5">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            Henüz çalma listen yok. Hesap bağlantılarını Ayarlar & Hesap üzerinden yönetebilirsin.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowSettingsModal(true)}
+                            className="px-3.5 py-2 rounded-xl bg-zinc-900 dark:bg-white/10 text-white text-xs font-semibold hover:bg-purple-600 transition cursor-pointer"
+                          >
+                            Ayarlar & Hesap'ı Aç
+                          </button>
+                        </div>
+                      ) : filteredPlaylists.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-zinc-500">
+                          Aramanızla eşleşen çalma listesi bulunamadı.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {visiblePlaylists.map((playlist) => {
+                              const isPlayingThisPlaylist =
+                                activePlayingPlaylistId === playlist.id ||
+                                Boolean(
+                                  userProfile.currentSong &&
+                                    playlist.tracks?.some((t) => t.id === userProfile.currentSong?.id)
+                                );
+                              return (
+                                <PlaylistRowItem
+                                  key={playlist.id}
+                                  playlist={playlist}
+                                  isPlaying={isPlayingThisPlaylist}
+                                  onView={(pl) => {
+                                    setViewingPlaylist(pl);
+                                    setPlaylistModalSearch('');
+                                  }}
+                                  onPlay={
+                                    onPlayPlaylist
+                                      ? (pl) => {
+                                          setActivePlayingPlaylistId(pl.id);
+                                          onPlayPlaylist(pl, false);
+                                        }
+                                      : undefined
+                                  }
+                                  onDelete={onDeletePlaylist}
+                                />
+                              );
+                            })}
+                          </div>
+
+                          {hasMorePlaylists && (
+                            <button
+                              type="button"
+                              onClick={() => setVisiblePlaylistsLimit((prev) => prev + 15)}
+                              className="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              <span>Daha Fazla Liste Göster (+{Math.min(15, remainingPlaylists)})</span>
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* ==================== SUB-TAB 2: FAVORİ PARÇALAR ==================== */}
+                {activeLibraryTab === 'favorites' && (() => {
+                  const filteredSongs = favoriteSongs.filter((song) =>
+                    librarySearchQuery
+                      ? song.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
+                        song.artist.toLowerCase().includes(librarySearchQuery.toLowerCase())
+                      : true
+                  );
+                  const visibleSongs = filteredSongs.slice(0, visibleFavoritesLimit);
+                  const hasMoreSongs = filteredSongs.length > visibleFavoritesLimit;
+                  const remainingSongs = filteredSongs.length - visibleFavoritesLimit;
+
+                  return (
+                    <div className="space-y-4">
+                      {favoriteSongs.length > 0 && onPlaySongsList && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {favoriteSongs.length} şarkı
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onPlaySongsList(favoriteSongs, true)}
+                              className="px-3 py-1.5 min-h-[36px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+                            >
+                              <Shuffle className="w-3.5 h-3.5 text-purple-600 dark:text-lime-400" />
+                              <span>Karışık</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onPlaySongsList(favoriteSongs, false)}
+                              className="px-3.5 py-1.5 min-h-[36px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-current" />
+                              <span>Tümünü Çal</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {favoriteSongs.length === 0 ? (
+                        <div className="py-8 px-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] text-center space-y-2">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            Henüz favori parçan yok. Dinlerken kalp ikonuna dokunarak anında ekleyebilirsin.
+                          </p>
+                        </div>
+                      ) : filteredSongs.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-zinc-500">
+                          Aramanızla eşleşen parça bulunamadı.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {visibleSongs.map((song, idx) => (
+                              <FavoriteSongRowItem
+                                key={song.id || idx}
+                                song={song}
+                                formattedDuration={formatDuration(song.durationSeconds)}
+                                onPlay={onPlaySong}
+                                onToggleFavorite={onToggleFavoriteSong}
+                              />
+                            ))}
+                          </div>
+
+                          {hasMoreSongs && (
+                            <button
+                              type="button"
+                              onClick={() => setVisibleFavoritesLimit((prev) => prev + 15)}
+                              className="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              <span>Daha Fazla Parça Göster (+{Math.min(15, remainingSongs)})</span>
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* ==================== SUB-TAB 3: SANATÇILAR ==================== */}
+                {activeLibraryTab === 'artists' && (
+                  <div className="space-y-4">
+                    {subscribedChannels.length > 0 && (
+                      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.06]">
+                        <button
+                          type="button"
+                          onClick={() => setArtistFilterMode('music_only')}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
+                            artistFilterMode === 'music_only'
+                              ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white shadow'
+                              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <span>Müzik Sanatçıları</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
+                            {sanitizedFavoriteArtists.length}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setArtistFilterMode('all_channels')}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
+                            artistFilterMode === 'all_channels'
+                              ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white shadow'
+                              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <span>Tüm YouTube Kanalları</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
+                            {subscribedChannels.length}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Quick Add Custom Artist */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (newArtistName.trim() && onAddFavoriteArtist) {
+                          onAddFavoriteArtist(newArtistName.trim());
+                          setNewArtistName('');
+                        }
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={newArtistName}
+                        onChange={(e) => setNewArtistName(e.target.value)}
+                        placeholder="Özel sanatçı ekle (örn: Daft Punk, Duman)..."
+                        className="flex-1 px-3.5 py-2.5 min-h-[42px] bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-purple-500/50"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newArtistName.trim()}
+                        className="px-4 py-2.5 min-h-[42px] rounded-xl bg-zinc-900 dark:bg-white/[0.1] hover:bg-purple-600 disabled:opacity-40 text-white font-semibold text-xs transition cursor-pointer"
+                      >
+                        Ekle
+                      </button>
+                    </form>
+
+                    {artistFilterMode === 'music_only' && (() => {
+                      const filteredArtists = sanitizedFavoriteArtists.filter((a: string) =>
+                        librarySearchQuery ? a.toLowerCase().includes(librarySearchQuery.toLowerCase()) : true
+                      );
+                      const visibleArtists = filteredArtists.slice(0, visibleArtistsLimit);
+                      const hasMoreArtists = filteredArtists.length > visibleArtistsLimit;
+                      const remainingArtists = filteredArtists.length - visibleArtistsLimit;
+
+                      return (
+                        <>
+                          {sanitizedFavoriteArtists.length === 0 ? (
+                            <div className="py-8 px-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] text-center">
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+                                Yukarıdan sevdiğin sanatçıları hemen ekleyebilir veya Ayarlar & Hesap üzerinden hesabını senkronize edebilirsin.
+                              </p>
+                            </div>
+                          ) : filteredArtists.length === 0 ? (
+                            <div className="py-8 text-center text-xs text-zinc-500">
+                              Aramanızla eşleşen müzik sanatçısı bulunamadı.
+                            </div>
+                          ) : (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                {visibleArtists.map((artistName: string, idx: number) => {
+                                  const avatarInfo = getArtistAvatarInfo(artistName);
+                                  return (
+                                    <FavoriteArtistRowItem
+                                      key={idx}
+                                      artistName={artistName}
+                                      avatarInfo={avatarInfo}
+                                      onStartRadio={onStartArtistRadio}
+                                      onToggleFavorite={onToggleFavoriteArtist}
+                                    />
+                                  );
+                                })}
+                              </div>
+
+                              {hasMoreArtists && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleArtistsLimit((prev) => prev + 15)}
+                                  className="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                  <span>Daha Fazla Sanatçı Göster (+{Math.min(15, remainingArtists)})</span>
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    {artistFilterMode === 'all_channels' && (() => {
+                      const filteredChannels = subscribedChannels.filter((ch) =>
+                        librarySearchQuery
+                          ? ch.name.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
+                            ch.rawTitle.toLowerCase().includes(librarySearchQuery.toLowerCase())
+                          : true
+                      );
+                      const visibleChannels = filteredChannels.slice(0, visibleChannelsLimit);
+                      const hasMoreChannels = filteredChannels.length > visibleChannelsLimit;
+                      const remainingChannels = filteredChannels.length - visibleChannelsLimit;
+
+                      return (
+                        <div className="space-y-3">
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 px-1">
+                            YouTube hesabınızda abone olduğunuz tüm kanallar ({subscribedChannels.length} kanal):
+                          </div>
+
+                          {filteredChannels.length === 0 ? (
+                            <div className="py-8 text-center text-xs text-zinc-500">
+                              Aramanızla eşleşen YouTube kanalı bulunamadı.
+                            </div>
+                          ) : (
+                            <>
+                              <div className="divide-y divide-zinc-200 dark:divide-white/[0.06] border-y border-zinc-200 dark:border-white/[0.06]">
+                                {visibleChannels.map((ch, idx) => {
+                                  const isAlreadyInFavorites = favoriteArtists.some(
+                                    (a) => a.toLowerCase() === ch.name.toLowerCase()
+                                  );
+
+                                  return (
+                                    <SubscribedChannelRowItem
+                                      key={ch.channelId || idx}
+                                      channel={ch}
+                                      isAlreadyInFavorites={isAlreadyInFavorites}
+                                      onStartRadio={onStartArtistRadio}
+                                      onToggleFavorite={onToggleFavoriteArtist}
+                                      onAddFavorite={onAddFavoriteArtist}
+                                    />
+                                  );
+                                })}
+                              </div>
+
+                              {hasMoreChannels && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleChannelsLimit((prev) => prev + 15)}
+                                  className="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                  <span>Daha Fazla Kanal Göster (+{Math.min(15, remainingChannels)})</span>
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      </div>
 
       {/* =====================================================================
           MODAL: ÇALMA LİSTESİ DETAY & ŞARKILAR (SINIRSIZ SAYFALAMA)
@@ -3214,7 +3189,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </span>
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Harmoniq Açık Güvenilirlik & Saygınlık Protokolü
+                    ListenHub Açık Güvenilirlik & Saygınlık Protokolü
                   </p>
                 </div>
               </div>
@@ -3330,7 +3305,7 @@ export const ProfileTab: React.FC<Props> = ({
                 <span className="text-[10px] text-zinc-500">Sıfır Gizli Algoritma</span>
               </div>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Harmoniq, güven puanınızı asla kapalı kapılar ardında veya reklam amacıyla değiştirmez. Hatalı bir puan kırılması şüphesinde anında bağımsız moderatör incelemesi başlatabilirsiniz.
+                ListenHub, güven puanınızı asla kapalı kapılar ardında veya reklam amacıyla değiştirmez. Hatalı bir puan kırılması şüphesinde anında bağımsız moderatör incelemesi başlatabilirsiniz.
               </p>
 
               {appealSent ? (
@@ -3756,13 +3731,10 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Card Header */}
               <div className="relative z-10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black tracking-wider text-emerald-400 flex items-center gap-1">
-                    <Headphones className="w-3.5 h-3.5" />
-                    <span>HARMONIQ</span>
-                  </span>
-                  <span className="text-[9px] uppercase tracking-widest text-zinc-400 font-mono">
-                    Frekans Kartı
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[10px] font-black tracking-wider text-emerald-400 flex items-center gap-1 truncate">
+                    <Headphones className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">LISTENHUB • FREKANS KİMLİK KARTI</span>
                   </span>
                 </div>
 
@@ -3841,8 +3813,8 @@ export const ProfileTab: React.FC<Props> = ({
                   ))}
                 </div>
 
-                <div className="text-center text-[9px] text-zinc-500 font-mono">
-                  harmoniq.app · Dinleme Frekansı ⚡
+                <div className="text-center text-[9px] text-zinc-400 font-mono">
+                  listenhub.app • Dinleme Frekansı
                 </div>
               </div>
             </div>
@@ -3919,7 +3891,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{userProfile.trustScore || 98}/100 Güven Puanı Mühürlü</span>
                 </span>
-                <span>Harmoniq AI Engine</span>
+                <span>ListenHub Frekans Motoru</span>
               </div>
             </div>
           </div>

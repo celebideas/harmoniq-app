@@ -1023,7 +1023,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             <span>Gerçek Müzik Dinleme & Link Eşleme Nasıl Çalışır?</span>
           </div>
           <p className="leading-relaxed">
-            YouTube Music linki veya parça adı girdiğinizde, <strong className="text-white">Harmoniq</strong> akıllı ses motoru şarkının orijinal stüdyo kaydını ve canlı yayın akışını odaya bağlar. Çalan müziği dinlerken odadaki 14 kişiyle saniyesi saniyesine senkron kalırsınız.
+            YouTube Music linki veya parça adı girdiğinizde, <strong className="text-white">ListenHub</strong> akıllı ses motoru şarkının orijinal stüdyo kaydını ve canlı yayın akışını odaya bağlar. Çalan müziği dinlerken odadaki 14 kişiyle saniyesi saniyesine senkron kalırsınız.
           </p>
         </div>
 

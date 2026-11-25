@@ -90,7 +90,7 @@ export const TopHeader: React.FC<Props> = ({
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b backdrop-blur-2xl select-none transition-colors duration-200 ${
+      className={`lg:hidden sticky top-0 z-40 border-b backdrop-blur-2xl select-none transition-colors duration-200 ${
         isLight
           ? 'bg-[#F5F4F8]/90 border-[#E4E2EC] text-[#12101B]'
           : 'bg-[#0A090F]/85 border-white/[0.07] text-zinc-50'
@@ -114,7 +114,7 @@ export const TopHeader: React.FC<Props> = ({
             />
           </div>
           <span className="text-sm sm:text-base font-heading font-bold tracking-tight">
-            Harmoniq
+            ListenHub
           </span>
         </div>
 
@@ -275,9 +275,7 @@ export const TopHeader: React.FC<Props> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div
-                    className={`w-full h-full bg-gradient-to-tr ${userProfile.avatarGradient} flex items-center justify-center text-force-white text-[11px] font-bold`}
-                  >
+                  <div className="avatar-circle w-full h-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white text-[11px] font-bold">
                     {userProfile.avatarSeed}
                   </div>
                 )}

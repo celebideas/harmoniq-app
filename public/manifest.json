@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Harmoniq - Ortak Canlı Müzik Odası",
-  "short_name": "Harmoniq",
-  "description": "Makromusic deneyiminden esinlenen, canlı frekans odaları ve senkronize zaman çizelgesiyle yeni nesil müzik sosyalleşme uygulaması.",
+  "name": "ListenHub",
+  "short_name": "ListenHub",
+  "description": "ListenHub – Canlı frekans odaları ve senkronize zaman çizelgesiyle gerçek zamanlı sosyal müzik ağı.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

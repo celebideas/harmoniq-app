@@ -60,7 +60,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
       case 'apple_music':
         return { name: 'Apple Music', color: 'text-pink-600 dark:text-pink-400' };
       default:
-        return { name: 'Harmoniq', color: 'text-zinc-500 dark:text-zinc-400' };
+        return { name: 'ListenHub', color: 'text-zinc-500 dark:text-zinc-400' };
     }
   };
 

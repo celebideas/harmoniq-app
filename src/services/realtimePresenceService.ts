@@ -186,7 +186,7 @@ class RealtimePresenceService {
         currentSecond: user.currentSecond,
         statusBubble: user.statusBubble || 'Canlı frekansta dinliyor',
         topArtists: [user.currentSongTitle],
-        bio: 'Gerçek zamanlı Harmoniq dinleyicisi.',
+        bio: 'Gerçek zamanlı ListenHub dinleyicisi.',
         trustScore: Math.max(90, user.trustScore || 99),
         lastHeartbeatAgoSeconds: Math.floor((now - user.lastSeen) / 1000),
         isOnline: true,

@@ -52,7 +52,7 @@ export function compactPlaylist(playlist: UserPlaylist): UserPlaylist {
   return {
     id: playlist.id,
     title: playlist.title.slice(0, 100),
-    description: playlist.description || 'Harmoniq listesi',
+    description: playlist.description || 'ListenHub listesi',
     genre: playlist.genre || 'Karışık',
     source: playlist.source || 'youtube_music',
     coverUrl: playlist.coverUrl,

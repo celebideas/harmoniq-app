@@ -7,7 +7,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Şikayetvar #1 Şikayet: Açıklamasız Kalıcı Ban',
     problemTitle: 'Haksız & Açıklamasız Hesap Yasaklamaları',
     makroProblem: 'Makromusic kullanıcıları, hiçbir kural ihlali yapmadıkları halde aniden kalıcı ban aldıklarını, satın aldıkları premium hakların yandığını ve muhatap bulamadıklarını belirtiyor.',
-    harmoniqSolution: 'Harmoniq "Şeffaf Güven Kalkanı": Her hesabın şeffaf 100 üzerinden Güvenlik Skoru vardır. İhlal veya şikayet durumunda doğrudan bildirim ve 48 saat içinde incelenen insan destekli İtiraz Sistemi mevcuttur.'
+    harmoniqSolution: 'ListenHub "Şeffaf Güven Kalkanı": Her hesabın şeffaf 100 üzerinden Güvenlik Skoru vardır. İhlal veya şikayet durumunda doğrudan bildirim ve 48 saat içinde incelenen insan destekli İtiraz Sistemi mevcuttur.'
   },
   {
     id: 'comp-2',
@@ -15,7 +15,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Kullanıcı Eleştirisi: Hayalet Hesaplar & Sahte Eşleşmeler',
     problemTitle: 'Bot Profiller ve Aylardır Girmeyen Kullanıcılar',
     makroProblem: 'Uygulamayı indirenlerin en büyük can sıkıntısı: Kullanıcıya jeton aldırmak için sahte beğeni bildirimleri atılması ve 6 aydır uygulamayı açmamış ölü profillerin eşleşmeye düşmesi.',
-    harmoniqSolution: 'Harmoniq "Heartbeat (Nabız) & Sadece Canlı Dinleyenler": 30s nabız sinyali; 45s kesintide odadan otomatik çıkarılır. Yalnızca şu an gerçekten müzik dinleyen kişiler listelenir. Sahte botlar imkansızdır.'
+    harmoniqSolution: 'ListenHub "Heartbeat (Nabız) & Sadece Canlı Dinleyenler": 30s nabız sinyali; 45s kesintide odadan otomatik çıkarılır. Yalnızca şu an gerçekten müzik dinleyen kişiler listelenir. Sahte botlar imkansızdır.'
   },
   {
     id: 'comp-3',
@@ -23,7 +23,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Topluluk Sorunu: Flört vs Konser/Müzik Kargaşası',
     problemTitle: 'Niyet Uyuşmazlığı ve İstenmeyen Taciz',
     makroProblem: 'Bir taraf sadece indie rock grubu kurmak veya konser arkadaşı bulmak isterken, diğer tarafın kaba flört/tinder tavırlarıyla yaklaşması ve uygulamanın amaç karmaşası yaşaması.',
-    harmoniqSolution: 'Harmoniq "Canlı Frekans Odaları & Buzkırıcılar": Tinder usulü kaydırma tamamen kaldırıldı. Müzikal zaman çizelgesi üzerinden tek dokunuşla "Sıradaki Şarkıyı Öner" gibi doğal müzik iletişimi kurulur.'
+    harmoniqSolution: 'ListenHub "Canlı Frekans Odaları & Buzkırıcılar": Tinder usulü kaydırma tamamen kaldırıldı. Müzikal zaman çizelgesi üzerinden tek dokunuşla "Sıradaki Şarkıyı Öner" gibi doğal müzik iletişimi kurulur.'
   },
   {
     id: 'comp-4',
@@ -31,7 +31,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Teknik Hata: Sohbet Silinmesi & Şarkı Çalamama',
     problemTitle: 'Sohbetlerin Kaybolması & Kopuk Mesajlaşma',
     makroProblem: 'Makromusic\'te eşleşmeler ve mesaj geçmişi ansızın siliniyor; sohbet içinde şarkı önizlemesi dinlenemiyor ve Spotify bağlantısı sürekli kopuyor.',
-    harmoniqSolution: 'Harmoniq "Otomatik Tanışma Bağlamı & Kalıcı Sohbet": Mesaj geçmişiniz asla kaybolmaz. Hangi şarkıda, hangi saniyede karşılaştığınız otomatik sohbet kartı olarak saklanır.'
+    harmoniqSolution: 'ListenHub "Otomatik Tanışma Bağlamı & Kalıcı Sohbet": Mesaj geçmişiniz asla kaybolmaz. Hangi şarkıda, hangi saniyede karşılaştığınız otomatik sohbet kartı olarak saklanır.'
   },
   {
     id: 'comp-5',
@@ -39,7 +39,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Yüzeysel Algoritma: Tek Şarkılık Tesadüfler',
     problemTitle: 'Yüzeysel Tek-Şarkı Eşleşmesi',
     makroProblem: 'Sadece o saniyede tesadüfen aynı popüler şarkıyı dinleyen iki kişiyi eşleştiriyor; fakat iki tarafın genel müzik zevkleri tamamen alakasız çıkıyor ve sohbet 2 dakikada tıkanıyor.',
-    harmoniqSolution: 'Harmoniq "Zaman Çizelgesi & Esnek Kümeleme": Şarkı odasında tek kişi kalırsan otomatik Sanatçı Odasına veya Tür Odasına bağlanırsın; derin müzikal bağ kurulur.'
+    harmoniqSolution: 'ListenHub "Zaman Çizelgesi & Esnek Kümeleme": Şarkı odasında tek kişi kalırsan otomatik Sanatçı Odasına veya Tür Odasına bağlanırsın; derin müzikal bağ kurulur.'
   },
   {
     id: 'comp-6',
@@ -47,7 +47,7 @@ export const MAKROMUSIC_COMPLAINT_SOLUTIONS: ComplaintSolution[] = [
     badgeText: 'Agresif Model: Her Ekranda 30sn Reklam & Jeton Tuzağı',
     problemTitle: 'Agresif Paywall & Jeton Tuzakları',
     makroProblem: 'Her kaydırmada geçilmeyen reklamlar, eşleşmeyi görmek için para ödemeye zorlama ve haksız kesilen abonelik yenilemeleri.',
-    harmoniqSolution: 'Harmoniq "Discord Nitro Modeli (Adil Freemium)": Odalara girmek, eşleşmek ve mesajlaşmak tamamen ücretsizdir. Asla jeton veya mesaj hakkı satılmaz.'
+    harmoniqSolution: 'ListenHub "Discord Nitro Modeli (Adil Freemium)": Odalara girmek, eşleşmek ve mesajlaşmak tamamen ücretsizdir. Asla jeton veya mesaj hakkı satılmaz.'
   }
 ];
 

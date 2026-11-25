@@ -197,9 +197,13 @@ const ArtistRoomRow: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className="py-3 px-2.5 -mx-2 rounded-xl flex items-center justify-between gap-4 group cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-white/[0.03] active:scale-[0.99] transition min-h-[58px]"
+      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[64px] ${
+        isCurrentArtist
+          ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
+          : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
+      }`}
     >
-      <div className="flex items-center gap-3.5 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         {room.imageUrl ? (
           <img
             src={room.imageUrl}
@@ -210,7 +214,7 @@ const ArtistRoomRow: React.FC<{
           />
         ) : (
           <div
-            className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/[0.08] relative overflow-hidden`}
+            className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/[0.08] relative overflow-hidden`}
           >
             <div className="absolute inset-0 bg-black/25 flex items-center justify-center opacity-40">
               <Music className="w-4 h-4 text-white" />
@@ -224,11 +228,8 @@ const ArtistRoomRow: React.FC<{
             <span className="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-500 dark:group-hover:text-purple-400 transition">
               {room.artist}
             </span>
-            {room.isPersonalFavorite && (
-              <span className="text-[11px] text-zinc-500">· Takip ediliyor</span>
-            )}
             {isCurrentArtist && (
-              <div className="flex items-end gap-0.5 h-3 ml-0.5">
+              <div className="flex items-end gap-0.5 h-3 ml-0.5 shrink-0">
                 <span className="w-0.5 bg-purple-500 h-2 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-0.5 bg-fuchsia-500 h-3 animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-0.5 bg-pink-500 h-1.5 animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -241,7 +242,7 @@ const ArtistRoomRow: React.FC<{
         </div>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
         <span className="text-xs text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 font-mono">
           <Users className="w-3.5 h-3.5 text-emerald-500" />
           <span>{room.totalLiveListeners}</span>
@@ -274,7 +275,11 @@ const SongRoomRow: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className="py-3 px-2.5 -mx-2 rounded-xl flex items-center justify-between gap-4 group cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-white/[0.03] active:scale-[0.99] transition min-h-[58px]"
+      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[64px] ${
+        isCurrent
+          ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
+          : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
+      }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-zinc-200 dark:border-white/[0.08]">
@@ -607,7 +612,7 @@ export const RoomsTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-5 max-w-2xl mx-auto w-full space-y-5 select-none">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 py-5 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-5 select-none">
       {/* 1. Editorial Header */}
       <div className="flex items-baseline justify-between border-b border-zinc-200 dark:border-white/[0.06] pb-3.5">
         <div>
@@ -831,8 +836,8 @@ export const RoomsTab: React.FC<Props> = ({
                 Aramanıza uygun müzik sanatçısı bulunamadı.
               </div>
             ) : (
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth">
-                {filteredArtistRooms.map((room) => {
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)] lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:pr-0 lg:[mask-image:none] lg:[-webkit-mask-image:none]">
+                {filteredArtistRooms.slice(0, 8).map((room) => {
                   const isCurrentArtist = currentSong.artist.toLowerCase() === room.artist.toLowerCase();
                   return (
                     <ArtistCardCompact
@@ -864,7 +869,7 @@ export const RoomsTab: React.FC<Props> = ({
                 Aramanıza uygun şarkı odası bulunamadı.
               </div>
             ) : (
-              <div className="divide-y divide-zinc-200/80 dark:divide-white/[0.06] border-y border-zinc-200/80 dark:border-white/[0.06]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                 {filteredSongRooms.slice(0, allModeSongLimit).map((song, index) => {
                   const isCurrent = song.id === currentSong.id;
                   const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
@@ -933,7 +938,7 @@ export const RoomsTab: React.FC<Props> = ({
             </div>
           ) : (
             <>
-              <div className="divide-y divide-zinc-200/80 dark:divide-white/[0.06] border-y border-zinc-200/80 dark:border-white/[0.06]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                 {filteredArtistRooms.slice(0, visibleArtistsCount).map((room) => {
                   const isCurrentArtist = currentSong.artist.toLowerCase() === room.artist.toLowerCase();
                   return (
@@ -955,7 +960,7 @@ export const RoomsTab: React.FC<Props> = ({
                       triggerHaptic(10);
                       setVisibleArtistsCount((prev) => prev + 12);
                     }}
-                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
                   >
                     <span>Daha Fazla Sanatçı Yükle (+{filteredArtistRooms.length - visibleArtistsCount})</span>
                     <span>↓</span>
@@ -981,7 +986,7 @@ export const RoomsTab: React.FC<Props> = ({
             </div>
           ) : (
             <>
-              <div className="divide-y divide-zinc-200/80 dark:divide-white/[0.06] border-y border-zinc-200/80 dark:border-white/[0.06]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                 {filteredSongRooms.slice(0, visibleSongsCount).map((song, index) => {
                   const isCurrent = song.id === currentSong.id;
                   const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
@@ -1009,7 +1014,7 @@ export const RoomsTab: React.FC<Props> = ({
                       triggerHaptic(10);
                       setVisibleSongsCount((prev) => prev + 12);
                     }}
-                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
                   >
                     <span>Daha Fazla Şarkı Odası Yükle (+{filteredSongRooms.length - visibleSongsCount})</span>
                     <span>↓</span>
@@ -1030,14 +1035,14 @@ export const RoomsTab: React.FC<Props> = ({
               <p className="text-zinc-400">Kütüphanem sekmesinden listelerinizi bağlayabilirsiniz.</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-200/80 dark:divide-white/[0.06] border-y border-zinc-200/80 dark:border-white/[0.06]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
               {syncedPlaylists.map((pl) => (
                 <div
                   key={pl.id}
                   onClick={() => onPlayPlaylist && onPlayPlaylist(pl)}
-                  className="py-3.5 flex items-center justify-between gap-3 group cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-white/[0.02] px-2 -mx-2 rounded-xl transition"
+                  className="p-3 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border border-[#E4E2EC] dark:border-white/[0.08] flex items-center justify-between gap-3 group cursor-pointer transition"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <img
                       src={pl.coverUrl}
                       alt={pl.title}

@@ -291,8 +291,8 @@ export const ChatTab: React.FC<Props> = ({
 
   return (
     <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-3 sm:px-6 py-4 lg:py-5">
-      {/* Desktop 2-Pane Split Layout / Mobile Single-Pane Switch */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 lg:h-[calc(100vh-172px)] lg:min-h-[560px]">
+      {/* Desktop 2-Pane Split Layout (w-80 inbox + flex-1 chat) / Mobile Single-Pane Switch */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:h-[calc(100vh-140px)] lg:min-h-[560px]">
         {/* ==================== LEFT PANE: DIRECTORY, TABS & INBOX ==================== */}
         <section
           className={`${
@@ -320,30 +320,30 @@ export const ChatTab: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Guest Google Sign-In Callout (Non-blocking) */}
+            {/* Mobile-Only Single Cloud Connect Action (Desktop uses the single Right Empty-State CTA, zero duplication) */}
             {!isCloudAuthenticated && onGoogleSignIn && (
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/12 via-purple-500/10 to-transparent border border-emerald-500/25 flex items-center justify-between gap-2.5">
+              <div className="lg:hidden p-3 rounded-2xl bg-gradient-to-r from-purple-500/10 via-emerald-500/10 to-transparent border border-purple-500/20 flex items-center justify-between gap-2.5">
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
                     <Cloud className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span className="truncate">Canlı Sohbete Katıl</span>
+                    <span className="truncate">Bulut Sohbeti Aç</span>
                   </div>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug">
-                    Gerçek kullanıcıları bul, arkadaş ekle ve cihazlar arası mesajlaş.
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 truncate">
+                    Cihazlar arası anlık mesajlaşma
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onGoogleSignIn}
                   disabled={isAuthLoading}
-                  className="px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-zinc-950 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0 min-h-[40px] cursor-pointer shadow-sm"
+                  className="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:brightness-110 disabled:opacity-60 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0 min-h-[44px] cursor-pointer shadow-sm"
                 >
                   {isAuthLoading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <LogIn className="w-3.5 h-3.5" />
                   )}
-                  <span>Google ile Gir</span>
+                  <span>Hesap Bağla</span>
                 </button>
               </div>
             )}
@@ -429,7 +429,7 @@ export const ChatTab: React.FC<Props> = ({
             {normalizedQuery && isCloudAuthenticated && (
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-1 flex items-center justify-between">
-                  <span>Harmoniq Üye Dizini</span>
+                  <span>ListenHub Üye Dizini</span>
                   <span className="tabular-nums">{filteredCloudDirectory.length} sonuç</span>
                 </div>
                 {filteredCloudDirectory.length === 0 ? (
@@ -493,7 +493,7 @@ export const ChatTab: React.FC<Props> = ({
                         {activeFrequencyUsers.length} aktif
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 px-1">
+                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 px-1 pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]">
                       {activeFrequencyUsers.map((user) => {
                         const existingConv = conversations.find((c) => c.user.id === user.id);
                         return (
@@ -640,7 +640,7 @@ export const ChatTab: React.FC<Props> = ({
                         Henüz arkadaş eklemedin
                       </p>
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Aşağıdaki Harmoniq üyelerinden veya Canlı odadan arkadaşlık isteği gönderebilirsin.
+                        Aşağıdaki ListenHub üyelerinden veya Canlı odadan arkadaşlık isteği gönderebilirsin.
                       </p>
                     </div>
                   ) : (
@@ -708,7 +708,7 @@ export const ChatTab: React.FC<Props> = ({
                 {isCloudAuthenticated && (
                   <div className="space-y-2 pt-2 border-t border-[#E4E2EC] dark:border-white/[0.06]">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-1 flex items-center justify-between">
-                      <span>Aktif Harmoniq Üyeleri</span>
+                      <span>Aktif ListenHub Üyeleri</span>
                       <span className="tabular-nums">{filteredCloudDirectory.length} üye</span>
                     </div>
 
@@ -887,10 +887,11 @@ export const ChatTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={onBackToList}
-                    className="lg:hidden p-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white rounded-xl hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] transition cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="lg:hidden px-2.5 py-2 text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] transition cursor-pointer min-h-[44px] flex items-center gap-1 text-xs font-semibold shrink-0"
                     aria-label="Geri Dön"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Geri</span>
                   </button>
 
                   <div
@@ -1177,14 +1178,14 @@ export const ChatTab: React.FC<Props> = ({
                   type="button"
                   onClick={onGoogleSignIn}
                   disabled={isAuthLoading}
-                  className="px-5 py-3 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-emerald-500/20"
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-purple-500/25 min-h-[44px]"
                 >
                   {isAuthLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <LogIn className="w-4 h-4" />
                   )}
-                  <span>Google ile Giriş Yap ve Bulut Sohbeti Aç</span>
+                  <span>Hesap / Bulut Sohbeti Bağla</span>
                 </button>
               )}
             </div>

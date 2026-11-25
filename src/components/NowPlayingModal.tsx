@@ -658,7 +658,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         currentSecond: progressSeconds,
         statusBubble: 'Aynı frekanstayız ⚡',
         topArtists: ['Duman', 'Mor ve Ötesi'],
-        bio: 'Harmoniq canlı dinleyicisi.',
+        bio: 'ListenHub canlı dinleyicisi.',
         trustScore: 98,
         lastHeartbeatAgoSeconds: 1,
         isOnline: true,

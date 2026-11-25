@@ -41,12 +41,18 @@
     --border-subtle: #E4E2EC;
   }
 
-  html,
-  body,
+  html {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: clip;
+  }
+
   #root {
-    overflow-x: hidden;
-    max-width: 100vw;
-    overscroll-behavior-y: none;
+    min-height: 100vh;
   }
 
   html,
@@ -78,24 +84,35 @@ html.light body {
 }
 
 /* Base App & Page Backgrounds */
-html.light .bg-\[\#0A090F\],
-html.light .bg-\[\#09090B\],
-html.light .bg-\[\#09090B\]\/90,
-html.light .bg-\[\#0C0C0E\],
-html.light .bg-\[\#0C0C0E\]\/95,
-html.light .bg-\[\#0E0E12\] {
+html.light .bg-\[\#0A090F\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0A090F\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0A090F\]\/85:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#09090B\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#09090B\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0C0C0E\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0C0C0E\]\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0E0C16\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0E0C16\]\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0E0E12\]:not(.keep-dark):not(.keep-dark *) {
   background-color: #F5F4F8 !important;
   color: #12101B !important;
 }
 
 /* Modals & Full Deck Container Surface */
-html.light .bg-\[\#0A0A0C\] {
+html.light .bg-\[\#0A0A0C\]:not(.keep-dark):not(.keep-dark *) {
   background-color: #FFFFFF !important;
   color: #12101B !important;
   border-color: #E4E2EC !important;
 }
 
-/* Elevated Dark-Only Cards & Legacy Surfaces (scoped away from .keep-dark and its descendants) */
+/* Elevated Dark-Only Cards & Legacy Surfaces (scoped away from .keep-dark, .keep-white-on-media and descendants) */
+html.light .bg-\[\#12101C\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#12101C\]\/95:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#12111A\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#12111A\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#13111C\]:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#13111C\]\/90:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#13111C\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#14121E\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#14121E\]\/80:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#14121E\]\/90:not(.keep-dark):not(.keep-dark *),
@@ -113,7 +130,7 @@ html.light .bg-zinc-950\/85:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/80:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/70:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/40:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *),
+html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
 html.light .bg-zinc-900\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-900\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-900\/80:not(.keep-dark):not(.keep-dark *),
@@ -137,24 +154,24 @@ html.light .bg-neutral-900\/60:not(.keep-dark):not(.keep-dark *) {
   box-shadow: 0 4px 20px rgba(20, 18, 30, 0.05) !important;
 }
 
-/* Secondary Inset Surfaces & Sub-Cards (exclude absolute album-art scrims & .keep-dark zones) */
-html.light .bg-black\/20:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/25:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/30:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/35:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/40:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/50:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-black\/60:not(.absolute):not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.02\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.025\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.03\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *) {
-  background-color: rgba(238, 236, 244, 0.85) !important;
+/* Secondary Inset Surfaces & Sub-Cards (exclude absolute album-art scrims & .keep-dark/.keep-white-on-media zones) */
+html.light .bg-black\/20:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/25:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/30:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/35:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/40:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/50:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-black\/60:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.02\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.025\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.03\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
+  background-color: rgba(236, 234, 242, 0.88) !important;
   border-color: #DFDCE8 !important;
 }
 
@@ -172,40 +189,79 @@ html.light textarea::placeholder {
   color: #7D788E !important;
 }
 
-/* Text Colors for legacy dark-only blocks */
-html.light .text-white:not(.text-force-white):not(.keep-dark):not(.keep-dark *),
-html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *),
-html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *),
-html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *),
-html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *),
-html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *) {
+/* Text Colors for legacy dark-only blocks (safely excluding gradient buttons, colored badges/avatars, and media overlays) */
+html.light .text-white:not(.text-force-white):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-purple-"]):not([class*="bg-purple-"] *):not([class*="bg-fuchsia-"]):not([class*="bg-fuchsia-"] *):not([class*="bg-pink-"]):not([class*="bg-pink-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-amber-"]):not([class*="bg-amber-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
+html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not([class*="bg-gradient-"] *) ,
+html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
   color: #12101B !important;
 }
 
-/* Preserve crisp white text ONLY on explicit solid brand surfaces & .text-force-white */
+/* Preserve crisp pure white text on gradient buttons, colored avatars, solid brand badges, and album art overlays */
 html.light .bg-accent-theme,
 html.light .bg-accent-theme *,
+html.light .avatar-circle,
+html.light .avatar-circle *,
+html.light .keep-white-on-media,
+html.light .keep-white-on-media *,
+html.light [class*="bg-gradient-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white,
+html.light [class*="bg-gradient-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white *,
+html.light [class*="from-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white,
+html.light [class*="from-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white *,
 html.light .bg-purple-600,
 html.light .bg-purple-600 *,
+html.light .bg-purple-500.text-white,
+html.light .bg-purple-500.text-white *,
+html.light .bg-fuchsia-600,
+html.light .bg-fuchsia-600 *,
+html.light .bg-fuchsia-500.text-white,
+html.light .bg-fuchsia-500.text-white *,
+html.light .bg-pink-600,
+html.light .bg-pink-600 *,
+html.light .bg-pink-500.text-white,
+html.light .bg-pink-500.text-white *,
+html.light .bg-emerald-600.text-white,
+html.light .bg-emerald-600.text-white *,
+html.light .bg-emerald-500.text-white,
+html.light .bg-emerald-500.text-white *,
+html.light .bg-amber-600.text-white,
+html.light .bg-amber-600.text-white *,
+html.light .bg-blue-600,
+html.light .bg-blue-600 *,
+html.light .bg-blue-500.text-white,
+html.light .bg-blue-500.text-white *,
 html.light .bg-rose-500,
 html.light .bg-rose-500 *,
+html.light .bg-rose-600,
+html.light .bg-rose-600 *,
 html.light .keep-dark,
 html.light .keep-dark .text-white,
 html.light .text-force-white,
 html.light .text-force-white * {
-  color: #ffffff !important;
+  color: #FFFFFF !important;
 }
 
-html.light .text-zinc-300:not(.keep-dark *),
-html.light .text-zinc-400:not(.keep-dark *),
-html.light .text-neutral-300:not(.keep-dark *),
-html.light .text-neutral-400:not(.keep-dark *),
-html.light .text-\[\#9E9AA8\]:not(.keep-dark *) {
+html.light .keep-white-on-media .text-white\/80,
+html.light .keep-white-on-media .text-zinc-200 {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+html.light .keep-white-on-media .text-zinc-950 {
+  color: #09090B !important;
+}
+
+html.light .text-zinc-300:not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-zinc-400:not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-neutral-300:not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-neutral-400:not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-\[\#9E9AA8\]:not(.keep-dark *):not(.keep-white-on-media *) {
   color: #5B576A !important;
 }
 
-html.light .text-zinc-500:not(.keep-dark *),
-html.light .text-neutral-500:not(.keep-dark *) {
+html.light .text-zinc-500:not(.keep-dark *):not(.keep-white-on-media *),
+html.light .text-neutral-500:not(.keep-dark *):not(.keep-white-on-media *) {
   color: #6E6A7E !important;
 }
 

@@ -156,7 +156,7 @@ class RealMusicEngine {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.title,
         artist: song.artist,
-        album: song.album || 'Harmoniq Canlı Frekans',
+        album: song.album || 'ListenHub Canlı Frekans',
         artwork: artworks,
       });
 

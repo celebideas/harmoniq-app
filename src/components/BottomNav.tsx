@@ -83,7 +83,7 @@ export const BottomNav: React.FC<Props> = ({
   return (
     <nav
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
-      className="fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-3xl bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-2xl border border-zinc-200/90 dark:border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.55)] overflow-hidden select-none transition-all duration-300"
+      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-3xl bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-2xl border border-zinc-200/90 dark:border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.55)] overflow-hidden select-none transition-all duration-300"
     >
       {/* UPPER TIER: MINI PLAYER STRIP (Visible on Odalar, Sohbet, Kütüphanem tabs) */}
       {showMiniPlayerStrip && currentSong && (

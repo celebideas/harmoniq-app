@@ -268,8 +268,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     try {
       const result = await onGoogleContinue();
       if (result.success && result.user) {
+        const previousSession = getStoredAuthSession();
+        const wasGuest = Boolean(previousSession?.isGuest);
         const alreadyOnboarded =
-          typeof window !== 'undefined' && Boolean(localStorage.getItem('harmoniq_onboarding_completed'));
+          !wasGuest &&
+          typeof window !== 'undefined' &&
+          localStorage.getItem('harmoniq_onboarding_completed') === 'true';
         const session: AuthSession = {
           userId: `google_${result.user.email.toLowerCase()}`,
           name: result.user.name || 'Müzik Kaşifi',
@@ -370,7 +374,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           <div className="space-y-1.5">
             <h1 className="font-heading text-3xl sm:text-4xl font-black tracking-tight text-white">
-              Harmoniq
+              ListenHub
             </h1>
             <p className="text-sm sm:text-[15px] text-zinc-300 leading-relaxed max-w-xs mx-auto [text-wrap:balance]">
               Aynı şarkının aynı saniyesinde frekansını yakala.

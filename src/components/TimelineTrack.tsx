@@ -585,7 +585,7 @@ export const TimelineTrack: React.FC<Props> = ({
 
       {/* 4. Şarkının Dinamik Bölümleri (Warm Amber Solo Vurgusu) */}
       <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pr-6 py-0.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pr-6 py-0.5 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]">
           <span className="text-[11px] text-[#646073] dark:text-[#9E9AA8] font-semibold shrink-0 mr-1 flex items-center gap-1">
             <Clock className="w-3 h-3 text-amber-500" />
             <span>Bölümler:</span>
