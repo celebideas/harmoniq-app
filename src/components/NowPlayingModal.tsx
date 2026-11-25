@@ -28,7 +28,7 @@ import {
   Zap,
   ExternalLink,
 } from 'lucide-react';
-import { Song, PlatformType, LoungeUser, TimelineMarker } from '../types';
+import { Song, PlatformType, LoungeUser } from '../types';
 import { fetchArtistRadio } from '../services/musicResolver';
 import { triggerHaptic } from '../services/themeService';
 import {
@@ -62,29 +62,15 @@ interface Props {
   isAudioLoading?: boolean;
 }
 
-const WAVY_WAVE_PATH = (() => {
-  const period = 24;
-  const half = period / 2;
-  const amp = 4.2;
-  const midY = 10;
-  let d = `M 0 ${midY}`;
-  for (let x = 0; x < 1248; x += period) {
-    d += ` Q ${x + half / 2} ${midY - amp}, ${x + half} ${midY} T ${x + period} ${midY}`;
-  }
-  return d;
-})();
-
-interface WavySeekBarProps {
+interface ModernSeekBarProps {
   progressSeconds: number;
   durationSeconds: number;
-  isPlaying: boolean;
   onSeek: (seconds: number) => void;
 }
 
-const WavySeekBar: React.FC<WavySeekBarProps> = ({
+const ModernSeekBar: React.FC<ModernSeekBarProps> = ({
   progressSeconds,
   durationSeconds,
-  isPlaying,
   onSeek,
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -138,8 +124,6 @@ const WavySeekBar: React.FC<WavySeekBarProps> = ({
     }
   };
 
-  const showWave = isPlaying && !isDragging;
-
   return (
     <div
       ref={trackRef}
@@ -160,73 +144,19 @@ const WavySeekBar: React.FC<WavySeekBarProps> = ({
           onSeek(Math.max(0, progressSeconds - 5));
         }
       }}
-      className="relative h-11 flex items-center select-none touch-none cursor-pointer group/wavy"
+      className="py-3 select-none touch-none cursor-pointer group"
       title="Sarmak için dokun veya sürükle"
     >
-      {/* Right Unplayed Track (clean straight subtle track after thumb) */}
-      <div
-        className="absolute right-0 h-1 rounded-full bg-zinc-300 dark:bg-white/20 transition-all duration-150"
-        style={{
-          left: `min(100%, calc(${activePercent}% + 6px))`,
-        }}
-      />
-
-      {/* Left Played Segment (0% to activePercent%) */}
-      <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 h-5 overflow-hidden pointer-events-none"
-        style={{
-          width: `max(0px, calc(${activePercent}% - 4px))`,
-        }}
-      >
-        {/* Flowing Material You Sine Wave when playing */}
+      <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/15 cursor-pointer relative group">
         <div
-          className={`absolute inset-0 flex items-center transition-all duration-300 ${
-            showWave ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
-          }`}
-        >
-          <svg
-            width="1248"
-            height="20"
-            viewBox="0 0 1248 20"
-            fill="none"
-            className={`max-w-none shrink-0 ${showWave ? 'animate-wavy-flow' : ''}`}
-          >
-            <defs>
-              <linearGradient id="harmoniqWavyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#9333EA" />
-                <stop offset="50%" stopColor="#D946EF" />
-                <stop offset="100%" stopColor="#EC4899" />
-              </linearGradient>
-            </defs>
-            <path
-              d={WAVY_WAVE_PATH}
-              stroke="url(#harmoniqWavyGradient)"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
-        </div>
-
-        {/* Calm Straight Gradient Line when paused or dragging */}
-        <div
-          className={`absolute inset-x-0 top-1/2 -translate-y-1/2 h-[3.5px] rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-opacity duration-300 ${
-            showWave ? 'opacity-0' : 'opacity-100'
-          }`}
+          className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-[width] duration-150"
+          style={{ width: `${activePercent}%` }}
         />
-      </div>
-
-      {/* Material You Vertical Pill Thumb */}
-      <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-20 transition-transform duration-150"
-        style={{ left: `${activePercent}%` }}
-      >
         <div
-          className={`rounded-full bg-zinc-900 dark:bg-white shadow-[0_0_12px_rgba(168,85,247,0.65)] transition-all duration-150 ${
-            isDragging
-              ? 'w-2 h-6 ring-4 ring-purple-500/30'
-              : 'w-1.5 h-5 group-hover/wavy:h-5.5 group-hover/wavy:w-1.5'
+          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-purple-500/30 pointer-events-none transition-transform duration-150 ${
+            isDragging ? 'scale-125 ring-4 ring-purple-500/25' : 'group-hover:scale-110'
           }`}
+          style={{ left: `${activePercent}%` }}
         />
       </div>
     </div>
@@ -295,13 +225,6 @@ export const NowPlayingModal: React.FC<Props> = ({
     }
   };
 
-  // Hotspot Flash Announcement Banner State
-  const [activeHotspotNotice, setActiveHotspotNotice] = useState<{
-    label: string;
-    emoji: string;
-    second: number;
-  } | null>(null);
-
   // In-player Listeners Bottom Sheet state
   const [showListenersSheet, setShowListenersSheet] = useState<boolean>(false);
   const [sheetSearchQuery, setSheetSearchQuery] = useState<string>('');
@@ -337,38 +260,6 @@ export const NowPlayingModal: React.FC<Props> = ({
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  // Dynamic 4-Section BÖLÜMLER recalculated on every song.id change (%8, %32, %62, %85)
-  const effectiveMarkers: TimelineMarker[] = useMemo(() => {
-    const dur = song.durationSeconds || 210;
-    const g = (song.genre || '').toLowerCase();
-    const isSynth = g.includes('synth') || g.includes('electronic') || g.includes('pop') || g.includes('hip-hop') || g.includes('rap');
-    return [
-      { second: Math.round(dur * 0.08), label: 'Giriş Melodisi', emoji: '⚡' },
-      { second: Math.round(dur * 0.32), label: 'Nakarat', emoji: '🔥' },
-      {
-        second: Math.round(dur * 0.62),
-        label: isSynth ? 'Synth / Bass Drop' : 'Gitar Solosu',
-        emoji: isSynth ? '🎹' : '🎸',
-      },
-      { second: Math.round(dur * 0.85), label: 'Final Akışı', emoji: '✨' },
-    ];
-  }, [song.id, song.durationSeconds, song.genre]);
-
-  // Handle clicking a timeline Hotspot
-  const handleHotspotClick = (marker: TimelineMarker) => {
-    triggerHaptic(25);
-    onSeek(marker.second);
-    setActiveHotspotNotice({
-      label: marker.label,
-      emoji: marker.emoji,
-      second: marker.second,
-    });
-    onShowToast(`📍 ${marker.emoji} ${marker.label} (${formatTime(marker.second)}) anına sıçrandı!`);
-    setTimeout(() => {
-      setActiveHotspotNotice(null);
-    }, 3200);
   };
 
   // Real LRCLIB synchronized & plain lyrics state (zero fabricated lyrics)
@@ -929,21 +820,6 @@ export const NowPlayingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Live Playing Soundwave Badge */}
-              {isPlaying && (
-                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-lime-400/30 flex items-center gap-1.5 text-[11px] text-lime-400 font-bold shadow">
-                  <span className="w-1.5 h-3 bg-lime-400 rounded-full animate-pulse" />
-                  <span
-                    className="w-1.5 h-4 bg-lime-400 rounded-full animate-pulse"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                  <span
-                    className="w-1.5 h-2 bg-lime-400 rounded-full animate-pulse"
-                    style={{ animationDelay: '300ms' }}
-                  />
-                  <span>Canlı Çalıyor</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -1077,69 +953,18 @@ export const NowPlayingModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* 3. ANDROID MATERIAL YOU WAVY SEEK BAR */}
-        <div className="relative space-y-1.5 pt-1">
-          {/* Hotspot Flash Announcement Banner (Zero-Layout-Shift Floating Overlay) */}
-          {activeHotspotNotice && (
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 pointer-events-none whitespace-nowrap animate-in zoom-in-95 fade-in duration-200">
-              <div className="px-3 py-1 rounded-full bg-zinc-950/90 border border-purple-500/50 text-purple-300 text-xs font-bold shadow-[0_6px_24px_rgba(147,51,234,0.35)] flex items-center gap-1.5 backdrop-blur-xl">
-                <span className="text-xs">{activeHotspotNotice.emoji}</span>
-                <span className="text-white">{activeHotspotNotice.label}</span>
-                <span className="text-purple-300 font-mono text-[11px] tabular-nums">
-                  [{formatTime(activeHotspotNotice.second)}]
-                </span>
-                <span className="text-[10px] text-zinc-300 font-medium">· Sıcak Nokta ⚡</span>
-              </div>
-            </div>
-          )}
-
-          {/* Material You Wavy Seek Bar */}
-          <WavySeekBar
+        {/* 3. ULTRA-CLEAN MODERN SEEK BAR */}
+        <div className="space-y-1 pt-1">
+          <ModernSeekBar
             progressSeconds={progressSeconds}
             durationSeconds={song.durationSeconds || 1}
-            isPlaying={isPlaying}
             onSeek={onSeek}
           />
 
-          <div className="flex items-center justify-between text-xs text-neutral-400 tabular-nums -mt-1">
-            <span className="text-accent-theme font-bold flex items-center gap-1.5">
-              <span>{formatTime(progressSeconds)}</span>
-            </span>
-            <span className="text-zinc-400 font-mono">{formatTime(song.durationSeconds)}</span>
+          <div className="flex items-center justify-between text-[11px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400 -mt-1.5">
+            <span>{formatTime(progressSeconds)}</span>
+            <span>{formatTime(song.durationSeconds)}</span>
           </div>
-
-          {/* Clickable Key Song Moments / Section Chips (Scrollable with Fade Mask) */}
-          {effectiveMarkers.length > 0 && (
-            <div className="relative pt-0.5">
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pr-8 py-1 [mask-image:linear-gradient(to_right,black_85%,transparent_100%)]">
-                <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-accent-theme" />
-                  <span>BÖLÜMLER:</span>
-                </span>
-                {effectiveMarkers.map((marker) => {
-                  const isCurrent = Math.abs(progressSeconds - marker.second) < 15;
-                  return (
-                    <button
-                      key={marker.second}
-                      type="button"
-                      onClick={() => handleHotspotClick(marker)}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-medium shrink-0 flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
-                        isCurrent
-                          ? 'bg-accent-theme text-zinc-950 font-bold shadow-md shadow-accent-theme/20 ring-1 ring-white/20'
-                          : 'bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 border border-white/[0.08]'
-                      }`}
-                    >
-                      <span>{marker.emoji}</span>
-                      <span>{marker.label}</span>
-                      <span className="opacity-70 text-[10px] font-mono">
-                        ({formatTime(marker.second)})
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* 4. MAIN TRANSPORT CONTROLS (Shuffle, Prev, Big Play, Next, Repeat) */}

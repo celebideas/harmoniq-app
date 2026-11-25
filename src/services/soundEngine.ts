@@ -430,7 +430,7 @@ class RealMusicEngine {
   }
 
   private triggerErrorFallback(failedSong: Song) {
-    console.info(`[Harmoniq SoundEngine] Auto-fallback for song "${failedSong.title}", advancing gracefully to next track...`);
+    console.info(`[ListenHub SoundEngine] Auto-fallback for song "${failedSong.title}", advancing gracefully to next track...`);
     if (this.errorFallbackHandler) {
       this.errorFallbackHandler(failedSong);
     } else if (this.onNextTrackHandler) {
@@ -585,24 +585,35 @@ class RealMusicEngine {
         this.audio.loop = false;
         this.audio.volume = 1;
 
+        let hasSeekedSuccessfully = false;
+
         const applyNativeSeek = () => {
           if (!this.audio || this.activePlaybackId !== playbackId) return;
+          if (safeStart <= 0) {
+            this.isPendingMetadataSeek = false;
+            return;
+          }
           const dur = this.audio.duration;
-          if (Number.isFinite(dur) && dur > 0 && safeStart > 0) {
+          if (Number.isFinite(dur) && dur > 0) {
             if (dur > safeStart) {
               this.previewTimeOffset = 0;
-              this.audio.currentTime = safeStart;
+              if (!hasSeekedSuccessfully || this.audio.currentTime < 1) {
+                this.audio.currentTime = safeStart;
+              }
             } else if (dur <= 35 && safeStart >= dur) {
               const proportionalSec = Math.max(
                 0,
                 Math.min(dur - 2, Math.floor((safeStart / (song.durationSeconds || 240)) * dur))
               );
               this.previewTimeOffset = safeStart - proportionalSec;
-              this.audio.currentTime = proportionalSec;
+              if (!hasSeekedSuccessfully || (proportionalSec > 1 && this.audio.currentTime < 1)) {
+                this.audio.currentTime = proportionalSec;
+              }
             } else {
               this.previewTimeOffset = 0;
               this.audio.currentTime = Math.max(0, dur - 2);
             }
+            hasSeekedSuccessfully = true;
           }
           this.isPendingMetadataSeek = false;
           this.simulatedSecond = safeStart;
@@ -613,6 +624,7 @@ class RealMusicEngine {
         if (isNewSrc) {
           if (safeStart > 0) {
             this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
+            this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
           } else {
             this.isPendingMetadataSeek = false;
           }
@@ -621,14 +633,21 @@ class RealMusicEngine {
         } else if (safeStart > 0) {
           if (this.audio.readyState >= 1) {
             applyNativeSeek();
+            if (this.audio.readyState < 3) {
+              this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
+            }
           } else {
             this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
+            this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
           }
         } else {
           this.isPendingMetadataSeek = false;
         }
 
         await this.audio.play();
+        if (safeStart > 0 && this.activePlaybackId === playbackId && this.audio.currentTime < 1) {
+          applyNativeSeek();
+        }
 
         // Check if a newer track was commanded while waiting for audio play Promise
         if (this.activePlaybackId !== playbackId) {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useId } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Play,
   Pause,
@@ -55,7 +55,6 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragSecond, setDragSecond] = useState<number>(currentSecond);
   const trackRef = useRef<HTMLDivElement>(null);
-  const waveGradientId = useId();
 
   const duration = Math.max(1, currentSong.durationSeconds || 210);
   const displaySecond = isDragging ? dragSecond : currentSecond;
@@ -102,15 +101,6 @@ export const DesktopPlayerBar: React.FC<Props> = ({
       handleVolumeChange(0);
     }
   };
-
-  // Smooth sine wave path for Material You wavy progress bar
-  const wavePath = React.useMemo(() => {
-    const segments: string[] = ['M 0 8'];
-    for (let x = 0; x < 720; x += 24) {
-      segments.push(`Q ${x + 6} 2.5, ${x + 12} 8 T ${x + 24} 8`);
-    }
-    return segments.join(' ');
-  }, []);
 
   return (
     <footer
@@ -221,9 +211,9 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Wavy Progress Scrubber */}
+        {/* Ultra-Clean Modern Progress Scrubber */}
         <div className="w-full flex items-center gap-3">
-          <span className="text-[11px] font-mono tabular-nums text-zinc-500 dark:text-zinc-400 w-10 text-right shrink-0">
+          <span className="text-[11px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400 w-10 text-right shrink-0">
             {formatTime(displaySecond)}
           </span>
 
@@ -233,55 +223,28 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={() => setIsDragging(false)}
-            className="relative flex-1 h-5 flex items-center cursor-pointer touch-none group"
+            className="flex-1 py-2 cursor-pointer touch-none group"
             role="slider"
             aria-label="Şarkı ilerleme çubuğu"
             aria-valuemin={0}
             aria-valuemax={duration}
             aria-valuenow={displaySecond}
           >
-            {/* Inactive straight track */}
-            <div className="absolute inset-x-0 h-[3px] rounded-full bg-zinc-200 dark:bg-white/15" />
-
-            {/* Active Wavy Progress */}
-            <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-4 overflow-hidden pointer-events-none"
-              style={{ width: `${progressPct}%` }}
-            >
-              {isPlaying && !isDragging ? (
-                <svg
-                  className="h-4 w-[720px] max-w-none animate-wavy-flow"
-                  viewBox="0 0 720 16"
-                  fill="none"
-                  preserveAspectRatio="none"
-                >
-                  <defs>
-                    <linearGradient id={waveGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#9333EA" />
-                      <stop offset="55%" stopColor="#D946EF" />
-                      <stop offset="100%" stopColor="#EC4899" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={wavePath}
-                    stroke={`url(#${waveGradientId})`}
-                    strokeWidth="2.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              ) : (
-                <div className="w-full h-[3px] mt-[6.5px] rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500" />
-              )}
+            <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/15 cursor-pointer relative group">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-[width] duration-150"
+                style={{ width: `${progressPct}%` }}
+              />
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-purple-500/30 pointer-events-none transition-transform duration-150 ${
+                  isDragging ? 'scale-125 ring-4 ring-purple-500/25' : 'group-hover:scale-110'
+                }`}
+                style={{ left: `${progressPct}%` }}
+              />
             </div>
-
-            {/* Vertical pill thumb */}
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-3.5 rounded-full bg-purple-600 dark:bg-white shadow-md pointer-events-none transition-transform group-hover:scale-125"
-              style={{ left: `${progressPct}%` }}
-            />
           </div>
 
-          <span className="text-[11px] font-mono tabular-nums text-zinc-500 dark:text-zinc-400 w-10 shrink-0">
+          <span className="text-[11px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400 w-10 shrink-0">
             {formatTime(duration)}
           </span>
         </div>

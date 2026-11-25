@@ -97,7 +97,7 @@ export const TopHeader: React.FC<Props> = ({
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-        {/* LEFT: Harmoniq Brand Icon & Title */}
+        {/* LEFT: ListenHub Brand Icon & Title */}
         <div
           onClick={() => {
             triggerHaptic(10);

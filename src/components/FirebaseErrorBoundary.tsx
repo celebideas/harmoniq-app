@@ -36,7 +36,7 @@ export class FirebaseErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error) {
-    console.error('[Harmoniq ErrorBoundary]', error);
+    console.error('[ListenHub ErrorBoundary]', error);
   }
 
   render() {

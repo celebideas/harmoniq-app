@@ -85,6 +85,20 @@ class YouTubePlayerController {
           this.notifyError(code);
         }
 
+        // YouTube player ready event: enforce pendingSeekSecond immediately on fresh iframe mount
+        if (data.event === 'onReady') {
+          this.sendCommand('unMute');
+          this.sendCommand('setVolume', [100]);
+          if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 0) {
+            this.sendCommand('seekTo', [this.pendingSeekSecond, true]);
+          }
+          if (this.isPlaying) {
+            this.sendCommand('playVideo');
+          } else {
+            this.sendCommand('pauseVideo');
+          }
+        }
+
         // YouTube player state updates
         // -1 = UNSTARTED, 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
         if (data.event === 'onStateChange') {
@@ -165,20 +179,36 @@ class YouTubePlayerController {
   }
 
   public setIframe(iframe: HTMLIFrameElement | null) {
+    if (this.iframe === iframe) return;
     this.iframe = iframe;
     if (iframe) {
       // Initialize communication with embedded player
       setTimeout(() => {
+        if (this.iframe !== iframe) return;
         this.sendCommand('listening');
         this.sendCommand('unMute');
         this.sendCommand('setVolume', [100]);
+        if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 0) {
+          this.sendCommand('seekTo', [this.pendingSeekSecond, true]);
+        }
         if (this.isPlaying) {
           this.sendCommand('playVideo');
         } else {
           this.sendCommand('pauseVideo');
         }
-      }, 400);
+      }, 350);
     }
+  }
+
+  public getPendingSeekSecond(): number | null {
+    return this.pendingSeekSecond;
+  }
+
+  public setPendingSeek(second: number | null) {
+    this.pendingSeekSecond =
+      second !== null && Number.isFinite(second) && second > 0
+        ? Math.floor(second)
+        : null;
   }
 
   public onTimeUpdate(cb: TimeUpdateCallback) {

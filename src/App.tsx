@@ -795,9 +795,22 @@ export default function App() {
   }, []);
 
   const lastPlayIntentRef = useRef<{ playing: boolean; time: number }>({ playing: false, time: 0 });
+  const pendingStartSecondRef = useRef<number | null>(null);
+  const pendingStartTimestampRef = useRef<number>(0);
 
   useEffect(() => {
     const unsubTime = soundEngine.onTimeUpdate((sec) => {
+      if (pendingStartSecondRef.current !== null) {
+        const target = pendingStartSecondRef.current;
+        const elapsed = Date.now() - pendingStartTimestampRef.current;
+        // Ignore transient 0s/1s reset ticks while a timestamped seek is buffering/loading
+        if (target > 2 && sec < 2 && elapsed < 4500) {
+          return;
+        }
+        if (Math.abs(sec - target) <= 4 || elapsed >= 4500) {
+          pendingStartSecondRef.current = null;
+        }
+      }
       setMySecond(sec);
     });
     const unsubState = soundEngine.onStateChange((playing) => {
@@ -1514,7 +1527,7 @@ export default function App() {
         return calculateLoungeCompatibilityWithTaste(allArtists, prev);
       });
     } catch (bgErr: any) {
-      console.info('[Harmoniq Sync Diagnostic] Background autoSyncUserData exception:', {
+      console.info('[ListenHub Sync Diagnostic] Background autoSyncUserData exception:', {
         timestamp: new Date().toISOString(),
         message: bgErr?.message,
       });
@@ -1540,7 +1553,7 @@ export default function App() {
         // Instant resync on tab resume
         autoSyncUserData();
         const currentSec = soundEngine.getCurrentTime();
-        if (currentSec >= 0) {
+        if (currentSec >= 0 && pendingStartSecondRef.current === null) {
           setMySecond(currentSec);
         }
         startSyncInterval();
@@ -1942,6 +1955,9 @@ export default function App() {
 
   const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
     const safeStart = Math.max(0, Math.floor(startSecond || 0));
+    pendingStartSecondRef.current = safeStart > 0 ? safeStart : null;
+    pendingStartTimestampRef.current = Date.now();
+
     let playableSong = song;
     if (!song.youtubeVideoId && song.artist && song.title) {
       try {
@@ -1963,14 +1979,14 @@ export default function App() {
       }
     }
 
-    setCurrentSong(playableSong);
-    playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
-    setMySecond(safeStart);
     if (autoPlay || isPlaying) {
       lastPlayIntentRef.current = { playing: true, time: Date.now() };
       setIsPlaying(true);
       soundEngine.playSong(playableSong, safeStart);
     }
+    setCurrentSong(playableSong);
+    playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
+    setMySecond(safeStart);
   };
 
   const handleNextSong = async () => {
@@ -2389,7 +2405,9 @@ export default function App() {
   };
 
   const handlePlayMoment = (track: Song, second: number) => {
-    const targetSecond = Math.max(0, Math.floor(second || 0));
+    const targetSecond = Math.max(0, Math.floor(Number(second) || 0));
+    pendingStartSecondRef.current = targetSecond > 0 ? targetSecond : null;
+    pendingStartTimestampRef.current = Date.now();
     setMySecond(targetSecond);
 
     const isSameTrack =

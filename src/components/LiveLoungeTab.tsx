@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -97,6 +97,16 @@ export const LiveLoungeTab: React.FC<Props> = ({
   const [myStatus, setMyStatus] = useState('01:42 gitar solosu efsane');
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [tempStatus, setTempStatus] = useState('');
+
+  // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek or pendingSeek clear NEVER reloads the iframe
+  const ytIframeSrc = useMemo(() => {
+    if (!currentSong.youtubeVideoId) return '';
+    const origin =
+      typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : '';
+    const startSec = ytController.getPendingSeekSecond() ?? 0;
+    const autoPlayFlag = ytController.getIsPlaying() ? '1' : '0';
+    return `https://www.youtube.com/embed/${currentSong.youtubeVideoId}?autoplay=${autoPlayFlag}&start=${startSec}&enablejsapi=1&playsinline=1&origin=${origin}&widgetid=1`;
+  }, [currentSong.youtubeVideoId]);
 
   // Live Vibe Stream & Anı Yakala Barı State
   const [vibeNotes, setVibeNotes] = useState<Array<{
@@ -509,7 +519,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             >
               <iframe
                 ref={(el) => ytController.setIframe(el)}
-                src={`https://www.youtube.com/embed/${currentSong.youtubeVideoId}?autoplay=${isPlaying ? '1' : '0'}&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&widgetid=1`}
+                src={ytIframeSrc}
                 title="ListenHub YouTube Music Player"
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

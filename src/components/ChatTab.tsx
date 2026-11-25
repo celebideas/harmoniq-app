@@ -128,14 +128,15 @@ export const ChatTab: React.FC<Props> = ({
 
   const handleShareSongConfirm = () => {
     if (!activeConv || !selectedSongToShare) return;
-    const defaultComment = `Bu şarkının ${formatTime(shareTimestampSecond)} saniyesini dinle!`;
+    const safeTimestamp = Math.max(0, Math.floor(Number(shareTimestampSecond) || 0));
+    const defaultComment = `Bu şarkının ${formatTime(safeTimestamp)} saniyesini dinle!`;
     const finalComment = songComment.trim() || defaultComment;
     if (onSendSongMessage) {
       onSendSongMessage(
         activeConv.matchId,
         selectedSongToShare,
         finalComment,
-        shareTimestampSecond
+        safeTimestamp
       );
     } else {
       onSendMessage(activeConv.matchId, finalComment, false);
@@ -1033,8 +1034,13 @@ export const ChatTab: React.FC<Props> = ({
                           {shouldShowSharedSongCard && msg.sharedSong && (
                             <div
                               onClick={() => {
-                                if (msg.sharedTimestampSecond !== undefined && onPlayMoment) {
-                                  onPlayMoment(msg.sharedSong!, msg.sharedTimestampSecond);
+                                const targetSec = Number(msg.sharedTimestampSecond);
+                                if (
+                                  msg.sharedTimestampSecond !== undefined &&
+                                  Number.isFinite(targetSec) &&
+                                  onPlayMoment
+                                ) {
+                                  onPlayMoment(msg.sharedSong!, Math.max(0, Math.floor(targetSec)));
                                 } else if (onPlaySong) {
                                   onPlaySong(msg.sharedSong!);
                                 }

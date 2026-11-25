@@ -3038,7 +3038,7 @@ export const ProfileTab: React.FC<Props> = ({
       )}
 
       {/* =====================================================================
-          MODAL: ŞEFFAF GÜVEN KALKANI (HARMONIQ TRUST SCORE)
+          MODAL: ŞEFFAF GÜVEN KALKANI (LISTENHUB TRUST SCORE)
          ===================================================================== */}
       {showTrustScoreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150">
