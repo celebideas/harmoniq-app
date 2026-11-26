@@ -105,13 +105,13 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   return (
     <footer
       aria-label="Masaüstü Medya Çubuğu"
-      className="hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-20 px-6 z-40 bg-white/95 dark:bg-[#12101C]/95 backdrop-blur-2xl border-t border-zinc-200 dark:border-white/[0.08] select-none shadow-[0_-8px_30px_rgba(0,0,0,0.22)]"
+      className="hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 bg-white/95 dark:bg-[#12101C]/95 backdrop-blur-2xl border-t border-zinc-200 dark:border-white/[0.08] select-none shadow-[0_-8px_30px_rgba(0,0,0,0.22)]"
     >
       {/* LEFT (w-1/4): Cover + Track Info + Favorite */}
       <div className="w-1/4 min-w-0 flex items-center gap-3.5">
         <div
           onClick={onOpenNowPlaying}
-          className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10 shadow-md cursor-pointer group"
+          className="relative w-13 h-13 rounded-xl overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10 shadow-md cursor-pointer group"
           title="Tam Ekran Oynatıcıyı Aç"
         >
           {currentSong.coverUrl ? (

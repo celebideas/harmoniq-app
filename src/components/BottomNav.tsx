@@ -46,32 +46,32 @@ export const BottomNav: React.FC<Props> = ({
   const navItems: {
     id: NavTab;
     label: string;
-    icon: React.ReactNode;
+    IconComponent: React.ComponentType<{ className?: string; strokeWidth?: number }>;
     badge?: number | string;
     isLiveBadge?: boolean;
   }[] = [
     {
       id: 'lounge',
       label: 'Canlı',
-      icon: <Radio className="w-4 h-4" />,
+      IconComponent: Radio,
       badge: liveCount,
       isLiveBadge: true,
     },
     {
       id: 'rooms',
       label: 'Odalar',
-      icon: <Disc3 className="w-4 h-4" />,
+      IconComponent: Disc3,
     },
     {
       id: 'chat',
       label: 'Sohbet',
-      icon: <MessageCircle className="w-4 h-4" />,
+      IconComponent: MessageCircle,
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
     {
       id: 'profile',
       label: 'Kütüphanem',
-      icon: <Library className="w-4 h-4" />,
+      IconComponent: Library,
     },
   ];
 
@@ -88,17 +88,17 @@ export const BottomNav: React.FC<Props> = ({
       {/* UPPER TIER: MINI PLAYER STRIP (Visible on Odalar, Sohbet, Kütüphanem tabs) */}
       {showMiniPlayerStrip && currentSong && (
         <div className="relative">
-          <div className="flex items-center justify-between px-3 py-2 gap-2.5">
-            {/* Left: Small Album Cover (w-9 h-9 rounded-lg) + Song & Artist Info */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 gap-3">
+            {/* Left: Album Cover (w-10 h-10 rounded-xl) + Song & Artist Info */}
             <div
               onClick={() => {
                 triggerHaptic(15);
                 onOpenNowPlaying?.();
               }}
-              className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
+              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
               title="Tam Ekran Oynatıcıyı Aç"
             >
-              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10 shadow-sm">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10 shadow-sm">
                 {currentSong.coverUrl ? (
                   <img
                     src={currentSong.coverUrl}
@@ -116,14 +116,14 @@ export const BottomNav: React.FC<Props> = ({
                 <div className="text-xs font-bold text-zinc-900 dark:text-zinc-50 truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   {currentSong.title}
                 </div>
-                <div className="text-[11px] text-[#646073] dark:text-[#9E9AA8] truncate">
+                <div className="text-[11px] text-[#646073] dark:text-[#9E9AA8] truncate mt-0.5">
                   {currentSong.artist}
                 </div>
               </div>
             </div>
 
             {/* Right: Play/Pause + Next Controls */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={(e) => {
@@ -131,7 +131,7 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="w-8 h-8 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white flex items-center justify-center shadow-[0_4px_14px_rgba(147,51,234,0.35)] transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white flex items-center justify-center shadow-[0_4px_14px_rgba(147,51,234,0.35)] transition active:scale-95 cursor-pointer"
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
@@ -152,7 +152,7 @@ export const BottomNav: React.FC<Props> = ({
                     triggerHaptic(15);
                     onNextSong();
                   }}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/[0.06] transition active:scale-95 cursor-pointer"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/[0.06] transition active:scale-95 cursor-pointer"
                   aria-label="Sonraki Şarkı"
                   title="Sonraki Şarkı"
                 >
@@ -182,9 +182,10 @@ export const BottomNav: React.FC<Props> = ({
       )}
 
       {/* LOWER TIER: 4 MAIN TABS (Canlı, Odalar, Sohbet, Kütüphanem) */}
-      <div className="grid grid-cols-4 gap-1 px-1.5 py-1">
+      <div className="grid grid-cols-4 gap-1.5 px-2.5 py-2">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
+          const IconComp = item.IconComponent;
           return (
             <button
               key={item.id}
@@ -194,18 +195,18 @@ export const BottomNav: React.FC<Props> = ({
                 onSelectTab(item.id);
               }}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center min-h-[54px] py-2 px-2 rounded-2xl transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold'
+                  ? 'bg-purple-500/12 text-purple-600 dark:text-purple-400 font-bold'
                   : 'text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-zinc-200 font-medium'
               }`}
             >
               <div className="relative flex items-center justify-center">
-                {item.icon}
+                <IconComp className="w-5 h-5" strokeWidth={isActive ? 2.4 : 1.9} />
 
                 {item.badge !== undefined && (
                   <span
-                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold leading-tight tabular-nums ${
+                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none tabular-nums ${
                       item.isLiveBadge
                         ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
                         : 'bg-gradient-to-r from-purple-600 to-pink-500 text-force-white shadow-xs'
@@ -216,7 +217,7 @@ export const BottomNav: React.FC<Props> = ({
                 )}
               </div>
 
-              <span className="text-[10px] tracking-tight mt-0.5 leading-none">
+              <span className="text-[11px] font-semibold mt-1 tracking-normal leading-none">
                 {item.label}
               </span>
             </button>

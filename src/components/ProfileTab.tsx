@@ -1637,7 +1637,7 @@ export const ProfileTab: React.FC<Props> = ({
     subscribedChannels.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-5 lg:py-6 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-5 space-y-6 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
       {/* Toast Notice Banner */}
       {toastNotice && (
         <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-950/95 border border-purple-500/40 text-zinc-900 dark:text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
@@ -1647,13 +1647,13 @@ export const ProfileTab: React.FC<Props> = ({
       )}
 
       {/* Adaptive Dual-Layout: Single column on mobile (<1024px), 12-col split on desktop (>=1024px) */}
-      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
         {/* ===================================================================
             LEFT 5 COLS ON DESKTOP: PROFILE HERO + TRUST SHIELD + MUSICAL AURA
            =================================================================== */}
-        <div className="lg:col-span-5 space-y-5 min-w-0">
+        <div className="lg:col-span-5 space-y-6 min-w-0">
           {/* 1. THEME-AWARE PROFILE HERO CARD */}
-          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/10 p-5 shadow-sm flex flex-col gap-4">
+          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/10 p-4 sm:p-5 shadow-sm flex flex-col gap-4">
             <div className="flex items-start gap-4 min-w-0">
               <div
                 className="relative group cursor-pointer shrink-0"
@@ -1789,7 +1789,7 @@ export const ProfileTab: React.FC<Props> = ({
 
           {/* 3. UNIFIED MÜZİK ÖZETİ & AURA — LIVE REAL LISTENING ANALYTICS */}
           <div className={profileSection === 'insights' ? 'block' : 'hidden lg:block'}>
-          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08] p-5 sm:p-6 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
+          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08] p-4 sm:p-5 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
         {!hasRealListeningData ? (
           <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400">
@@ -2315,8 +2315,8 @@ export const ProfileTab: React.FC<Props> = ({
               </div>
             ) : (
               <>
-                {/* Minimalist Underline Navigation Tabs */}
-                <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/[0.07] overflow-x-auto no-scrollbar whitespace-nowrap pb-1 pr-6 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+                {/* Touch-Friendly Library Sub-Tabs */}
+                <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/[0.07] overflow-x-auto no-scrollbar whitespace-nowrap pb-2.5 pr-6 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
                   {[
                     { id: 'playlists' as const, label: `Çalma Listeleri (${syncedPlaylists.length})` },
                     { id: 'favorites' as const, label: `Favori Parçalar (${favoriteSongs.length})` },
@@ -2331,16 +2331,13 @@ export const ProfileTab: React.FC<Props> = ({
                           setActiveLibraryTab(tab.id);
                           setLibrarySearchQuery('');
                         }}
-                        className={`px-3 py-2 min-h-[40px] text-xs font-medium whitespace-nowrap shrink-0 transition-colors relative cursor-pointer ${
+                        className={`px-3.5 py-2 text-xs font-semibold rounded-xl min-h-[40px] whitespace-nowrap shrink-0 transition cursor-pointer ${
                           isActive
-                            ? 'text-zinc-900 dark:text-white font-bold'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                            ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
+                            : 'bg-zinc-100 dark:bg-white/[0.05] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/80 dark:hover:bg-white/[0.09]'
                         }`}
                       >
                         {tab.label}
-                        {isActive && (
-                          <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-purple-600 dark:bg-lime-400 rounded-full" />
-                        )}
                       </button>
                     );
                   })}

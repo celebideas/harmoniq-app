@@ -803,12 +803,11 @@ export default function App() {
       if (pendingStartSecondRef.current !== null) {
         const target = pendingStartSecondRef.current;
         const elapsed = Date.now() - pendingStartTimestampRef.current;
-        // Ignore transient 0s/1s reset ticks while a timestamped seek is buffering/loading
-        if (target > 2 && sec < 2 && elapsed < 3500) {
+        if (sec >= target - 1 || elapsed >= 1200) {
+          pendingStartSecondRef.current = null;
+        } else if (target > 2 && sec < 2) {
           return;
         }
-        // Clear immediately on the very first valid time update
-        pendingStartSecondRef.current = null;
       }
       setMySecond(sec);
     });
@@ -2421,6 +2420,13 @@ export default function App() {
         setIsPlaying(true);
         soundEngine.resume();
       }
+    } else if (isSameTrack && soundEngine.getCurrentSongId() === track.id) {
+      soundEngine.seekTo(targetSecond);
+      if (!isPlaying || !soundEngine.getIsPlaying()) {
+        lastPlayIntentRef.current = { playing: true, time: Date.now() };
+        setIsPlaying(true);
+        soundEngine.resume();
+      }
     } else {
       void handleSelectSong(track, true, targetSecond);
     }
@@ -2863,7 +2869,7 @@ export default function App() {
       />
 
       <div
-        className={`w-full flex-1 flex flex-col lg:pl-64 ${
+        className={`w-full flex-1 flex flex-col lg:pl-72 ${
           isLight ? 'bg-[#F5F4F8]/95 shadow-sm' : 'bg-[#0A090F]/90'
         } relative z-10 transition-all duration-300`}
       >

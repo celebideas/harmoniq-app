@@ -300,14 +300,54 @@ const resolveListenerLatLng = (
   return offsetLatLngByKm(originCenter, Math.min(14.2, distKm), bearing);
 };
 
+const isValidLatLng = (coords: LatLngTuple | null | undefined): coords is LatLngTuple =>
+  Array.isArray(coords) &&
+  coords.length === 2 &&
+  Number.isFinite(coords[0]) &&
+  Number.isFinite(coords[1]) &&
+  Math.abs(coords[0]) <= 90 &&
+  Math.abs(coords[1]) <= 180;
+
+const safeFlyTo = (
+  map: L.Map | null,
+  coords: LatLngTuple,
+  zoom: number,
+  duration = 0.75
+) => {
+  if (!map || !isValidLatLng(coords) || !Number.isFinite(zoom)) return;
+  try {
+    const container = map.getContainer();
+    const isVisible =
+      Boolean(container) && container.offsetWidth > 0 && container.offsetHeight > 0;
+    if (!isVisible) {
+      map.setView(coords, zoom, { animate: false });
+      return;
+    }
+    map.invalidateSize({ animate: false });
+    const size = map.getSize();
+    if (!size || size.x <= 0 || size.y <= 0) {
+      map.setView(coords, zoom, { animate: false });
+      return;
+    }
+    map.flyTo(coords, zoom, { animate: true, duration });
+  } catch {
+    try {
+      map.setView(coords, zoom, { animate: false });
+    } catch {
+      // ignore if map is unmounting
+    }
+  }
+};
+
 const getFilterMapConfig = (filter: DistanceFilter, center: LatLngTuple): {
   center: LatLngTuple;
   zoom: number;
   radiusMeters: number | null;
 } => {
-  if (filter === '1km') return { center, zoom: 14, radiusMeters: 1000 };
-  if (filter === '5km') return { center, zoom: 12, radiusMeters: 5000 };
-  if (filter === 'city') return { center, zoom: 11, radiusMeters: 15000 };
+  const safeCenter = isValidLatLng(center) ? center : CITY_COORDS.istanbul.center;
+  if (filter === '1km') return { center: safeCenter, zoom: 14, radiusMeters: 1000 };
+  if (filter === '5km') return { center: safeCenter, zoom: 12, radiusMeters: 5000 };
+  if (filter === 'city') return { center: safeCenter, zoom: 11, radiusMeters: 15000 };
   return { center: TURKEY_OVERVIEW_CENTER, zoom: TURKEY_OVERVIEW_ZOOM, radiusMeters: null };
 };
 
@@ -405,7 +445,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
       if (
         res.gpsGranted &&
         typeof res.location?.latitude === 'number' &&
-        typeof res.location?.longitude === 'number'
+        typeof res.location?.longitude === 'number' &&
+        Number.isFinite(res.location.latitude) &&
+        Number.isFinite(res.location.longitude)
       ) {
         setGpsCoords([res.location.latitude, res.location.longitude]);
       } else {
@@ -491,11 +533,25 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
     // Ensure proper container dimensions after animations/tab reveal
     const resizeTimer = setTimeout(() => {
-      map.invalidateSize();
+      if (mapContainerRef.current && mapContainerRef.current.offsetWidth > 0) {
+        map.invalidateSize({ animate: false });
+      }
     }, 180);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (entry && entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          map.invalidateSize({ animate: false });
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
 
     return () => {
       clearTimeout(resizeTimer);
+      resizeObserver?.disconnect();
       map.remove();
       mapRef.current = null;
       tileLayerRef.current = null;
@@ -532,41 +588,40 @@ export const ProximityDensityMap: React.FC<Props> = ({
       `,
     });
 
-    if (userMarkerRef.current) {
-      userMarkerRef.current.setLatLng(cityCenter).setIcon(userIcon);
-    } else {
-      userMarkerRef.current = L.marker(cityCenter, {
-        icon: userIcon,
-        interactive: false,
-        zIndexOffset: 500,
-      }).addTo(map);
-    }
-
     // Update or hide metric radar circle
     if (circleRef.current) {
       map.removeLayer(circleRef.current);
       circleRef.current = null;
     }
 
-    if (cfg.radiusMeters !== null) {
-      const strokeColor = activeFilter === '1km' ? '#10b981' : '#a855f7';
-      const fillColor = activeFilter === '1km' ? '#10b981' : '#9333ea';
-      circleRef.current = L.circle(cityCenter, {
-        radius: cfg.radiusMeters,
-        color: strokeColor,
-        weight: 1.75,
-        opacity: 0.72,
-        dashArray: activeFilter === 'city' ? '6 6' : undefined,
-        fillColor,
-        fillOpacity: effectiveTheme === 'light' ? 0.1 : 0.14,
-        interactive: false,
-      }).addTo(map);
+    if (isValidLatLng(cityCenter)) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng(cityCenter).setIcon(userIcon);
+      } else {
+        userMarkerRef.current = L.marker(cityCenter, {
+          icon: userIcon,
+          interactive: false,
+          zIndexOffset: 500,
+        }).addTo(map);
+      }
+
+      if (cfg.radiusMeters !== null) {
+        const strokeColor = activeFilter === '1km' ? '#10b981' : '#a855f7';
+        const fillColor = activeFilter === '1km' ? '#10b981' : '#9333ea';
+        circleRef.current = L.circle(cityCenter, {
+          radius: cfg.radiusMeters,
+          color: strokeColor,
+          weight: 1.75,
+          opacity: 0.72,
+          dashArray: activeFilter === 'city' ? '6 6' : undefined,
+          fillColor,
+          fillOpacity: effectiveTheme === 'light' ? 0.1 : 0.14,
+          interactive: false,
+        }).addTo(map);
+      }
     }
 
-    map.flyTo(cfg.center, cfg.zoom, {
-      animate: true,
-      duration: 0.85,
-    });
+    safeFlyTo(map, cfg.center, cfg.zoom, 0.85);
   }, [activeFilter, cityCenter, effectiveTheme]);
 
   // 4. Render Listener Avatar Pins inside LayerGroup
@@ -616,6 +671,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
         `,
       });
 
+      if (!isValidLatLng(coords)) return;
+
       const marker = L.marker(coords, {
         icon,
         zIndexOffset: isSelected ? 400 : user.isRealUser ? 300 : inActiveRange ? 150 : 50,
@@ -624,11 +681,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
       marker.on('click', () => {
         triggerHaptic(15);
         setSelectedUserId(user.id);
-        const targetZoom = Math.max(map.getZoom(), activeFilter === 'all' ? 9.5 : 13.5);
-        map.flyTo(coords, targetZoom, {
-          animate: true,
-          duration: 0.65,
-        });
+        const currentZoom = Number.isFinite(map.getZoom()) ? map.getZoom() : 12;
+        const targetZoom = Math.max(currentZoom, activeFilter === 'all' ? 9.5 : 13.5);
+        safeFlyTo(map, coords, targetZoom, 0.65);
       });
 
       marker.addTo(layerGroup);
@@ -650,7 +705,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
     const map = mapRef.current;
     if (!map) return;
     const cfg = getFilterMapConfig(activeFilter, cityCenter);
-    map.flyTo(cfg.center, cfg.zoom, { animate: true, duration: 0.75 });
+    safeFlyTo(map, cfg.center, cfg.zoom, 0.75);
   }, [activeFilter, cityCenter]);
 
   const handleClusterClick = (cluster: CityClusterInfo) => {
@@ -665,10 +720,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
       if (activeFilter !== 'all') {
         onChangeFilter('all');
       }
-      map?.flyTo(TURKEY_OVERVIEW_CENTER, TURKEY_OVERVIEW_ZOOM, {
-        animate: true,
-        duration: 0.85,
-      });
+      safeFlyTo(map, TURKEY_OVERVIEW_CENTER, TURKEY_OVERVIEW_ZOOM, 0.85);
       if (cluster.users[0]) {
         setSelectedUserId(cluster.users[0].id);
       }
@@ -689,10 +741,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
       onChangeFilter('city');
     }
 
-    map?.flyTo(targetCoords, 13.5, {
-      animate: true,
-      duration: 0.75,
-    });
+    safeFlyTo(map, targetCoords, 13.5, 0.75);
 
     if (cluster.users[0]) {
       setSelectedUserId(cluster.users[0].id);

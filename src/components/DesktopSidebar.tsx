@@ -65,25 +65,25 @@ export const DesktopSidebar: React.FC<Props> = ({
     {
       id: 'lounge',
       label: 'Canlı',
-      icon: <Radio className="w-4 h-4 shrink-0" />,
+      icon: <Radio className="w-5 h-5 shrink-0" />,
       badge: liveListenersCount,
       isLiveBadge: true,
     },
     {
       id: 'rooms',
       label: 'Odalar',
-      icon: <Disc3 className="w-4 h-4 shrink-0" />,
+      icon: <Disc3 className="w-5 h-5 shrink-0" />,
     },
     {
       id: 'chat',
       label: 'Sohbet',
-      icon: <MessageCircle className="w-4 h-4 shrink-0" />,
+      icon: <MessageCircle className="w-5 h-5 shrink-0" />,
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
     {
       id: 'profile',
       label: 'Kütüphanem',
-      icon: <Library className="w-4 h-4 shrink-0" />,
+      icon: <Library className="w-5 h-5 shrink-0" />,
     },
   ];
 
@@ -123,7 +123,7 @@ export const DesktopSidebar: React.FC<Props> = ({
   return (
     <aside
       aria-label="Masaüstü Navigasyon"
-      className="hidden lg:flex flex-col fixed left-0 top-0 bottom-20 w-64 z-30 bg-white/95 dark:bg-[#0E0C16]/95 backdrop-blur-2xl border-r border-zinc-200 dark:border-white/[0.07] p-4 select-none justify-between"
+      className="hidden lg:flex flex-col fixed left-0 top-0 bottom-[84px] w-72 z-30 bg-white/95 dark:bg-[#0E0C16]/95 backdrop-blur-2xl border-r border-zinc-200 dark:border-white/[0.07] p-5 select-none justify-between"
     >
       {/* TOP: Brand + Privacy Frequency Capsule */}
       <div className="space-y-4">
@@ -132,9 +132,9 @@ export const DesktopSidebar: React.FC<Props> = ({
             triggerHaptic(10);
             onSelectTab('lounge');
           }}
-          className="flex items-center gap-3 px-2 py-1 cursor-pointer group"
+          className="flex items-center gap-3.5 p-3 rounded-2xl cursor-pointer group hover:bg-zinc-100/70 dark:hover:bg-white/[0.03] transition"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-[0_4px_16px_rgba(147,51,234,0.38)] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-[0_4px_16px_rgba(147,51,234,0.38)] shrink-0">
             <Disc3
               className={`w-5 h-5 text-white ${isPlaying ? 'animate-spin' : ''}`}
               style={{ animationDuration: '5s' }}
@@ -144,7 +144,7 @@ export const DesktopSidebar: React.FC<Props> = ({
             <span className="text-lg font-heading font-extrabold tracking-tight text-zinc-900 dark:text-white block leading-none">
               ListenHub
             </span>
-            <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] block mt-1">
+            <span className="text-xs text-zinc-500 dark:text-[#9E9AA8] block mt-1">
               Canlı Müzik Ağı
             </span>
           </div>
@@ -224,7 +224,7 @@ export const DesktopSidebar: React.FC<Props> = ({
         </div>
 
         {/* MIDDLE: 4 Main Navigation Tabs */}
-        <nav className="space-y-1 pt-2" aria-label="Ana Bölümler">
+        <nav className="space-y-2 pt-2" aria-label="Ana Bölümler">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -236,13 +236,13 @@ export const DesktopSidebar: React.FC<Props> = ({
                   onSelectTab(item.id);
                 }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full px-3.5 py-3 rounded-2xl text-sm flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                className={`w-full px-4 py-3.5 rounded-2xl text-[15px] font-semibold flex items-center justify-between gap-3.5 transition-all cursor-pointer ${
                   isActive
                     ? 'bg-gradient-to-r from-purple-600/15 via-fuchsia-500/12 to-pink-500/10 text-purple-700 dark:text-purple-300 font-bold border border-purple-500/25 shadow-xs'
-                    : 'text-zinc-600 dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/90 dark:hover:bg-white/[0.05] font-medium border border-transparent'
+                    : 'text-zinc-600 dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/90 dark:hover:bg-white/[0.05] border border-transparent'
                 }`}
               >
-                <span className="flex items-center gap-3 min-w-0">
+                <span className="flex items-center gap-3.5 min-w-0">
                   <span className={isActive ? 'text-purple-600 dark:text-purple-400' : ''}>
                     {item.icon}
                   </span>
@@ -251,7 +251,7 @@ export const DesktopSidebar: React.FC<Props> = ({
 
                 {item.badge !== undefined && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums shrink-0 ${
+                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums shrink-0 ${
                       item.isLiveBadge
                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                         : 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
@@ -292,7 +292,7 @@ export const DesktopSidebar: React.FC<Props> = ({
             triggerHaptic(10);
             onSelectTab('profile');
           }}
-          className={`w-full p-2.5 rounded-2xl border flex items-center gap-3 text-left transition cursor-pointer ${
+          className={`w-full p-3 rounded-2xl border flex items-center gap-3 text-left transition cursor-pointer ${
             activeTab === 'profile'
               ? 'bg-purple-500/10 border-purple-500/30'
               : 'bg-zinc-50/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.06] border-zinc-200/80 dark:border-white/[0.07]'

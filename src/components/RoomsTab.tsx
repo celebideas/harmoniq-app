@@ -197,7 +197,7 @@ const ArtistRoomRow: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[64px] ${
+      className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrentArtist
           ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
           : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
@@ -275,7 +275,7 @@ const SongRoomRow: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[64px] ${
+      className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrent
           ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
           : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
@@ -612,7 +612,7 @@ export const RoomsTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 py-5 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-5 select-none">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-5 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-6 select-none">
       {/* 1. Editorial Header */}
       <div className="flex items-baseline justify-between border-b border-zinc-200 dark:border-white/[0.06] pb-3.5">
         <div>
@@ -630,7 +630,7 @@ export const RoomsTab: React.FC<Props> = ({
       </div>
 
       {/* 2. Kişisel Frekansın Hero Kartı + 4'lü Ruh Hali Seçici (Mood Tuner) */}
-      <div className="p-4 rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-xl space-y-3.5 relative overflow-hidden">
+      <div className="p-4 sm:p-5 rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-xl space-y-3.5 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-44 h-44 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center justify-between gap-3 relative z-10">
@@ -697,7 +697,7 @@ export const RoomsTab: React.FC<Props> = ({
                   type="button"
                   onClick={() => handleSelectMoodTuner(mood.id)}
                   title={mood.desc}
-                  className={`px-2.5 py-2 rounded-xl text-[11px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                     isSelected
                       ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white border-transparent shadow-md shadow-purple-500/20'
                       : 'bg-[#ECEAF2]/80 dark:bg-[#1E1B2E]/75 hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-200 border-[#DFDCE8] dark:border-white/[0.07]'
@@ -769,10 +769,10 @@ export const RoomsTab: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setSelectedGenreFilter('all')}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer shrink-0 ${
               selectedGenreFilter === 'all'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-sm'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
             }`}
           >
             Tümü
@@ -782,10 +782,10 @@ export const RoomsTab: React.FC<Props> = ({
               key={genre}
               type="button"
               onClick={() => setSelectedGenreFilter(genre)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
+              className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer shrink-0 ${
                 selectedGenreFilter === genre
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-sm'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
               }`}
             >
               {genre}

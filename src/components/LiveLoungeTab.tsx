@@ -411,10 +411,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col px-3.5 sm:px-6 py-3.5 sm:py-5 max-w-xl lg:max-w-6xl mx-auto w-full relative select-none">
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-5 space-y-6 max-w-xl lg:max-w-6xl mx-auto w-full relative select-none">
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
         {/* LEFT 7 COLUMNS (Desktop): Live Player Console + Timeline / Leaflet Map */}
-        <div className="lg:col-span-7 flex flex-col gap-4 min-w-0">
+        <div className="lg:col-span-7 flex flex-col gap-5 min-w-0">
       {/* =========================================================================
           1. KOMPAKT "CANLI FREKANS SAHNESİ" KARTI (FOCAL ANCHOR)
          ========================================================================= */}
@@ -422,7 +422,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
         aria-label="Şu Anda Çalan"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="relative rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] p-3.5 sm:p-5 overflow-hidden shadow-xl"
+        className="relative rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] p-4 sm:p-5 overflow-hidden shadow-xl"
       >
         {/* Dynamic Ambient Glow inside Console */}
         {currentSong.coverUrl && (
@@ -646,13 +646,13 @@ export const LiveLoungeTab: React.FC<Props> = ({
          ========================================================================= */}
       <section aria-label="Dinleyici Frekansı ve Mesafe Katmanı" className="space-y-3">
         {/* Tekil Kontrol Çubuğu (Görünüm Seçici + Mesafe Seçici) */}
-        <div className="p-2.5 sm:p-3 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] backdrop-blur-md space-y-2.5 shadow-sm">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] backdrop-blur-md space-y-3 shadow-sm">
           {/* Top Row: Görünüm Seçici: [⏱ Zaman Rayı | 📍 Radar Harita | 👥 Liste (X)] */}
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-black/40 border border-zinc-200/80 dark:border-white/[0.06] rounded-xl text-xs">
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-black/40 border border-zinc-200/80 dark:border-white/[0.06] rounded-2xl text-xs">
             <button
               type="button"
               onClick={() => setLoungeViewMode('timeline')}
-              className={`py-1.5 px-2 rounded-lg font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 loungeViewMode === 'timeline'
                   ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white font-bold shadow-sm'
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
@@ -664,7 +664,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setLoungeViewMode('map')}
-              className={`py-1.5 px-2 rounded-lg font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 loungeViewMode === 'map'
                   ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white font-bold shadow-sm'
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
@@ -676,7 +676,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             <button
               type="button"
               onClick={onOpenRoomListeners}
-              className="py-1.5 px-2 rounded-lg font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/[0.06] transition cursor-pointer flex items-center justify-center gap-1"
+              className="px-3.5 py-2 text-xs font-semibold rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/[0.06] transition cursor-pointer flex items-center justify-center gap-1"
               title="Tüm Dinleyici Listesi"
             >
               <span>👥 Liste ({distanceFilteredUsers.length + 1})</span>
@@ -684,7 +684,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </div>
 
           {/* Bottom Row: Mesafe Seçici: [1 km • Yürüme | 5 km • İlçe | Şehir • 15 km | Tümü] */}
-          <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+          <div className="flex items-center gap-2 pt-1 overflow-x-auto no-scrollbar whitespace-nowrap">
             {[
               { id: '1km' as DistanceFilter, label: '1 km • Yürüme', count: displayUsers.filter(u => u.distanceKm <= 1).length },
               { id: '5km' as DistanceFilter, label: '5 km • İlçe', count: displayUsers.filter(u => u.distanceKm <= 5).length },
@@ -697,7 +697,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   key={f.id}
                   type="button"
                   onClick={() => setDistanceFilter(f.id)}
-                  className={`py-1.5 px-3 rounded-lg text-center text-xs whitespace-nowrap shrink-0 transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl text-center whitespace-nowrap shrink-0 transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
                     isSelected
                       ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 font-bold border border-purple-500/35 shadow-sm'
                       : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.04]'
@@ -806,11 +806,11 @@ export const LiveLoungeTab: React.FC<Props> = ({
         </div>
 
         {/* RIGHT 5 COLUMNS (Desktop): Unified Saniye Notları & Hızlı Tepki Card + Room Listeners Summary */}
-        <aside className="lg:col-span-5 flex flex-col gap-4 min-w-0 lg:sticky lg:top-6">
+        <aside className="lg:col-span-5 flex flex-col gap-5 min-w-0 lg:sticky lg:top-6">
           {/* ===============================================================
               BİRLEŞİK KART: SANİYE NOTLARI & HIZLI TEPKİ
              =============================================================== */}
-          <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] backdrop-blur-xl space-y-3 shadow-lg">
+          <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] backdrop-blur-xl space-y-3.5 shadow-lg">
             {/* Header Row */}
             <div className="flex items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2 min-w-0">
@@ -970,7 +970,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </div>
 
           {/* Room Listeners Summary & Auto-Radio Card */}
-          <div className="p-3.5 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-sm space-y-3">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-sm space-y-3">
             <div className="flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex -space-x-1.5 shrink-0">

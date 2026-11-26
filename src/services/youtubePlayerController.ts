@@ -25,6 +25,7 @@ class YouTubePlayerController {
   private isStartingPlayback: boolean = false;
   private startPlaybackTimeout: ReturnType<typeof setTimeout> | null = null;
   private pendingSeekSecond: number | null = null;
+  private lastActualYouTubeSecond: number | null = null;
 
   constructor() {
     this.attachMessageListener();
@@ -130,11 +131,16 @@ class YouTubePlayerController {
             this.isPlaying = true;
             if (this.pendingSeekSecond !== null) {
               const targetSec = this.pendingSeekSecond;
-              // Clear BEFORE seekTo so subsequent buffering -> playing transition never loops!
+              // Clear immediately so this can execute at most ONCE and never cause a buffering loop
               this.pendingSeekSecond = null;
-              this.currentSecond = targetSec;
-              this.sendCommand('seekTo', [targetSec, true]);
-              this.notifyTime(targetSec);
+              const actualTime = this.lastActualYouTubeSecond;
+              // loadVideoById({ startSeconds }) already starts at targetSec;
+              // only run a single corrective seekTo if YouTube's actual reported time drifted > 5s
+              if (actualTime !== null && Math.abs(actualTime - targetSec) > 5) {
+                this.currentSecond = targetSec;
+                this.sendCommand('seekTo', [targetSec, true]);
+                this.notifyTime(targetSec);
+              }
             }
             this.notifyState(true);
             this.startTimer();
@@ -163,7 +169,8 @@ class YouTubePlayerController {
         if (data.event === 'infoDelivery' && data.info) {
           if (typeof data.info.currentTime === 'number') {
             const sec = Math.floor(data.info.currentTime);
-            // Ignore transient 0s echo before pendingSeekSecond executes on PLAYING
+            this.lastActualYouTubeSecond = sec;
+            // Ignore transient 0s echo while loading a new timestamped video
             if (this.pendingSeekSecond !== null && this.pendingSeekSecond > 3 && sec < 3) {
               return;
             }
@@ -263,11 +270,16 @@ class YouTubePlayerController {
     if (videoId) {
       this.currentVideoId = videoId;
     }
-    if (isNewVideo || shouldSeekSameVideo) {
+    if (isNewVideo) {
+      this.lastActualYouTubeSecond = null;
       this.currentSecond = safeStart;
+      this.pendingSeekSecond = safeStart > 0 ? safeStart : null;
+    } else if (shouldSeekSameVideo) {
+      this.currentSecond = safeStart;
+      this.pendingSeekSecond = null;
+    } else {
+      this.pendingSeekSecond = null;
     }
-
-    this.pendingSeekSecond = safeStart > 0 ? safeStart : null;
 
     this.beginStartingPlaybackLock();
     this.lastCommandTime = Date.now();
@@ -283,7 +295,7 @@ class YouTubePlayerController {
         { videoId: this.currentVideoId, startSeconds: safeStart },
       ]);
     } else {
-      if (shouldSeekSameVideo || safeStart > 0) {
+      if (shouldSeekSameVideo) {
         this.sendCommand('seekTo', [safeStart, true]);
       }
       this.sendCommand('playVideo');
@@ -312,6 +324,7 @@ class YouTubePlayerController {
   public stop(silent: boolean = false) {
     this.clearStartingPlaybackLock();
     this.pendingSeekSecond = null;
+    this.lastActualYouTubeSecond = null;
     this.lastCommandTime = Date.now();
     this.expectedPlayingState = false;
     this.isPlaying = false;

@@ -346,9 +346,9 @@ export const ChatTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-3 sm:px-6 py-4 lg:py-5">
+    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 space-y-6">
       {/* Desktop 2-Pane Split Layout (w-80 inbox + flex-1 chat) / Mobile Single-Pane Switch */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:h-[calc(100vh-140px)] lg:min-h-[560px]">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 lg:h-[calc(100vh-148px)] lg:min-h-[560px]">
         {/* ==================== LEFT PANE: DIRECTORY, TABS & INBOX ==================== */}
         <section
           className={`${
@@ -356,7 +356,7 @@ export const ChatTab: React.FC<Props> = ({
           } flex-col bg-white dark:bg-[#12111A]/90 border border-[#E4E2EC] dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-lg lg:h-full`}
         >
           {/* Left Header */}
-          <div className="px-4 pt-4 pb-3 border-b border-[#E4E2EC] dark:border-white/[0.07] space-y-3 shrink-0">
+          <div className="p-4 sm:p-5 border-b border-[#E4E2EC] dark:border-white/[0.07] space-y-3.5 shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-lg font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
@@ -427,33 +427,33 @@ export const ChatTab: React.FC<Props> = ({
             </div>
 
             {/* Segmented Tabs: Sohbetler | Arkadaşlar | İstekler */}
-            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]">
+            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => setSocialTab('chats')}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
                   socialTab === 'chats'
                     ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Sohbetler</span>
+                <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Sohbetler</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSocialTab('friends')}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
                   socialTab === 'friends'
                     ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <Users className="w-3.5 h-3.5" />
-                <span>Arkadaşlar</span>
+                <Users className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Arkadaşlar</span>
                 {friendsList.length > 0 && (
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
                     {friendsList.length}
                   </span>
                 )}
@@ -462,16 +462,16 @@ export const ChatTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setSocialTab('requests')}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
                   socialTab === 'requests'
                     ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>İstekler</span>
+                <UserPlus className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">İstekler</span>
                 {incomingRequests.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-zinc-950 text-[10px] font-extrabold tabular-nums">
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-zinc-950 text-[10px] font-extrabold tabular-nums shrink-0">
                     {incomingRequests.length}
                   </span>
                 )}
@@ -480,7 +480,7 @@ export const ChatTab: React.FC<Props> = ({
           </div>
 
           {/* Left Scrollable Body */}
-          <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-4">
+          <div className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-5 space-y-4">
             {/* Search matches in Real Cloud Users Directory (shown across tabs when searching) */}
             {normalizedQuery && isCloudAuthenticated && (
               <div className="space-y-2">

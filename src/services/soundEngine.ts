@@ -500,6 +500,22 @@ class RealMusicEngine {
    */
   public async playSong(song: Song, startSecond: number = 0): Promise<boolean> {
     const safeStart = Math.max(0, Math.floor(startSecond || 0));
+
+    // Rule 1: If the same track is ALREADY loaded, NEVER reload audio.src or re-send loadVideoById!
+    const isSameLoadedSong =
+      this.currentSong !== null &&
+      (this.currentSong.id === song.id ||
+        (Boolean(song.youtubeVideoId) &&
+          this.currentSong.youtubeVideoId === song.youtubeVideoId));
+
+    if (isSameLoadedSong) {
+      this.seekTo(safeStart);
+      if (!this.isPlaying) {
+        this.resume();
+      }
+      return true;
+    }
+
     const requestId = ++this.currentRequestId;
     const playbackId = `pb_${requestId}_${song.id}_${Date.now()}`;
     this.activePlaybackId = playbackId;
@@ -625,27 +641,22 @@ class RealMusicEngine {
 
         const isNewSrc = this.audio.src !== url;
         if (isNewSrc) {
-          if (pendingStart !== null) {
-            this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
-            this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
-          } else {
-            this.isPendingMetadataSeek = false;
-          }
           this.audio.src = url;
           this.audio.load();
-        } else if (pendingStart !== null) {
+        }
+
+        if (pendingStart !== null) {
           if (this.audio.readyState >= 1) {
             applyNativeSeek();
           } else {
             this.audio.addEventListener('loadedmetadata', applyNativeSeek, { once: true });
-            this.audio.addEventListener('canplay', applyNativeSeek, { once: true });
           }
         } else {
           this.isPendingMetadataSeek = false;
         }
 
         await this.audio.play();
-        if (pendingStart !== null && this.activePlaybackId === playbackId) {
+        if (pendingStart !== null && this.activePlaybackId === playbackId && this.audio.readyState >= 1) {
           applyNativeSeek();
         }
 
@@ -732,6 +743,7 @@ class RealMusicEngine {
       }
     } else if (this.currentSong?.audioUrl && this.audio) {
       this.isUsingSilentAudio = false;
+      this.audio.loop = false;
       this.audio.play().catch((err) => console.warn('Audio resume:', err));
     } else {
       this.startSimulatedTimer(this.simulatedSecond, this.currentSong?.durationSeconds || 240);
