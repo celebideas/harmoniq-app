@@ -337,22 +337,19 @@ export const ChatTab: React.FC<Props> = ({
   const renderUserAvatar = (user: LoungeUser, sizeClass = 'w-11 h-11') => (
     <div className="relative shrink-0">
       <div
-        className={`${sizeClass} rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs border border-[#E8E6E1] dark:border-white/[0.08] overflow-hidden`}
+        className={`${sizeClass} rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs overflow-hidden ${
+          user.isOnline
+            ? 'ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
+            : 'border border-[#E6E4DF] dark:border-white/[0.08]'
+        }`}
+        title={user.isOnline ? 'Şu an dinliyor' : undefined}
       >
         {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+          <img src={user.avatarUrl} alt={user.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
         ) : (
           user.avatarSeed
         )}
       </div>
-      {user.isOnline && (
-        <span
-          className="absolute -bottom-1 -right-1 px-1 py-0.5 rounded-md bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.1] shadow-xs flex items-center justify-center"
-          title="Canlı dinliyor"
-        >
-          <LiveMiniEqualizer />
-        </span>
-      )}
     </div>
   );
 
@@ -642,25 +639,19 @@ export const ChatTab: React.FC<Props> = ({
                             }}
                             className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out"
                           >
-                            <div className="relative">
-                              <div className="w-12 h-12 rounded-full p-[2px] border border-[#16A34A]/50 dark:border-[#22C55E]/50">
-                                <div
-                                  className={`w-full h-full rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs overflow-hidden`}
-                                >
-                                  {user.avatarUrl ? (
-                                    <img
-                                      src={user.avatarUrl}
-                                      alt={user.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    user.avatarSeed
-                                  )}
-                                </div>
-                              </div>
-                              <span className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded-md bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.1] flex items-center justify-center">
-                                <LiveMiniEqualizer />
-                              </span>
+                            <div
+                              className={`w-12 h-12 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs overflow-hidden ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]`}
+                            >
+                              {user.avatarUrl ? (
+                                <img
+                                  src={user.avatarUrl}
+                                  alt={user.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                user.avatarSeed
+                              )}
                             </div>
                             <span className="text-[11px] font-medium text-[#111113] dark:text-[#F5F5F7] max-w-[64px] truncate">
                               {user.name.split(' ')[0]}
@@ -1032,12 +1023,11 @@ export const ChatTab: React.FC<Props> = ({
                         <span className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                           {activeChatUser.name}
                         </span>
-                        {activeChatUser.isOnline && <LiveMiniEqualizer />}
                       </div>
                       <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate flex items-center gap-1.5">
                         <span>{activeChatUser.city}</span>
                         <span>·</span>
-                        <span>{activeChatUser.isOnline ? 'Canlı dinliyor' : 'Çevrimdışı'}</span>
+                        <span>{activeChatUser.isOnline ? 'Şu an dinliyor' : 'Çevrimdışı'}</span>
                       </div>
                     </div>
                   </div>

@@ -360,18 +360,19 @@ export const TimelineTrack: React.FC<Props> = ({
                   {isMultiUser ? (
                     <div className="relative group/pin">
                       <div
-                        className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} border-2 ${
-                          isCoinciding || hasSynced || hasRealUser
-                            ? 'border-[#16A34A] dark:border-[#22C55E] ring-2 ring-[#22C55E]/30'
+                        className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} ${
+                          isCoinciding || hasSynced || hasRealUser || primaryUser.isOnline
+                            ? 'ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
                             : isClusterActive
-                            ? 'border-[#111113] dark:border-white'
-                            : 'border-white dark:border-[#141418]'
+                            ? 'ring-[1.5px] ring-[#111113] dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
+                            : 'border border-white dark:border-[#141418]'
                         } flex items-center justify-center text-force-white text-[10px] font-bold relative z-10 shadow-sm`}
                       >
                         {primaryUser.avatarUrl ? (
                           <img
                             src={primaryUser.avatarUrl}
                             alt={primaryUser.name}
+                            referrerPolicy="no-referrer"
                             className="w-full h-full object-cover rounded-full"
                           />
                         ) : (
@@ -384,18 +385,19 @@ export const TimelineTrack: React.FC<Props> = ({
                     </div>
                   ) : (
                     <div
-                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} border-2 ${
-                        isCoinciding || hasSynced || hasRealUser
-                          ? 'border-[#16A34A] dark:border-[#22C55E] ring-2 ring-[#22C55E]/30'
+                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} ${
+                        isCoinciding || hasSynced || hasRealUser || primaryUser.isOnline
+                          ? 'ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
                           : isClusterActive
-                          ? 'border-[#111113] dark:border-white'
-                          : 'border-white dark:border-[#141418]'
+                          ? 'ring-[1.5px] ring-[#111113] dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
+                          : 'border border-white dark:border-[#141418]'
                       } flex items-center justify-center text-force-white text-[10px] font-bold overflow-hidden shadow-sm`}
                     >
                       {primaryUser.avatarUrl ? (
                         <img
                           src={primaryUser.avatarUrl}
                           alt={primaryUser.name}
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -483,11 +485,18 @@ export const TimelineTrack: React.FC<Props> = ({
                       onClick={() => onSelectUser(user)}
                       className="flex items-center gap-2.5 min-w-0 cursor-pointer group/u"
                     >
-                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#E6E4DF] dark:border-white/[0.08]">
+                      <div
+                        className={`w-10 h-10 rounded-full overflow-hidden shrink-0 ${
+                          user.isOnline
+                            ? 'ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]'
+                            : 'border border-[#E6E4DF] dark:border-white/[0.08]'
+                        }`}
+                      >
                         {user.avatarUrl ? (
                           <img
                             src={user.avatarUrl}
                             alt={user.name}
+                            referrerPolicy="no-referrer"
                             className="w-full h-full object-cover"
                           />
                         ) : (

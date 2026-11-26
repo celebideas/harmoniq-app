@@ -553,8 +553,14 @@ html.dark .harmoniq-leaflet-map:not(.map-satellite-mode) .leaflet-tile-pane {
   filter: invert(93%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
+html.light .leaflet-tile-pane,
 .map-satellite-mode .leaflet-tile-pane {
   filter: none !important;
+  opacity: 1 !important;
+}
+
+html.light .leaflet-container {
+  background: #F1EFEA !important;
 }
 
 html.dark .leaflet-container {

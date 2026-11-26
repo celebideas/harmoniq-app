@@ -157,71 +157,68 @@ const PlaylistRowItem = React.memo<{
 }>(({ playlist, isPlaying = false, onView, onPlay, onDelete }) => (
   <div
     onClick={() => onView(playlist)}
-    className={`p-3 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl transition border ${
+    className={`p-3.5 flex flex-col justify-between group cursor-pointer rounded-2xl transition border ${
       isPlaying
         ? 'bg-[#111113]/[0.05] dark:bg-white/[0.06] border-[#111113]/25 dark:border-white/25 shadow-sm'
         : 'bg-white dark:bg-[#141418] border-[#E6E4DF] dark:border-white/[0.08] hover:border-[#111113]/25 dark:hover:border-white/25 hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none'
     }`}
   >
+    {/* Top Row: Cover + Full Readable Playlist Name & Count */}
     <div className="flex items-center gap-3 min-w-0">
-      <div className="relative shrink-0">
-        <img
-          src={playlist.coverUrl}
-          alt={playlist.title}
-          loading="lazy"
-          decoding="async"
-          className={`w-12 h-12 rounded-xl object-cover shrink-0 bg-[#F1EFEA] dark:bg-[#1C1C22] border ${
-            isPlaying ? 'border-[#111113]/30 dark:border-white/30 ring-2 ring-[#111113]/15 dark:ring-white/20' : 'border-[#E6E4DF] dark:border-white/[0.08]'
-          }`}
-        />
-      </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <h4
-            className={`text-sm font-semibold truncate transition ${
-              isPlaying
-                ? 'text-[#111113] dark:text-[#F5F5F7] font-bold'
-                : 'text-[#111113] dark:text-[#F5F5F7] group-hover:text-[#111113] dark:group-hover:text-[#F5F5F7]'
-            }`}
-          >
-            {playlist.title}
-          </h4>
-          {isPlaying && (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] border border-emerald-500/30 text-[10px] font-bold shrink-0">
-              Aktif
-            </span>
-          )}
-        </div>
+      <img
+        src={playlist.coverUrl}
+        alt={playlist.title}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        className={`w-11 h-11 rounded-xl object-cover shrink-0 bg-[#F1EFEA] dark:bg-[#1C1C22] border ${
+          isPlaying
+            ? 'border-[#111113]/30 dark:border-white/30'
+            : 'border-[#E6E4DF] dark:border-white/[0.08]'
+        }`}
+      />
+      <div className="min-w-0 flex-1">
+        <h4 className="font-semibold text-sm text-[#111113] dark:text-[#F5F5F7] line-clamp-1 leading-snug">
+          {playlist.title}
+        </h4>
         <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 font-mono tabular-nums">
           {playlist.tracks?.length || playlist.trackCount} parça · {playlist.duration}
         </p>
       </div>
     </div>
 
-    <div className="flex items-center gap-1.5 shrink-0">
-      {onPlay && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlay(playlist);
-          }}
-          className={`px-3 py-2 min-h-[38px] rounded-xl font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-            isPlaying
-              ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
-              : 'bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113] dark:hover:bg-white dark:hover:text-[#0B0B0D] text-[#111113] dark:text-[#F5F5F7] hover:text-white'
-          }`}
-        >
-          {isPlaying ? (
-            <span>ılı</span>
-          ) : (
-            <>
+    {/* Bottom Row: Action & Delete */}
+    <div className="pt-2.5 mt-2.5 border-t border-[#E6E4DF] dark:border-white/[0.06] flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {isPlaying ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay && onPlay(playlist);
+            }}
+            className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] border border-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Aktif</span>
+          </button>
+        ) : (
+          onPlay && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlay(playlist);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113] dark:hover:bg-white hover:text-white dark:hover:text-[#0B0B0D] text-[#111113] dark:text-[#F5F5F7] font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
+            >
               <Play className="w-3 h-3 fill-current" />
               <span>Çal</span>
-            </>
-          )}
-        </button>
-      )}
+            </button>
+          )
+        )}
+      </div>
+
       {onDelete && (
         <button
           type="button"
@@ -229,8 +226,9 @@ const PlaylistRowItem = React.memo<{
             e.stopPropagation();
             onDelete(playlist.id);
           }}
-          className="p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-rose-500 transition cursor-pointer"
+          className="p-1.5 rounded-lg text-[#63636B] dark:text-[#8E8E98] hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
           title="Listeyi Kaldır"
+          aria-label="Listeyi Kaldır"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -1740,7 +1738,7 @@ export const ProfileTab: React.FC<Props> = ({
   ];
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-5 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-28 space-y-5 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
       {/* Toast Notice Banner */}
       {toastNotice && (
         <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.12] text-[#111113] dark:text-[#F5F5F7] text-xs font-medium shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
@@ -1812,7 +1810,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowTrustScoreModal(true)}
-                    className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
+                    className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
                     title="Şeffaf Güven Kalkanı Detaylarını İncele"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
@@ -1910,14 +1908,22 @@ export const ProfileTab: React.FC<Props> = ({
                       <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
                         Haftalık Dinleme Özeti
                       </div>
-                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#111113] dark:text-[#F5F5F7] tabular-nums">
-                        {weeklyHours > 0
-                          ? `${weeklyHours}s ${weeklyRemainingMinutes}dk`
-                          : weeklyRemainingMinutes > 0
-                          ? `${weeklyRemainingMinutes}dk ${weeklyRemainingSeconds}sn`
-                          : weeklyTotalSeconds > 0
-                          ? `${weeklyTotalSeconds}sn`
-                          : '0dk'}
+                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#111113] dark:text-[#F5F5F7] tabular-nums inline-flex items-baseline gap-1.5">
+                        {weeklyHours > 0 ? (
+                          <>
+                            <span>{weeklyHours}s</span>
+                            <span>{weeklyRemainingMinutes}dk</span>
+                          </>
+                        ) : weeklyRemainingMinutes > 0 ? (
+                          <>
+                            <span>{weeklyRemainingMinutes}dk</span>
+                            <span>{weeklyRemainingSeconds}sn</span>
+                          </>
+                        ) : weeklyTotalSeconds > 0 ? (
+                          <span>{weeklyTotalSeconds}sn</span>
+                        ) : (
+                          <span>0dk</span>
+                        )}
                       </div>
                       <p className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                         {weeklyScrobbleCount > 0

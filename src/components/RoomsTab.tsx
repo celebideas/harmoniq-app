@@ -143,36 +143,38 @@ const ArtistCardCompact: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex flex-col items-center text-center shrink-0 group ${
+      className={`w-full p-3.5 h-full rounded-2xl border active:scale-[0.98] transition-colors duration-150 cursor-pointer flex flex-col items-center justify-between text-center group ${
         isCurrentArtist
-          ? 'bg-[#111113]/[0.06] dark:bg-white/[0.08] border-[#111113]/25 dark:border-white/25'
-          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none'
+          ? 'bg-white dark:bg-[#141418] border-[#111113] dark:border-white/40 shadow-[0_2px_12px_rgba(17,17,19,0.06)] dark:shadow-none'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(17,17,19,0.04)] dark:shadow-none'
       }`}
     >
-      <div className="relative mb-2.5">
-        {room.imageUrl ? (
-          <img
-            src={room.imageUrl}
-            alt={room.artist}
-            loading="lazy"
-            decoding="async"
-            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#E6E4DF] dark:border-white/[0.08] bg-[#1C1C22] group-hover:scale-105 transition-transform"
-          />
-        ) : (
-          <div
-            className={`w-13 h-13 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/[0.08] relative overflow-hidden group-hover:scale-105 transition-transform`}
-          >
-            <span className="relative z-10">{room.avatarSeed}</span>
-          </div>
-        )}
-      </div>
+      <div className="flex flex-col items-center w-full min-w-0">
+        <div className="relative mb-2.5">
+          {room.imageUrl ? (
+            <img
+              src={room.imageUrl}
+              alt={room.artist}
+              loading="lazy"
+              decoding="async"
+              className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#E6E4DF] dark:border-white/[0.08] bg-[#1C1C22] group-hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div
+              className={`w-13 h-13 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/[0.08] relative overflow-hidden group-hover:scale-105 transition-transform`}
+            >
+              <span className="relative z-10">{room.avatarSeed}</span>
+            </div>
+          )}
+        </div>
 
-      <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate w-full">
-        {room.artist}
-      </span>
-      <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
-        {room.topSongTitle}
-      </span>
+        <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate w-full">
+          {room.artist}
+        </span>
+        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
+          {room.topSongTitle}
+        </span>
+      </div>
 
       <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-[#16A34A] dark:text-[#22C55E] font-mono tabular-nums">
         <LiveMiniEqualizer />
@@ -813,7 +815,7 @@ export const RoomsTab: React.FC<Props> = ({
                 Aramanıza uygun müzik sanatçısı bulunamadı.
               </div>
             ) : (
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)] lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:pr-0 lg:[mask-image:none] lg:[-webkit-mask-image:none]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 w-full">
                 {filteredArtistRooms.slice(0, visibleArtistsCount).map((room) => {
                   const isCurrentArtist = Boolean(
                     currentSong && currentSong.artist.toLowerCase() === room.artist.toLowerCase()

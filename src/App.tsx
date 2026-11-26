@@ -3186,6 +3186,7 @@ export default function App() {
   }
 
   return (
+    <>
     <div
       className={`min-h-screen ${
         isLight ? 'bg-[#FAF9F6] text-[#111113]' : 'bg-[#0B0B0D] text-[#F5F5F7]'
@@ -3554,16 +3555,13 @@ export default function App() {
               transform: toastDragOffsetY ? `translateY(${toastDragOffsetY}px)` : undefined,
               transition: toastDragOffsetY ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
             }}
-            className="fixed top-[68px] left-4 right-4 z-50 max-w-md mx-auto pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300"
+            className="fixed top-[68px] left-4 right-4 z-[130] max-w-md mx-auto pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300"
           >
-            <div className="relative rounded-2xl bg-zinc-950/90 border border-emerald-500/40 shadow-[0_12px_40px_rgba(16,185,129,0.2)] backdrop-blur-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 overflow-hidden">
-              {/* Subtle emerald background aura */}
-              <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
+            <div className="relative rounded-2xl bg-white dark:bg-[#141418] text-[#111113] dark:text-[#F5F5F7] border border-[#E6E4DF] dark:border-white/10 shadow-2xl backdrop-blur-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 overflow-hidden">
               {/* 5-Second Progress Bar (Right-to-Left / shrinking smoothly) */}
-              <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-emerald-500/15 overflow-hidden">
+              <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#16A34A]/15 dark:bg-[#22C55E]/15 overflow-hidden">
                 <div
-                  className="h-full bg-emerald-400 origin-left"
+                  className="h-full bg-[#16A34A] dark:bg-[#22C55E] origin-left"
                   style={{
                     animation: 'toastProgress 5s linear forwards',
                   }}
@@ -3571,7 +3569,7 @@ export default function App() {
               </div>
 
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* User Avatar with pulsing compatibility ring */}
+                {/* User Avatar with refined live ring */}
                 <div
                   onClick={() => {
                     triggerHaptic(15);
@@ -3582,7 +3580,7 @@ export default function App() {
                   className="relative cursor-pointer shrink-0 group/av"
                   title="Profili Gör"
                 >
-                  <div className="w-11 h-11 rounded-xl overflow-hidden ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-black">
+                  <div className="w-11 h-11 rounded-full overflow-hidden ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-[#141418]">
                     {highCompatibilityToast.user.avatarUrl ? (
                       <img
                         src={highCompatibilityToast.user.avatarUrl}
@@ -3591,27 +3589,26 @@ export default function App() {
                       />
                     ) : (
                       <div
-                        className={`w-full h-full bg-gradient-to-tr ${highCompatibilityToast.user.avatarGradient} flex items-center justify-center text-white font-bold text-xs`}
+                        className={`avatar-circle w-full h-full bg-gradient-to-tr ${highCompatibilityToast.user.avatarGradient} flex items-center justify-center text-white font-bold text-xs`}
                       >
                         {highCompatibilityToast.user.avatarSeed}
                       </div>
                     )}
                   </div>
-                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-zinc-950 rounded-full animate-pulse" />
                 </div>
 
                 {/* Details */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-bold text-white truncate">
+                    <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                       {highCompatibilityToast.user.name}
                     </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shrink-0">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#16A34A]/12 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/25 dark:border-[#22C55E]/30 flex items-center gap-1 shrink-0">
                       <Zap className="w-2.5 h-2.5 fill-current" />
                       <span>%{highCompatibilityToast.score} Uyum</span>
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-300 truncate mt-0.5">
+                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                     {highCompatibilityToast.reason}
                   </p>
                 </div>
@@ -3627,7 +3624,7 @@ export default function App() {
                     handleSendFrequency(highCompatibilityToast.user);
                     setHighCompatibilityToast(null);
                   }}
-                  className="px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm flex items-center gap-1"
+                  className="studio-btn-primary px-2.5 py-1.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm flex items-center gap-1"
                   title="Frekans Gönder / Sohbet Başlat"
                 >
                   <Zap className="w-3 h-3 fill-current" />
@@ -3641,7 +3638,7 @@ export default function App() {
                     setSelectedDrawerUser(highCompatibilityToast.user);
                     setHighCompatibilityToast(null);
                   }}
-                  className="px-2.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white font-medium text-xs transition active:scale-95 cursor-pointer border border-white/10"
+                  className="px-2.5 py-1.5 rounded-xl bg-[#F1EFEA] hover:bg-[#E6E4DF] dark:bg-white/[0.08] dark:hover:bg-white/[0.14] text-[#111113] dark:text-[#F5F5F7] font-medium text-xs transition active:scale-95 cursor-pointer border border-[#E2DFD9] dark:border-white/10"
                 >
                   Profil
                 </button>
@@ -3656,7 +3653,7 @@ export default function App() {
                     }
                     setHighCompatibilityToast(null);
                   }}
-                  className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+                  className="p-1 rounded-lg text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-white hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition cursor-pointer"
                   aria-label="Kapat"
                 >
                   <X className="w-4 h-4" />
@@ -3667,14 +3664,14 @@ export default function App() {
         )}
 
         {toastMessage && (
-          <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[80] pointer-events-none bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border border-[#E4E2EC] dark:border-white/10 text-zinc-900 dark:text-zinc-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 max-w-[90vw]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[130] pointer-events-none bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#E6E4DF] dark:border-white/10 text-[#111113] dark:text-[#F5F5F7] px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 max-w-[90vw]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] animate-pulse shrink-0" />
             <span className="truncate">{toastMessage}</span>
           </div>
         )}
 
         {silentSyncNotice && !toastMessage && (
-          <div className="fixed bottom-36 right-4 z-[75] pointer-events-none bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 px-3.5 py-2 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="fixed bottom-36 right-4 z-[130] pointer-events-none bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#16A34A]/35 dark:border-[#22C55E]/35 text-[#16A34A] dark:text-[#22C55E] px-3.5 py-2 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <span>{silentSyncNotice}</span>
           </div>
         )}
@@ -3720,6 +3717,7 @@ export default function App() {
           }}
         />
       </div>
+    </div>
 
       <MiniProfileDrawer
         user={resolvedDrawerUser}
@@ -3917,6 +3915,6 @@ export default function App() {
         onComplete={handleOnboardingComplete}
         onSkipAsGuest={handleOnboardingSkip}
       />
-    </div>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronDown,
   Play,
@@ -1152,11 +1153,10 @@ export const NowPlayingModal: React.FC<Props> = ({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
                       <div
-                        className={`avatar-circle w-10 h-10 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold border border-white/20 shadow`}
+                        className={`avatar-circle w-10 h-10 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold shadow ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#FAF9F6] dark:ring-offset-[#141418]`}
                       >
                         {user.name.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#16A34A] dark:bg-[#22C55E] border-2 border-[#FAF9F6] dark:border-[#141418]" />
                     </div>
 
                     <div className="min-w-0">
@@ -1387,27 +1387,27 @@ export const NowPlayingModal: React.FC<Props> = ({
     </div>
   );
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Tam Ekran Müzik Oynatıcı"
-      className="fixed inset-0 z-[90] h-[100dvh] w-full flex flex-col bg-[#FAF9F6] dark:bg-[#0B0B0D] text-[#111113] dark:text-[#F5F5F7] overflow-hidden animate-modal-enter"
+      className="fixed inset-0 z-[120] h-[100dvh] w-full flex flex-col bg-[#0B0B0D] light:bg-[#FAF9F6] text-[#F5F5F7] light:text-[#111113] overflow-hidden"
     >
       {/* Full-Screen Organic Album Cover Ambient Glow (Radial Gradient + Soft Blurred Artwork Wash) */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         {/* Dark Mode Organic Radial Glow */}
         <div
           className="hidden dark:block absolute inset-0 transition-all duration-700"
           style={{
-            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.28) 0%, rgba(${albumRgb}, 0.09) 48%, rgba(11, 11, 13, 0) 80%)`,
+            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.26) 0%, rgba(${albumRgb}, 0.08) 48%, rgba(11, 11, 13, 0) 80%)`,
           }}
         />
         {/* Light Mode Organic Radial Glow */}
         <div
           className="block dark:hidden absolute inset-0 transition-all duration-700"
           style={{
-            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.14) 0%, rgba(${albumRgb}, 0.04) 48%, rgba(250, 249, 246, 0) 80%)`,
+            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.13) 0%, rgba(${albumRgb}, 0.04) 48%, rgba(250, 249, 246, 0) 80%)`,
           }}
         />
         {/* Ultra-Soft Blurred Full-Bleed Artwork Wash */}
@@ -1415,13 +1415,14 @@ export const NowPlayingModal: React.FC<Props> = ({
           <img
             src={song.coverUrl}
             alt=""
-            className="w-full h-full object-cover blur-[100px] scale-125 opacity-[0.06] dark:opacity-[0.14] select-none transition-all duration-700"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover blur-[100px] scale-125 opacity-[0.05] dark:opacity-[0.12] select-none transition-all duration-700"
           />
         )}
       </div>
 
-      {/* TOP STUDIO HEADER BAR (Fixed Non-Shrinking Top Bar) */}
-      <header className="relative z-20 shrink-0 w-full border-b border-[#E6E4DF]/70 dark:border-white/[0.06] bg-[#FAF9F6]/70 dark:bg-[#0B0B0D]/60 backdrop-blur-xl">
+      {/* TOP STUDIO HEADER BAR (Aligned directly to max-w-5xl mx-auto px-6 axis) */}
+      <header className="relative z-20 shrink-0 w-full border-b border-[#E6E4DF]/80 dark:border-white/[0.06] bg-[#FAF9F6]/90 dark:bg-[#0B0B0D]/85 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between gap-2">
           {/* Left: Close Button */}
           <button
@@ -1454,7 +1455,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                 <div
                   role="status"
                   aria-live="polite"
-                  className="absolute right-full mr-2 top-1/2 -translate-y-1/2 z-[100] whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] border border-[#16A34A]/35 dark:border-[#22C55E]/35 shadow-lg flex items-center gap-1.5 pointer-events-none animate-modal-enter"
+                  className="absolute right-full mr-2 top-1/2 -translate-y-1/2 z-[130] whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] border border-[#16A34A]/35 dark:border-[#22C55E]/35 shadow-lg flex items-center gap-1.5 pointer-events-none"
                 >
                   <Check className="w-3 h-3 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={2.5} />
                   <span>ListenHub an bağlantısı kopyalandı</span>
@@ -1499,15 +1500,16 @@ export const NowPlayingModal: React.FC<Props> = ({
       {/* =====================================================================
           DESKTOP LAYOUT (>= 1024px): 2-Column Wide Full-Screen Studio Stage
          ===================================================================== */}
-      <main className="hidden lg:grid relative z-10 flex-1 min-h-0 max-w-5xl mx-auto w-full grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center px-6 py-6">
-        {/* LEFT COLUMN: Large Square Album Cover + Metadata + Seek + Monochrome Controls */}
-        <section className="lg:col-span-6 flex flex-col items-center justify-center w-full max-w-[380px] mx-auto space-y-5">
-          {/* Pure Uncropped Square Album Cover */}
-          <div className="w-full max-w-[340px] aspect-square rounded-2xl overflow-hidden shadow-2xl border border-[#E6E4DF] dark:border-white/[0.08] bg-[#141418] shrink-0 group">
+      <main className="hidden lg:grid relative z-10 flex-1 min-h-0 max-w-5xl mx-auto w-full grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start px-6 py-6 overflow-y-auto no-scrollbar">
+        {/* LEFT COLUMN: Clean Square Album Cover + Metadata + Seek + Monochrome Controls */}
+        <section className="lg:col-span-6 flex flex-col items-center w-full max-w-[380px] mx-auto space-y-5">
+          {/* Pure Uncropped Square Album Cover (No corner numbers/badges) */}
+          <div className="w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden shadow-2xl border border-[#E6E4DF] dark:border-white/[0.08] bg-[#F1EFEA] dark:bg-[#141418] shrink-0 group">
             {song.coverUrl && !coverError ? (
               <img
                 src={song.coverUrl}
                 alt={song.album || song.title}
+                referrerPolicy="no-referrer"
                 onError={() => setCoverError(true)}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               />
@@ -1523,7 +1525,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           </div>
 
           {/* Metadata + Heart */}
-          <div className="w-full max-w-[360px] space-y-3">
+          <div className="w-full max-w-[340px] space-y-3">
             {renderTrackMeta()}
 
             {/* Live Room Counter Quick Jump */}
@@ -1548,15 +1550,15 @@ export const NowPlayingModal: React.FC<Props> = ({
           </div>
         </section>
 
-        {/* RIGHT COLUMN: Full-Height Scrollable Studio Panel (Sözler | Sıradaki | Radyo | Odadakiler) */}
-        <section className="lg:col-span-6 h-full max-h-[75vh] flex flex-col rounded-2xl bg-white/85 dark:bg-[#141418]/85 backdrop-blur-xl border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_12px_36px_rgba(17,17,19,0.05)] dark:shadow-none overflow-hidden">
-          {/* Clean 4-Tab Bar */}
+        {/* RIGHT COLUMN: Full-Height Scrollable Studio Panel (Sözler | Sıradaki | Radyo | Oda (X)) */}
+        <section className="lg:col-span-6 h-[calc(100dvh-132px)] max-h-[680px] flex flex-col rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_12px_36px_rgba(17,17,19,0.05)] dark:shadow-none overflow-hidden">
+          {/* Clean Single-Line 4-Tab Bar */}
           <div
             role="tablist"
             aria-label="Oynatıcı sekmeleri"
-            className="shrink-0 p-2 border-b border-[#E6E4DF] dark:border-white/[0.08] bg-[#FAF9F6]/70 dark:bg-[#0B0B0D]/40"
+            className="shrink-0 p-2 border-b border-[#E6E4DF] dark:border-white/[0.08] bg-[#FAF9F6] dark:bg-[#0B0B0D]/40"
           >
-            <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.06]">
+            <div className="grid grid-cols-4 gap-1 w-full p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.06]">
               <button
                 type="button"
                 role="tab"
@@ -1565,7 +1567,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setDesktopTab('lyrics');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopTab === 'lyrics'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
@@ -1583,7 +1585,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setDesktopTab('queue');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopTab === 'queue'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
@@ -1601,7 +1603,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setDesktopTab('radio');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopTab === 'radio'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
@@ -1619,14 +1621,14 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setDesktopTab('listeners');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopTab === 'listeners'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
-                <span className="truncate">Odadakiler ({activeRoomListeners.length})</span>
+                <span>Oda ({activeRoomListeners.length})</span>
               </button>
             </div>
           </div>
@@ -1689,11 +1691,12 @@ export const NowPlayingModal: React.FC<Props> = ({
 
             {/* Breathing Full Square Album Cover OR Synchronized Lyrics in the Exact Same Slot */}
             {mobileHeroMode === 'cover' ? (
-              <div className="w-[72vw] max-w-[300px] aspect-square mx-auto rounded-2xl overflow-hidden shadow-2xl border border-[#E6E4DF] dark:border-white/[0.08] bg-[#141418] shrink-0">
+              <div className="w-[72vw] max-w-[300px] aspect-square mx-auto rounded-2xl overflow-hidden shadow-2xl border border-[#E6E4DF] dark:border-white/[0.08] bg-[#F1EFEA] dark:bg-[#141418] shrink-0">
                 {song.coverUrl && !coverError ? (
                   <img
                     src={song.coverUrl}
                     alt={song.album || song.title}
+                    referrerPolicy="no-referrer"
                     onError={() => setCoverError(true)}
                     className="w-full h-full object-cover"
                   />
@@ -1708,7 +1711,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                 )}
               </div>
             ) : (
-              <div className="w-[82vw] max-w-[320px] aspect-square mx-auto rounded-2xl bg-white/85 dark:bg-[#141418]/90 backdrop-blur-xl border border-[#E6E4DF] dark:border-white/[0.08] shadow-xl flex flex-col overflow-hidden shrink-0">
+              <div className="w-[82vw] max-w-[320px] aspect-square mx-auto rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-xl flex flex-col overflow-hidden shrink-0">
                 {renderLyricsContent(mobileLyricsRef, true)}
               </div>
             )}
@@ -1721,7 +1724,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Bottom Drawer/List Area: Sıradaki | Radyo | Odadakiler */}
+          {/* Bottom Drawer/List Area: Sıradaki | Radyo | Oda (X) */}
           <section
             ref={mobileQueueSectionRef}
             className="mt-7 pt-5 border-t border-[#E6E4DF] dark:border-white/[0.08] space-y-4"
@@ -1729,7 +1732,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             <div
               role="tablist"
               aria-label="Alt oynatıcı listeleri"
-              className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.06]"
+              className="grid grid-cols-3 gap-1 w-full p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.06]"
             >
               <button
                 type="button"
@@ -1739,7 +1742,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setMobileBottomTab('queue');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   mobileBottomTab === 'queue'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
@@ -1757,7 +1760,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setMobileBottomTab('radio');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   mobileBottomTab === 'radio'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
@@ -1775,14 +1778,14 @@ export const NowPlayingModal: React.FC<Props> = ({
                   triggerHaptic(12);
                   setMobileBottomTab('listeners');
                 }}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`whitespace-nowrap text-xs px-2 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   mobileBottomTab === 'listeners'
                     ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                     : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
                 }`}
               >
                 <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                <span className="truncate">Odadakiler ({activeRoomListeners.length})</span>
+                <span>Oda ({activeRoomListeners.length})</span>
               </button>
             </div>
 
@@ -1796,4 +1799,6 @@ export const NowPlayingModal: React.FC<Props> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

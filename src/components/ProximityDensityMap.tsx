@@ -327,17 +327,14 @@ const hashString = (input: string): number => {
   return Math.abs(hash);
 };
 
-// Map Tailwind avatarGradient tokens to clean inline CSS gradient colors for Leaflet divIcon
+// Map Tailwind avatarGradient tokens to calm, studio-grade CSS gradients for Leaflet divIcon
 const resolveAvatarGradientCss = (gradientToken?: string): string => {
   const g = (gradientToken || '').toLowerCase();
-  if (g.includes('emerald') || g.includes('teal')) return 'linear-gradient(135deg, #10b981, #0f766e)';
-  if (g.includes('purple') || g.includes('violet') || g.includes('fuchsia')) return 'linear-gradient(135deg, #9333ea, #ec4899)';
-  if (g.includes('amber') || g.includes('orange')) return 'linear-gradient(135deg, #f59e0b, #ea580c)';
-  if (g.includes('rose') || g.includes('red')) return 'linear-gradient(135deg, #f43f5e, #be123c)';
-  if (g.includes('cyan') || g.includes('sky') || g.includes('blue')) return 'linear-gradient(135deg, #06b6d4, #2563eb)';
-  if (g.includes('indigo')) return 'linear-gradient(135deg, #6366f1, #7c3aed)';
-  if (g.includes('lime') || g.includes('green')) return 'linear-gradient(135deg, #84cc16, #15803d)';
-  return 'linear-gradient(135deg, #9333ea, #db2777)';
+  if (g.includes('emerald') || g.includes('teal')) return 'linear-gradient(135deg, #065f46, #022c22)';
+  if (g.includes('slate') || g.includes('blue') || g.includes('cyan') || g.includes('indigo')) return 'linear-gradient(135deg, #475569, #1e293b)';
+  if (g.includes('stone') || g.includes('amber') || g.includes('orange')) return 'linear-gradient(135deg, #57534e, #292524)';
+  if (g.includes('neutral') || g.includes('rose') || g.includes('red')) return 'linear-gradient(135deg, #525252, #262626)';
+  return 'linear-gradient(135deg, #3f3f46, #18181b)';
 };
 
 const offsetLatLngByKm = (
@@ -680,6 +677,21 @@ export const ProximityDensityMap: React.FC<Props> = ({
     tileLayerRef.current = googleLayer;
   }, [mapStyle]);
 
+  // 2b. Force tile redraw & layout recalculation on theme or mapStyle change (prevents gray tiles in Light Mode)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.invalidateSize({ animate: false });
+    tileLayerRef.current?.redraw();
+    const timer = setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize({ animate: false });
+        tileLayerRef.current?.redraw();
+      }
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [effectiveTheme, mapStyle]);
+
   // 3. Update User Center Marker ("Sen"), Metric Radar Circle, and Smooth FlyTo on city/radius change
   useEffect(() => {
     const map = mapRef.current;
@@ -773,36 +785,26 @@ export const ProximityDensityMap: React.FC<Props> = ({
       const safeAvatarUrl = sanitizeImageUrl(user.avatarUrl);
       const gradientCss = resolveAvatarGradientCss(user.avatarGradient);
 
-      const ringColor = user.isRealUser
-        ? '#22C55E'
-        : isSelected
-        ? effectiveTheme === 'light'
-          ? '#141416'
-          : '#F5F5F7'
-        : effectiveTheme === 'light'
-        ? '#ffffff'
-        : 'rgba(255,255,255,0.85)';
-
+      const ringOffsetColor = effectiveTheme === 'light' ? '#FAF9F6' : '#0B0B0D';
       const size = isSelected ? 40 : 34;
       const opacity = inActiveRange ? 1 : 0.36;
-      const glowShadow = isSelected
-        ? '0 0 0 3px rgba(34,197,94,0.35), 0 6px 18px rgba(0,0,0,0.45)'
-        : user.isRealUser
-        ? '0 0 0 3px rgba(34,197,94,0.4), 0 4px 14px rgba(0,0,0,0.4)'
-        : '0 4px 12px rgba(0,0,0,0.35)';
+      const liveRingShadow = isSelected
+        ? `0 0 0 2px ${ringOffsetColor}, 0 0 0 4px rgba(16,185,129,0.95), 0 6px 18px rgba(0,0,0,0.45)`
+        : user.isOnline !== false
+        ? `0 0 0 2px ${ringOffsetColor}, 0 0 0 3.5px rgba(16,185,129,0.82), 0 4px 12px rgba(0,0,0,0.35)`
+        : `0 0 0 1.5px ${effectiveTheme === 'light' ? '#E6E4DF' : 'rgba(255,255,255,0.2)'}, 0 4px 12px rgba(0,0,0,0.3)`;
 
       const avatarInner = safeAvatarUrl
         ? `<img src="${escapeHtml(safeAvatarUrl)}" alt="${safeName}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;display:block;" />`
-        : `<div style="width:100%;height:100%;border-radius:9999px;background:${gradientCss};display:flex;align-items:center;justify-content:center;color:#ffffff;font-weight:800;font-size:${isSelected ? '12px' : '11px'};letter-spacing:-0.02em;">${safeSeed}</div>`;
+        : `<div style="width:100%;height:100%;border-radius:9999px;background:${gradientCss};display:flex;align-items:center;justify-content:center;color:#ffffff;font-weight:700;font-size:${isSelected ? '12px' : '11px'};letter-spacing:-0.02em;">${safeSeed}</div>`;
 
       const icon = L.divIcon({
         className: 'harmoniq-leaflet-marker',
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
         html: `
-          <div class="keep-dark" style="position:relative;width:${size}px;height:${size}px;border-radius:9999px;padding:2px;background:${ringColor};box-shadow:${glowShadow};opacity:${opacity};transition:transform 0.2s ease, opacity 0.2s ease;cursor:pointer;" title="${safeName} (${user.distanceKm} km)">
+          <div class="keep-dark" style="position:relative;width:${size}px;height:${size}px;border-radius:9999px;box-shadow:${liveRingShadow};opacity:${opacity};transition:transform 0.2s ease, opacity 0.2s ease;cursor:pointer;" title="${safeName} (${user.distanceKm} km)">
             ${avatarInner}
-            <span style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:9999px;background:#22C55E;border:2px solid #0B0B0D;"></span>
           </div>
         `,
       });
@@ -1117,13 +1119,25 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     src={selectedUser.avatarUrl}
                     alt={selectedUser.name}
                     referrerPolicy="no-referrer"
-                    className={`w-11 h-11 rounded-full object-cover shrink-0 border ${
-                      isLight ? 'border-[#E6E4DF]' : 'border-white/10'
+                    className={`w-11 h-11 rounded-full object-cover shrink-0 ${
+                      selectedUser.isOnline
+                        ? `ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
+                          }`
+                        : isLight
+                        ? 'border border-[#E6E4DF]'
+                        : 'border border-white/10'
                     }`}
                   />
                 ) : (
                   <div
-                    className={`avatar-circle w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0`}
+                    className={`avatar-circle w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 ${
+                      selectedUser.isOnline
+                        ? `ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
+                          }`
+                        : ''
+                    }`}
                   >
                     {selectedUser.avatarSeed}
                   </div>

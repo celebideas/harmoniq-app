@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Radio,
@@ -104,9 +105,9 @@ export const MiniProfileDrawer: React.FC<Props> = ({
   const isPendingReceived = user.friendStatus === 'pending_received';
   const isFriends = user.friendStatus === 'friends';
 
-  return (
+  const drawerContent = (
     <div
-      className="fixed inset-0 z-[95] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter select-none"
+      className="fixed inset-0 z-[125] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter select-none"
       onClick={onClose}
     >
       <div
@@ -128,23 +129,22 @@ export const MiniProfileDrawer: React.FC<Props> = ({
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative shrink-0">
               <div
-                className={`avatar-circle w-14 h-14 rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-lg ring-1 shadow-md overflow-hidden ${
-                  isLight ? 'ring-black/10' : 'ring-white/10'
+                className={`avatar-circle w-14 h-14 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-lg shadow-md overflow-hidden ${
+                  user.isOnline
+                    ? `ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                        isLight ? 'ring-offset-white' : 'ring-offset-[#141418]'
+                      }`
+                    : isLight
+                    ? 'ring-1 ring-black/10'
+                    : 'ring-1 ring-white/10'
                 }`}
               >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  <img src={user.avatarUrl} alt={user.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 ) : (
                   user.avatarSeed
                 )}
               </div>
-              {user.isOnline && (
-                <span
-                  className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ${
-                    isLight ? 'bg-[#16A34A] ring-white' : 'bg-[#22C55E] ring-[#141418]'
-                  }`}
-                />
-              )}
             </div>
 
             <div className="min-w-0">
@@ -561,4 +561,6 @@ export const MiniProfileDrawer: React.FC<Props> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(drawerContent, document.body) : drawerContent;
 };

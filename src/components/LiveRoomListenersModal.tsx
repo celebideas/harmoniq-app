@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Search,
@@ -98,9 +99,9 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
     ? 'bg-[#F1EFEA] text-[#63636B] hover:text-[#111113] hover:bg-[#E6E4DF] border border-[#E2DFD9] rounded-xl font-semibold'
     : 'bg-[#1C1C22] text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#24242C] border border-white/[0.08] rounded-xl font-semibold';
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
       onClick={onClose}
     >
       <div
@@ -227,7 +228,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
         </div>
 
         {/* Quick Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 text-[11px] [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
           <button
             type="button"
             onClick={() => setFilterMode('all')}
@@ -320,26 +321,19 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                         <img
                           src={user.avatarUrl}
                           alt={user.name}
-                          className={`w-11 h-11 rounded-2xl object-cover shadow-sm ${
-                            user.isRealUser ? 'ring-2 ring-emerald-500/70' : ''
+                          className={`w-11 h-11 rounded-full object-cover shadow-sm ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
                           }`}
                         />
                       ) : (
                         <div
-                          className={`avatar-circle w-11 h-11 rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-sm shadow-sm ${
-                            user.isRealUser ? 'ring-2 ring-emerald-500/70' : ''
+                          className={`avatar-circle w-11 h-11 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-sm shadow-sm ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
                           }`}
                         >
                           {user.avatarSeed}
                         </div>
                       )}
-                      <span
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${
-                          isLight
-                            ? 'border-[#FAF9F6] bg-[#16A34A]'
-                            : 'border-[#1C1C22] bg-[#22C55E]'
-                        }`}
-                      />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -538,4 +532,6 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
