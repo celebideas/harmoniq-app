@@ -346,7 +346,7 @@ export async function syncUserProfileToFirestore(params: {
   city: string;
   bio: string;
   topGenres: string[];
-  currentSong: Song;
+  currentSong: Song | null;
   currentSecond: number;
   statusBubble?: string;
   privacyMode: PrivacyMode;
@@ -370,7 +370,7 @@ async function runSerializedProfileSync(params: {
   city: string;
   bio: string;
   topGenres: string[];
-  currentSong: Song;
+  currentSong: Song | null;
   currentSecond: number;
   statusBubble?: string;
   privacyMode: PrivacyMode;
@@ -416,9 +416,9 @@ async function runSerializedProfileSync(params: {
       city,
       bio,
       topGenres,
-      currentSongId: clampStr(params.currentSong.id, 128, 'song-duman'),
-      currentSongTitle: clampStr(params.currentSong.title, 140, 'Kırmış Kalbini'),
-      currentSongArtist: clampStr(params.currentSong.artist, 140, 'Duman'),
+      currentSongId: clampStr(params.currentSong?.id, 128, ''),
+      currentSongTitle: clampStr(params.currentSong?.title, 140, ''),
+      currentSongArtist: clampStr(params.currentSong?.artist, 140, ''),
       currentSecond: clampNum(params.currentSecond, 0, 7200, 0),
       isDiscoverable,
       isOnline: true,
@@ -491,7 +491,7 @@ async function runSerializedProfileSync(params: {
 
 export async function updateLiveListeningPresence(params: {
   uid: string;
-  currentSong: Song;
+  currentSong: Song | null;
   currentSecond: number;
   statusBubble?: string;
   isOnline?: boolean;
@@ -499,9 +499,9 @@ export async function updateLiveListeningPresence(params: {
   try {
     const profileRef = doc(db, 'publicProfiles', params.uid);
     const payload: Record<string, unknown> = {
-      currentSongId: clampStr(params.currentSong.id, 128, 'song-duman'),
-      currentSongTitle: clampStr(params.currentSong.title, 140, 'Kırmış Kalbini'),
-      currentSongArtist: clampStr(params.currentSong.artist, 140, 'Duman'),
+      currentSongId: clampStr(params.currentSong?.id, 128, ''),
+      currentSongTitle: clampStr(params.currentSong?.title, 140, ''),
+      currentSongArtist: clampStr(params.currentSong?.artist, 140, ''),
       currentSecond: clampNum(params.currentSecond, 0, 7200, 0),
       isOnline: params.isOnline !== false,
       lastSeenAt: serverTimestamp(),
@@ -924,7 +924,7 @@ export async function sendOrStartCloudMessage(params: {
   myCity: string;
   targetUser: LoungeUser;
   text: string;
-  currentSong: Song;
+  currentSong: Song | null;
   currentSecond: number;
   isIcebreaker?: boolean;
   sharedSong?: Song;
@@ -979,15 +979,15 @@ export async function sendOrStartCloudMessage(params: {
         uidB,
         participantA: iAmA ? meSummary : otherSummary,
         participantB: iAmA ? otherSummary : meSummary,
-        matchedTrackId: clampStr(params.currentSong.id, 128, 'song-duman'),
-        matchedTrackTitle: clampStr(params.currentSong.title, 140, 'Kırmış Kalbini'),
-        matchedTrackArtist: clampStr(params.currentSong.artist, 140, 'Duman'),
+        matchedTrackId: clampStr(params.currentSong?.id, 128, ''),
+        matchedTrackTitle: clampStr(params.currentSong?.title, 140, 'ListenHub'),
+        matchedTrackArtist: clampStr(params.currentSong?.artist, 140, ''),
         matchedTrackCoverGradient: clampStr(
-          params.currentSong.coverGradient,
+          params.currentSong?.coverGradient,
           120,
           'from-zinc-800 to-zinc-950'
         ),
-        matchedTrackDuration: clampNum(params.currentSong.durationSeconds, 0, 7200, 240),
+        matchedTrackDuration: clampNum(params.currentSong?.durationSeconds, 0, 7200, 240),
         matchedSecond: clampNum(params.currentSecond, 0, 7200, 0),
         lastMessage: previewText,
         lastMessageAt: serverTimestamp(),
@@ -997,7 +997,7 @@ export async function sendOrStartCloudMessage(params: {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
-      const coverUrl = clampStr(params.currentSong.coverUrl, 500, '');
+      const coverUrl = clampStr(params.currentSong?.coverUrl, 500, '');
       if (coverUrl) convPayload.matchedTrackCoverUrl = coverUrl;
       batch.set(convRef, convPayload);
     } else {

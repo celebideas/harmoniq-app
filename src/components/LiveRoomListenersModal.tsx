@@ -42,7 +42,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<
-    'all' | '1km' | '5km' | 'city' | 'solo' | 'kadikoy' | 'ytm' | 'friends'
+    'all' | '1km' | '5km' | 'city' | 'kadikoy' | 'ytm' | 'friends'
   >('all');
   const [coverError, setCoverError] = useState(false);
 
@@ -79,7 +79,6 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
       if (filterMode === '1km') return user.distanceKm <= 1.0;
       if (filterMode === '5km') return user.distanceKm <= 5.0;
       if (filterMode === 'city') return user.distanceKm <= 15.0;
-      if (filterMode === 'solo') return Math.abs(user.currentSecond - 142) <= 10;
       if (filterMode === 'kadikoy') {
         const lowerCity = `${formattedCity} ${user.city}`.toLowerCase();
         return lowerCity.includes('kadıköy') || lowerCity.includes('moda');
@@ -206,7 +205,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Odadaki kişiler arasında ara (İsim, Kadıköy, Solo...)"
+            placeholder="Odadaki kişiler arasında ara (İsim, şehir, not...)"
             className={`w-full pl-10 pr-10 py-2.5 rounded-2xl text-xs border transition focus:outline-none focus:border-[#E87A3E] ${
               isLight
                 ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512] placeholder-[#8E847A]'
@@ -260,16 +259,6 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           </button>
           <button
             type="button"
-            onClick={() => setFilterMode('solo')}
-            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              filterMode === 'solo' ? activeChipClass : inactiveChipClass
-            }`}
-          >
-            <Music className="w-3 h-3 shrink-0" />
-            <span>01:42 Solosunda Olanlar</span>
-          </button>
-          <button
-            type="button"
             onClick={() => setFilterMode('kadikoy')}
             className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 cursor-pointer ${
               filterMode === 'kadikoy' ? activeChipClass : inactiveChipClass
@@ -302,7 +291,6 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-1">
           {filteredListeners.length > 0 ? (
             filteredListeners.map((user) => {
-              const isAtSolo = Math.abs(user.currentSecond - 142) <= 5;
               const displayCity = sanitizeFormattedLocation(user.city);
               const cleanedQuote = user.statusBubble ? stripStrayEmojis(user.statusBubble) : '';
 
@@ -405,11 +393,6 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                         >
                           <Clock className="w-2.5 h-2.5 text-[#E87A3E]" />
                           <span>{formatTime(user.currentSecond)}</span>
-                          {isAtSolo && (
-                            <span className={isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'}>
-                              · Solo
-                            </span>
-                          )}
                         </span>
 
                         <span

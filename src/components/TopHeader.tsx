@@ -14,7 +14,7 @@ import { ListenHubLogo } from './ListenHubLogo';
 import { triggerHaptic } from '../services/themeService';
 
 interface Props {
-  currentSong: Song;
+  currentSong: Song | null;
   onOpenSongPicker: () => void;
   onOpenNowPlaying?: () => void;
   isPlaying?: boolean;

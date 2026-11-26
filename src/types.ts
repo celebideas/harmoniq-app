@@ -18,7 +18,7 @@ export interface UserProfile {
   avatarUrl?: string; // Custom uploaded or preset profile picture
   bio: string;
   email?: string;
-  currentSong: Song;
+  currentSong: Song | null;
   songProgressSeconds: number;
   isListeningNow: boolean;
   lastActiveMinutesAgo: number;

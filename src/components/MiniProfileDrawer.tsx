@@ -17,7 +17,7 @@ import { sanitizeFormattedLocation } from '../services/locationService';
 
 interface Props {
   user: LoungeUser | null;
-  song: Song;
+  song: Song | null;
   onClose: () => void;
   onSendFrequency: (user: LoungeUser, icebreakerText?: string) => void;
   onToggleFriend?: (user: LoungeUser) => void;
@@ -52,7 +52,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
   useEffect(() => {
     setCoverError(false);
-  }, [displaySong.coverUrl, displaySong.id]);
+  }, [displaySong?.coverUrl, displaySong?.id]);
 
   if (!user) return null;
 
@@ -296,7 +296,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                 isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/10'
               }`}
             >
-              {displaySong.coverUrl && !coverError ? (
+              {displaySong?.coverUrl && !coverError ? (
                 <img
                   src={displaySong.coverUrl}
                   alt={displaySong.album || displaySong.title}
@@ -306,7 +306,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               ) : (
                 <div
                   className={`w-full h-full bg-gradient-to-br ${
-                    displaySong.coverGradient || 'from-[#E87A3E] to-[#D97706]'
+                    displaySong?.coverGradient || 'from-[#E87A3E] to-[#D97706]'
                   } flex items-center justify-center text-white`}
                 >
                   <Music className="w-5 h-5" />
@@ -324,7 +324,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                     isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
                   }`}
                 >
-                  {formatTime(user.currentSecond)} / {formatTime(displaySong.durationSeconds || 220)}
+                  {formatTime(user.currentSecond)} / {formatTime(displaySong?.durationSeconds || 220)}
                 </span>
               </div>
               <div
@@ -332,10 +332,10 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                   isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
                 }`}
               >
-                {displaySong.title}
+                {displaySong?.title || 'Canlı Dinleme'}
               </div>
               <div className={`text-[11px] truncate ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
-                {displaySong.artist} · {displaySong.genre}
+                {displaySong ? `${displaySong.artist} · ${displaySong.genre}` : 'ListenHub Ağı'}
               </div>
             </div>
           </div>
@@ -398,7 +398,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
             }`}
           >
-            <span className="truncate">{displaySong.album}</span>
+            <span className="truncate">{displaySong?.album || 'ListenHub'}</span>
             <span
               className={`flex items-center gap-1.5 font-medium shrink-0 ${
                 isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'

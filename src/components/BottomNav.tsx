@@ -19,7 +19,7 @@ interface Props {
   onSelectTab: (tab: NavTab) => void;
   unreadCount: number;
   liveCount?: number;
-  currentSong?: Song;
+  currentSong?: Song | null;
   isPlaying?: boolean;
   currentSecond?: number;
   isAudioLoading?: boolean;

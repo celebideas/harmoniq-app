@@ -17,7 +17,7 @@ import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
 
 interface Props {
-  currentSong: Song;
+  currentSong: Song | null;
   isPlaying: boolean;
   isAudioLoading?: boolean;
   currentSecond: number;
@@ -60,9 +60,11 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   const trackRef = useRef<HTMLDivElement>(null);
 
   const isLight = themeMode === 'light';
-  const duration = Math.max(1, currentSong.durationSeconds || 210);
+  const duration = Math.max(1, currentSong?.durationSeconds || 210);
   const displaySecond = isDragging ? dragSecond : currentSecond;
   const progressPct = Math.min(100, Math.max(0, (displaySecond / duration) * 100));
+
+  if (!currentSong) return null;
 
   const computeSecondFromClientX = (clientX: number) => {
     if (!trackRef.current) return displaySecond;

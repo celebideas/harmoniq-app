@@ -11,15 +11,30 @@ import {
   SkipForward,
   Send,
   Video,
+  Disc3,
+  Link2,
 } from 'lucide-react';
 import { Song, LoungeUser, PlatformType, PrivacyMode } from '../types';
 import { TimelineTrack } from './TimelineTrack';
-import { ProximityDensityMap, DistanceFilter } from './ProximityDensityMap';
+import { ProximityDensityMap, RadiusSlider, ALL_TURKEY_RADIUS } from './ProximityDensityMap';
 import { ytController } from '../services/youtubePlayerController';
 import { triggerHaptic } from '../services/themeService';
 
+interface VibeNote {
+  id: string;
+  userInitials: string;
+  userName: string;
+  avatarGradient: string;
+  second: number;
+  note: string;
+  isMine?: boolean;
+  userRef?: LoungeUser;
+}
+
+const VIBE_NOTES_STORAGE_KEY = 'listenhub_vibe_notes_by_song';
+
 interface Props {
-  currentSong: Song;
+  currentSong: Song | null;
   mySecond: number;
   users: LoungeUser[];
   activePlatform: PlatformType;
@@ -30,6 +45,7 @@ interface Props {
   onDirectChat?: (user: LoungeUser) => void;
   onSeekSecond: (sec: number) => void;
   onOpenSongPicker: () => void;
+  onOpenYouTubeConnect?: () => void;
   onToggleFriend?: (user: LoungeUser) => void;
   onOpenNowPlaying: () => void;
   onOpenRoomListeners?: () => void;
@@ -63,6 +79,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
   onDirectChat,
   onSeekSecond,
   onOpenSongPicker,
+  onOpenYouTubeConnect,
   onToggleFriend,
   onOpenNowPlaying,
   onOpenRoomListeners,
@@ -83,70 +100,48 @@ export const LiveLoungeTab: React.FC<Props> = ({
 }) => {
   // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek NEVER reloads the iframe
   const ytIframeSrc = useMemo(() => {
-    if (!currentSong.youtubeVideoId) return '';
+    if (!currentSong?.youtubeVideoId) return '';
     const origin =
       typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : '';
     const startSec = ytController.getPendingSeekSecond() ?? 0;
     const autoPlayFlag = ytController.getIsPlaying() ? '1' : '0';
     return `https://www.youtube.com/embed/${currentSong.youtubeVideoId}?autoplay=${autoPlayFlag}&start=${startSec}&enablejsapi=1&playsinline=1&origin=${origin}&widgetid=1`;
-  }, [currentSong.youtubeVideoId]);
+  }, [currentSong?.youtubeVideoId]);
 
-  const [vibeNotes, setVibeNotes] = useState<
-    Array<{
-      id: string;
-      userInitials: string;
-      userName: string;
-      avatarGradient: string;
-      second: number;
-      note: string;
-      isMine?: boolean;
-      userRef?: LoungeUser;
-    }>
-  >([
-    {
-      id: 'vibe-1',
-      userInitials: 'DK',
-      userName: 'Defne Kaya',
-      avatarGradient: 'from-zinc-700 to-zinc-900',
-      second: 102,
-      note: 'Gitar solosu tüyleri diken diken etti.',
-    },
-    {
-      id: 'vibe-2',
-      userInitials: 'ET',
-      userName: 'Emir Timur',
-      avatarGradient: 'from-stone-700 to-stone-900',
-      second: 135,
-      note: 'Gece sürüşü için kusursuz.',
-    },
-    {
-      id: 'vibe-3',
-      userInitials: 'SY',
-      userName: 'Selin Yılmaz',
-      avatarGradient: 'from-neutral-700 to-neutral-900',
-      second: 28,
-      note: 'Giriş melodisi ilk saniyeden yakalıyor.',
-    },
-    {
-      id: 'vibe-4',
-      userInitials: 'BA',
-      userName: 'Barış Alper',
-      avatarGradient: 'from-zinc-600 to-zinc-800',
-      second: 54,
-      note: 'Bas yürüyüşü inanılmaz temiz.',
-    },
-    {
-      id: 'vibe-5',
-      userInitials: 'MK',
-      userName: 'Melis Kurt',
-      avatarGradient: 'from-stone-600 to-stone-800',
-      second: 85,
-      note: 'Nakaratın girdiği an odadaki herkes susuyor.',
-    },
-  ]);
+  // Per-song Saniye Anıları stored in localStorage (zero hardcoded Duman notes)
+  const [vibeNotesBySong, setVibeNotesBySong] = useState<Record<string, VibeNote[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = localStorage.getItem(VIBE_NOTES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return {};
+  });
+
+  const activeSongNotes: VibeNote[] = useMemo(() => {
+    if (!currentSong?.id) return [];
+    const raw = vibeNotesBySong[currentSong.id] || [];
+    return raw.map((v) => {
+      if (v.isMine || v.userRef) return v;
+      const matched = users.find(
+        (u) =>
+          u.name.toLowerCase().includes(v.userName.toLowerCase()) ||
+          v.userName.toLowerCase().includes(u.name.toLowerCase()) ||
+          u.avatarSeed === v.userInitials
+      );
+      return matched ? { ...v, userRef: matched } : v;
+    });
+  }, [currentSong?.id, vibeNotesBySong, users]);
 
   const [customNoteText, setCustomNoteText] = useState('');
-  const [distanceFilter, setDistanceFilter] = useState<DistanceFilter>('all');
+  const [radiusKm, setRadiusKm] = useState<number>(ALL_TURKEY_RADIUS);
   const [loungeViewMode, setLoungeViewMode] = useState<'timeline' | 'map'>('timeline');
   const [showKlipMode, setShowKlipMode] = useState(false);
 
@@ -155,33 +150,18 @@ export const LiveLoungeTab: React.FC<Props> = ({
   const touchStartY = useRef<number | null>(null);
   const [swipeHint, setSwipeHint] = useState<'next' | 'prev' | null>(null);
 
-  useEffect(() => {
-    if (users.length > 0) {
-      setVibeNotes((prev) =>
-        prev.map((v) => {
-          const matched = users.find(
-            (u) =>
-              u.name.toLowerCase().includes(v.userName.toLowerCase()) ||
-              v.userName.toLowerCase().includes(u.name.toLowerCase()) ||
-              u.avatarSeed === v.userInitials
-          );
-          return matched ? { ...v, userRef: matched } : v;
-        })
-      );
-    }
-  }, [users]);
-
   const displayUsers =
     privacyMode === 'friends_only'
       ? users.filter((u) => u.friendStatus === 'friends')
       : users;
 
-  const distanceFilteredUsers = displayUsers.filter((u) => {
-    if (distanceFilter === '1km') return u.distanceKm <= 1.0;
-    if (distanceFilter === '5km') return u.distanceKm <= 5.0;
-    if (distanceFilter === 'city') return u.distanceKm <= 15.0;
-    return true;
-  });
+  const distanceFilteredUsers = useMemo(
+    () =>
+      displayUsers.filter((u) =>
+        radiusKm >= ALL_TURKEY_RADIUS ? true : u.distanceKm <= radiusKm
+      ),
+    [displayUsers, radiusKm]
+  );
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -199,16 +179,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
     onShowToast?.(`${formatTime(vibe.second)} anına sarıldı (${vibe.userName})`);
   };
 
-  const handleVibeUserOpen = (vibe: {
-    id: string;
-    userInitials: string;
-    userName: string;
-    avatarGradient: string;
-    second: number;
-    note: string;
-    isMine?: boolean;
-    userRef?: LoungeUser;
-  }) => {
+  const handleVibeUserOpen = (vibe: VibeNote) => {
     if (vibe.isMine) return;
     triggerHaptic(15);
     if (vibe.userRef) {
@@ -225,7 +196,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
       platform: 'youtube_music',
       currentSecond: vibe.second,
       statusBubble: vibe.note,
-      topArtists: [currentSong.artist, 'Duman', 'Mor ve Ötesi'],
+      topArtists: currentSong?.artist ? [currentSong.artist] : [],
       bio: 'Aynı şarkının aynı saniyesinde buluşan dinleyici.',
       trustScore: 98,
       lastHeartbeatAgoSeconds: 5,
@@ -239,12 +210,13 @@ export const LiveLoungeTab: React.FC<Props> = ({
 
   const handleSendCustomNote = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentSong?.id) return;
     const trimmed = customNoteText.trim();
     if (!trimmed) return;
 
     triggerHaptic(22);
     const sec = Math.round(mySecond);
-    const newVibe = {
+    const newVibe: VibeNote = {
       id: `vibe-${Date.now()}`,
       userInitials: 'SN',
       userName: 'Sen',
@@ -254,7 +226,19 @@ export const LiveLoungeTab: React.FC<Props> = ({
       isMine: true,
     };
 
-    setVibeNotes((prev) => [newVibe, ...prev]);
+    setVibeNotesBySong((prev) => {
+      const existing = prev[currentSong.id] || [];
+      const nextMap = {
+        ...prev,
+        [currentSong.id]: [newVibe, ...existing],
+      };
+      try {
+        localStorage.setItem(VIBE_NOTES_STORAGE_KEY, JSON.stringify(nextMap));
+      } catch {
+        // ignore storage errors
+      }
+      return nextMap;
+    });
     setCustomNoteText('');
     onShowToast?.(`Notun ${formatTime(sec)} anına bırakıldı.`);
   };
@@ -285,6 +269,80 @@ export const LiveLoungeTab: React.FC<Props> = ({
       }
     }
   };
+
+  if (!currentSong) {
+    return (
+      <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 pb-8 max-w-xl lg:max-w-4xl mx-auto w-full relative select-none">
+        <section
+          aria-label="Sahnen Hazır"
+          className="rounded-3xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_8px_32px_rgba(24,21,18,0.06)] dark:shadow-none p-7 sm:p-10 text-center flex flex-col items-center justify-center space-y-5"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#E87A3E]">
+            <Disc3 className="w-8 h-8" strokeWidth={1.6} />
+          </div>
+
+          <div className="space-y-2 max-w-md">
+            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-[#181512] dark:text-[#FAF7F2] tracking-tight">
+              Sahnen Hazır — İlk Parçanı Başlat
+            </h2>
+            <p className="text-xs sm:text-sm text-[#6B635B] dark:text-[#A39A91] leading-relaxed">
+              Kendi kütüphanenden bir parça aç veya dilediğin şarkıyı arayıp canlı zaman rayında aynı saniyedeki dinleyicilerle buluş.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(15);
+                onOpenSongPicker();
+              }}
+              className="studio-btn-primary w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Search className="w-4 h-4" strokeWidth={1.85} />
+              <span>Şarkı Ara ve Başlat</span>
+            </button>
+
+            {onOpenYouTubeConnect && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(15);
+                  onOpenYouTubeConnect();
+                }}
+                className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Link2 className="w-4 h-4 text-[#E87A3E]" strokeWidth={1.85} />
+                <span>YouTube Music Kütüphaneni Bağla</span>
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* Quiet Proximity Map Preview even before first song */}
+        <section aria-label="Yakındaki Dinleyiciler" className="mt-5 space-y-3">
+          <RadiusSlider
+            radiusKm={radiusKm}
+            onChangeRadiusKm={setRadiusKm}
+            listenerCount={distanceFilteredUsers.length}
+            themeMode={themeMode}
+          />
+          <ProximityDensityMap
+            users={displayUsers}
+            radiusKm={radiusKm}
+            onChangeRadiusKm={setRadiusKm}
+            onSelectUser={onSelectUser}
+            onDirectChat={onDirectChat}
+            onSeekSecond={onSeekSecond}
+            currentSong={null}
+            myCity={userCity}
+            onChangeCity={onUpdateCity}
+            themeMode={themeMode}
+          />
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-6 max-w-xl lg:max-w-6xl mx-auto w-full relative select-none">
@@ -452,8 +510,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
             ) : (
               <ProximityDensityMap
                 users={displayUsers}
-                activeFilter={distanceFilter}
-                onChangeFilter={setDistanceFilter}
+                radiusKm={radiusKm}
+                onChangeRadiusKm={setRadiusKm}
                 onSelectUser={onSelectUser}
                 onDirectChat={onDirectChat}
                 onSeekSecond={onSeekSecond}
@@ -464,7 +522,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               />
             )}
 
-            {/* Quiet Studio Control Strip: Timeline | Harita | Liste + Distance Filter */}
+            {/* Quiet Studio Control Strip: Timeline | Harita | Liste + Interactive KM RadiusSlider */}
             <div className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-3 space-y-2.5">
               <div className="grid grid-cols-3 gap-1 p-1 bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] rounded-xl text-xs">
                 <button
@@ -505,45 +563,12 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 </button>
               </div>
 
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap">
-                {[
-                  { id: 'all' as DistanceFilter, label: 'Tümü', count: displayUsers.length },
-                  {
-                    id: '1km' as DistanceFilter,
-                    label: '1 km',
-                    count: displayUsers.filter((u) => u.distanceKm <= 1).length,
-                  },
-                  {
-                    id: '5km' as DistanceFilter,
-                    label: '5 km',
-                    count: displayUsers.filter((u) => u.distanceKm <= 5).length,
-                  },
-                  {
-                    id: 'city' as DistanceFilter,
-                    label: '15 km',
-                    count: displayUsers.filter((u) => u.distanceKm <= 15).length,
-                  },
-                ].map((f) => {
-                  const isSelected = distanceFilter === f.id;
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setDistanceFilter(f.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center gap-1.5 border ${
-                        isSelected
-                          ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold border-[#E87A3E]/25'
-                          : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]'
-                      }`}
-                    >
-                      <span>{f.label}</span>
-                      <span className="font-mono tabular-nums text-[10px] opacity-80">
-                        {f.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <RadiusSlider
+                radiusKm={radiusKm}
+                onChangeRadiusKm={setRadiusKm}
+                listenerCount={distanceFilteredUsers.length}
+                themeMode={themeMode}
+              />
             </div>
 
             {distanceFilteredUsers.length === 0 && loungeViewMode === 'timeline' && (
@@ -553,7 +578,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 </p>
                 <button
                   type="button"
-                  onClick={() => setDistanceFilter('all')}
+                  onClick={() => setRadiusKm(ALL_TURKEY_RADIUS)}
                   className="px-3.5 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
                 >
                   Tüm Dinleyicileri Göster
@@ -565,7 +590,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
 
         {/* RIGHT 5 COLUMNS (Desktop): Calm "Saniye Anıları" Card + Quiet Listener Summary */}
         <aside className="lg:col-span-5 flex flex-col gap-4 min-w-0 lg:sticky lg:top-6">
-          {/* 3. SAKİN "SANİYE ANILARI" BÖLÜMÜ */}
+          {/* 3. SAKİN "SANİYE ANILARI" BÖLÜMÜ (Dinamik, yalnızca çalan parçaya özel) */}
           <section
             aria-label="Saniye Anıları"
             className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3.5"
@@ -575,51 +600,59 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 Saniye Anıları
               </h3>
               <span className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91]">
-                {vibeNotes.length} anı
+                {activeSongNotes.length} anı
               </span>
             </div>
 
-            {/* Clean Editorial Quote Rows (Comment left, clickable mono timestamp right) */}
-            <div className="divide-y divide-[#EAE4DC] dark:divide-[#FFF0E1]/[0.06]">
-              {vibeNotes.slice(0, 5).map((vibe) => {
-                const isNearCurrent = Math.abs(mySecond - vibe.second) <= 5;
-                return (
-                  <div
-                    key={vibe.id}
-                    className={`py-2.5 first:pt-0.5 last:pb-0.5 flex items-start justify-between gap-3 transition-colors ${
-                      isNearCurrent ? 'opacity-100' : 'opacity-90 hover:opacity-100'
-                    }`}
-                  >
+            {activeSongNotes.length === 0 ? (
+              <div className="py-4 px-3 rounded-xl bg-[#FAF8F4] dark:bg-[#211D1A]/70 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-center">
+                <p className="text-xs text-[#6B635B] dark:text-[#A39A91]">
+                  Bu parçada ilk saniye anısını sen bırak
+                </p>
+              </div>
+            ) : (
+              /* Clean Editorial Quote Rows (Comment left, clickable mono timestamp right) */
+              <div className="divide-y divide-[#EAE4DC] dark:divide-[#FFF0E1]/[0.06]">
+                {activeSongNotes.slice(0, 5).map((vibe) => {
+                  const isNearCurrent = Math.abs(mySecond - vibe.second) <= 5;
+                  return (
                     <div
-                      onClick={() => handleVibeUserOpen(vibe)}
-                      className={`min-w-0 flex-1 space-y-0.5 ${
-                        vibe.isMine ? '' : 'cursor-pointer group/vibe'
+                      key={vibe.id}
+                      className={`py-2.5 first:pt-0.5 last:pb-0.5 flex items-start justify-between gap-3 transition-colors ${
+                        isNearCurrent ? 'opacity-100' : 'opacity-90 hover:opacity-100'
                       }`}
                     >
-                      <p className="text-xs sm:text-[13px] text-[#181512] dark:text-[#FAF7F2] leading-relaxed">
-                        "{vibe.note}"
-                      </p>
-                      <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] group-hover/vibe:text-[#181512] dark:group-hover/vibe:text-[#FAF7F2] transition-colors block truncate">
-                        {vibe.userName}
-                      </span>
-                    </div>
+                      <div
+                        onClick={() => handleVibeUserOpen(vibe)}
+                        className={`min-w-0 flex-1 space-y-0.5 ${
+                          vibe.isMine ? '' : 'cursor-pointer group/vibe'
+                        }`}
+                      >
+                        <p className="text-xs sm:text-[13px] text-[#181512] dark:text-[#FAF7F2] leading-relaxed">
+                          "{vibe.note}"
+                        </p>
+                        <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] group-hover/vibe:text-[#181512] dark:group-hover/vibe:text-[#FAF7F2] transition-colors block truncate">
+                          {vibe.userName}
+                        </span>
+                      </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleVibeRowSeek(vibe)}
-                      className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
-                        isNearCurrent
-                          ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/30 dark:border-[#22C55E]/30'
-                          : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
-                      }`}
-                      title={`${formatTime(vibe.second)} anına sar`}
-                    >
-                      {formatTime(vibe.second)}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                      <button
+                        type="button"
+                        onClick={() => handleVibeRowSeek(vibe)}
+                        className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
+                          isNearCurrent
+                            ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/30 dark:border-[#22C55E]/30'
+                            : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
+                        }`}
+                        title={`${formatTime(vibe.second)} anına sar`}
+                      >
+                        {formatTime(vibe.second)}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Single-line Calm Note Input */}
             <form

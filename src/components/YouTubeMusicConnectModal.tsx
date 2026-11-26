@@ -29,7 +29,7 @@ import { resolveMusicLinkOrQuery, extractYouTubeVideoId } from '../services/musi
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  currentSong: Song;
+  currentSong: Song | null;
   isPlaying: boolean;
   onTogglePlay: () => void;
   onSelectSong: (song: Song) => void;
@@ -263,7 +263,8 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
     handleConnectLink(customSongUrl);
   };
 
-  const currentYtId = currentSong.youtubeVideoId || extractYouTubeVideoId(currentSong.rawMediaTitle || '');
+  const currentYtId =
+    currentSong?.youtubeVideoId || extractYouTubeVideoId(currentSong?.rawMediaTitle || '');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -870,6 +871,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             </span>
           </div>
 
+          {currentSong ? (
           <div className="p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
@@ -925,6 +927,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               </button>
             </div>
           </div>
+          ) : (
+          <div className="p-3 rounded-2xl bg-neutral-900/70 border border-neutral-800 text-xs text-neutral-400">
+            Henüz seçili bir parça yok. Aşağıdan bir parça veya çalma listesi bağlayabilirsin.
+          </div>
+          )}
 
           {/* Embedded YouTube Player if Klip is toggled with official youtube.com session cookies */}
           {showVideoEmbed && currentYtId && (

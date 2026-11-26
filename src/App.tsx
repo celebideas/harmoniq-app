@@ -179,12 +179,102 @@ export default function App() {
     }
     return 'lounge';
   });
-  const [currentSong, setCurrentSong] = useState<Song>(SAMPLE_SONGS[0]);
+  const LAST_PLAYED_SONG_KEY = 'listenhub_last_played_song';
+  const LAST_PLAYED_SECOND_KEY = 'listenhub_last_played_second';
+
+  const isTemplatePlaylist = (id: string) =>
+    id === 'pl-yc-liked' || id === 'pl-yc-mix' || id === 'pl-yc-night';
+  const isTemplateSong = (id: string) =>
+    id === 'song-duman' ||
+    id === 'song-morveotesi' ||
+    id === 'song-arctic' ||
+    id === 'song-jakuzi' ||
+    id === 'song-teoman' ||
+    id === 'song-shepastaway';
+
+  const initialPlaybackRef = useRef<{ song: Song | null; second: number } | null>(null);
+  if (initialPlaybackRef.current === null) {
+    let resolvedSong: Song | null = null;
+    let resolvedSecond = 0;
+
+    if (typeof window !== 'undefined') {
+      // 1) User's own persisted last played song & second
+      try {
+        const savedSongRaw = localStorage.getItem(LAST_PLAYED_SONG_KEY);
+        if (savedSongRaw) {
+          const parsedSong = JSON.parse(savedSongRaw) as Song;
+          if (parsedSong && parsedSong.id && parsedSong.title) {
+            resolvedSong = parsedSong;
+            const savedSecRaw = localStorage.getItem(LAST_PLAYED_SECOND_KEY);
+            const parsedSec = savedSecRaw ? Number(savedSecRaw) : 0;
+            if (Number.isFinite(parsedSec) && parsedSec > 0) {
+              resolvedSecond = Math.floor(parsedSec);
+            }
+          }
+        }
+      } catch {
+        // ignore storage parse error
+      }
+
+      // 2) Fallback to first real track in user's connected YouTube Music / Favorites library
+      if (!resolvedSong) {
+        try {
+          const persistedLib = getPersistentYouTubeLibrary();
+          const libFav = persistedLib?.favoriteSongs?.find((s: Song) => s && !isTemplateSong(s.id));
+          const libPlTrack = persistedLib?.playlists
+            ?.filter((p: UserPlaylist) => !isTemplatePlaylist(p.id))
+            .flatMap((p: UserPlaylist) => p.tracks || [])
+            .find((s: Song) => s && !isTemplateSong(s.id));
+
+          if (libFav) {
+            resolvedSong = libFav;
+          } else if (libPlTrack) {
+            resolvedSong = libPlTrack;
+          } else {
+            const savedFavRaw = localStorage.getItem('harmoniq_user_favorite_songs');
+            if (savedFavRaw) {
+              const parsedFavs = JSON.parse(savedFavRaw);
+              if (Array.isArray(parsedFavs)) {
+                const firstRealFav = parsedFavs.find((s: Song) => s && !isTemplateSong(s.id));
+                if (firstRealFav) resolvedSong = firstRealFav;
+              }
+            }
+            if (!resolvedSong) {
+              const savedPlRaw = localStorage.getItem('harmoniq_user_playlists');
+              if (savedPlRaw) {
+                const parsedPls = JSON.parse(savedPlRaw);
+                if (Array.isArray(parsedPls)) {
+                  const firstRealPlTrack = parsedPls
+                    .filter((p: UserPlaylist) => !isTemplatePlaylist(p.id))
+                    .flatMap((p: UserPlaylist) => p.tracks || [])
+                    .find((s: Song) => s && !isTemplateSong(s.id));
+                  if (firstRealPlTrack) resolvedSong = firstRealPlTrack;
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore storage parse error
+        }
+      }
+      // 3) Otherwise remain null (clean empty stage — NEVER force SAMPLE_SONGS[0]!)
+    }
+
+    initialPlaybackRef.current = { song: resolvedSong, second: resolvedSecond };
+  }
+
+  const [currentSong, setCurrentSong] = useState<Song | null>(initialPlaybackRef.current.song);
   const [activeTheme, setActiveTheme] = useState<ExtractedPalette>(DEFAULT_PALETTE);
 
   // Dynamic Color Theme Engine: Extracts palette from album artwork only when song or cover changes
   const lastExtractedSongRef = useRef<string>('');
   useEffect(() => {
+    if (!currentSong) {
+      lastExtractedSongRef.current = '';
+      setActiveTheme(DEFAULT_PALETTE);
+      applyThemeToDocument(DEFAULT_PALETTE);
+      return;
+    }
     const key = `${currentSong.id}::${currentSong.coverUrl || ''}`;
     if (lastExtractedSongRef.current === key) return;
     lastExtractedSongRef.current = key;
@@ -198,20 +288,11 @@ export default function App() {
     return () => {
       isCancelled = true;
     };
-  }, [currentSong.id, currentSong.coverUrl, currentSong.artist, currentSong.title]);
+  }, [currentSong?.id, currentSong?.coverUrl, currentSong?.artist, currentSong?.title]);
 
-  const [mySecond, setMySecond] = useState<number>(0);
+  const [mySecond, setMySecond] = useState<number>(initialPlaybackRef.current.second);
   const [activePlatform, setActivePlatform] = useState<PlatformType>('youtube_music');
   const [privacyMode, setPrivacyMode] = useState<PrivacyMode>('public');
-
-  const isTemplatePlaylist = (id: string) =>
-    id === 'pl-yc-liked' || id === 'pl-yc-mix' || id === 'pl-yc-night';
-  const isTemplateSong = (id: string) =>
-    id === 'song-duman' ||
-    id === 'song-morveotesi' ||
-    id === 'song-arctic' ||
-    id === 'song-jakuzi' ||
-    id === 'song-teoman';
 
   const [syncedPlaylists, setSyncedPlaylists] = useState<UserPlaylist[]>(() => {
     if (typeof window !== 'undefined') {
@@ -491,6 +572,10 @@ export default function App() {
         'harmoniq_yt_connected_account',
         'harmoniq_yt_synced_library',
         'listenhub_play_history',
+        'listenhub_last_played_song',
+        'listenhub_last_played_second',
+        'listenhub_vibe_notes_by_song',
+        'harmoniq_custom_top4_vitrin',
         ...Object.values(STORAGE_KEYS),
       ];
       keysToRemove.forEach((key) => {
@@ -502,6 +587,10 @@ export default function App() {
       });
     }
 
+    setCurrentSong(null);
+    setMySecond(0);
+    setActiveQueue([]);
+    setNextRadioSong(null);
     setYoutubeAccount({
       email: '',
       handle: '@muziksever',
@@ -725,16 +814,26 @@ export default function App() {
 
   // Playback & Infinite Radio Queue State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [activeQueue, setActiveQueue] = useState<Song[]>(SAMPLE_SONGS);
+  const [activeQueue, setActiveQueue] = useState<Song[]>(() =>
+    initialPlaybackRef.current?.song ? [initialPlaybackRef.current.song] : []
+  );
   const [autoRadioEnabled, setAutoRadioEnabled] = useState<boolean>(true);
   const [nextRadioSong, setNextRadioSong] = useState<Song | null>(null);
-  const playedSongTitlesRef = useRef<Set<string>>(new Set([SAMPLE_SONGS[0].title.toLowerCase()]));
+  const playedSongTitlesRef = useRef<Set<string>>(
+    new Set(
+      initialPlaybackRef.current?.song
+        ? [initialPlaybackRef.current.song.title.toLowerCase()]
+        : []
+    )
+  );
   const isFetchingMoreRadioRef = useRef<boolean>(false);
-  const currentRadioSeedRef = useRef<Song>(SAMPLE_SONGS[0]);
+  const currentRadioSeedRef = useRef<Song | null>(initialPlaybackRef.current?.song ?? null);
 
   const [showNowPlayingModal, setShowNowPlayingModal] = useState<boolean>(false);
   const [showRoomListenersModal, setShowRoomListenersModal] = useState<boolean>(false);
   const [showSongPickerModal, setShowSongPickerModal] = useState<boolean>(false);
+  const [signatureSlotTarget, setSignatureSlotTarget] = useState<number | null>(null);
+  const [signatureVitrinVersion, setSignatureVitrinVersion] = useState<number>(0);
   const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
   const [showYouTubeConnectModal, setShowYouTubeConnectModal] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -837,8 +936,48 @@ export default function App() {
     };
   }, []);
 
+  // Persist currentSong & playback second to localStorage so user always resumes their own real track
+  const lastPersistedSecRef = useRef<number>(-1);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !currentSong) return;
+    try {
+      localStorage.setItem(LAST_PLAYED_SONG_KEY, JSON.stringify(currentSong));
+    } catch {
+      // ignore storage errors
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !currentSong) return;
+    const rounded = Math.max(0, Math.floor(mySecond));
+    if (Math.abs(rounded - lastPersistedSecRef.current) >= 2 || rounded === 0) {
+      lastPersistedSecRef.current = rounded;
+      try {
+        localStorage.setItem(LAST_PLAYED_SECOND_KEY, String(rounded));
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [mySecond, currentSong?.id]);
+
+  // If user connects YouTube Music / syncs playlists while stage is empty, stage their first real track automatically
+  useEffect(() => {
+    if (currentSong) return;
+    const firstRealFav = favoriteSongs.find((s) => s && !isTemplateSong(s.id));
+    const firstRealPlTrack = syncedPlaylists
+      .filter((p) => !isTemplatePlaylist(p.id))
+      .flatMap((p) => p.tracks || [])
+      .find((s) => s && !isTemplateSong(s.id));
+    const candidate = firstRealFav || firstRealPlTrack || null;
+    if (candidate) {
+      setCurrentSong(candidate);
+      currentRadioSeedRef.current = candidate;
+      setActiveQueue([candidate]);
+    }
+  }, [currentSong, favoriteSongs, syncedPlaylists]);
+
   // Real-time listening analytics tracker (persists every 5s + scrobbles at >=10s into listenhub_play_history)
-  const trackedSongRef = useRef<Song>(currentSong);
+  const trackedSongRef = useRef<Song | null>(currentSong);
   const unsavedPlaySecRef = useRef<number>(0);
   const trackSessionSecRef = useRef<number>(0);
   const trackScrobbledRef = useRef<boolean>(false);
@@ -850,14 +989,15 @@ export default function App() {
   useEffect(() => {
     trackSessionSecRef.current = 0;
     trackScrobbledRef.current = false;
-  }, [currentSong.id]);
+  }, [currentSong?.id]);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !currentSong) return;
     const activeSongSnapshot = trackedSongRef.current;
 
     const timer = window.setInterval(() => {
       const songNow = trackedSongRef.current;
+      if (!songNow) return;
       unsavedPlaySecRef.current += 1;
       trackSessionSecRef.current += 1;
 
@@ -874,15 +1014,18 @@ export default function App() {
 
     return () => {
       window.clearInterval(timer);
-      if (unsavedPlaySecRef.current > 0) {
+      if (unsavedPlaySecRef.current > 0 && activeSongSnapshot) {
         recordListeningPulse(activeSongSnapshot, unsavedPlaySecRef.current);
         unsavedPlaySecRef.current = 0;
       }
     };
-  }, [isPlaying, currentSong.id]);
+  }, [isPlaying, currentSong?.id]);
 
+  // Only warm up artist radio if user already has a real saved/library track on boot
   useEffect(() => {
-    fetchArtistRadio(SAMPLE_SONGS[0])
+    const bootSong = initialPlaybackRef.current?.song;
+    if (!bootSong) return;
+    fetchArtistRadio(bootSong)
       .then((res) => {
         if (res.tracks && res.tracks.length > 0) {
           setActiveQueue(res.tracks);
@@ -913,6 +1056,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!currentSong) return;
     soundEngine.setMediaSessionActions({
       onPrevTrack: () => handlePrevSong(),
       onNextTrack: () => handleNextSong(),
@@ -1001,10 +1145,14 @@ export default function App() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [currentSong.id, currentSong.title, currentSong.artist, loungeUsers]);
+  }, [currentSong?.id, currentSong?.title, currentSong?.artist, loungeUsers]);
 
   const handleStartRadioStation = async (seedSong?: Song) => {
     const seed = seedSong || currentSong;
+    if (!seed) {
+      setShowSongPickerModal(true);
+      return;
+    }
     currentRadioSeedRef.current = seed;
     playedSongTitlesRef.current = new Set([seed.title.toLowerCase()]);
     setToastMessage(`${seed.artist} radyosu hazırlanıyor...`);
@@ -1045,8 +1193,10 @@ export default function App() {
       await handleSelectSong(firstSong, true);
       setToastMessage(`${res.stationName} başlatıldı (${res.tracks.length} parça)`);
       setTimeout(() => setToastMessage(null), 3500);
-    } else {
+    } else if (currentSong) {
       await handleStartRadioStation(currentSong);
+    } else {
+      setShowSongPickerModal(true);
     }
   };
 
@@ -1922,6 +2072,10 @@ export default function App() {
   };
 
   const handleTogglePlay = () => {
+    if (!currentSong) {
+      setShowSongPickerModal(true);
+      return;
+    }
     const now = Date.now();
     // 250ms debounce guard to prevent accidental mobile double-tap toggles
     if (now - lastToggleClickRef.current < 250) {
@@ -1945,8 +2099,15 @@ export default function App() {
   };
 
   const handleSeekSecond = (sec: number) => {
-    setMySecond(sec);
-    soundEngine.seek(sec);
+    const safeSec = Math.max(0, Math.floor(sec));
+    setMySecond(safeSec);
+    if (typeof window !== 'undefined' && currentSong) {
+      lastPersistedSecRef.current = safeSec;
+      try {
+        localStorage.setItem(LAST_PLAYED_SECOND_KEY, String(safeSec));
+      } catch {}
+    }
+    soundEngine.seek(safeSec);
   };
 
   const handleSelectTab = (tab: NavTab) => {
@@ -1979,26 +2140,42 @@ export default function App() {
       }
     }
 
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LAST_PLAYED_SONG_KEY, JSON.stringify(playableSong));
+        localStorage.setItem(LAST_PLAYED_SECOND_KEY, String(safeStart));
+        lastPersistedSecRef.current = safeStart;
+      } catch {
+        // ignore storage errors
+      }
+    }
+
     if (autoPlay || isPlaying) {
       lastPlayIntentRef.current = { playing: true, time: Date.now() };
       setIsPlaying(true);
       soundEngine.playSong(playableSong, safeStart);
     }
     setCurrentSong(playableSong);
+    currentRadioSeedRef.current = playableSong;
     playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
     setMySecond(safeStart);
   };
 
   const handleNextSong = async () => {
-    const queue = activeQueue && activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS;
+    if (!currentSong) {
+      setShowSongPickerModal(true);
+      return;
+    }
+    const queue = activeQueue && activeQueue.length > 0 ? activeQueue : [currentSong];
     const currentIdx = queue.findIndex(
       (s) => s.id === currentSong.id || s.title.toLowerCase() === currentSong.title.toLowerCase()
     );
     const nextIdx = currentIdx !== -1 ? currentIdx + 1 : 0;
+    const radioSeed = currentRadioSeedRef.current || currentSong;
 
     if (queue.length - nextIdx <= 4 && !isFetchingMoreRadioRef.current) {
       isFetchingMoreRadioRef.current = true;
-      fetchMoreRadioRecommendations(currentRadioSeedRef.current, playedSongTitlesRef.current)
+      fetchMoreRadioRecommendations(radioSeed, playedSongTitlesRef.current)
         .then((newTracks) => {
           isFetchingMoreRadioRef.current = false;
           if (newTracks && newTracks.length > 0) {
@@ -2020,7 +2197,7 @@ export default function App() {
       setNextRadioSong(queue[nextIdx + 1] || null);
       await handleSelectSong(nextSong, true);
     } else {
-      const more = await fetchMoreRadioRecommendations(currentRadioSeedRef.current, playedSongTitlesRef.current);
+      const more = await fetchMoreRadioRecommendations(radioSeed, playedSongTitlesRef.current);
       if (more.length > 0) {
         setActiveQueue((prev) => [...prev, ...more]);
         const nextSong = more[0];
@@ -2034,7 +2211,8 @@ export default function App() {
   };
 
   const handlePrevSong = async () => {
-    const queue = activeQueue && activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS;
+    if (!currentSong) return;
+    const queue = activeQueue && activeQueue.length > 0 ? activeQueue : [currentSong];
     const currentIdx = queue.findIndex(
       (s) => s.id === currentSong.id || s.title.toLowerCase() === currentSong.title.toLowerCase()
     );
@@ -2075,7 +2253,7 @@ export default function App() {
             myAvatarGradient: currentUserProfile.avatarGradient,
             myCity: currentUserProfile.city,
             targetUid: user.id,
-            songContext: `${currentSong.artist} - ${currentSong.title}`,
+            songContext: currentSong ? `${currentSong.artist} - ${currentSong.title}` : 'ListenHub Ağı',
           });
           setToastMessage(`${user.name} için gerçek arkadaşlık isteği gönderildi.`);
         }
@@ -2204,7 +2382,10 @@ export default function App() {
       const existingCloud = cloudConversations.find((c) => c.pairId === pairId);
       if (!existingCloud || icebreakerText) {
         const initialText =
-          icebreakerText || `Selam ${user.name}! ${currentSong.title} şarkısında aynı frekansta karşılaştık.`;
+          icebreakerText ||
+          (currentSong
+            ? `Selam ${user.name}! ${currentSong.title} şarkısında aynı frekansta karşılaştık.`
+            : `Selam ${user.name}! ListenHub'da aynı frekansta karşılaştık.`);
         try {
           await sendOrStartCloudMessage({
             myUid: firebaseUser.uid,
@@ -2231,16 +2412,36 @@ export default function App() {
     setActiveTab('chat');
 
     const existing = conversations.find((c) => c.user.id === user.id);
-    const initialText = icebreakerText || `Selam ${user.name}! ${currentSong.title} şarkısında aynı frekansta karşılaştık.`;
+    const initialText =
+      icebreakerText ||
+      (currentSong
+        ? `Selam ${user.name}! ${currentSong.title} şarkısında aynı frekansta karşılaştık.`
+        : `Selam ${user.name}! ListenHub'da aynı frekansta karşılaştık.`);
 
     if (!existing) {
+      const fallbackTrack: Song = currentSong || user.currentSong || {
+        id: 'listenhub-chat',
+        title: 'ListenHub Frekansı',
+        artist: 'Canlı Sohbet',
+        album: 'ListenHub',
+        genre: 'Müzik',
+        rawMediaTitle: 'ListenHub',
+        coverGradient: 'from-[#E87A3E] to-[#D97706]',
+        durationSeconds: 180,
+        bpm: 110,
+        keyNote: 'Am',
+        catalogNumber: 'LH-CHAT',
+        releaseYear: new Date().getFullYear(),
+        soundType: 'indie',
+        timelineMarkers: [],
+      };
       const newConv: LoungeConversation = {
         matchId: `conv-${user.id}-${Date.now()}`,
         user,
-        matchedTrack: currentSong,
-        matchedSecond: currentSong.id === 'song-duman' ? 102 : (mySecond || 102),
+        matchedTrack: fallbackTrack,
+        matchedSecond: mySecond || 0,
         matchedPlatform: activePlatform,
-        contextBanner: `${currentSong.artist} - ${currentSong.title}`,
+        contextBanner: currentSong ? `${currentSong.artist} - ${currentSong.title}` : 'ListenHub Ağı',
         lastMessage: initialText,
         lastMessageTime: 'Şimdi',
         unreadCount: 0,
@@ -2381,10 +2582,10 @@ export default function App() {
       const newConv: LoungeConversation = {
         matchId: `conv-${user.id}-${Date.now()}`,
         user,
-        matchedTrack: currentSong,
+        matchedTrack: currentSong || track,
         matchedSecond: mySecond,
         matchedPlatform: activePlatform,
-        contextBanner: `${currentSong.artist} - ${currentSong.title}`,
+        contextBanner: currentSong ? `${currentSong.artist} - ${currentSong.title}` : `${track.artist} - ${track.title}`,
         lastMessage: fullText,
         lastMessageTime: 'Şimdi',
         unreadCount: 0,
@@ -2400,7 +2601,7 @@ export default function App() {
       setConversations((prev) => [newConv, ...prev]);
     }
 
-    setToastMessage(`🎧 ${user.name} kullanıcısına "${track.title}" fısıldandı!`);
+    setToastMessage(`${user.name} kullanıcısına "${track.title}" fısıldandı.`);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -2410,12 +2611,14 @@ export default function App() {
     pendingStartTimestampRef.current = Date.now();
     setMySecond(targetSecond);
 
-    const isSameTrack =
-      currentSong.id === track.id ||
-      (currentSong.title.trim().toLowerCase() === track.title.trim().toLowerCase() &&
-        currentSong.artist.trim().toLowerCase() === track.artist.trim().toLowerCase());
+    const isSameTrack = Boolean(
+      currentSong &&
+        (currentSong.id === track.id ||
+          (currentSong.title.trim().toLowerCase() === track.title.trim().toLowerCase() &&
+            currentSong.artist.trim().toLowerCase() === track.artist.trim().toLowerCase()))
+    );
 
-    if (isSameTrack && soundEngine.getCurrentSongId() === currentSong.id) {
+    if (isSameTrack && currentSong && soundEngine.getCurrentSongId() === currentSong.id) {
       soundEngine.seekTo(targetSecond);
       if (!isPlaying || !soundEngine.getIsPlaying()) {
         lastPlayIntentRef.current = { playing: true, time: Date.now() };
@@ -2557,7 +2760,7 @@ export default function App() {
       topGenres: currentUserProfile.topGenres,
       currentSong,
       currentSecond: mySecond,
-      statusBubble: `${currentSong.title} dinliyor`,
+      statusBubble: currentSong ? `${currentSong.title} dinliyor` : 'ListenHub ağında aktif',
       privacyMode,
     }).catch(() => {});
 
@@ -2596,14 +2799,16 @@ export default function App() {
         uid: firebaseUser.uid,
         currentSong: song,
         currentSecond: sec,
-        statusBubble: `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, '0')} · ${song.title}`,
+        statusBubble: song
+          ? `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, '0')} · ${song.title}`
+          : 'ListenHub ağında aktif',
         isOnline: true,
       }).catch(() => {});
     };
     sendPulse();
     const timer = setInterval(sendPulse, 25000);
     return () => clearInterval(timer);
-  }, [firebaseUser?.uid, currentSong.id]);
+  }, [firebaseUser?.uid, currentSong?.id]);
 
   // Subscribe to real-time messages for the currently open cloud conversation
   useEffect(() => {
@@ -2625,6 +2830,10 @@ export default function App() {
 
   // Real-time Heartbeat & Cross-Tab Presence (BroadcastChannel)
   useEffect(() => {
+    if (!currentSong) {
+      setRealLiveListeners([]);
+      return;
+    }
     realtimePresence.startHeartbeatCycle();
     const unsub = realtimePresence.subscribeToRealListeners(currentSong.id, (realUsers) => {
       setRealLiveListeners(realUsers);
@@ -2633,9 +2842,10 @@ export default function App() {
       unsub();
       realtimePresence.stopHeartbeatCycle();
     };
-  }, [currentSong.id]);
+  }, [currentSong?.id]);
 
   useEffect(() => {
+    if (!currentSong) return;
     const clientUid =
       firebaseUser?.uid ||
       (typeof window !== 'undefined'
@@ -2657,9 +2867,9 @@ export default function App() {
       currentSong,
       currentSecond: mySecond,
       trustScore: currentUserProfile.trustScore,
-      statusBubble: `${Math.floor(mySecond / 60)}:${(mySecond % 60).toString().padStart(2, '0')} anında aynı frekansta 🎧`,
+      statusBubble: `${Math.floor(mySecond / 60)}:${Math.floor(mySecond % 60).toString().padStart(2, '0')} anında aynı frekansta`,
     });
-  }, [firebaseUser?.uid, currentSong.id, currentSong.title, mySecond, currentUserProfile.name, currentUserProfile.city]);
+  }, [firebaseUser?.uid, currentSong?.id, currentSong?.title, mySecond, currentUserProfile.name, currentUserProfile.city]);
 
   // Unified Cloud + Local Derived Social Models
   const cloudProfileMap = useMemo(() => {
@@ -2944,20 +3154,34 @@ export default function App() {
               onSelectUser={(user) => setSelectedDrawerUser(user)}
               onDirectChat={(user) => handleSendFrequency(user)}
               onSeekSecond={handleSeekSecond}
-              onOpenSongPicker={() => setShowSongPickerModal(true)}
+              onOpenSongPicker={() => {
+                setSignatureSlotTarget(null);
+                setShowSongPickerModal(true);
+              }}
+              onOpenYouTubeConnect={() => {
+                setActiveTab('profile');
+                setShouldOpenProfileSettings(true);
+              }}
               onToggleFriend={handleToggleFriend}
-              onOpenNowPlaying={() => setShowNowPlayingModal(true)}
-              onOpenRoomListeners={() => setShowRoomListenersModal(true)}
+              onOpenNowPlaying={() => {
+                if (currentSong) setShowNowPlayingModal(true);
+              }}
+              onOpenRoomListeners={() => {
+                if (currentSong) setShowRoomListenersModal(true);
+              }}
               isPlaying={isPlaying}
               onTogglePlay={handleTogglePlay}
               onSelectSong={handleSelectSong}
               onNextSong={handleNextSong}
               onPrevSong={handlePrevSong}
-              isFavorite={favoriteSongs.some(
-                (s) =>
-                  s.id === currentSong.id ||
-                  (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
-                    s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+              isFavorite={Boolean(
+                currentSong &&
+                  favoriteSongs.some(
+                    (s) =>
+                      s.id === currentSong.id ||
+                      (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
+                        s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+                  )
               )}
               onToggleFavorite={handleToggleFavoriteSong}
               onShowToast={(msg) => {
@@ -3132,6 +3356,11 @@ export default function App() {
               onLogout={handleFullLogout}
               shouldOpenSettings={shouldOpenProfileSettings}
               onConsumeOpenSettings={() => setShouldOpenProfileSettings(false)}
+              onPickSongForSignatureSlot={(slotIdx) => {
+                setSignatureSlotTarget(slotIdx);
+                setShowSongPickerModal(true);
+              }}
+              signatureVitrinVersion={signatureVitrinVersion}
             />
           )}
         </main>
@@ -3313,11 +3542,14 @@ export default function App() {
           isPlaying={isPlaying}
           isAudioLoading={isAudioLoading}
           currentSecond={mySecond}
-          isFavorite={favoriteSongs.some(
-            (s) =>
-              s.id === currentSong.id ||
-              (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
-                s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+          isFavorite={Boolean(
+            currentSong &&
+              favoriteSongs.some(
+                (s) =>
+                  s.id === currentSong.id ||
+                  (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
+                    s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+              )
           )}
           themeMode={effectiveTheme}
           onTogglePlay={handleTogglePlay}
@@ -3325,7 +3557,9 @@ export default function App() {
           onPrevSong={handlePrevSong}
           onSeekSecond={handleSeekSecond}
           onToggleFavorite={handleToggleFavoriteSong}
-          onOpenNowPlaying={() => setShowNowPlayingModal(true)}
+          onOpenNowPlaying={() => {
+            if (currentSong) setShowNowPlayingModal(true);
+          }}
         />
       </div>
 
@@ -3352,9 +3586,41 @@ export default function App() {
 
       <SongPickerModal
         isOpen={showSongPickerModal}
-        onClose={() => setShowSongPickerModal(false)}
+        onClose={() => {
+          setShowSongPickerModal(false);
+          setSignatureSlotTarget(null);
+        }}
         currentSong={currentSong}
-        onSelectSong={handleSelectSong}
+        customTitle={
+          signatureSlotTarget !== null
+            ? `İmza #${signatureSlotTarget + 1} İçin Parça Seç`
+            : undefined
+        }
+        customSubtitle={
+          signatureSlotTarget !== null
+            ? 'Profil vitrininde sergilenecek parçayı ara veya link yapıştır'
+            : undefined
+        }
+        onSelectSong={(song) => {
+          if (signatureSlotTarget !== null) {
+            const targetIdx = signatureSlotTarget;
+            try {
+              const saved = localStorage.getItem('harmoniq_custom_top4_vitrin');
+              const arr: (Song | null)[] = saved ? JSON.parse(saved) : [null, null, null, null];
+              const nextArr = Array.isArray(arr) && arr.length === 4 ? [...arr] : [null, null, null, null];
+              nextArr[targetIdx] = song;
+              localStorage.setItem('harmoniq_custom_top4_vitrin', JSON.stringify(nextArr));
+            } catch {
+              // ignore storage errors
+            }
+            setSignatureVitrinVersion((v) => v + 1);
+            setSignatureSlotTarget(null);
+            setToastMessage(`"${song.title}" #${targetIdx + 1} imza vitrinine eklendi.`);
+            setTimeout(() => setToastMessage(null), 2800);
+          } else {
+            void handleSelectSong(song);
+          }
+        }}
         themeMode={effectiveTheme}
       />
 
@@ -3370,68 +3636,73 @@ export default function App() {
         isCheckingUpdates={pwa.isChecking}
       />
 
-      <NowPlayingModal
-        isOpen={showNowPlayingModal}
-        onClose={() => setShowNowPlayingModal(false)}
-        song={currentSong}
-        isPlaying={isPlaying}
-        onTogglePlay={handleTogglePlay}
-        progressSeconds={mySecond}
-        onSeek={handleSeekSecond}
-        onNextSong={handleNextSong}
-        onPrevSong={handlePrevSong}
-        onSelectSong={handleSelectSong}
-        allSongs={activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
-        onStartRadioStation={handleStartRadioStation}
-        onOpenSongPicker={() => {
-          setShowNowPlayingModal(false);
-          setShowSongPickerModal(true);
-        }}
-        activePlatform={activePlatform}
-        onShowToast={(msg) => {
-          setToastMessage(msg);
-          setTimeout(() => setToastMessage(null), 3000);
-        }}
-        onOpenRoomListeners={() => {
-          setShowRoomListenersModal(true);
-        }}
-        listeners={combinedLoungeUsers}
-        onSelectUser={(user) => {
-          setSelectedDrawerUser(user);
-        }}
-        onStartChatWithUser={(user) => {
-          setActiveChatUser(user);
-          setActiveTab('chat');
-          setShowNowPlayingModal(false);
-        }}
-        isFavorite={favoriteSongs.some(
-          (s) =>
-            s.id === currentSong.id ||
-            (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
-              s.artist.toLowerCase() === currentSong.artist.toLowerCase())
-        )}
-        onToggleFavorite={handleToggleFavoriteSong}
-        isAudioLoading={isAudioLoading}
-      />
+      {currentSong && (
+        <NowPlayingModal
+          isOpen={showNowPlayingModal}
+          onClose={() => setShowNowPlayingModal(false)}
+          song={currentSong}
+          isPlaying={isPlaying}
+          onTogglePlay={handleTogglePlay}
+          progressSeconds={mySecond}
+          onSeek={handleSeekSecond}
+          onNextSong={handleNextSong}
+          onPrevSong={handlePrevSong}
+          onSelectSong={handleSelectSong}
+          allSongs={activeQueue.length > 0 ? activeQueue : [currentSong]}
+          onStartRadioStation={handleStartRadioStation}
+          onOpenSongPicker={() => {
+            setShowNowPlayingModal(false);
+            setSignatureSlotTarget(null);
+            setShowSongPickerModal(true);
+          }}
+          activePlatform={activePlatform}
+          onShowToast={(msg) => {
+            setToastMessage(msg);
+            setTimeout(() => setToastMessage(null), 3000);
+          }}
+          onOpenRoomListeners={() => {
+            setShowRoomListenersModal(true);
+          }}
+          listeners={combinedLoungeUsers}
+          onSelectUser={(user) => {
+            setSelectedDrawerUser(user);
+          }}
+          onStartChatWithUser={(user) => {
+            setActiveChatUser(user);
+            setActiveTab('chat');
+            setShowNowPlayingModal(false);
+          }}
+          isFavorite={favoriteSongs.some(
+            (s) =>
+              s.id === currentSong.id ||
+              (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
+                s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+          )}
+          onToggleFavorite={handleToggleFavoriteSong}
+          isAudioLoading={isAudioLoading}
+        />
+      )}
 
-      <LiveRoomListenersModal
-        isOpen={showRoomListenersModal}
-        onClose={() => setShowRoomListenersModal(false)}
-        song={currentSong}
-        listeners={combinedLoungeUsers}
-        onSelectUser={(user) => {
-          setSelectedDrawerUser(user);
-          setShowRoomListenersModal(false);
-        }}
-        onStartChatWithUser={(user) => {
-          setActiveChatUser(user);
-          setActiveTab('chat');
-          setShowRoomListenersModal(false);
-        }}
-        onToggleFriend={handleToggleFriend}
-        activePlatform={activePlatform}
-        themeMode={effectiveTheme}
-      />
+      {currentSong && (
+        <LiveRoomListenersModal
+          isOpen={showRoomListenersModal}
+          onClose={() => setShowRoomListenersModal(false)}
+          song={currentSong}
+          listeners={combinedLoungeUsers}
+          onSelectUser={(user) => {
+            setSelectedDrawerUser(user);
+            setShowRoomListenersModal(false);
+          }}
+          onStartChatWithUser={(user) => {
+            setActiveChatUser(user);
+            setActiveTab('chat');
+            setShowRoomListenersModal(false);
+          }}
+          onToggleFriend={handleToggleFriend}
+          activePlatform={activePlatform}
+          themeMode={effectiveTheme}
+        />
+      )}
 
       <YouTubeMusicConnectModal
         isOpen={showYouTubeConnectModal}

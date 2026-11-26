@@ -19,10 +19,10 @@ import {
 } from '../services/artistFilterService';
 import { triggerHaptic } from '../services/themeService';
 import { LiveMiniEqualizer } from './LiveMiniEqualizer';
-import { ProximityDensityMap, DistanceFilter } from './ProximityDensityMap';
+import { ProximityDensityMap, RadiusSlider, ALL_TURKEY_RADIUS } from './ProximityDensityMap';
 
 interface Props {
-  currentSong: Song;
+  currentSong: Song | null;
   onSelectRoom: (song: Song) => void;
   syncedPlaylists?: UserPlaylist[];
   onPlayPlaylist?: (playlist: UserPlaylist) => void;
@@ -328,7 +328,7 @@ export const RoomsTab: React.FC<Props> = ({
   themeMode = 'dark',
 }) => {
   const [exploreLens, setExploreLens] = useState<ExploreLens>('rooms');
-  const [mapDistanceFilter, setMapDistanceFilter] = useState<DistanceFilter>('all');
+  const [mapRadiusKm, setMapRadiusKm] = useState<number>(ALL_TURKEY_RADIUS);
   const [filterMode, setFilterMode] = useState<RoomFilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenreFilter, setSelectedGenreFilter] = useState<string>('all');
@@ -656,48 +656,21 @@ export const RoomsTab: React.FC<Props> = ({
       {/* LENS 2: HARİTA (Real Interactive OpenStreetMap + Leaflet ProximityDensityMap) */}
       {exploreLens === 'map' && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {[
-              { id: 'all' as DistanceFilter, label: 'Tümü', count: users.length },
-              {
-                id: '1km' as DistanceFilter,
-                label: '1 km',
-                count: users.filter((u) => u.distanceKm <= 1).length,
-              },
-              {
-                id: '5km' as DistanceFilter,
-                label: '5 km',
-                count: users.filter((u) => u.distanceKm <= 5).length,
-              },
-              {
-                id: 'city' as DistanceFilter,
-                label: '15 km',
-                count: users.filter((u) => u.distanceKm <= 15).length,
-              },
-            ].map((f) => {
-              const isSelected = mapDistanceFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setMapDistanceFilter(f.id)}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 border ${
-                    isSelected
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
-                      : 'bg-white dark:bg-[#171412] text-[#6B635B] dark:text-[#A39A91] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
-                  }`}
-                >
-                  <span>{f.label}</span>
-                  <span className="font-mono tabular-nums text-[10px] opacity-75">{f.count}</span>
-                </button>
-              );
-            })}
-          </div>
+          <RadiusSlider
+            radiusKm={mapRadiusKm}
+            onChangeRadiusKm={setMapRadiusKm}
+            listenerCount={
+              mapRadiusKm >= ALL_TURKEY_RADIUS
+                ? users.length
+                : users.filter((u) => u.distanceKm <= mapRadiusKm).length
+            }
+            themeMode={themeMode}
+          />
 
           <ProximityDensityMap
             users={users}
-            activeFilter={mapDistanceFilter}
-            onChangeFilter={setMapDistanceFilter}
+            radiusKm={mapRadiusKm}
+            onChangeRadiusKm={setMapRadiusKm}
             onSelectUser={onSelectUser || (() => {})}
             onDirectChat={onDirectChat}
             onSeekSecond={onSeekSecond}
@@ -893,8 +866,9 @@ export const RoomsTab: React.FC<Props> = ({
                 ) : (
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)] lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:pr-0 lg:[mask-image:none] lg:[-webkit-mask-image:none]">
                     {filteredArtistRooms.slice(0, 8).map((room) => {
-                      const isCurrentArtist =
-                        currentSong.artist.toLowerCase() === room.artist.toLowerCase();
+                      const isCurrentArtist = Boolean(
+                        currentSong && currentSong.artist.toLowerCase() === room.artist.toLowerCase()
+                      );
                       return (
                         <ArtistCardCompact
                           key={room.artist}
@@ -925,7 +899,7 @@ export const RoomsTab: React.FC<Props> = ({
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                     {filteredSongRooms.slice(0, allModeSongLimit).map((song, index) => {
-                      const isCurrent = song.id === currentSong.id;
+                      const isCurrent = Boolean(currentSong && song.id === currentSong.id);
                       const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
                       return (
                         <SongRoomRow
@@ -996,8 +970,9 @@ export const RoomsTab: React.FC<Props> = ({
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                     {filteredArtistRooms.slice(0, visibleArtistsCount).map((room) => {
-                      const isCurrentArtist =
-                        currentSong.artist.toLowerCase() === room.artist.toLowerCase();
+                      const isCurrentArtist = Boolean(
+                        currentSong && currentSong.artist.toLowerCase() === room.artist.toLowerCase()
+                      );
                       return (
                         <ArtistRoomRow
                           key={room.artist}
@@ -1046,7 +1021,7 @@ export const RoomsTab: React.FC<Props> = ({
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                     {filteredSongRooms.slice(0, visibleSongsCount).map((song, index) => {
-                      const isCurrent = song.id === currentSong.id;
+                      const isCurrent = Boolean(currentSong && song.id === currentSong.id);
                       const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
                       return (
                         <SongRoomRow

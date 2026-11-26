@@ -144,6 +144,8 @@ interface Props {
   onLogout?: () => void;
   shouldOpenSettings?: boolean;
   onConsumeOpenSettings?: () => void;
+  onPickSongForSignatureSlot?: (slotIndex: number) => void;
+  signatureVitrinVersion?: number;
 }
 
 const PlaylistRowItem = React.memo<{
@@ -429,6 +431,7 @@ export const ProfileTab: React.FC<Props> = ({
   onCancelSentRequest,
   onToggleFriend,
   onStartChatWithFriend,
+  onOpenSongPicker,
   onOpenYouTubeConnect,
   onUpdateAvatar,
   syncedPlaylists = [],
@@ -463,6 +466,8 @@ export const ProfileTab: React.FC<Props> = ({
   onLogout,
   shouldOpenSettings = false,
   onConsumeOpenSettings,
+  onPickSongForSignatureSlot,
+  signatureVitrinVersion = 0,
 }) => {
   const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
   const currentTheme = themeMode || localTheme;
@@ -1018,16 +1023,47 @@ export const ProfileTab: React.FC<Props> = ({
       }
     : undefined;
 
-  const weeklyAnthemSong: Song =
+  const weeklyAnthemSong: Song | undefined =
     topPlayedSong ||
     favoriteSongs[0] ||
     allWeeklyTracks[0] ||
-    sortedWeeklyArtists[0]?.sampleSong ||
-    SAMPLE_SONGS[0];
+    sortedWeeklyArtists[0]?.sampleSong;
 
-  // Top 4 Signature Tracks Showcase (İmza Parçalarım - Top 4 Vitrin)
+  const isDefaultTemplateSongId = (id?: string) =>
+    id === 'song-duman' ||
+    id === 'song-morveotesi' ||
+    id === 'song-arctic' ||
+    id === 'song-jakuzi' ||
+    id === 'song-teoman' ||
+    id === 'song-shepastaway';
+
+  // Top 4 Signature Tracks Showcase (100% real user history & connected library — ZERO SAMPLE_SONGS fallback)
   const signatureTop4Tracks: Song[] = useMemo(() => {
-    const pool = [...favoriteSongs, ...allWeeklyTracks, ...SAMPLE_SONGS];
+    const historySongs: Song[] = liveWeeklyHistory.topTracks
+      .map(({ record }) => ({
+        id: record.id,
+        title: record.title,
+        artist: record.artist,
+        album: record.album || 'Single',
+        genre: record.genre,
+        rawMediaTitle: `${record.artist} - ${record.title}`,
+        coverUrl: record.coverUrl,
+        coverGradient: record.coverGradient || 'from-amber-600 to-orange-800',
+        durationSeconds: record.durationSeconds || 210,
+        bpm: 118,
+        keyNote: 'Am',
+        catalogNumber: 'LH-LIVE',
+        timelineMarkers: [],
+        audioUrl: record.audioUrl,
+        youtubeVideoId: record.youtubeVideoId,
+        releaseYear: new Date().getFullYear(),
+        soundType: 'indie' as const,
+      }))
+      .filter((t) => !isDefaultTemplateSongId(t.id));
+
+    const realFavorites = favoriteSongs.filter((t) => t && !isDefaultTemplateSongId(t.id));
+    const realWeekly = allWeeklyTracks.filter((t) => t && !isDefaultTemplateSongId(t.id));
+    const pool = [...historySongs, ...realFavorites, ...realWeekly];
     const seen = new Set<string>();
     const top4: Song[] = [];
     for (const track of pool) {
@@ -1040,7 +1076,7 @@ export const ProfileTab: React.FC<Props> = ({
       if (top4.length >= 4) break;
     }
     return top4;
-  }, [favoriteSongs, allWeeklyTracks]);
+  }, [liveWeeklyHistory.topTracks, favoriteSongs, allWeeklyTracks]);
 
   // User-customized Top 4 Vitrin Tracks (persisted to LocalStorage)
   const [customTop4Tracks, setCustomTop4Tracks] = useState<(Song | null)[]>(() => {
@@ -1048,35 +1084,75 @@ export const ProfileTab: React.FC<Props> = ({
       const saved = localStorage.getItem('harmoniq_custom_top4_vitrin');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+        if (Array.isArray(parsed) && parsed.length === 4) {
+          return parsed.map((item) =>
+            item && !isDefaultTemplateSongId(item.id) ? item : null
+          );
+        }
       }
     } catch {}
     return [null, null, null, null];
   });
 
+  // Sync customTop4Tracks whenever updated via global SongPickerModal
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('harmoniq_custom_top4_vitrin');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 4) {
+          setCustomTop4Tracks(parsed);
+          return;
+        }
+      }
+      setCustomTop4Tracks([null, null, null, null]);
+    } catch {}
+  }, [signatureVitrinVersion]);
+
   const [editingTop4Slot, setEditingTop4Slot] = useState<number | null>(null);
   const [top4SearchQuery, setTop4SearchQuery] = useState('');
 
-  // Combined Top 4 Vitrin Tracks (Custom override -> Fallback to dynamic top tracks)
-  const displayedTop4Tracks: Song[] = useMemo(() => {
-    const fallbackTop4 = signatureTop4Tracks;
-    return [0, 1, 2, 3].map((idx) => {
-      return customTop4Tracks[idx] || fallbackTop4[idx] || SAMPLE_SONGS[idx % SAMPLE_SONGS.length];
-    });
+  // Combined Top 4 Vitrin Tracks: Custom pinned -> Real history/library -> Empty slot (null)
+  const displayedTop4Tracks: (Song | null)[] = useMemo(() => {
+    const usedKeys = new Set<string>();
+    const result: (Song | null)[] = [null, null, null, null];
+
+    for (let i = 0; i < 4; i++) {
+      const pinned = customTop4Tracks[i];
+      if (pinned && pinned.title) {
+        result[i] = pinned;
+        usedKeys.add(`${pinned.title.toLowerCase()}::${(pinned.artist || '').toLowerCase()}`);
+      }
+    }
+
+    let fallbackCursor = 0;
+    for (let i = 0; i < 4; i++) {
+      if (result[i]) continue;
+      while (fallbackCursor < signatureTop4Tracks.length) {
+        const candidate = signatureTop4Tracks[fallbackCursor++];
+        const key = `${candidate.title.toLowerCase()}::${(candidate.artist || '').toLowerCase()}`;
+        if (!usedKeys.has(key)) {
+          result[i] = candidate;
+          usedKeys.add(key);
+          break;
+        }
+      }
+    }
+
+    return result;
   }, [customTop4Tracks, signatureTop4Tracks]);
 
-  // Combined catalog of user's songs for vitrin slot selection
+  // Combined catalog of user's real songs for fallback vitrin modal
   const allAvailableSongsForVitrin: Song[] = useMemo(() => {
     const combined = [
       ...favoriteSongs,
       ...(syncedPlaylists || []).flatMap((p) => p.tracks || []),
       ...allWeeklyTracks,
-      ...SAMPLE_SONGS,
     ];
     const seen = new Set<string>();
     const list: Song[] = [];
     for (const s of combined) {
-      if (!s || !s.title) continue;
+      if (!s || !s.title || isDefaultTemplateSongId(s.id)) continue;
       const key = `${s.title.toLowerCase()}::${(s.artist || '').toLowerCase()}`;
       if (!seen.has(key)) {
         seen.add(key);
@@ -1088,7 +1164,7 @@ export const ProfileTab: React.FC<Props> = ({
 
   const handleAssignSongToTop4Slot = (song: Song, slotIndex: number) => {
     triggerHaptic(20);
-    const updated = [...displayedTop4Tracks];
+    const updated = [...customTop4Tracks];
     updated[slotIndex] = song;
     setCustomTop4Tracks(updated);
     try {
@@ -1561,9 +1637,12 @@ export const ProfileTab: React.FC<Props> = ({
   const handleCopyWeeklySummary = () => {
     const genresList = sortedWeeklyGenres.map((g) => `${g.genre} (%${g.percentage})`).join(', ');
     const artistsList = sortedWeeklyArtists.map((a) => `#${a.rank} ${a.name}`).join(' · ');
-    const summaryText = `🎧 ListenHub · Haftalık Müzik Özeti\n👤 ${
+    const anthemLine = weeklyAnthemSong
+      ? `\nHaftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}`
+      : '';
+    const summaryText = `ListenHub · Haftalık Müzik Özeti\n${
       userProfile.youtubeAccount?.name || userProfile.name
-    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\n🛡️ Güven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\n⏱ Toplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\n⚡ Müzik Personası: ${weeklyPersona}\n📊 En Çok Dinlenen Türler: ${genresList}\n👑 Zirvedeki Sanatçılar: ${artistsList}\n🔥 Haftanın Şarkısı: ${weeklyAnthemSong.artist} - ${weeklyAnthemSong.title}\n✨ Frekansı keşfet: https://listenhub.app`;
+    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\nGüven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\nToplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\nMüzik Personası: ${weeklyPersona}\nEn Çok Dinlenen Türler: ${genresList}\nZirvedeki Sanatçılar: ${artistsList}${anthemLine}\nFrekansı keşfet: https://listenhub.app`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(summaryText);
@@ -1812,10 +1891,10 @@ export const ProfileTab: React.FC<Props> = ({
                       İlk parçanı açtığında gerçek dinleme süren ve tür dağılımın burada oluşmaya başlayacak.
                     </p>
                   </div>
-                  {onPlaySong && (
+                  {onOpenSongPicker && (
                     <button
                       type="button"
-                      onClick={() => onPlaySong(SAMPLE_SONGS[0])}
+                      onClick={() => onOpenSongPicker()}
                       className="studio-btn-primary px-4 py-2.5 min-h-[42px] rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold transition active:scale-95 flex items-center gap-2 cursor-pointer"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" />
@@ -2027,7 +2106,7 @@ export const ProfileTab: React.FC<Props> = ({
                   )}
 
                   {/* Highlight: Weekly Anthem */}
-                  {weeklyFilter === 'all' && (
+                  {weeklyFilter === 'all' && weeklyAnthemSong && (
                     <div className="pt-3 border-t border-[#E8E6E1] dark:border-white/[0.06]">
                       <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/60 border border-[#E8E6E1] dark:border-white/[0.06]">
                         <div className="flex items-center gap-3 min-w-0">
@@ -2092,8 +2171,36 @@ export const ProfileTab: React.FC<Props> = ({
 
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {displayedTop4Tracks.map((track, idx) => {
-                const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
                 const rank = idx + 1;
+                if (!track) {
+                  return (
+                    <button
+                      key={`empty-slot-${idx}`}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(15);
+                        if (onPickSongForSignatureSlot) {
+                          onPickSongForSignatureSlot(idx);
+                        } else {
+                          setEditingTop4Slot(idx);
+                          setTop4SearchQuery('');
+                        }
+                      }}
+                      className="aspect-[3/4] rounded-xl border-2 border-dashed border-[#A39A91]/45 dark:border-[#FFF0E1]/20 hover:border-[#E87A3E]/65 bg-[#FAF8F4] dark:bg-[#171412]/70 hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] flex flex-col items-center justify-center gap-1.5 p-2 text-center cursor-pointer active:scale-[0.96] transition-all group"
+                      title={`#${rank} İmza Parçanı Ekle`}
+                      aria-label={`#${rank} imza parçası ekle`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#E87A3E]/12 border border-[#E87A3E]/25 flex items-center justify-center text-[#E87A3E] group-hover:scale-105 transition-transform">
+                        <Plus className="w-4 h-4" strokeWidth={2} />
+                      </div>
+                      <span className="text-[10.5px] font-semibold text-[#6B635B] dark:text-[#A39A91] group-hover:text-[#181512] dark:group-hover:text-[#FAF7F2] leading-tight">
+                        Parça Ekle
+                      </span>
+                    </button>
+                  );
+                }
+
+                const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
                 return (
                   <div
                     key={track.id || idx}
@@ -2131,8 +2238,12 @@ export const ProfileTab: React.FC<Props> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         triggerHaptic(20);
-                        setEditingTop4Slot(idx);
-                        setTop4SearchQuery('');
+                        if (onPickSongForSignatureSlot) {
+                          onPickSongForSignatureSlot(idx);
+                        } else {
+                          setEditingTop4Slot(idx);
+                          setTop4SearchQuery('');
+                        }
                       }}
                       className="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition active:scale-95 border border-white/15 z-20 cursor-pointer"
                       title={`#${rank} İmza Parçasını Değiştir`}

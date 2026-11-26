@@ -376,7 +376,7 @@ export const INITIAL_FRIEND_REQUESTS: { id: string; fromUser: LoungeUser; timest
       friendStatus: 'pending'
     },
     timestamp: '10 dk önce',
-    songContext: 'Duman - Kırmış Kalbini dinlerken sana arkadaşlık isteği gönderdi',
+    songContext: 'Aynı frekansta dinlerken sana arkadaşlık isteği gönderdi',
     status: 'pending'
   }
 ];
@@ -390,8 +390,8 @@ export const INITIAL_LOUNGE_USERS: LoungeUser[] = [
     avatarSeed: 'DK',
     avatarGradient: 'from-amber-500 to-rose-600',
     platform: 'youtube_music',
-    currentSecond: 142, // Exactly on Duman Guitar Solo!
-    statusBubble: '01:42 solosunda tüyler diken diken',
+    currentSecond: 142,
+    statusBubble: 'Bu geçişte tüyler diken diken oluyor.',
     statusLikesCount: 14,
     hasLikedStatus: false,
     topArtists: ['Duman', 'Mor ve Ötesi', 'She Past Away', 'The Cure'],
@@ -412,7 +412,7 @@ export const INITIAL_LOUNGE_USERS: LoungeUser[] = [
     avatarGradient: 'from-amber-500 to-orange-700',
     platform: 'youtube_music',
     currentSecond: 142,
-    statusBubble: 'Batu Mutlugil solosu ve overdrive pedalları efsane.',
+    statusBubble: 'Miksteki gitar tonu ve analog derinlik harika.',
     statusLikesCount: 9,
     hasLikedStatus: false,
     topArtists: ['Duman', 'Teoman', 'Mor ve Ötesi'],

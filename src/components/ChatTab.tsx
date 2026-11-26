@@ -45,7 +45,7 @@ interface Props {
   onStartChatWithUser?: (user: LoungeUser, initialText?: string) => void;
   onOpenUserProfile?: (user: LoungeUser) => void;
   recentListeners?: LoungeUser[];
-  currentSong?: Song;
+  currentSong?: Song | null;
   currentSecond?: number;
   allSongs?: Song[];
   // Real-time cloud social props

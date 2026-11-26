@@ -24,16 +24,109 @@ import {
 } from '../services/locationService';
 import { triggerHaptic } from '../services/themeService';
 
-export type DistanceFilter = '1km' | '5km' | 'city' | 'all';
+export const ALL_TURKEY_RADIUS = 51;
+
+export interface RadiusSliderProps {
+  radiusKm: number;
+  onChangeRadiusKm: (km: number) => void;
+  listenerCount: number;
+  themeMode?: 'dark' | 'light';
+}
+
+export const RadiusSlider: React.FC<RadiusSliderProps> = ({
+  radiusKm,
+  onChangeRadiusKm,
+  listenerCount,
+  themeMode,
+}) => {
+  const isLight =
+    themeMode === 'light' ||
+    (!themeMode &&
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('light'));
+
+  const isAllTurkey = radiusKm >= ALL_TURKEY_RADIUS;
+  const activeLabel = isAllTurkey ? 'Türkiye Geneli' : `${radiusKm} km`;
+  const fillPct = Math.min(100, Math.max(0, ((radiusKm - 1) / (ALL_TURKEY_RADIUS - 1)) * 100));
+
+  return (
+    <div
+      className={`rounded-xl px-3 py-2.5 border space-y-2 transition-colors ${
+        isLight
+          ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
+          : 'bg-[#211D1A] border-[#FFF0E1]/[0.06] text-[#FAF7F2]'
+      }`}
+    >
+      {/* Top Row: Left label · Center copper mono badge · Right listener counter */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
+        <span
+          className={`font-medium truncate ${
+            isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+          }`}
+        >
+          Mesafe Yarıçapı
+        </span>
+
+        <span className="px-2.5 py-0.5 rounded-lg bg-[#E87A3E]/15 border border-[#E87A3E]/30 text-[#D96B2C] dark:text-[#F49A5E] font-mono tabular-nums text-[11px] font-bold whitespace-nowrap">
+          {activeLabel}
+        </span>
+
+        <span
+          className={`text-right font-mono tabular-nums text-[11px] font-medium truncate ${
+            isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+          }`}
+        >
+          {listenerCount} dinleyici
+        </span>
+      </div>
+
+      {/* Thin Copper Range Slider */}
+      <div className="space-y-1">
+        <div className="relative flex items-center">
+          <input
+            type="range"
+            min={1}
+            max={ALL_TURKEY_RADIUS}
+            step={1}
+            value={Math.min(ALL_TURKEY_RADIUS, Math.max(1, radiusKm))}
+            onChange={(e) => {
+              const nextVal = Number(e.target.value);
+              onChangeRadiusKm(nextVal);
+            }}
+            aria-label="Mesafe Yarıçapı"
+            aria-valuetext={activeLabel}
+            style={{
+              background: `linear-gradient(to right, #E87A3E 0%, #D97706 ${fillPct}%, ${
+                isLight ? '#E2D9CE' : 'rgba(255,240,225,0.12)'
+              } ${fillPct}%, ${
+                isLight ? '#E2D9CE' : 'rgba(255,240,225,0.12)'
+              } 100%)`,
+            }}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#E87A3E] focus:outline-none"
+          />
+        </div>
+
+        <div
+          className={`flex items-center justify-between text-[10px] font-mono tabular-nums ${
+            isLight ? 'text-[#8E847A]' : 'text-[#A39A91]'
+          }`}
+        >
+          <span>1 km</span>
+          <span>Tümü</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface Props {
   users: LoungeUser[];
-  activeFilter: DistanceFilter;
-  onChangeFilter: (filter: DistanceFilter) => void;
+  radiusKm: number;
+  onChangeRadiusKm: (km: number) => void;
   onSelectUser: (user: LoungeUser) => void;
   onDirectChat?: (user: LoungeUser) => void;
   onSeekSecond?: (sec: number) => void;
-  currentSong: Song;
+  currentSong: Song | null;
   myCity?: string;
   onChangeCity?: (city: string) => void;
   themeMode?: 'dark' | 'light';
@@ -262,8 +355,8 @@ const resolveListenerLatLng = (
   const normCity = normalizeTr(user.city || '');
   const distKm = typeof user.distanceKm === 'number' ? user.distanceKm : 1.5;
 
-  // Remote intercity listeners (> 15 km): map to their actual Turkish city coordinates
-  if (distKm > 15) {
+  // Remote intercity listeners (> 50 km): map to their actual Turkish city coordinates
+  if (distKm > 50) {
     for (const [cityKey, coords] of Object.entries(OTHER_TURKEY_CITY_COORDS)) {
       if (normCity.includes(cityKey)) {
         const jitterKm = 0.8 + (seed % 30) * 0.08;
@@ -282,7 +375,7 @@ const resolveListenerLatLng = (
     return offsetLatLngByKm(picked, 1.2, bearing);
   }
 
-  // Local listeners within the selected city (<= 15 km)
+  // Local listeners within the selected metro area (<= 50 km)
   const spec = CITY_COORDS[activeCityKey] || CITY_COORDS.istanbul;
 
   // 1 km walking ring: keep accurately within ~0.2 - 0.88 km of center so they sit cleanly inside the 1000m circle
@@ -300,7 +393,7 @@ const resolveListenerLatLng = (
   }
 
   // Otherwise place at exact metric distance from center
-  return offsetLatLngByKm(originCenter, Math.min(14.2, distKm), bearing);
+  return offsetLatLngByKm(originCenter, Math.min(48, distKm), bearing);
 };
 
 const isValidLatLng = (coords: LatLngTuple | null | undefined): coords is LatLngTuple =>
@@ -342,22 +435,25 @@ const safeFlyTo = (
   }
 };
 
-const getFilterMapConfig = (filter: DistanceFilter, center: LatLngTuple): {
+const getRadiusMapConfig = (radiusKm: number, center: LatLngTuple): {
   center: LatLngTuple;
   zoom: number;
   radiusMeters: number | null;
 } => {
   const safeCenter = isValidLatLng(center) ? center : CITY_COORDS.istanbul.center;
-  if (filter === '1km') return { center: safeCenter, zoom: 14, radiusMeters: 1000 };
-  if (filter === '5km') return { center: safeCenter, zoom: 12, radiusMeters: 5000 };
-  if (filter === 'city') return { center: safeCenter, zoom: 11, radiusMeters: 15000 };
-  return { center: TURKEY_OVERVIEW_CENTER, zoom: TURKEY_OVERVIEW_ZOOM, radiusMeters: null };
+  if (radiusKm >= ALL_TURKEY_RADIUS) {
+    return { center: TURKEY_OVERVIEW_CENTER, zoom: TURKEY_OVERVIEW_ZOOM, radiusMeters: null };
+  }
+  const clampedKm = Math.max(1, Math.min(50, radiusKm));
+  const zoom =
+    clampedKm <= 2 ? 14 : clampedKm <= 8 ? 12 : clampedKm <= 20 ? 11 : 9.5;
+  return { center: safeCenter, zoom, radiusMeters: clampedKm * 1000 };
 };
 
 export const ProximityDensityMap: React.FC<Props> = ({
   users,
-  activeFilter,
-  onChangeFilter,
+  radiusKm,
+  onChangeRadiusKm,
   onSelectUser,
   onDirectChat,
   onSeekSecond,
@@ -448,7 +544,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
       if (onChangeCity && res.location?.fullLocation) {
         onChangeCity(res.location.fullLocation);
       }
-      const cfg = getFilterMapConfig(activeFilter, resolvedCenter);
+      const cfg = getRadiusMapConfig(radiusKm, resolvedCenter);
       safeFlyTo(mapRef.current, cfg.center, cfg.zoom, 0.75);
 
       if (res.gpsGranted) {
@@ -462,7 +558,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
     } finally {
       setIsRequestingGps(false);
     }
-  }, [activeFilter, cityCenter, onChangeCity]);
+  }, [radiusKm, cityCenter, onChangeCity]);
 
   const selectedUser = useMemo(() => {
     if (!selectedUserId) return null;
@@ -479,26 +575,20 @@ export const ProximityDensityMap: React.FC<Props> = ({
     return users.map((u, idx) => {
       const coords = resolveListenerLatLng(u, idx, activeCityKey, cityCenter);
       const inActiveRange =
-        activeFilter === '1km'
-          ? u.distanceKm <= 1.0
-          : activeFilter === '5km'
-          ? u.distanceKm <= 5.0
-          : activeFilter === 'city'
-          ? u.distanceKm <= 15.0
-          : true;
+        radiusKm >= ALL_TURKEY_RADIUS ? true : u.distanceKm <= radiusKm;
       return {
         user: u,
         coords,
         inActiveRange,
       };
     });
-  }, [users, activeCityKey, cityCenter, activeFilter]);
+  }, [users, activeCityKey, cityCenter, radiusKm]);
 
   // 1. Initialize Leaflet Map once on mount
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    const initialCfg = getFilterMapConfig(activeFilter, cityCenter);
+    const initialCfg = getRadiusMapConfig(radiusKm, cityCenter);
     const map = L.map(mapContainerRef.current, {
       center: initialCfg.center,
       zoom: initialCfg.zoom,
@@ -548,12 +638,12 @@ export const ProximityDensityMap: React.FC<Props> = ({
     };
   }, []);
 
-  // 3. Update User Center Marker ("Sen"), Metric Radar Circle, and Smooth FlyTo on city/filter change
+  // 3. Update User Center Marker ("Sen"), Metric Radar Circle, and Smooth FlyTo on city/radius change
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    const cfg = getFilterMapConfig(activeFilter, cityCenter);
+    const cfg = getRadiusMapConfig(radiusKm, cityCenter);
 
     // Update or create "Sen" pulsing emerald center pin
     const userIcon = L.divIcon({
@@ -575,12 +665,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
       `,
     });
 
-    // Update or hide metric radar circle
-    if (circleRef.current) {
-      map.removeLayer(circleRef.current);
-      circleRef.current = null;
-    }
-
     if (isValidLatLng(cityCenter)) {
       if (userMarkerRef.current) {
         userMarkerRef.current.setLatLng(cityCenter).setIcon(userIcon);
@@ -593,23 +677,42 @@ export const ProximityDensityMap: React.FC<Props> = ({
       }
 
       if (cfg.radiusMeters !== null) {
-        const strokeColor = activeFilter === '1km' ? '#22C55E' : '#E87A3E';
-        const fillColor = activeFilter === '1km' ? '#22C55E' : '#E87A3E';
-        circleRef.current = L.circle(cityCenter, {
-          radius: cfg.radiusMeters,
-          color: strokeColor,
-          weight: 1.75,
-          opacity: 0.72,
-          dashArray: activeFilter === 'city' ? '6 6' : undefined,
-          fillColor,
-          fillOpacity: effectiveTheme === 'light' ? 0.1 : 0.14,
-          interactive: false,
-        }).addTo(map);
+        const strokeColor = radiusKm <= 2 ? '#22C55E' : '#E87A3E';
+        const fillColor = radiusKm <= 2 ? '#22C55E' : '#E87A3E';
+        const fillOpacity = effectiveTheme === 'light' ? 0.1 : 0.14;
+        if (circleRef.current) {
+          circleRef.current
+            .setLatLng(cityCenter)
+            .setRadius(cfg.radiusMeters)
+            .setStyle({
+              color: strokeColor,
+              fillColor,
+              fillOpacity,
+              dashArray: radiusKm > 15 ? '6 6' : undefined,
+            });
+        } else {
+          circleRef.current = L.circle(cityCenter, {
+            radius: cfg.radiusMeters,
+            color: strokeColor,
+            weight: 1.75,
+            opacity: 0.75,
+            dashArray: radiusKm > 15 ? '6 6' : undefined,
+            fillColor,
+            fillOpacity,
+            interactive: false,
+          }).addTo(map);
+        }
+      } else if (circleRef.current) {
+        map.removeLayer(circleRef.current);
+        circleRef.current = null;
       }
+    } else if (circleRef.current) {
+      map.removeLayer(circleRef.current);
+      circleRef.current = null;
     }
 
-    safeFlyTo(map, cfg.center, cfg.zoom, 0.85);
-  }, [activeFilter, cityCenter, effectiveTheme]);
+    safeFlyTo(map, cfg.center, cfg.zoom, 0.55);
+  }, [radiusKm, cityCenter, effectiveTheme]);
 
   // 4. Render Listener Avatar Pins inside LayerGroup
   useEffect(() => {
@@ -671,13 +774,16 @@ export const ProximityDensityMap: React.FC<Props> = ({
         triggerHaptic(15);
         setSelectedUserId(user.id);
         const currentZoom = Number.isFinite(map.getZoom()) ? map.getZoom() : 12;
-        const targetZoom = Math.max(currentZoom, activeFilter === 'all' ? 9.5 : 13.5);
+        const targetZoom = Math.max(
+          currentZoom,
+          radiusKm >= ALL_TURKEY_RADIUS ? 9.5 : 13.5
+        );
         safeFlyTo(map, coords, targetZoom, 0.65);
       });
 
       marker.addTo(layerGroup);
     });
-  }, [mappedListeners, selectedUserId, effectiveTheme, activeFilter]);
+  }, [mappedListeners, selectedUserId, effectiveTheme, radiusKm]);
 
   const handleZoomIn = useCallback(() => {
     triggerHaptic(10);
@@ -702,8 +808,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
     const spec = CITY_COORDS[activeCityKey] || CITY_COORDS.istanbul;
 
     if (isRemote) {
-      if (activeFilter !== 'all') {
-        onChangeFilter('all');
+      if (radiusKm < ALL_TURKEY_RADIUS) {
+        onChangeRadiusKm(ALL_TURKEY_RADIUS);
       }
       safeFlyTo(map, TURKEY_OVERVIEW_CENTER, TURKEY_OVERVIEW_ZOOM, 0.85);
       if (cluster.users[0]) {
@@ -722,8 +828,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
       targetCoords = spec.districts.low;
     }
 
-    if (activeFilter === '1km' && !cluster.id.endsWith('-high')) {
-      onChangeFilter('city');
+    if (radiusKm <= 2 && !cluster.id.endsWith('-high')) {
+      onChangeRadiusKm(15);
     }
 
     safeFlyTo(map, targetCoords, 13.5, 0.75);
@@ -829,13 +935,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               }`}
             />
             <span>
-              {activeFilter === '1km'
-                ? '1 km · Yürüme'
-                : activeFilter === '5km'
-                ? '5 km · İlçe'
-                : activeFilter === 'city'
-                ? '15 km · Şehir'
-                : 'Türkiye Geneli'}
+              {radiusKm >= ALL_TURKEY_RADIUS ? 'Türkiye Geneli' : `${radiusKm} km yarıçap`}
             </span>
           </div>
 
@@ -1099,7 +1199,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
             >
               Bölge Yoğunluğu ({myCity.split(',')[0].trim()})
             </span>
-            <span className="truncate max-w-[160px]">{currentSong.title}</span>
+            <span className="truncate max-w-[160px]">
+              {currentSong?.title || 'Canlı Ağ'}
+            </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

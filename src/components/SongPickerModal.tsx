@@ -17,9 +17,11 @@ import { resolveMusicLinkOrQuery, searchTracks } from '../services/musicResolver
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  currentSong: Song;
+  currentSong: Song | null;
   onSelectSong: (song: Song) => void;
   themeMode?: 'dark' | 'light';
+  customTitle?: string;
+  customSubtitle?: string;
 }
 
 export const SongPickerModal: React.FC<Props> = ({
@@ -28,6 +30,8 @@ export const SongPickerModal: React.FC<Props> = ({
   currentSong,
   onSelectSong,
   themeMode,
+  customTitle,
+  customSubtitle,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isResolving, setIsResolving] = useState(false);
@@ -155,10 +159,10 @@ export const SongPickerModal: React.FC<Props> = ({
                   isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
                 }`}
               >
-                Çalan Şarkıyı Değiştir
+                {customTitle || (currentSong ? 'Çalan Şarkıyı Değiştir' : 'Şarkı Ara ve Başlat')}
               </h3>
               <p className={`text-xs ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
-                Canlı odadaki parçanı seç veya link eşle
+                {customSubtitle || 'Canlı odadaki parçanı seç veya link eşle'}
               </p>
             </div>
           </div>
@@ -329,7 +333,7 @@ export const SongPickerModal: React.FC<Props> = ({
           )}
 
           {filteredSongs.map((song) => {
-            const isSelected = song.id === currentSong.id;
+            const isSelected = Boolean(currentSong && song.id === currentSong.id);
             const showImage = Boolean(song.coverUrl) && !failedCovers[song.id];
 
             return (
