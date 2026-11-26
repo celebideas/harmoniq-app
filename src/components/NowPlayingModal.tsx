@@ -28,6 +28,7 @@ import {
   UserCheck,
   Zap,
   ExternalLink,
+  Check,
 } from 'lucide-react';
 import { Song, PlatformType, LoungeUser } from '../types';
 import { fetchArtistRadio } from '../services/musicResolver';
@@ -224,6 +225,24 @@ export const NowPlayingModal: React.FC<Props> = ({
   const [sheetFilter, setSheetFilter] = useState<'all' | 'synced' | 'kadikoy'>('all');
 
   const heroLyricsContainerRef = useRef<HTMLDivElement>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareCopiedTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setShareCopied(false);
+      if (shareCopiedTimerRef.current) {
+        window.clearTimeout(shareCopiedTimerRef.current);
+        shareCopiedTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (shareCopiedTimerRef.current) {
+        window.clearTimeout(shareCopiedTimerRef.current);
+        shareCopiedTimerRef.current = null;
+      }
+    };
+  }, [isOpen]);
 
   // Initialize like state with song favorite status
   useEffect(() => {
@@ -684,15 +703,32 @@ export const NowPlayingModal: React.FC<Props> = ({
       }
     }
 
-    try {
-      await navigator.clipboard?.writeText(shareUrl);
-    } catch {
+    let copied = false;
+    if (
+      typeof navigator !== 'undefined' &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === 'function'
+    ) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
       const textarea = document.createElement('textarea');
       textarea.value = shareUrl;
+      textarea.setAttribute('readonly', '');
       textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '-9999px';
       textarea.style.opacity = '0';
       document.body.appendChild(textarea);
+      textarea.focus();
       textarea.select();
+      textarea.setSelectionRange(0, shareUrl.length);
       try {
         document.execCommand('copy');
       } catch {
@@ -700,7 +736,15 @@ export const NowPlayingModal: React.FC<Props> = ({
       }
       document.body.removeChild(textarea);
     }
-    onShowToast('ListenHub an bağlantısı kopyalandı');
+
+    setShareCopied(true);
+    if (shareCopiedTimerRef.current) {
+      window.clearTimeout(shareCopiedTimerRef.current);
+    }
+    shareCopiedTimerRef.current = window.setTimeout(() => {
+      setShareCopied(false);
+      shareCopiedTimerRef.current = null;
+    }, 2000);
   };
 
   // Find upcoming queue songs (other songs after current)
@@ -745,15 +789,35 @@ export const NowPlayingModal: React.FC<Props> = ({
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
-                title="ListenHub Anını Paylaş"
-                aria-label="ListenHub Anını Paylaş"
-              >
-                <Share2 className="w-4 h-4" strokeWidth={1.75} />
-              </button>
+              <div className="relative flex items-center">
+                {shareCopied && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="absolute right-full mr-2 top-1/2 -translate-y-1/2 z-[100] whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] border border-[#16A34A]/35 dark:border-[#22C55E]/35 shadow-lg flex items-center gap-1.5 pointer-events-none animate-modal-enter"
+                  >
+                    <Check className="w-3 h-3 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={2.5} />
+                    <span>ListenHub an bağlantısı kopyalandı</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className={`min-h-[42px] min-w-[42px] p-2 rounded-xl transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer ${
+                    shareCopied
+                      ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E]'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A]'
+                  }`}
+                  title={shareCopied ? 'ListenHub an bağlantısı kopyalandı' : 'ListenHub Anını Paylaş'}
+                  aria-label="ListenHub Anını Paylaş"
+                >
+                  {shareCopied ? (
+                    <Check className="w-4 h-4 text-[#16A34A] dark:text-[#22C55E]" strokeWidth={2.25} />
+                  ) : (
+                    <Share2 className="w-4 h-4" strokeWidth={1.75} />
+                  )}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={onOpenSongPicker}
