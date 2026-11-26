@@ -1,10 +1,8 @@
-// Harmoniq PWA Service Worker with Auto-Update & Network-First Strategy
-const APP_VERSION = 'harmoniq-v1.3.0';
-const CACHE_NAME = `harmoniq-cache-${APP_VERSION}`;
+// ListenHub PWA Service Worker with Safe Production-Only Caching
+const APP_VERSION = 'listenhub-v2.0.0';
+const CACHE_NAME = `listenhub-cache-${APP_VERSION}`;
 
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -17,7 +15,7 @@ const CORE_ASSETS = [
   '/covers/shepastaway.jpg'
 ];
 
-// 1. Install Event: Cache core assets and immediately skip waiting
+// 1. Install Event: Cache static icons/covers and immediately skip waiting
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -29,16 +27,16 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 2. Activate Event: Clean up all obsolete caches and take control of all open clients
+// 2. Activate Event: Clean up ALL legacy caches (including stale Vite module caches)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
           if (name !== CACHE_NAME) {
-            console.log('[SW] Deleting legacy cache:', name);
             return caches.delete(name);
           }
+          return Promise.resolve(false);
         })
       );
     }).then(() => self.clients.claim())
@@ -53,11 +51,34 @@ self.addEventListener('message', (event) => {
 });
 
 // 4. Fetch Event:
-// - Navigation requests (HTML): Always NETWORK-FIRST so any new deployment on Cloud Run is immediately served!
-// - Static assets: Stale-While-Revalidate with background cache updating.
+// - NEVER intercept Vite dev modules (/src/, /node_modules/, /@vite/, /@fs/, ?v=, ?t=), API routes, or cross-origin requests.
+// - Navigation requests: Network-first.
+// - Production static assets only: Stale-While-Revalidate.
 self.addEventListener('fetch', (event) => {
-  // Ignore non-GET or chrome-extension schemes
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+
+  // Never intercept cross-origin requests (APIs, YouTube, Google Fonts, tiles, etc.)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Never cache Vite dev server modules, source TS/TSX files, HMR endpoints, or backend API routes
+  const pathname = url.pathname;
+  if (
+    pathname.startsWith('/src/') ||
+    pathname.startsWith('/node_modules/') ||
+    pathname.startsWith('/@') ||
+    pathname.startsWith('/api/') ||
+    pathname === '/sw.js' ||
+    url.searchParams.has('v') ||
+    url.searchParams.has('t') ||
+    pathname.endsWith('.ts') ||
+    pathname.endsWith('.tsx')
+  ) {
     return;
   }
 
@@ -81,7 +102,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static Assets & Scripts: Stale-While-Revalidate
+  // Only cache static production assets (images, icons, manifest, built /assets/ chunks)
+  const isCacheableStatic =
+    pathname.startsWith('/assets/') ||
+    pathname.startsWith('/covers/') ||
+    pathname === '/manifest.json' ||
+    /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(pathname);
+
+  if (!isCacheableStatic) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)

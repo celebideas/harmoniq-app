@@ -36,10 +36,30 @@ export function usePwaUpdate(): PwaUpdateState {
       };
     }
 
-    // Register service worker with updateViaCache: 'none'
+    // In Vite dev mode, never keep an active Service Worker so pre-bundled React chunks stay in sync
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+        .catch(() => {});
+      if ('caches' in window) {
+        caches
+          .keys()
+          .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+          .catch(() => {});
+      }
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+
+    // Register service worker in production with updateViaCache: 'none'
+    let activeReg: ServiceWorkerRegistration | null = null;
     navigator.serviceWorker
       .register('/sw.js', { updateViaCache: 'none' })
       .then((reg) => {
+        activeReg = reg;
         setRegistration(reg);
 
         // Check if there is already a waiting worker
@@ -56,7 +76,6 @@ export function usePwaUpdate(): PwaUpdateState {
                 newWorker.state === 'installed' &&
                 navigator.serviceWorker.controller
               ) {
-                // New content available!
                 setIsUpdateAvailable(true);
               }
             });
@@ -79,16 +98,16 @@ export function usePwaUpdate(): PwaUpdateState {
 
     // Periodic update check every 45 seconds while app is open
     const interval = setInterval(() => {
-      if (registration) {
-        registration.update().catch(() => {});
+      if (activeReg) {
+        activeReg.update().catch(() => {});
         setLastCheckedTime(new Date());
       }
     }, 45000);
 
-    // Check updates when app window becomes active/focused (e.g. mobile app switched to)
+    // Check updates when app window becomes active/focused
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && registration) {
-        registration.update().catch(() => {});
+      if (document.visibilityState === 'visible' && activeReg) {
+        activeReg.update().catch(() => {});
         setLastCheckedTime(new Date());
       }
     };
