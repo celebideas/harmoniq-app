@@ -37,6 +37,7 @@ interface Props {
   onSeekSecond?: (sec: number) => void;
   userCity?: string;
   onUpdateCity?: (city: string) => void;
+  themeMode?: 'dark' | 'light';
 }
 
 type RoomFilterMode = 'all' | 'artists' | 'songs' | 'personal';
@@ -324,6 +325,7 @@ export const RoomsTab: React.FC<Props> = ({
   onSeekSecond,
   userCity,
   onUpdateCity,
+  themeMode = 'dark',
 }) => {
   const [exploreLens, setExploreLens] = useState<ExploreLens>('rooms');
   const [mapDistanceFilter, setMapDistanceFilter] = useState<DistanceFilter>('all');
@@ -702,6 +704,7 @@ export const RoomsTab: React.FC<Props> = ({
             currentSong={currentSong}
             myCity={userCity}
             onChangeCity={onUpdateCity}
+            themeMode={themeMode}
           />
         </div>
       )}

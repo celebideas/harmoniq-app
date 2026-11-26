@@ -28,18 +28,76 @@ function saveLocationToStorage(loc: UserLocation) {
 }
 
 /**
- * Format city string from location parts
+ * Returns true if the string looks like a neighborhood, street, or boulevard rather than a district (İlçe).
  */
-export function formatCityName(district?: string, city?: string, state?: string): string {
-  const primaryCity = city || state || '';
-  if (district && primaryCity && district.toLowerCase() !== primaryCity.toLowerCase()) {
-    return `${primaryCity}, ${district}`;
-  }
-  return primaryCity || district || 'İstanbul, Kadıköy';
+export function isNeighborhood(val?: string): boolean {
+  if (!val) return false;
+  return /mahalle|mah\.|sokak|cadde|bulvar/i.test(val);
 }
 
 /**
- * Reverse geocodes latitude & longitude into a human-readable city/district.
+ * Strips administrative suffixes such as "İli", "Province", "İlçesi", "District"
+ */
+function cleanAdminName(val?: string): string {
+  if (!val) return '';
+  return val
+    .replace(/\s+(İli|Ili|Province|İlçesi|Ilcesi|District|Merkez İlçesi|Büyükşehir Belediyesi|Belediyesi)$/i, '')
+    .trim();
+}
+
+/**
+ * Normalizes any raw location string (including legacy parentheses or cached neighborhood labels)
+ * into clean "Şehir, İlçe" or "Şehir" format.
+ */
+export function sanitizeFormattedLocation(raw?: string): string {
+  if (!raw || !raw.trim()) return 'İstanbul, Kadıköy';
+  const trimmed = raw.trim();
+
+  // Handle legacy "Şehir (İlçe ...)" format
+  const parenMatch = trimmed.match(/^([^(,]+)\(([^)]+)\)/);
+  if (parenMatch) {
+    const cityPart = cleanAdminName(parenMatch[1]);
+    const innerPart = cleanAdminName(parenMatch[2].split('/')[0]);
+    if (innerPart && !isNeighborhood(innerPart)) {
+      return formatCityName(innerPart, cityPart);
+    }
+    return formatCityName(undefined, cityPart);
+  }
+
+  const parts = trimmed.split(',').map((p) => cleanAdminName(p)).filter(Boolean);
+  if (parts.length >= 2) {
+    const cityPart = parts[0];
+    const distPart = isNeighborhood(parts[1]) ? undefined : parts[1];
+    return formatCityName(distPart, cityPart);
+  }
+  return formatCityName(undefined, parts[0] || 'İstanbul');
+}
+
+/**
+ * Format city string strictly as "Şehir, İlçe" (or "Şehir" when district is missing, same as city, or a neighborhood).
+ */
+export function formatCityName(district?: string, city?: string, state?: string): string {
+  const cleanCity = cleanAdminName(city || state || '');
+  const rawDistrict = cleanAdminName(district || '');
+  const cleanDistrict = rawDistrict && !isNeighborhood(rawDistrict) ? rawDistrict : '';
+
+  if (
+    cleanCity &&
+    cleanDistrict &&
+    cleanDistrict.toLocaleLowerCase('tr-TR') !== cleanCity.toLocaleLowerCase('tr-TR')
+  ) {
+    return `${cleanCity}, ${cleanDistrict}`;
+  }
+  return cleanCity || cleanDistrict || 'İstanbul, Kadıköy';
+}
+
+interface BigDataCloudAdminEntry {
+  name?: string;
+  adminLevel?: number;
+}
+
+/**
+ * Reverse geocodes latitude & longitude strictly into "Şehir, İlçe" (never neighborhood/mahalle).
  * Uses BigDataCloud client API (fast, CORS-friendly, no API key needed)
  * with OpenStreetMap Nominatim fallback.
  */
@@ -52,10 +110,29 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     );
     if (res.ok) {
       const data = await res.json();
-      const district = data.locality || data.localityInfo?.administrative?.[3]?.name || data.localityInfo?.administrative?.[2]?.name;
-      const city = data.city || data.principalSubdivision || data.countryName;
+      const city = cleanAdminName(data.principalSubdivision || data.city);
+
+      const adminList: BigDataCloudAdminEntry[] = Array.isArray(data.localityInfo?.administrative)
+        ? data.localityInfo.administrative
+        : [];
+      const adminLevel6 = adminList.find((entry) => entry?.adminLevel === 6 && entry?.name)?.name;
+
+      const districtCandidates = [adminLevel6, data.city, data.locality];
+      let district: string | undefined;
+      for (const candidate of districtCandidates) {
+        const cleaned = cleanAdminName(candidate);
+        if (
+          cleaned &&
+          !isNeighborhood(cleaned) &&
+          (!city || cleaned.toLocaleLowerCase('tr-TR') !== city.toLocaleLowerCase('tr-TR'))
+        ) {
+          district = cleaned;
+          break;
+        }
+      }
+
       if (city) {
-        return { city, district: district && district !== city ? district : undefined };
+        return { city, district };
       }
     }
   } catch {
@@ -63,18 +140,31 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
   }
 
   try {
-    // 2. Secondary: OpenStreetMap Nominatim
+    // 2. Secondary: OpenStreetMap Nominatim (never suburb / neighbourhood / quarter)
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1&accept-language=tr`,
       { signal: AbortSignal.timeout(3500) }
     );
     if (res.ok) {
       const data = await res.json();
       const addr = data.address || {};
-      const district = addr.suburb || addr.district || addr.neighbourhood || addr.quarter;
-      const city = addr.city || addr.town || addr.province || addr.state;
+      const city = cleanAdminName(addr.province || addr.state || addr.city);
+      const districtCandidates = [addr.town, addr.county, addr.city_district, addr.municipality];
+      let district: string | undefined;
+      for (const candidate of districtCandidates) {
+        const cleaned = cleanAdminName(candidate);
+        if (
+          cleaned &&
+          !isNeighborhood(cleaned) &&
+          (!city || cleaned.toLocaleLowerCase('tr-TR') !== city.toLocaleLowerCase('tr-TR'))
+        ) {
+          district = cleaned;
+          break;
+        }
+      }
+
       if (city || district) {
-        return { city: city || district || 'İstanbul', district };
+        return { city: city || district || 'İstanbul', district: city ? district : undefined };
       }
     }
   } catch {
@@ -139,12 +229,12 @@ function getSafeTurkishFallbackLocation(): UserLocation {
   if (typeof localStorage !== 'undefined') {
     const saved = localStorage.getItem(STORAGE_KEY_CITY);
     if (saved && !isForeignOrVpnLocation(undefined, saved, false)) {
-      fallbackCity = saved;
+      fallbackCity = sanitizeFormattedLocation(saved);
     }
   }
   const parts = fallbackCity.split(',');
   const city = parts[0]?.trim() || 'İstanbul';
-  const district = parts[1]?.trim() || 'Kadıköy';
+  const district = parts[1]?.trim() || undefined;
   return {
     city,
     district,
@@ -178,11 +268,17 @@ export async function detectLocationByIP(): Promise<UserLocation> {
           return getSafeTurkishFallbackLocation();
         }
 
-        const city = rawCity;
-        const district = data.region && data.region !== city ? data.region : undefined;
-        const formatted = formatCityName(district, city);
+        const province = cleanAdminName(data.region || data.city || 'İstanbul');
+        const distCandidate = cleanAdminName(data.city);
+        const district =
+          distCandidate &&
+          !isNeighborhood(distCandidate) &&
+          distCandidate.toLocaleLowerCase('tr-TR') !== province.toLocaleLowerCase('tr-TR')
+            ? distCandidate
+            : undefined;
+        const formatted = formatCityName(district, province);
         const loc: UserLocation = {
-          city,
+          city: province,
           district,
           fullLocation: formatted,
           isAuto: true,
@@ -215,11 +311,17 @@ export async function detectLocationByIP(): Promise<UserLocation> {
           return getSafeTurkishFallbackLocation();
         }
 
-        const city = rawCity;
-        const district = data.regionName && data.regionName !== city ? data.regionName : undefined;
-        const formatted = formatCityName(district, city);
+        const province = cleanAdminName(data.regionName || data.cityName || 'İstanbul');
+        const distCandidate = cleanAdminName(data.cityName);
+        const district =
+          distCandidate &&
+          !isNeighborhood(distCandidate) &&
+          distCandidate.toLocaleLowerCase('tr-TR') !== province.toLocaleLowerCase('tr-TR')
+            ? distCandidate
+            : undefined;
+        const formatted = formatCityName(district, province);
         const loc: UserLocation = {
-          city,
+          city: province,
           district,
           fullLocation: formatted,
           isAuto: true,
@@ -393,14 +495,16 @@ export async function detectLiveLocation(): Promise<UserLocation> {
  * Save manual location override
  */
 export function setManualLocation(customCity: string): UserLocation {
-  const trimmed = customCity.trim() || 'İstanbul, Kadıköy';
+  const cleaned = sanitizeFormattedLocation(customCity);
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY_CITY, trimmed);
+    localStorage.setItem(STORAGE_KEY_CITY, cleaned);
     localStorage.setItem(STORAGE_KEY_MODE, 'manual');
   }
+  const parts = cleaned.split(',');
   return {
-    city: trimmed,
-    fullLocation: trimmed,
+    city: parts[0]?.trim() || cleaned,
+    district: parts[1]?.trim() || undefined,
+    fullLocation: cleaned,
     isAuto: false,
     updatedAt: Date.now(),
   };
@@ -413,7 +517,8 @@ export function getSavedLocation(): { fullLocation: string; city: string; isAuto
   if (typeof localStorage === 'undefined') {
     return { fullLocation: 'İstanbul, Kadıköy', city: 'İstanbul, Kadıköy', isAuto: false };
   }
-  const fullLocation = localStorage.getItem(STORAGE_KEY_CITY) || 'İstanbul, Kadıköy';
+  const rawSaved = localStorage.getItem(STORAGE_KEY_CITY) || 'İstanbul, Kadıköy';
+  const fullLocation = sanitizeFormattedLocation(rawSaved);
   const mode = localStorage.getItem(STORAGE_KEY_MODE) || 'auto';
   return {
     fullLocation,
@@ -502,255 +607,254 @@ interface UserCityOverride {
 
 const CITY_USER_LOCALIZATIONS: Record<Exclude<SupportedCityKey, 'custom'>, Record<string, UserCityOverride>> = {
   selcuk: {
-    // 1 km - 2.5 km (High Density: Selçuk Merkez & İstasyon)
+    // 1 km - 2.5 km (Selçuk)
     'user-arda': {
-      city: 'Selçuk (İstasyon)',
+      city: 'İzmir, Selçuk',
       bio: 'Selçuk sokak müzisyeni ve indie gitaristi.',
-      statusBubble: 'İstasyon caddesinde kulaklıkta Duman yankılanıyor ⚡',
+      statusBubble: 'Selçuk sokaklarında kulaklıkta Duman yankılanıyor.',
     },
     'user-ece': {
-      city: 'Selçuk (Atatürk Mah.)',
-      statusBubble: 'Çarşıda kafede kahve ve Kaan Tangöze.',
+      city: 'İzmir, Selçuk',
+      statusBubble: 'Kahve ve Kaan Tangöze eşliğinde akustik mola.',
     },
     'user-kaan': {
-      city: 'Selçuk (İsabey)',
-      statusBubble: 'St. Jean yokuşunda gece yürüyüşü...',
+      city: 'İzmir, Selçuk',
+      statusBubble: 'Akşam yürüyüşünde kulaklıkta bu parça dönüyor...',
     },
     'user-mert': {
-      city: 'Selçuk (Merkez)',
+      city: 'İzmir, Selçuk',
     },
     'user-defne': {
-      city: 'Selçuk (St. Jean & Kale)',
+      city: 'İzmir, Selçuk',
       bio: 'Ege akşamları, plak dükkanları ve canlı performanslar.',
     },
     'user-sinan': {
-      city: 'Selçuk Merkez',
+      city: 'İzmir, Selçuk',
     },
-    // 3.5 km - 5.5 km (Medium Density: Şirince & Efes/Pamucak)
+    // 3.5 km - 15 km (Çevre ilçeler)
     'user-deniz': {
-      city: 'Selçuk (Şirince)',
+      city: 'İzmir, Selçuk',
     },
     'user-beren': {
-      city: 'Selçuk (Efes / Pamucak)',
+      city: 'İzmir, Selçuk',
       bio: 'Ege doğası, şiir ve alternatif rock.',
       statusBubble: 'Ege rüzgarında kulaklıkta çalan tek şarkı.',
     },
     'user-can': {
-      city: 'Selçuk (Efes / Pamucak)',
+      city: 'Aydın, Kuşadası',
     },
     'user-burak': {
-      city: 'Selçuk (Şirince)',
+      city: 'İzmir, Selçuk',
     },
-    // 5.5 km - 15 km (Low Density: Efes / Pamucak & Şirince)
     'user-zeynep': {
-      city: 'Selçuk (Şirince)',
+      city: 'İzmir, Torbalı',
     },
-    // Remote / Regional (> 15 km: Alsancak & İzmir)
-    'user-cem': { city: 'İzmir (Alsancak)' },
-    'user-melis': { city: 'İzmir (Alsancak / Kordon)' },
-    'user-eren': { city: 'İzmir (Alsancak)' },
-    'user-selin': { city: 'Selçuk (Efes / Pamucak)' },
-    'user-tolga': { city: 'Selçuk Merkez' },
+    // Remote / Regional (> 15 km)
+    'user-cem': { city: 'İzmir, Konak' },
+    'user-melis': { city: 'İzmir, Karşıyaka' },
+    'user-eren': { city: 'İzmir, Bornova' },
+    'user-selin': { city: 'Aydın, Kuşadası' },
+    'user-tolga': { city: 'İzmir, Selçuk' },
   },
   izmir: {
-    // 1 km - 2.5 km (High Density: Alsancak & Kordon)
+    // 1 km - 2.5 km (Konak)
     'user-arda': {
-      city: 'İzmir (Kıbrıs Şehitleri)',
-      bio: 'Alsancak sokak müzisyeni ve indie gitaristi.',
-      statusBubble: 'Kıbrıs Şehitleri caddesinde kulaklıkta Duman yankılanıyor ⚡',
+      city: 'İzmir, Konak',
+      bio: 'İzmir sokak müzisyeni ve indie gitaristi.',
+      statusBubble: 'Konak sahilinde kulaklıkta Duman yankılanıyor.',
     },
     'user-ece': {
-      city: 'İzmir (Alsancak Çarşı)',
-      statusBubble: 'Alsancak\'ta kafede kahve ve Kaan Tangöze.',
+      city: 'İzmir, Konak',
+      statusBubble: 'Kahve ve Kaan Tangöze eşliğinde akşam üstü.',
     },
     'user-kaan': {
-      city: 'İzmir (Kordon)',
-      statusBubble: 'Kordon boyunda gece yürüyüşü...',
+      city: 'İzmir, Konak',
+      statusBubble: 'Körfez kıyısında gece yürüyüşü...',
     },
     'user-mert': {
-      city: 'İzmir (Alsancak)',
+      city: 'İzmir, Konak',
     },
     'user-defne': {
-      city: 'İzmir (Güzelyalı)',
-      bio: 'Alsancak plak dükkanları, gece sürüşü ve canlı performanslar.',
+      city: 'İzmir, Balçova',
+      bio: 'Plak dükkanları, gece sürüşü ve canlı performanslar.',
     },
     'user-sinan': {
-      city: 'İzmir (Konak)',
+      city: 'İzmir, Konak',
     },
-    // 3.5 km - 5.5 km (Medium Density: Karşıyaka & Bostanlı)
+    // 3.5 km - 5.5 km (Karşıyaka)
     'user-deniz': {
-      city: 'İzmir (Karşıyaka Çarşı)',
+      city: 'İzmir, Karşıyaka',
     },
     'user-beren': {
-      city: 'İzmir (Bostanlı Sahil)',
+      city: 'İzmir, Karşıyaka',
       bio: 'Körfez manzarası, şiir ve alternatif rock.',
       statusBubble: 'Karşıyaka vapurunda kulaklıkta çalan tek şarkı.',
     },
     'user-can': {
-      city: 'İzmir (Bostanlı)',
+      city: 'İzmir, Karşıyaka',
     },
     'user-burak': {
-      city: 'İzmir (Göztepe)',
+      city: 'İzmir, Konak',
     },
-    // 5.5 km - 15 km (Low Density: Bornova & Çevre)
+    // 5.5 km - 15 km (Bornova)
     'user-zeynep': {
-      city: 'İzmir (Bornova)',
+      city: 'İzmir, Bornova',
     },
     // Remote (> 15 km)
-    'user-cem': { city: 'Bursa (Nilüfer)' },
-    'user-melis': { city: 'Eskişehir (Tepebaşı)' },
-    'user-eren': { city: 'İstanbul (Kadıköy)' },
-    'user-selin': { city: 'Ankara (Çankaya)' },
-    'user-tolga': { city: 'Antalya (Muratpaşa)' },
+    'user-cem': { city: 'Bursa, Nilüfer' },
+    'user-melis': { city: 'Eskişehir, Tepebaşı' },
+    'user-eren': { city: 'İstanbul, Kadıköy' },
+    'user-selin': { city: 'Ankara, Çankaya' },
+    'user-tolga': { city: 'Antalya, Muratpaşa' },
   },
   antalya: {
-    // 1 km - 2.5 km (High Density: Kaleiçi & Konyaaltı)
+    // 1 km - 2.5 km (Muratpaşa)
     'user-arda': {
-      city: 'Antalya (Kaleiçi)',
-      bio: 'Kaleiçi sokak müzisyeni ve indie gitaristi.',
-      statusBubble: 'Kaleiçi sokaklarında kulaklıkta Duman yankılanıyor ⚡',
+      city: 'Antalya, Muratpaşa',
+      bio: 'Antalya sokak müzisyeni ve indie gitaristi.',
+      statusBubble: 'Sahil boyunca kulaklıkta Duman yankılanıyor.',
     },
     'user-ece': {
-      city: 'Antalya (Işıklar Cad.)',
-      statusBubble: 'Işıklar\'da kafede kahve ve Kaan Tangöze.',
+      city: 'Antalya, Muratpaşa',
+      statusBubble: 'Kafede kahve ve Kaan Tangöze.',
     },
     'user-kaan': {
-      city: 'Antalya (Konyaaltı Sahil)',
+      city: 'Antalya, Konyaaltı',
       statusBubble: 'Konyaaltı sahilinde gece yürüyüşü...',
     },
     'user-mert': {
-      city: 'Antalya (Muratpaşa)',
+      city: 'Antalya, Muratpaşa',
     },
     'user-defne': {
-      city: 'Antalya (Bahçelievler)',
-      bio: 'Kaleiçi plak dükkanları, sahil sürüşü ve canlı performanslar.',
+      city: 'Antalya, Muratpaşa',
+      bio: 'Plak dükkanları, sahil sürüşü ve canlı performanslar.',
     },
     'user-sinan': {
-      city: 'Antalya (Meltem)',
+      city: 'Antalya, Muratpaşa',
     },
-    // 3.5 km - 5.5 km (Medium Density: Lara & Şirinyalı)
+    // 3.5 km - 5.5 km (Konyaaltı & Muratpaşa)
     'user-deniz': {
-      city: 'Antalya (Şirinyalı)',
+      city: 'Antalya, Muratpaşa',
     },
     'user-beren': {
-      city: 'Antalya (Fener)',
+      city: 'Antalya, Muratpaşa',
       bio: 'Falez manzarası, şiir ve alternatif rock.',
       statusBubble: 'Falezlerde gün batımında kulaklıkta çalan tek şarkı.',
     },
     'user-can': {
-      city: 'Antalya (Lara)',
+      city: 'Antalya, Konyaaltı',
     },
     'user-burak': {
-      city: 'Antalya (Gürsu)',
+      city: 'Antalya, Konyaaltı',
     },
-    // 5.5 km - 15 km (Low Density: Kültür & Kepez)
+    // 5.5 km - 15 km (Kepez)
     'user-zeynep': {
-      city: 'Antalya (Kültür / Kepez)',
+      city: 'Antalya, Kepez',
     },
     // Remote (> 15 km)
-    'user-cem': { city: 'Bursa (Nilüfer)' },
-    'user-melis': { city: 'Eskişehir (Tepebaşı)' },
-    'user-eren': { city: 'İzmir (Alsancak)' },
-    'user-selin': { city: 'Ankara (Çankaya)' },
-    'user-tolga': { city: 'İstanbul (Kadıköy)' },
+    'user-cem': { city: 'Bursa, Nilüfer' },
+    'user-melis': { city: 'Eskişehir, Tepebaşı' },
+    'user-eren': { city: 'İzmir, Konak' },
+    'user-selin': { city: 'Ankara, Çankaya' },
+    'user-tolga': { city: 'İstanbul, Kadıköy' },
   },
   ankara: {
-    // 1 km - 2.5 km (High Density: Tunalı & Çankaya)
+    // 1 km - 2.5 km (Çankaya)
     'user-arda': {
-      city: 'Ankara (Tunalı Hilmi)',
-      bio: 'Tunalı sokak müzisyeni ve indie gitaristi.',
-      statusBubble: 'Tunalı Hilmi caddesinde kulaklıkta Duman yankılanıyor ⚡',
+      city: 'Ankara, Çankaya',
+      bio: 'Çankaya sokak müzisyeni ve indie gitaristi.',
+      statusBubble: 'Çankaya akşamında kulaklıkta Duman yankılanıyor.',
     },
     'user-ece': {
-      city: 'Ankara (Kuğulu Park)',
-      statusBubble: 'Tunalı\'da kafede kahve ve Kaan Tangöze.',
+      city: 'Ankara, Çankaya',
+      statusBubble: 'Kafede kahve ve Kaan Tangöze.',
     },
     'user-kaan': {
-      city: 'Ankara (Kızılay Karanfil)',
-      statusBubble: 'Bahçelievler 7. Cadde\'de gece yürüyüşü...',
+      city: 'Ankara, Çankaya',
+      statusBubble: 'Akşam yürüyüşünde kulaklıkta bu parça dönüyor...',
     },
     'user-mert': {
-      city: 'Ankara (Çankaya)',
+      city: 'Ankara, Çankaya',
     },
     'user-defne': {
-      city: 'Ankara (Bahçelievler 7. Cad)',
-      bio: 'Tunalı plak dükkanları, gece sürüşü ve canlı performanslar.',
+      city: 'Ankara, Çankaya',
+      bio: 'Plak dükkanları, gece sürüşü ve canlı performanslar.',
     },
     'user-sinan': {
-      city: 'Ankara (Ayrancı)',
+      city: 'Ankara, Çankaya',
     },
-    // 3.5 km - 5.5 km (Medium Density: Kavaklıdere & Emek)
+    // 3.5 km - 5.5 km (Çankaya & Yenimahalle)
     'user-deniz': {
-      city: 'Ankara (Kavaklıdere)',
+      city: 'Ankara, Çankaya',
     },
     'user-beren': {
-      city: 'Ankara (Gaziosmanpaşa)',
-      bio: 'Seğmenler Parkı, şiir ve alternatif rock.',
-      statusBubble: 'Seğmenler\'de kulaklıkta çalan tek şarkı.',
+      city: 'Ankara, Çankaya',
+      bio: 'Park yürüyüşleri, şiir ve alternatif rock.',
+      statusBubble: 'Akşam rüzgarında kulaklıkta çalan tek şarkı.',
     },
     'user-can': {
-      city: 'Ankara (Emek)',
+      city: 'Ankara, Yenimahalle',
     },
     'user-burak': {
-      city: 'Ankara (Anıttepe)',
+      city: 'Ankara, Altındağ',
     },
-    // 5.5 km - 15 km (Low Density: Bilkent & ODTÜ)
+    // 5.5 km - 15 km (Yenimahalle)
     'user-zeynep': {
-      city: 'Ankara (Bilkent / ODTÜ)',
+      city: 'Ankara, Yenimahalle',
     },
     // Remote (> 15 km)
-    'user-cem': { city: 'Bursa (Nilüfer)' },
-    'user-melis': { city: 'Eskişehir (Tepebaşı)' },
-    'user-eren': { city: 'İzmir (Alsancak)' },
-    'user-selin': { city: 'İstanbul (Kadıköy)' },
-    'user-tolga': { city: 'Antalya (Muratpaşa)' },
+    'user-cem': { city: 'Bursa, Nilüfer' },
+    'user-melis': { city: 'Eskişehir, Tepebaşı' },
+    'user-eren': { city: 'İzmir, Konak' },
+    'user-selin': { city: 'İstanbul, Kadıköy' },
+    'user-tolga': { city: 'Antalya, Muratpaşa' },
   },
   istanbul: {
     'user-arda': {
-      city: 'İstanbul (Kadıköy Bahariye)',
+      city: 'İstanbul, Kadıköy',
       bio: 'Kadıköy sokak müzisyeni ve indie gitaristi.',
-      statusBubble: 'Bahariye caddesinde kulaklıkta Duman yankılanıyor ⚡',
+      statusBubble: 'Kadıköy akşamında kulaklıkta Duman yankılanıyor.',
     },
     'user-ece': {
-      city: 'İstanbul (Kadıköy Çarşı)',
-      statusBubble: 'Çarşıda kafede kahve ve Kaan Tangöze.',
+      city: 'İstanbul, Kadıköy',
+      statusBubble: 'Kafede kahve ve Kaan Tangöze.',
     },
     'user-kaan': {
-      city: 'İstanbul (Kadıköy Rıhtım)',
+      city: 'İstanbul, Kadıköy',
       statusBubble: 'Kadıköy sokaklarında gece yürüyüşü...',
     },
     'user-mert': {
-      city: 'İstanbul (Kadıköy)',
+      city: 'İstanbul, Kadıköy',
     },
     'user-defne': {
-      city: 'İstanbul (Moda)',
+      city: 'İstanbul, Kadıköy',
       bio: 'Kadıköy plak dükkanları, gece sürüşü ve canlı performanslar.',
     },
     'user-sinan': {
-      city: 'İstanbul (Fenerbahçe)',
+      city: 'İstanbul, Kadıköy',
     },
     'user-deniz': {
-      city: 'İstanbul (Karaköy)',
+      city: 'İstanbul, Beyoğlu',
     },
     'user-beren': {
-      city: 'İstanbul (Üsküdar)',
+      city: 'İstanbul, Üsküdar',
       bio: 'Boğaz manzarası, şiir ve alternatif rock.',
       statusBubble: 'Vapurda kulaklıkta çalan tek şarkı.',
     },
     'user-can': {
-      city: 'İstanbul (Beşiktaş)',
+      city: 'İstanbul, Beşiktaş',
     },
     'user-burak': {
-      city: 'İstanbul (Cihangir)',
+      city: 'İstanbul, Beyoğlu',
     },
     'user-zeynep': {
-      city: 'İstanbul (Şişli)',
+      city: 'İstanbul, Şişli',
     },
-    'user-cem': { city: 'Bursa (Nilüfer)' },
-    'user-melis': { city: 'Eskişehir (Tepebaşı)' },
-    'user-eren': { city: 'İzmir (Alsancak)' },
-    'user-selin': { city: 'Ankara (Çankaya)' },
-    'user-tolga': { city: 'Antalya (Muratpaşa)' },
+    'user-cem': { city: 'Bursa, Nilüfer' },
+    'user-melis': { city: 'Eskişehir, Tepebaşı' },
+    'user-eren': { city: 'İzmir, Konak' },
+    'user-selin': { city: 'Ankara, Çankaya' },
+    'user-tolga': { city: 'Antalya, Muratpaşa' },
   },
 };
 
@@ -759,46 +863,46 @@ export const CITY_CLUSTER_NAMES: Record<
   { high: string; medium: string; low: string; remote: string }
 > = {
   selcuk: {
-    high: 'Selçuk Merkez',
-    medium: 'Şirince',
-    low: 'Efes & Pamucak',
+    high: 'İzmir, Selçuk',
+    medium: 'Aydın, Kuşadası',
+    low: 'İzmir, Torbalı',
     remote: 'Diğer Şehirler',
   },
   izmir: {
-    high: 'Alsancak',
-    medium: 'Karşıyaka',
-    low: 'Bornova',
+    high: 'İzmir, Konak',
+    medium: 'İzmir, Karşıyaka',
+    low: 'İzmir, Bornova',
     remote: 'Diğer Şehirler',
   },
   antalya: {
-    high: 'Kaleiçi',
-    medium: 'Konyaaltı',
-    low: 'Lara',
+    high: 'Antalya, Muratpaşa',
+    medium: 'Antalya, Konyaaltı',
+    low: 'Antalya, Kepez',
     remote: 'Diğer Şehirler',
   },
   ankara: {
-    high: 'Çankaya & Tunalı',
-    medium: 'Bahçelievler',
-    low: 'Kızılay',
+    high: 'Ankara, Çankaya',
+    medium: 'Ankara, Yenimahalle',
+    low: 'Ankara, Altındağ',
     remote: 'Diğer Şehirler',
   },
   istanbul: {
-    high: 'Kadıköy & Moda',
-    medium: 'Beşiktaş',
-    low: 'Cihangir',
+    high: 'İstanbul, Kadıköy',
+    medium: 'İstanbul, Beşiktaş',
+    low: 'İstanbul, Beyoğlu',
     remote: 'Diğer Şehirler',
   },
   custom: {
-    high: 'Merkez & Çarşı',
-    medium: 'Bulvar & Sahil',
-    low: 'Kampüs & Çevre',
+    high: 'Merkez',
+    medium: 'Yakın Çevre',
+    low: 'İlçe Geneli',
     remote: 'Diğer Şehirler',
   },
 };
 
 /**
- * Dynamically localizes 1 km - 15 km (and remote) listener neighborhoods
- * so they always match the user's selected city (Selçuk, İzmir, Antalya, Ankara, İstanbul, etc.).
+ * Dynamically localizes 1 km - 15 km (and remote) listener locations
+ * strictly in "Şehir, İlçe" format matching the user's selected city.
  */
 export function localizeUsersForCity(users: LoungeUser[], rawCity?: string): LoungeUser[] {
   if (!Array.isArray(users)) return [];
@@ -808,7 +912,7 @@ export function localizeUsersForCity(users: LoungeUser[], rawCity?: string): Lou
     return users.map((u) => {
       if (!u) return u;
       const override = map[u.id];
-      if (!override) return u;
+      if (!override) return { ...u, city: sanitizeFormattedLocation(u.city) };
       return {
         ...u,
         city: override.city,
@@ -818,23 +922,14 @@ export function localizeUsersForCity(users: LoungeUser[], rawCity?: string): Lou
     });
   }
 
-  // Fallback for any other custom city (e.g., Bursa, Eskişehir, Londra)
-  const baseCity = (rawCity || 'İstanbul').split(',')[0].split('(')[0].trim() || 'Merkez';
+  // Fallback for any other custom city (e.g., Bursa, Eskişehir)
+  const cleanCustom = sanitizeFormattedLocation(rawCity);
   return users.map((u) => {
     if (!u || typeof u.distanceKm !== 'number') return u;
-    if (u.distanceKm <= 1.0) {
-      return { ...u, city: `${baseCity} (Çarşı)` };
-    }
-    if (u.distanceKm <= 2.5) {
-      return { ...u, city: `${baseCity} (Merkez)` };
-    }
-    if (u.distanceKm <= 5.5) {
-      return { ...u, city: `${baseCity} (Meydan)` };
-    }
     if (u.distanceKm <= 15.0) {
-      return { ...u, city: `${baseCity} (Kampüs)` };
+      return { ...u, city: cleanCustom };
     }
-    return u;
+    return { ...u, city: sanitizeFormattedLocation(u.city) };
   });
 }
 

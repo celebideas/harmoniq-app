@@ -187,8 +187,9 @@ export const NowPlayingModal: React.FC<Props> = ({
   onStartChatWithUser,
   isAudioLoading = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<'queue' | 'radio' | 'lyrics'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'radio'>('queue');
   const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover');
+  const [coverError, setCoverError] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(142);
   const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
@@ -201,28 +202,19 @@ export const NowPlayingModal: React.FC<Props> = ({
   } | null>(null);
   const [isLoadingRadio, setIsLoadingRadio] = useState<boolean>(false);
 
-  // Synchronized viewMode and activeTab management
+  useEffect(() => {
+    setCoverError(false);
+  }, [song.coverUrl, song.id]);
+
+  // Independent top hero mode switcher (Kapak | Sözler) & bottom tabs (Sıradaki | Radyo)
   const handleSelectViewMode = (mode: 'cover' | 'lyrics') => {
     triggerHaptic(15);
     setViewMode(mode);
-    if (mode === 'lyrics') {
-      setActiveTab('lyrics');
-    } else if (activeTab === 'lyrics') {
-      setActiveTab('queue');
-    }
   };
 
-  const handleSelectTab = (tab: 'queue' | 'radio' | 'lyrics') => {
+  const handleSelectTab = (tab: 'queue' | 'radio') => {
     triggerHaptic(15);
     setActiveTab(tab);
-    if (tab === 'lyrics') {
-      setViewMode('lyrics');
-      setTimeout(() => {
-        heroLyricsContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 60);
-    } else if (viewMode === 'lyrics') {
-      setViewMode('cover');
-    }
   };
 
   // In-player Listeners Bottom Sheet state
@@ -230,7 +222,6 @@ export const NowPlayingModal: React.FC<Props> = ({
   const [sheetSearchQuery, setSheetSearchQuery] = useState<string>('');
   const [sheetFilter, setSheetFilter] = useState<'all' | 'synced' | 'kadikoy'>('all');
 
-  const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const heroLyricsContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize like state with song favorite status
@@ -295,16 +286,6 @@ export const NowPlayingModal: React.FC<Props> = ({
     };
   }, [isOpen, song.id, song.title, song.artist]);
 
-  // Auto scroll active lyric line into view in bottom tab
-  useEffect(() => {
-    if (activeTab === 'lyrics' && lyricsData?.status === 'synced' && lyricsContainerRef.current) {
-      const activeEl = lyricsContainerRef.current.querySelector('.active-lyric-line');
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [progressSeconds, activeTab, lyricsData?.status]);
-
   // Auto scroll active lyric line into view in Hero Lyrics Mode
   useEffect(() => {
     if (viewMode === 'lyrics' && lyricsData?.status === 'synced' && heroLyricsContainerRef.current) {
@@ -327,7 +308,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-mert-room',
         name: 'Mert Arslan',
         age: 24,
-        city: 'Kadıköy',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'mert',
         avatarGradient: 'from-emerald-500 to-teal-700',
         platform: 'youtube_music' as PlatformType,
@@ -345,7 +326,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-selin-room',
         name: 'Selin Kaya',
         age: 22,
-        city: 'Moda',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'selin',
         avatarGradient: 'from-purple-500 to-pink-600',
         platform: 'youtube_music' as PlatformType,
@@ -363,7 +344,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-burak-room',
         name: 'Burak Çelik',
         age: 26,
-        city: 'Beşiktaş',
+        city: 'İstanbul, Beşiktaş',
         avatarSeed: 'burak',
         avatarGradient: 'from-amber-500 to-orange-600',
         platform: 'youtube_music' as PlatformType,
@@ -381,7 +362,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-ezgi-room',
         name: 'Ezgi Demir',
         age: 23,
-        city: 'Cihangir',
+        city: 'İstanbul, Beyoğlu',
         avatarSeed: 'ezgi',
         avatarGradient: 'from-blue-500 to-indigo-600',
         platform: 'youtube_music' as PlatformType,
@@ -399,7 +380,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-can-room',
         name: 'Can Yılmaz',
         age: 25,
-        city: 'Kadıköy',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'can',
         avatarGradient: 'from-rose-500 to-red-700',
         platform: 'youtube_music' as PlatformType,
@@ -417,7 +398,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-deniz-room',
         name: 'Deniz Aksoy',
         age: 21,
-        city: 'Üsküdar',
+        city: 'İstanbul, Üsküdar',
         avatarSeed: 'deniz',
         avatarGradient: 'from-cyan-500 to-blue-600',
         platform: 'youtube_music' as PlatformType,
@@ -435,7 +416,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-alp-room',
         name: 'Alp Eren',
         age: 27,
-        city: 'Bakırköy',
+        city: 'İstanbul, Bakırköy',
         avatarSeed: 'alp',
         avatarGradient: 'from-teal-500 to-emerald-700',
         platform: 'youtube_music' as PlatformType,
@@ -453,12 +434,12 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-yagmur-room',
         name: 'Yağmur Tan',
         age: 23,
-        city: 'Kadıköy',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'yagmur',
         avatarGradient: 'from-violet-500 to-purple-800',
         platform: 'youtube_music' as PlatformType,
         currentSecond: Math.max(0, progressSeconds - 5),
-        statusBubble: 'Sürekli replay 🔁',
+        statusBubble: 'Sürekli replay',
         topArtists: ['Duman', 'Son Feci Bisiklet'],
         bio: 'Gündüz öğrenci, gece indie dinleyicisi.',
         trustScore: 93,
@@ -471,12 +452,12 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-onur-room',
         name: 'Onur Şahin',
         age: 28,
-        city: 'Şişli',
+        city: 'İstanbul, Şişli',
         avatarSeed: 'onur',
-        avatarGradient: 'from-lime-500 to-green-700',
+        avatarGradient: 'from-amber-500 to-orange-700',
         platform: 'youtube_music' as PlatformType,
         currentSecond: 74,
-        statusBubble: 'Kulaklıkla yüksek ses 🎧',
+        statusBubble: 'Kulaklıkla yüksek ses',
         topArtists: ['Duman', 'Manga'],
         bio: 'Prodüksiyon ve miksajla ilgileniyorum.',
         trustScore: 89,
@@ -489,14 +470,14 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-zeynep-room',
         name: 'Zeynep Koç',
         age: 22,
-        city: 'Moda',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'zeynep',
         avatarGradient: 'from-fuchsia-500 to-pink-700',
         platform: 'youtube_music' as PlatformType,
         currentSecond: progressSeconds,
         statusBubble: 'Tam bu saniye harika',
         topArtists: ['Duman', 'Jakuzi', 'Palmiyeler'],
-        bio: 'Moda sahil piknikleri & indie rock.',
+        bio: 'Kadıköy sahil buluşmaları & indie rock.',
         trustScore: 97,
         lastHeartbeatAgoSeconds: 2,
         isOnline: true,
@@ -507,7 +488,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-berk-room',
         name: 'Berk Aydın',
         age: 24,
-        city: 'Ataşehir',
+        city: 'İstanbul, Ataşehir',
         avatarSeed: 'berk',
         avatarGradient: 'from-sky-500 to-blue-700',
         platform: 'youtube_music' as PlatformType,
@@ -525,12 +506,12 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-irem-room',
         name: 'İrem Vural',
         age: 25,
-        city: 'Karaköy',
+        city: 'İstanbul, Beyoğlu',
         avatarSeed: 'irem',
         avatarGradient: 'from-yellow-500 to-amber-700',
         platform: 'youtube_music' as PlatformType,
         currentSecond: 180,
-        statusBubble: 'Bırak dönsün devran ✨',
+        statusBubble: 'Bırak dönsün devran',
         topArtists: ['Duman', 'Gripin'],
         bio: 'Tasarımcı & müzik gurmesi.',
         trustScore: 95,
@@ -543,12 +524,12 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-tolga-room',
         name: 'Tolga Çetin',
         age: 29,
-        city: 'Bostancı',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'tolga',
         avatarGradient: 'from-stone-500 to-zinc-700',
         platform: 'youtube_music' as PlatformType,
         currentSecond: 215,
-        statusBubble: 'Kapanış riffleri 🖤',
+        statusBubble: 'Kapanış riffleri',
         topArtists: ['Duman', 'Redd'],
         bio: 'Konser biletleri koleksiyoneri.',
         trustScore: 94,
@@ -561,7 +542,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         id: 'user-asli-room',
         name: 'Aslı Güneş',
         age: 23,
-        city: 'Kadıköy',
+        city: 'İstanbul, Kadıköy',
         avatarSeed: 'asli',
         avatarGradient: 'from-rose-500 to-orange-500',
         platform: 'youtube_music' as PlatformType,
@@ -759,24 +740,27 @@ export const NowPlayingModal: React.FC<Props> = ({
         </div>
 
         {/* 1. HERO VISUAL SHOWCASE (Mode Switcher + Cover / Lyrics) */}
-        <div className="relative flex flex-col items-center justify-center pt-1 pb-2 overflow-hidden">
+        <div className="relative shrink-0 flex flex-col items-center justify-center pt-1 pb-2">
           {/* Organic Soft Ambient Glow derived directly from Album Cover */}
-          {song.coverUrl && (
-            <img
-              src={song.coverUrl}
-              alt=""
-              aria-hidden="true"
-              className="absolute w-64 h-64 rounded-full object-cover blur-3xl opacity-15 dark:opacity-25 scale-125 pointer-events-none select-none transition-all duration-700"
-            />
+          {song.coverUrl && !coverError && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+              <img
+                src={song.coverUrl}
+                alt=""
+                aria-hidden="true"
+                className="w-64 h-64 rounded-full object-cover blur-3xl opacity-15 dark:opacity-25 scale-125 select-none transition-all duration-700"
+              />
+            </div>
           )}
 
           {/* Mode Switcher (Kapak | Sözler | Oda) */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] mb-4 z-10">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] mb-4 z-10 shrink-0">
             <button
+              type="button"
               onClick={() => handleSelectViewMode('cover')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                 viewMode === 'cover'
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
@@ -784,10 +768,11 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Kapak</span>
             </button>
             <button
+              type="button"
               onClick={() => handleSelectViewMode('lyrics')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                 viewMode === 'lyrics'
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
@@ -795,6 +780,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Sözler</span>
             </button>
             <button
+              type="button"
               onClick={() => setShowListenersSheet(true)}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-[#181512] dark:text-[#FAF7F2] hover:bg-white/70 dark:hover:bg-[#FFF0E1]/[0.08] active:scale-95 cursor-pointer"
               title="Odadaki dinleyicileri incele"
@@ -804,17 +790,22 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* VIEW MODE 1: Pure Album Jacket (zero overlay clutter) */}
+          {/* VIEW MODE 1: Pure Square Album Jacket (strict 1:1 ratio, never clipped) */}
           {viewMode === 'cover' && (
-            <div className="relative z-10 w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden shadow-xl border border-[#E8E6E1] dark:border-white/[0.08] group">
-              {song.coverUrl ? (
+            <div className="relative z-10 aspect-square w-64 sm:w-72 mx-auto rounded-2xl overflow-hidden shadow-2xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shrink-0 group">
+              {song.coverUrl && !coverError ? (
                 <img
                   src={song.coverUrl}
-                  alt={song.album}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  alt={song.album || song.title}
+                  onError={() => setCoverError(true)}
+                  className="aspect-square w-64 sm:w-72 mx-auto rounded-2xl object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.03]"
                 />
               ) : (
-                <div className="w-full h-full bg-[#1C1C22] flex items-center justify-center text-white/40">
+                <div
+                  className={`aspect-square w-64 sm:w-72 mx-auto rounded-2xl bg-gradient-to-br ${
+                    song.coverGradient || 'from-[#E87A3E] to-[#D97706]'
+                  } flex items-center justify-center text-white/80 shadow-2xl`}
+                >
                   <Music className="w-16 h-16" strokeWidth={1.5} />
                 </div>
               )}
@@ -1042,15 +1033,16 @@ export const NowPlayingModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* 5. TABS: QUEUE, RADIO GENERATOR, LYRICS */}
-        <div className="space-y-3 pt-3 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
-          {/* Tab Selector */}
-          <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] p-1 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
+        {/* 5. TABS: QUEUE & RADIO GENERATOR (Lyrics lives solely in top hero switcher) */}
+        <div className="space-y-3 pt-3 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shrink-0">
+          {/* Tab Selector (Sıradaki | Radyo) */}
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] p-1 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
             <button
+              type="button"
               onClick={() => handleSelectTab('queue')}
               className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'queue'
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
@@ -1058,26 +1050,16 @@ export const NowPlayingModal: React.FC<Props> = ({
               <span>Sıradaki</span>
             </button>
             <button
+              type="button"
               onClick={() => handleSelectTab('radio')}
               className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'radio'
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <Radio className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span>Radyo</span>
-            </button>
-            <button
-              onClick={() => handleSelectTab('lyrics')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
-                activeTab === 'lyrics'
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
-                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
-              }`}
-            >
-              <Mic2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-              <span>Sözler</span>
             </button>
           </div>
 
@@ -1220,77 +1202,6 @@ export const NowPlayingModal: React.FC<Props> = ({
                   </div>
                 </>
               ) : null}
-            </div>
-          )}
-
-          {/* Tab 3: Real LRCLIB Synchronized & Plain Lyrics */}
-          {activeTab === 'lyrics' && (
-            <div
-              ref={lyricsContainerRef}
-              className="p-4 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] max-h-56 overflow-y-auto space-y-3 text-center no-scrollbar"
-            >
-              {isLoadingLyrics ? (
-                <div className="py-8 flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 text-[#141416] dark:text-[#F5F5F7] animate-spin" />
-                  <span className="text-xs font-medium text-[#63636B] dark:text-[#8E8E98]">
-                    Şarkı sözleri getiriliyor...
-                  </span>
-                </div>
-              ) : lyricsData?.status === 'synced' ? (
-                <>
-                  <div className="font-mono text-[10px] font-semibold text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider mb-2">
-                    Senkronize Şarkı Sözleri
-                  </div>
-                  {lyricsData.syncedLines.map((line, idx) => {
-                    const nextLine = lyricsData.syncedLines[idx + 1];
-                    const isActive =
-                      progressSeconds >= line.second &&
-                      (!nextLine || progressSeconds < nextLine.second);
-                    return (
-                      <p
-                        key={`${line.second}-${idx}`}
-                        onClick={() => onSeek(Math.floor(line.second))}
-                        className={`cursor-pointer transition-all duration-300 py-1 ${
-                          isActive
-                            ? 'active-lyric-line text-[#141416] dark:text-[#F5F5F7] text-lg font-bold scale-[1.02]'
-                            : 'text-sm font-medium text-[#63636B]/60 dark:text-white/35 hover:text-[#141416] dark:hover:text-white/75'
-                        }`}
-                      >
-                        {line.text}
-                      </p>
-                    );
-                  })}
-                </>
-              ) : lyricsData?.status === 'plain' ? (
-                <>
-                  <div className="font-mono text-[10px] font-semibold text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider mb-2">
-                    Şarkı Sözleri
-                  </div>
-                  {lyricsData.plainLines.map((line, idx) => (
-                    <p
-                      key={idx}
-                      className="text-sm font-medium text-[#141416] dark:text-[#F5F5F7] leading-relaxed"
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </>
-              ) : (
-                <div className="py-6 flex flex-col items-center justify-center gap-2.5">
-                  <p className="text-xs font-semibold text-[#63636B] dark:text-[#8E8E98]">
-                    Bu parça için senkronize şarkı sözü bulunamadı.
-                  </p>
-                  <a
-                    href={getGoogleLyricsSearchUrl(song.artist, song.title)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="studio-btn-primary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold transition active:scale-95"
-                  >
-                    <span>Sözleri Web&apos;de Ara</span>
-                    <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  </a>
-                </div>
-              )}
             </div>
           )}
         </div>

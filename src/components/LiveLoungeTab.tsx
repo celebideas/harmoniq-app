@@ -50,6 +50,7 @@ interface Props {
   isAudioLoading?: boolean;
   candidateSongs?: Song[];
   onWhisperTrack?: (user: LoungeUser, track: Song, note?: string) => void;
+  themeMode?: 'dark' | 'light';
 }
 
 export const LiveLoungeTab: React.FC<Props> = ({
@@ -78,6 +79,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
   isAudioLoading = false,
   candidateSongs,
   onWhisperTrack,
+  themeMode = 'dark',
 }) => {
   // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek NEVER reloads the iframe
   const ytIframeSrc = useMemo(() => {
@@ -217,7 +219,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
       id: `user-${vibe.id}`,
       name: vibe.userName,
       age: 24,
-      city: userCity || 'İstanbul, Moda',
+      city: userCity || 'İstanbul, Kadıköy',
       avatarSeed: vibe.userInitials,
       avatarGradient: vibe.avatarGradient,
       platform: 'youtube_music',
@@ -458,6 +460,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 currentSong={currentSong}
                 myCity={userCity}
                 onChangeCity={onUpdateCity}
+                themeMode={themeMode}
               />
             )}
 

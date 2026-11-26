@@ -36,6 +36,7 @@ interface Props {
   currentSong: Song;
   myCity?: string;
   onChangeCity?: (city: string) => void;
+  themeMode?: 'dark' | 'light';
 }
 
 type LatLngTuple = [number, number];
@@ -70,6 +71,7 @@ const CITY_COORDS: Record<SupportedCityKey, CityGeoSpec> = {
       rihtim: [40.9927, 29.0226],
       moda: [40.9834, 29.0268],
       besiktas: [41.0422, 29.0067],
+      beyoglu: [41.0369, 28.9775],
       cihangir: [41.0319, 28.9833],
       sisli: [41.0602, 28.9877],
       karakoy: [41.0225, 28.9744],
@@ -80,12 +82,12 @@ const CITY_COORDS: Record<SupportedCityKey, CityGeoSpec> = {
     },
   },
   izmir: {
-    center: [38.4361, 27.1419], // Alsancak
+    center: [38.4361, 27.1419], // Konak
     districts: {
-      high: [38.4361, 27.1419], // Alsancak
+      high: [38.4361, 27.1419], // Konak
       medium: [38.4596, 27.1195], // Karşıyaka
       low: [38.4622, 27.2165], // Bornova
-      extra: [38.4189, 27.1287], // Konak
+      extra: [38.3905, 27.0504], // Balçova
     },
     namedDistricts: {
       alsancak: [38.4361, 27.1419],
@@ -94,17 +96,18 @@ const CITY_COORDS: Record<SupportedCityKey, CityGeoSpec> = {
       bostanli: [38.4552, 27.0972],
       bornova: [38.4622, 27.2165],
       konak: [38.4189, 27.1287],
+      balcova: [38.3905, 27.0504],
       goztepe: [38.3964, 27.0882],
       guzelyali: [38.3979, 27.0785],
     },
   },
   selcuk: {
-    center: [37.9508, 27.3688], // Selçuk Merkez
+    center: [37.9508, 27.3688], // Selçuk
     districts: {
-      high: [37.9508, 27.3688], // Selçuk Merkez
-      medium: [37.9439, 27.4342], // Şirince
-      low: [37.9394, 27.3414], // Efes
-      extra: [37.9469, 27.2747], // Pamucak
+      high: [37.9508, 27.3688], // Selçuk
+      medium: [37.8579, 27.2610], // Kuşadası
+      low: [38.1525, 27.3646], // Torbalı
+      extra: [37.9469, 27.2747],
     },
     namedDistricts: {
       selcuk: [37.9508, 27.3688],
@@ -113,18 +116,21 @@ const CITY_COORDS: Record<SupportedCityKey, CityGeoSpec> = {
       efes: [37.9394, 27.3414],
       pamucak: [37.9469, 27.2747],
       kusadasi: [37.8579, 27.2610],
+      torbali: [38.1525, 27.3646],
     },
   },
   ankara: {
-    center: [39.9035, 32.8597], // Çankaya / Tunalı
+    center: [39.9035, 32.8597], // Çankaya
     districts: {
-      high: [39.9035, 32.8597], // Çankaya & Tunalı
-      medium: [39.9218, 32.8211], // Bahçelievler
-      low: [39.9208, 32.8541], // Kızılay
-      extra: [39.8917, 32.7848], // ODTÜ / Bilkent
+      high: [39.9035, 32.8597], // Çankaya
+      medium: [39.9693, 32.8124], // Yenimahalle
+      low: [39.9412, 32.8669], // Altındağ
+      extra: [39.8917, 32.7848],
     },
     namedDistricts: {
       cankaya: [39.9035, 32.8597],
+      yenimahalle: [39.9693, 32.8124],
+      altindag: [39.9412, 32.8669],
       tunali: [39.9054, 32.8615],
       kavaklidere: [39.9096, 32.8594],
       bahcelievler: [39.9218, 32.8211],
@@ -135,12 +141,12 @@ const CITY_COORDS: Record<SupportedCityKey, CityGeoSpec> = {
     },
   },
   antalya: {
-    center: [36.8841, 30.7056], // Kaleiçi
+    center: [36.8841, 30.7056], // Muratpaşa
     districts: {
-      high: [36.8841, 30.7056], // Kaleiçi
+      high: [36.8841, 30.7056], // Muratpaşa
       medium: [36.8685, 30.6378], // Konyaaltı
-      low: [36.8547, 30.7852], // Lara
-      extra: [36.9061, 30.6548], // Kültür / Kepez
+      low: [36.9242, 30.7176], // Kepez
+      extra: [36.9061, 30.6548],
     },
     namedDistricts: {
       kaleici: [36.8841, 30.7056],
@@ -358,18 +364,22 @@ export const ProximityDensityMap: React.FC<Props> = ({
   currentSong,
   myCity = 'İstanbul, Kadıköy',
   onChangeCity,
+  themeMode,
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
   const [isRequestingGps, setIsRequestingGps] = useState(false);
   const [gpsStatusNote, setGpsStatusNote] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<LatLngTuple | null>(null);
-  const [effectiveTheme, setEffectiveTheme] = useState<'dark' | 'light'>(() => {
+  const [observedTheme, setObservedTheme] = useState<'dark' | 'light'>(() => {
     if (typeof document !== 'undefined') {
       return document.documentElement.classList.contains('light') ? 'light' : 'dark';
     }
     return 'dark';
   });
+
+  const effectiveTheme: 'dark' | 'light' = themeMode ?? observedTheme;
+  const isLight = effectiveTheme === 'light';
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -392,14 +402,14 @@ export const ProximityDensityMap: React.FC<Props> = ({
     return (CITY_COORDS[activeCityKey] || CITY_COORDS.istanbul).center;
   }, [activeCityKey, myCity, gpsCoords]);
 
-  // Sync theme reactively with <html class="dark" | "light">
+  // Fallback sync with <html class="dark" | "light"> when themeMode prop is not provided
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (themeMode !== undefined || typeof document === 'undefined') return;
     const syncTheme = () => {
       const next: 'dark' | 'light' = document.documentElement.classList.contains('light')
         ? 'light'
         : 'dark';
-      setEffectiveTheme(next);
+      setObservedTheme(next);
     };
     syncTheme();
     const observer = new MutationObserver(syncTheme);
@@ -408,7 +418,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
       attributeFilter: ['class', 'data-theme'],
     });
     return () => observer.disconnect();
-  }, []);
+  }, [themeMode]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -726,25 +736,55 @@ export const ProximityDensityMap: React.FC<Props> = ({
   return (
     <div className="space-y-4">
       {/* Real Interactive GIS Proximity & Density Map Card */}
-      <div className="relative rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] p-4 sm:p-5 overflow-hidden shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none select-none space-y-3.5">
+      <div
+        className={`relative rounded-2xl border p-4 sm:p-5 overflow-hidden select-none space-y-3.5 transition-colors duration-150 ${
+          isLight
+            ? 'bg-white border-[#EAE4DC] shadow-[0_4px_20px_rgba(24,21,18,0.04)] text-[#181512]'
+            : 'bg-[#171412] border-[#FFF0E1]/[0.08] shadow-none text-[#FAF7F2]'
+        }`}
+      >
         {/* Clean Header inside Map Card (No city chip clutter or duplicate GPS button) */}
-        <div className="relative z-10 flex flex-col gap-2 pb-3 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-xs">
+        <div
+          className={`relative z-10 flex flex-col gap-2 pb-3 border-b text-xs ${
+            isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.06]'
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
-              <span className="font-bold text-[#181512] dark:text-[#FAF7F2] text-sm tracking-tight">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+                }`}
+              />
+              <span
+                className={`font-bold text-sm tracking-tight ${
+                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                }`}
+              >
                 Canlı Frekans & Yoğunluk Haritası
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-[#6B635B] dark:text-[#A39A91] bg-[#F2EDE6] dark:bg-[#211D1A] px-2.5 py-1.5 rounded-xl border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
+            <div
+              className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-xl border ${
+                isLight
+                  ? 'text-[#6B635B] bg-[#F2EDE6] border-[#E2D9CE]'
+                  : 'text-[#A39A91] bg-[#211D1A] border-[#FFF0E1]/[0.06]'
+              }`}
+            >
               <Compass className="w-3.5 h-3.5 shrink-0 text-[#E87A3E]" strokeWidth={1.75} />
               <span className="truncate max-w-[170px] font-medium">{myCity}</span>
             </div>
           </div>
 
           {gpsStatusNote && (
-            <div className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[11px] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-between gap-2">
+            <div
+              className={`px-3 py-1.5 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${
+                isLight
+                  ? 'bg-[#F2EDE6] border-[#E2D9CE] text-[#181512]'
+                  : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+              }`}
+            >
               <span className="flex items-center gap-1.5 min-w-0">
                 <MapPin className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" strokeWidth={1.75} />
                 <span className="truncate">{gpsStatusNote}</span>
@@ -752,7 +792,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setGpsStatusNote(null)}
-                className="text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] cursor-pointer shrink-0"
+                className={`cursor-pointer shrink-0 transition ${
+                  isLight
+                    ? 'text-[#6B635B] hover:text-[#181512]'
+                    : 'text-[#A39A91] hover:text-[#FAF7F2]'
+                }`}
                 aria-label="Kapat"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -763,15 +807,27 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
         {/* Real Interactive Leaflet Map Canvas */}
         <div
-          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] relative z-10 ${
-            effectiveTheme === 'light' ? 'bg-[#F2EDE6]' : 'bg-[#0E0C0B]'
+          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border relative z-10 ${
+            isLight
+              ? 'border-[#EAE4DC] bg-[#F2EDE6]'
+              : 'border-[#FFF0E1]/[0.08] bg-[#0E0C0B]'
           }`}
         >
           <div ref={mapContainerRef} className="w-full h-full z-0" />
 
           {/* Active Radius Overlay Label (Top-Left) */}
-          <div className="pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl bg-white/92 dark:bg-[#171412]/92 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] backdrop-blur-md text-[11px] font-mono tabular-nums font-medium text-[#181512] dark:text-[#FAF7F2] shadow-sm flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+          <div
+            className={`pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-[11px] font-mono tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
+              isLight
+                ? 'bg-white/92 border-[#EAE4DC] text-[#181512]'
+                : 'bg-[#171412]/92 border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+              }`}
+            />
             <span>
               {activeFilter === '1km'
                 ? '1 km · Yürüme'
@@ -785,11 +841,21 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
           {/* Compact Zoom & GPS Locate Controls (Bottom-Right) */}
           <div className="absolute bottom-3 right-3 z-[450] flex flex-col gap-1.5">
-            <div className="flex flex-col rounded-xl overflow-hidden bg-white/95 dark:bg-[#171412]/95 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] backdrop-blur-xl shadow-md">
+            <div
+              className={`flex flex-col rounded-xl overflow-hidden border backdrop-blur-xl shadow-md ${
+                isLight
+                  ? 'bg-white/95 border-[#EAE4DC]'
+                  : 'bg-[#171412]/95 border-[#FFF0E1]/[0.1]'
+              }`}
+            >
               <button
                 type="button"
                 onClick={handleZoomIn}
-                className="w-9 h-9 flex items-center justify-center text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
+                className={`w-9 h-9 flex items-center justify-center transition active:scale-95 cursor-pointer border-b ${
+                  isLight
+                    ? 'text-[#181512] hover:bg-[#F2EDE6] border-[#EAE4DC]'
+                    : 'text-[#FAF7F2] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08]'
+                }`}
                 title="Yakınlaştır"
                 aria-label="Haritayı yakınlaştır"
               >
@@ -798,7 +864,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleZoomOut}
-                className="w-9 h-9 flex items-center justify-center text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer"
+                className={`w-9 h-9 flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                  isLight
+                    ? 'text-[#181512] hover:bg-[#F2EDE6]'
+                    : 'text-[#FAF7F2] hover:bg-[#211D1A]'
+                }`}
                 title="Uzaklaştır"
                 aria-label="Haritayı uzaklaştır"
               >
@@ -810,7 +880,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
               type="button"
               disabled={isRequestingGps}
               onClick={handleRecenterWithGps}
-              className="w-9 h-9 rounded-xl bg-white/95 dark:bg-[#171412]/95 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] backdrop-blur-xl shadow-md flex items-center justify-center text-[#E87A3E] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer disabled:opacity-60"
+              className={`w-9 h-9 rounded-xl border backdrop-blur-xl shadow-md flex items-center justify-center text-[#E87A3E] transition active:scale-95 cursor-pointer disabled:opacity-60 ${
+                isLight
+                  ? 'bg-white/95 border-[#EAE4DC] hover:bg-[#F2EDE6]'
+                  : 'bg-[#171412]/95 border-[#FFF0E1]/[0.1] hover:bg-[#211D1A]'
+              }`}
               title="GPS Konumumu Bul ve Odaklan"
               aria-label="GPS konumumu bul ve odaklan"
             >
@@ -825,7 +899,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
         {/* Active Selected User Info Callout Card */}
         {selectedUser && (
-          <div className="relative z-30 p-4 rounded-2xl bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-3">
+          <div
+            className={`relative z-30 p-4 rounded-2xl border space-y-3 transition-colors duration-150 ${
+              isLight
+                ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
+                : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+            }`}
+          >
             {/* Top Row */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -834,21 +914,31 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     src={selectedUser.avatarUrl}
                     alt={selectedUser.name}
                     referrerPolicy="no-referrer"
-                    className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/10"
+                    className={`w-11 h-11 rounded-full object-cover shrink-0 border ${
+                      isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/10'
+                    }`}
                   />
                 ) : (
                   <div
-                    className={`w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0`}
+                    className={`avatar-circle w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0`}
                   >
                     {selectedUser.avatarSeed}
                   </div>
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-[#181512] dark:text-[#FAF7F2] text-sm sm:text-base leading-tight truncate">
+                  <h4
+                    className={`font-bold text-sm sm:text-base leading-tight truncate ${
+                      isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    }`}
+                  >
                     {selectedUser.name}, {selectedUser.age}
                   </h4>
-                  <p className="text-xs text-[#6B635B] dark:text-[#A39A91] font-medium mt-0.5 flex items-center gap-1">
+                  <p
+                    className={`text-xs font-medium mt-0.5 flex items-center gap-1 ${
+                      isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                    }`}
+                  >
                     <MapPin className="w-3 h-3 shrink-0" strokeWidth={1.75} />
                     <span className="truncate">{selectedUser.city}</span>
                   </p>
@@ -856,13 +946,23 @@ export const ProximityDensityMap: React.FC<Props> = ({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-mono font-semibold tabular-nums">
+                <span
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold tabular-nums ${
+                    isLight
+                      ? 'bg-white text-[#181512] border-[#EAE4DC]'
+                      : 'bg-[#171412] text-[#FAF7F2] border-[#FFF0E1]/[0.08]'
+                  }`}
+                >
                   {selectedUser.distanceKm} km
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedUserId(null)}
-                  className="w-8 h-8 rounded-full bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer"
+                  className={`w-8 h-8 rounded-full border flex items-center justify-center transition cursor-pointer ${
+                    isLight
+                      ? 'bg-white border-[#EAE4DC] text-[#6B635B] hover:text-[#181512]'
+                      : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#A39A91] hover:text-[#FAF7F2]'
+                  }`}
                   title="Kapat"
                   aria-label="Kullanıcı kartını kapat"
                 >
@@ -874,31 +974,69 @@ export const ProximityDensityMap: React.FC<Props> = ({
             {/* Metadata Row */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {selectedUser.isRealUser && (
-                <span className="px-2 py-0.5 rounded-lg bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[11px] font-mono font-semibold flex items-center gap-1.5 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+                <span
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-semibold flex items-center gap-1.5 shrink-0 ${
+                    isLight
+                      ? 'bg-[#16A34A]/15 text-[#16A34A]'
+                      : 'bg-[#22C55E]/15 text-[#22C55E]'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+                    }`}
+                  />
                   <span>Canlı</span>
                 </span>
               )}
 
-              <span className="px-2 py-0.5 rounded-lg bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+              <span
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                  isLight
+                    ? 'bg-[#16A34A]/10 text-[#16A34A]'
+                    : 'bg-[#22C55E]/15 text-[#22C55E]'
+                }`}
+              >
                 <ShieldCheck className="w-3 h-3" strokeWidth={1.75} />
                 <span>Güven · {selectedUser.trustScore || 99}</span>
               </span>
 
-              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+              <span
+                className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                  isLight
+                    ? 'bg-white border-[#EAE4DC] text-[#181512]'
+                    : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                }`}
+              >
                 <Zap className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
                 <span>%{selectedUser.compatibilityScore || 94} Uyum</span>
               </span>
 
-              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+              <span
+                className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                  isLight
+                    ? 'bg-white border-[#EAE4DC] text-[#181512]'
+                    : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                }`}
+              >
                 <Music className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
                 <span>{formatTime(selectedUser.currentSecond)}</span>
               </span>
             </div>
 
             {/* Status Quote */}
-            <div className="p-2.5 rounded-xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
-              <p className="text-xs text-[#181512] dark:text-[#FAF7F2] italic leading-relaxed">
+            <div
+              className={`p-2.5 rounded-xl border ${
+                isLight
+                  ? 'bg-white border-[#EAE4DC]'
+                  : 'bg-[#171412] border-[#FFF0E1]/[0.08]'
+              }`}
+            >
+              <p
+                className={`text-xs italic leading-relaxed ${
+                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                }`}
+              >
                 "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor.`}"
               </p>
             </div>
@@ -913,7 +1051,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSeekSecond(selectedUser.currentSecond);
                   }
                 }}
-                className="min-h-[42px] py-2 px-3 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                className="min-h-[42px] py-2 px-3 rounded-xl studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <span className="font-mono tabular-nums">
                   {formatTime(selectedUser.currentSecond)} Anına Katıl
@@ -930,7 +1068,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSelectUser(selectedUser);
                   }
                 }}
-                className="min-h-[42px] py-2 px-3 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 text-[#181512] dark:text-[#FAF7F2] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                className={`min-h-[42px] py-2 px-3 rounded-xl border font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
+                  isLight
+                    ? 'bg-white hover:bg-[#F2EDE6] text-[#181512] border-[#EAE4DC]'
+                    : 'bg-[#171412] hover:bg-[#FFF0E1]/10 text-[#FAF7F2] border-[#FFF0E1]/[0.08]'
+                }`}
               >
                 <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
                 <span>Mesaj Gönder</span>
@@ -939,11 +1081,23 @@ export const ProximityDensityMap: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Neighborhood Density Clusters (Real Districts + Diğer Şehirler) */}
-        <div className="relative z-10 pt-3.5 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] space-y-2.5">
-          <div className="flex items-center justify-between text-[11px] text-[#6B635B] dark:text-[#A39A91] gap-2">
-            <span className="font-semibold text-[#181512] dark:text-[#FAF7F2]">
-              Semt Yoğunluğu ({myCity.split(',')[0].trim()})
+        {/* District Density Clusters (Real Districts + Diğer Şehirler) */}
+        <div
+          className={`relative z-10 pt-3.5 border-t space-y-2.5 ${
+            isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.06]'
+          }`}
+        >
+          <div
+            className={`flex items-center justify-between text-[11px] gap-2 ${
+              isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+            }`}
+          >
+            <span
+              className={`font-semibold ${
+                isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+              }`}
+            >
+              Bölge Yoğunluğu ({myCity.split(',')[0].trim()})
             </span>
             <span className="truncate max-w-[160px]">{currentSong.title}</span>
           </div>
@@ -962,24 +1116,40 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   onClick={() => handleClusterClick(cluster)}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer active:scale-95 flex flex-col justify-between gap-2 ${
                     isActive
-                      ? 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#181512] dark:text-[#FAF7F2]'
-                      : 'bg-[#FAF8F4] dark:bg-[#211D1A]/75 border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A]'
+                      ? isLight
+                        ? 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#181512]'
+                        : 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#FAF7F2]'
+                      : isLight
+                      ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512] hover:bg-[#F2EDE6]'
+                      : 'bg-[#211D1A] border-[#FFF0E1]/[0.06] text-[#FAF7F2] hover:bg-[#2A2420]'
                   }`}
                 >
-                  <div className="font-semibold text-xs leading-snug text-[#181512] dark:text-[#FAF7F2]">
+                  <div
+                    className={`font-semibold text-xs leading-snug ${
+                      isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    }`}
+                  >
                     {displayLabel}
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between gap-1 text-[10.5px] font-mono tabular-nums">
-                      <span className="font-semibold text-[#16A34A] dark:text-[#22C55E]">
+                      <span
+                        className={`font-semibold ${
+                          isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'
+                        }`}
+                      >
                         {cluster.count} kişi
                       </span>
-                      <span className="text-[#6B635B] dark:text-[#A39A91]">
+                      <span className={isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}>
                         {cluster.avgDistance} km
                       </span>
                     </div>
-                    <div className="text-[10px] font-medium text-[#6B635B] dark:text-[#A39A91]">
+                    <div
+                      className={`text-[10px] font-medium ${
+                        isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                      }`}
+                    >
                       {isRemoteCluster
                         ? 'Türkiye Geneli'
                         : cluster.density === 'high'

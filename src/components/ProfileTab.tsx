@@ -466,6 +466,11 @@ export const ProfileTab: React.FC<Props> = ({
 }) => {
   const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
   const currentTheme = themeMode || localTheme;
+  const isLightTheme =
+    currentTheme === 'light' ||
+    (currentTheme === 'system' &&
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const handleThemeChange = (mode: ThemeMode) => {
     triggerHaptic(20);
@@ -2923,23 +2928,51 @@ export const ProfileTab: React.FC<Props> = ({
           MODAL: ŞEFFAF GÜVEN KALKANI (LISTENHUB TRUST SCORE)
          ===================================================================== */}
       {showTrustScoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg bg-zinc-950 border border-emerald-500/30 rounded-3xl p-6 sm:p-7 shadow-[0_20px_60px_rgba(16,185,129,0.15)] space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-in fade-in duration-150"
+          onClick={() => setShowTrustScoreModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`relative w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar border ${
+              isLightTheme
+                ? 'bg-white border-[#EAE4DC] text-[#181512]'
+                : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+            }`}
+          >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+            <div
+              className={`flex items-center justify-between pb-3.5 border-b ${
+                isLightTheme ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.08]'
+              }`}
+            >
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div
+                  className={`w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center ${
+                    isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
+                  }`}
+                >
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                  <h3
+                    className={`text-base font-heading font-bold flex items-center gap-2 flex-wrap ${
+                      isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    }`}
+                  >
                     <span>Şeffaf Güven Kalkanı</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                        isLightTheme
+                          ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
+                          : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      }`}
+                    >
                       v2.4 Doğrulandı
                     </span>
                   </h3>
-                  <p className="text-xs text-zinc-400">
-                    ListenHub Açık Güvenilirlik & Saygınlık Protokolü
+                  <p className={`text-xs ${isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+                    ListenHub Açık Güvenilirlik &amp; Saygınlık Protokolü
                   </p>
                 </div>
               </div>
@@ -2947,135 +2980,304 @@ export const ProfileTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setShowTrustScoreModal(false)}
-                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+                className={`p-1.5 rounded-xl transition cursor-pointer ${
+                  isLightTheme
+                    ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
+                    : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
+                }`}
+                aria-label="Kapat"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Score Hero Badge */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-emerald-950/20 to-zinc-900 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Score Hero Badge (Crisp Light & Dark Contrast) */}
+            <div
+              className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isLightTheme
+                  ? 'bg-[#FAF8F4] border-[#EAE4DC]'
+                  : 'bg-[#211D1A] border-[#FFF0E1]/[0.08]'
+              }`}
+            >
               <div className="space-y-1">
-                <span className="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">
+                <span
+                  className={`text-[11px] font-bold uppercase tracking-wider ${
+                    isLightTheme ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
+                  }`}
+                >
                   Genel Güven Puanınız
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-heading font-black text-white tracking-tight">
-                    {userProfile.trustScore || 98}
+                  <span
+                    className={`text-4xl font-heading font-black tracking-tight tabular-nums ${
+                      isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    }`}
+                  >
+                    {userProfile.trustScore || 99}
                   </span>
-                  <span className="text-lg text-emerald-400/80 font-semibold">/ 100</span>
+                  <span
+                    className={`text-lg font-semibold tabular-nums ${
+                      isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                    }`}
+                  >
+                    / 100
+                  </span>
                 </div>
-                <div className="text-xs text-zinc-300">
-                  Rozet Seviyesi: <span className="font-bold text-emerald-400">Elit Dinleyici (A+)</span>
+                <div className={`text-xs ${isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+                  Rozet Seviyesi:{' '}
+                  <span
+                    className={`font-bold ${
+                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
+                    }`}
+                  >
+                    Elit Dinleyici (A+)
+                  </span>
                 </div>
               </div>
 
-              <div className="sm:text-right space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <div className="sm:text-right space-y-1.5">
+                <div
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${
+                    isLightTheme
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
+                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                  }`}
+                >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Doğrulanmış Hesap</span>
                 </div>
-                <div className="text-[11px] text-zinc-400">
+                <div className={`text-[11px] ${isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
                   Canlı oda açma ve sohbet ayrıcalıklı
                 </div>
               </div>
             </div>
 
-            {/* 3 Scoring Pillars */}
+            {/* 3 Scoring Pillars (Harmonized Warm Copper & Calm Emerald Only) */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+              <h4
+                className={`text-xs font-semibold uppercase tracking-wider ${
+                  isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                }`}
+              >
                 Puanlama Sütunları ve Hesaplama Detayı
               </h4>
 
               {/* Pillar 1 */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Headphones className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-semibold text-white">
+              <div
+                className={`p-3.5 rounded-2xl border space-y-2 ${
+                  isLightTheme
+                    ? 'bg-[#FAF8F4] border-[#EAE4DC]'
+                    : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Headphones
+                      className={`w-4 h-4 shrink-0 ${
+                        isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-semibold truncate ${
+                        isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      }`}
+                    >
                       1. Gerçek Zamanlı Dinleme Tutarlılığı (%35)
                     </span>
                   </div>
-                  <span className="text-xs font-mono font-bold text-emerald-400">35 / 35</span>
+                  <span
+                    className={`text-xs font-mono font-bold shrink-0 ${
+                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
+                    }`}
+                  >
+                    35 / 35
+                  </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Şarkıların en az %70'ini atlamadan, gerçek zaman çizelgesiyle ve kesintisiz dinleme alışkanlığı. Bot, scraper veya otomatik makro trafiği tespit edilmedi.
+                <p
+                  className={`text-[11px] leading-relaxed ${
+                    isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  }`}
+                >
+                  Şarkıların en az %70&apos;ini atlamadan, gerçek zaman çizelgesiyle ve kesintisiz
+                  dinleme alışkanlığı. Bot, scraper veya otomatik makro trafiği tespit edilmedi.
                 </p>
-                <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-400 h-full rounded-full" style={{ width: '100%' }} />
+                <div
+                  className={`w-full h-1.5 rounded-full overflow-hidden ${
+                    isLightTheme ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+                  }`}
+                >
+                  <div
+                    className={`h-full rounded-full ${
+                      isLightTheme ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+                    }`}
+                    style={{ width: '100%' }}
+                  />
                 </div>
               </div>
 
               {/* Pillar 2 */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs font-semibold text-white">
-                      2. Topluluk Etkileşimi & Müzikal Rezonans (%35)
+              <div
+                className={`p-3.5 rounded-2xl border space-y-2 ${
+                  isLightTheme
+                    ? 'bg-[#FAF8F4] border-[#EAE4DC]'
+                    : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Sparkles className="w-4 h-4 shrink-0 text-[#E87A3E]" />
+                    <span
+                      className={`text-xs font-semibold truncate ${
+                        isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      }`}
+                    >
+                      2. Topluluk Etkileşimi &amp; Müzikal Rezonans (%35)
                     </span>
                   </div>
-                  <span className="text-xs font-mono font-bold text-cyan-400">34 / 35</span>
+                  <span
+                    className={`text-xs font-mono font-bold shrink-0 ${
+                      isLightTheme ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
+                    }`}
+                  >
+                    34 / 35
+                  </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Canlı odalarda eşzamanlı dinleme, şarkı ve çalma listesi paylaşımları ile diğer doğrulanmış dinleyicilerle karşılıklı %85+ frekans uyumu.
+                <p
+                  className={`text-[11px] leading-relaxed ${
+                    isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  }`}
+                >
+                  Canlı odalarda eşzamanlı dinleme, şarkı ve çalma listesi paylaşımları ile diğer
+                  doğrulanmış dinleyicilerle karşılıklı %85+ frekans uyumu.
                 </p>
-                <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-cyan-400 h-full rounded-full" style={{ width: '97%' }} />
+                <div
+                  className={`w-full h-1.5 rounded-full overflow-hidden ${
+                    isLightTheme ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+                  }`}
+                >
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#E87A3E] to-[#D97706]"
+                    style={{ width: '97%' }}
+                  />
                 </div>
               </div>
 
               {/* Pillar 3 */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-lime-400" />
-                    <span className="text-xs font-semibold text-white">
-                      3. Sıfır İhlal & Temiz Hesap Sicili (%30)
+              <div
+                className={`p-3.5 rounded-2xl border space-y-2 ${
+                  isLightTheme
+                    ? 'bg-[#FAF8F4] border-[#EAE4DC]'
+                    : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shield
+                      className={`w-4 h-4 shrink-0 ${
+                        isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-semibold truncate ${
+                        isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      }`}
+                    >
+                      3. Sıfır İhlal &amp; Temiz Hesap Sicili (%30)
                     </span>
                   </div>
-                  <span className="text-xs font-mono font-bold text-lime-400">29 / 30</span>
+                  <span
+                    className={`text-xs font-mono font-bold shrink-0 ${
+                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
+                    }`}
+                  >
+                    30 / 30
+                  </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Diğer kullanıcılardan sıfır spam, taciz veya manipülasyon şikayeti. 180+ gündür temiz ve örnek topluluk sicili.
+                <p
+                  className={`text-[11px] leading-relaxed ${
+                    isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  }`}
+                >
+                  Diğer kullanıcılardan sıfır spam, taciz veya manipülasyon şikayeti. 180+ gündür
+                  temiz ve örnek topluluk sicili.
                 </p>
-                <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-lime-400 h-full rounded-full" style={{ width: '96%' }} />
+                <div
+                  className={`w-full h-1.5 rounded-full overflow-hidden ${
+                    isLightTheme ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+                  }`}
+                >
+                  <div
+                    className={`h-full rounded-full ${
+                      isLightTheme ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+                    }`}
+                    style={{ width: '100%' }}
+                  />
                 </div>
               </div>
             </div>
 
             {/* Appeal & Transparency Rules */}
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+            <div
+              className={`p-4 rounded-2xl border space-y-3 ${
+                isLightTheme
+                  ? 'bg-[#FAF8F4] border-[#EAE4DC]'
+                  : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+              }`}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Şeffaflık & İtiraz Hakkı</span>
+                <span
+                  className={`text-xs font-semibold flex items-center gap-1.5 ${
+                    isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  }`}
+                >
+                  <AlertCircle className="w-3.5 h-3.5 text-[#E87A3E]" />
+                  <span>Şeffaflık &amp; İtiraz Hakkı</span>
                 </span>
-                <span className="text-[10px] text-zinc-500">Sıfır Gizli Algoritma</span>
+                <span className={`text-[10px] ${isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+                  Sıfır Gizli Algoritma
+                </span>
               </div>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                ListenHub, güven puanınızı asla kapalı kapılar ardında veya reklam amacıyla değiştirmez. Hatalı bir puan kırılması şüphesinde anında bağımsız moderatör incelemesi başlatabilirsiniz.
+              <p
+                className={`text-[11px] leading-relaxed ${
+                  isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                }`}
+              >
+                ListenHub, güven puanınızı asla kapalı kapılar ardında veya reklam amacıyla
+                değiştirmez. Hatalı bir puan kırılması şüphesinde anında bağımsız moderatör
+                incelemesi başlatabilirsiniz.
               </p>
 
               {appealSent ? (
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>İtiraz bildiriminiz alındı (#SEC-942). Güvenlik ekibi dinleme kaydınızı 2 saat içinde inceleyecek.</span>
+                <div
+                  className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
+                    isLightTheme
+                      ? 'bg-emerald-500/12 border-emerald-500/30 text-emerald-700'
+                      : 'bg-emerald-500/12 border-emerald-500/30 text-emerald-400'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>
+                    İtiraz bildiriminiz alındı (#SEC-942). Güvenlik ekibi dinleme kaydınızı 2 saat
+                    içinde inceleyecek.
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setAppealSent(true)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white text-xs font-semibold transition cursor-pointer"
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition border cursor-pointer ${
+                      isLightTheme
+                        ? 'bg-[#F2EDE6] hover:bg-[#EAE4DC] text-[#181512] border-[#E2D9CE]'
+                        : 'bg-[#171412] hover:bg-[#2B2521] text-[#FAF7F2] border-[#FFF0E1]/10'
+                    }`}
                   >
                     İtiraz Bildirimi Gönder
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowTrustScoreModal(false)}
-                    className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition cursor-pointer"
+                    className="studio-btn-primary py-2.5 px-5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs transition shadow-sm cursor-pointer"
                   >
                     Anladım
                   </button>
@@ -3091,25 +3293,37 @@ export const ProfileTab: React.FC<Props> = ({
          ===================================================================== */}
       {showSettingsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-in fade-in duration-150"
           onClick={() => setShowSettingsModal(false)}
         >
           <div
-            className="relative w-full max-w-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+            className={`relative w-full max-w-lg rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border ${
+              isLightTheme
+                ? 'bg-white border-[#EAE4DC] text-[#181512]'
+                : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Modal Header + 2-Tab Switcher */}
-            <div className="px-6 pt-5 pb-4 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-4 shrink-0">
+            <div
+              className={`px-6 pt-5 pb-4 border-b space-y-4 shrink-0 ${
+                isLightTheme ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.08]'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#D96B2C] dark:text-[#F49A5E]">
+                  <div className="w-9 h-9 rounded-xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#E87A3E]">
                     <Settings className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-heading font-bold text-[#181512] dark:text-[#FAF7F2]">
-                      Ayarlar & Hesap
+                    <h3
+                      className={`text-base font-heading font-bold ${
+                        isLightTheme ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      }`}
+                    >
+                      Ayarlar &amp; Hesap
                     </h3>
-                    <p className="text-xs text-[#6B635B] dark:text-[#A39A91]">
+                    <p className={`text-xs ${isLightTheme ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
                       Profil bilgilerin, görünüm ve müzik servisleri
                     </p>
                   </div>
@@ -3118,22 +3332,38 @@ export const ProfileTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowSettingsModal(false)}
-                  className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer"
+                  className={`p-2 rounded-xl transition cursor-pointer ${
+                    isLightTheme
+                      ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
+                      : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
+                  }`}
                   aria-label="Kapat"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Clean 2-Tab Selector */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.07]">
+              {/* Clean 2-Tab Selector (Unambiguous Reactive Active Highlight) */}
+              <div
+                role="tablist"
+                aria-label="Ayarlar sekmeleri"
+                className={`grid grid-cols-2 gap-1.5 p-1 rounded-2xl border ${
+                  isLightTheme
+                    ? 'bg-[#F2EDE6] border-[#E2D9CE]'
+                    : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+                }`}
+              >
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={settingsTab === 'profile'}
                   onClick={() => setSettingsTab('profile')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
                     settingsTab === 'profile'
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
-                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
+                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
+                      : isLightTheme
+                      ? 'bg-transparent text-[#6B635B] hover:text-[#181512] border-transparent'
+                      : 'bg-transparent text-[#A39A91] hover:text-[#FAF7F2] border-transparent'
                   }`}
                 >
                   <UserIcon className="w-3.5 h-3.5" />
@@ -3141,15 +3371,19 @@ export const ProfileTab: React.FC<Props> = ({
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={settingsTab === 'account'}
                   onClick={() => setSettingsTab('account')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
                     settingsTab === 'account'
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
-                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
+                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
+                      : isLightTheme
+                      ? 'bg-transparent text-[#6B635B] hover:text-[#181512] border-transparent'
+                      : 'bg-transparent text-[#A39A91] hover:text-[#FAF7F2] border-transparent'
                   }`}
                 >
                   <Youtube className="w-3.5 h-3.5" />
-                  <span>Hesap & Müzik Servisleri</span>
+                  <span>Hesap &amp; Müzik Servisleri</span>
                 </button>
               </div>
             </div>

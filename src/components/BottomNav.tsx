@@ -23,6 +23,7 @@ interface Props {
   isPlaying?: boolean;
   currentSecond?: number;
   isAudioLoading?: boolean;
+  themeMode?: 'dark' | 'light';
   onTogglePlay?: () => void;
   onNextSong?: () => void;
   onOpenNowPlaying?: () => void;
@@ -38,11 +39,14 @@ export const BottomNav: React.FC<Props> = ({
   isPlaying = false,
   currentSecond = 0,
   isAudioLoading = false,
+  themeMode = 'dark',
   onTogglePlay,
   onNextSong,
   onOpenNowPlaying,
   onSeekSecond,
 }) => {
+  const isLight = themeMode === 'light';
+
   const navItems: {
     id: NavTab;
     label: string;
@@ -83,7 +87,11 @@ export const BottomNav: React.FC<Props> = ({
   return (
     <nav
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
-      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl bg-white/95 dark:bg-[#171412]/95 backdrop-blur-xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_8px_30px_rgba(24,21,18,0.10)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] overflow-hidden select-none transition-all duration-300"
+      className={`lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl backdrop-blur-xl border overflow-hidden select-none transition-colors duration-150 ${
+        isLight
+          ? 'bg-white/95 border-[#EAE4DC] shadow-[0_8px_30px_rgba(24,21,18,0.10)] text-[#181512]'
+          : 'bg-[#171412]/95 border-[#FFF0E1]/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#FAF7F2]'
+      }`}
     >
       {/* UPPER TIER: MINI PLAYER STRIP */}
       {showMiniPlayerStrip && currentSong && (
@@ -97,7 +105,11 @@ export const BottomNav: React.FC<Props> = ({
               className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
               title="Tam Ekran Oynatıcıyı Aç"
             >
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 ring-1 ring-black/5 dark:ring-[#FFF0E1]/10">
+              <div
+                className={`relative w-10 h-10 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 ring-1 ${
+                  isLight ? 'ring-black/5' : 'ring-[#FFF0E1]/10'
+                }`}
+              >
                 {currentSong.coverUrl ? (
                   <img
                     src={currentSong.coverUrl}
@@ -112,10 +124,18 @@ export const BottomNav: React.FC<Props> = ({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
+                <div
+                  className={`text-xs font-semibold truncate ${
+                    isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  }`}
+                >
                   {currentSong.title}
                 </div>
-                <div className="text-[11px] text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
+                <div
+                  className={`text-[11px] truncate mt-0.5 ${
+                    isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  }`}
+                >
                   {currentSong.artist}
                 </div>
               </div>
@@ -129,7 +149,7 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center transition active:scale-95 cursor-pointer"
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
@@ -150,7 +170,11 @@ export const BottomNav: React.FC<Props> = ({
                     triggerHaptic(15);
                     onNextSong();
                   }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                    isLight
+                      ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
+                      : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
+                  }`}
                   aria-label="Sonraki Şarkı"
                   title="Sonraki Şarkı"
                 >
@@ -168,7 +192,9 @@ export const BottomNav: React.FC<Props> = ({
               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
               onSeekSecond(Math.round(ratio * (currentSong.durationSeconds || 1)));
             }}
-            className="h-[2px] w-full bg-[#EAE4DC] dark:bg-[#FFF0E1]/10 cursor-pointer overflow-hidden"
+            className={`h-[2px] w-full cursor-pointer overflow-hidden ${
+              isLight ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+            }`}
             title="Şarkıda sar"
           >
             <div
@@ -195,8 +221,12 @@ export const BottomNav: React.FC<Props> = ({
               aria-current={isActive ? 'page' : undefined}
               className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold'
-                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] font-medium'
+                  ? isLight
+                    ? 'bg-[#E87A3E]/15 text-[#D96B2C] font-semibold'
+                    : 'bg-[#E87A3E]/15 text-[#F49A5E] font-semibold'
+                  : isLight
+                  ? 'text-[#6B635B] hover:text-[#181512] font-medium'
+                  : 'text-[#A39A91] hover:text-[#FAF7F2] font-medium'
               }`}
             >
               <div className="relative flex items-center justify-center">
@@ -206,8 +236,10 @@ export const BottomNav: React.FC<Props> = ({
                   <span
                     className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-semibold leading-none tabular-nums ${
                       item.isLiveBadge
-                        ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/20 text-[#16A34A] dark:text-[#22C55E]'
-                        : 'bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white'
+                        ? isLight
+                          ? 'bg-[#16A34A]/15 text-[#16A34A]'
+                          : 'bg-[#22C55E]/20 text-[#22C55E]'
+                        : 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white'
                     }`}
                   >
                     {item.badge}

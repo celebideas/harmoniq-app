@@ -2922,12 +2922,13 @@ export default function App() {
               userCity={userCity}
               onUpdateCity={(city) => {
                 const updated = setManualLocation(city);
-                setUserCity(updated.city);
-                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.city}" olarak güncellendi`);
+                setUserCity(updated.fullLocation);
+                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.fullLocation}" olarak güncellendi`);
                 setTimeout(() => setToastMessage(null), 3000);
               }}
               candidateSongs={favoriteSongs.length > 0 ? favoriteSongs : activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
               onWhisperTrack={handleWhisperTrack}
+              themeMode={effectiveTheme}
             />
           </div>
 
@@ -2964,10 +2965,11 @@ export default function App() {
               userCity={userCity}
               onUpdateCity={(city) => {
                 const updated = setManualLocation(city);
-                setUserCity(updated.city);
-                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.city}" olarak güncellendi`);
+                setUserCity(updated.fullLocation);
+                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.fullLocation}" olarak güncellendi`);
                 setTimeout(() => setToastMessage(null), 3000);
               }}
+              themeMode={effectiveTheme}
             />
           )}
 
@@ -3251,6 +3253,7 @@ export default function App() {
           isPlaying={isPlaying}
           currentSecond={mySecond}
           isAudioLoading={isAudioLoading}
+          themeMode={effectiveTheme}
           onTogglePlay={handleTogglePlay}
           onNextSong={handleNextSong}
           onOpenNowPlaying={() => setShowNowPlayingModal(true)}
@@ -3268,6 +3271,7 @@ export default function App() {
               (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
                 s.artist.toLowerCase() === currentSong.artist.toLowerCase())
           )}
+          themeMode={effectiveTheme}
           onTogglePlay={handleTogglePlay}
           onNextSong={handleNextSong}
           onPrevSong={handlePrevSong}
@@ -3283,6 +3287,7 @@ export default function App() {
         onClose={() => setSelectedDrawerUser(null)}
         onSendFrequency={handleSendFrequency}
         onToggleFriend={handleToggleFriend}
+        themeMode={effectiveTheme}
         onAcceptIncomingRequest={(user) => {
           const targetUid = user.uid || user.id;
           const matchingReq = cloudIncomingRequests.find((r) => r.fromUid === targetUid);
@@ -3302,6 +3307,7 @@ export default function App() {
         onClose={() => setShowSongPickerModal(false)}
         currentSong={currentSong}
         onSelectSong={handleSelectSong}
+        themeMode={effectiveTheme}
       />
 
       <InstallAppModal
@@ -3376,6 +3382,7 @@ export default function App() {
         }}
         onToggleFriend={handleToggleFriend}
         activePlatform={activePlatform}
+        themeMode={effectiveTheme}
       />
 
       <YouTubeMusicConnectModal
