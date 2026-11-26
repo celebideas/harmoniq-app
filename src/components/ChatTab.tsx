@@ -26,7 +26,7 @@ import {
   Flag,
   ShieldAlert,
 } from 'lucide-react';
-import { LoungeConversation, LoungeUser, Song, FriendRequest } from '../types';
+import { LoungeConversation, LoungeUser, Song, FriendRequest, ActiveCoListenSession } from '../types';
 import { searchTracks } from '../services/musicResolver';
 import { LiveMiniEqualizer } from './LiveMiniEqualizer';
 
@@ -69,6 +69,10 @@ interface Props {
   onCancelSentRequest?: (userId: string) => void;
   onBlockUser?: (user: LoungeUser) => void;
   onShowToast?: (msg: string) => void;
+  activeCoListen?: ActiveCoListenSession | null;
+  onStartCoListen?: (user: LoungeUser, track?: Song, second?: number) => void;
+  onSuggestCoListenSong?: () => void;
+  onLeaveCoListen?: () => void;
 }
 
 export const ChatTab: React.FC<Props> = ({
@@ -99,6 +103,10 @@ export const ChatTab: React.FC<Props> = ({
   onCancelSentRequest,
   onBlockUser,
   onShowToast,
+  activeCoListen = null,
+  onStartCoListen,
+  onSuggestCoListenSong,
+  onLeaveCoListen,
 }) => {
   const [socialTab, setSocialTab] = useState<SocialPaneTab>('chats');
   const [searchQuery, setSearchQuery] = useState('');
@@ -423,7 +431,43 @@ export const ChatTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-6 space-y-5">
+    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-6 space-y-4">
+      {/* Sleek Single-Line Active Co-Listen Session Bar */}
+      {activeCoListen && (
+        <div className="px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.10] shadow-[0_2px_12px_rgba(17,17,19,0.04)] dark:shadow-none flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
+            <span className="text-xs sm:text-[13px] font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
+              {activeCoListen.partnerName} ile birlikte dinliyorsun
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onSuggestCoListenSong && (
+              <button
+                type="button"
+                onClick={onSuggestCoListenSong}
+                className="px-2.5 py-1.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E6E4DF] dark:hover:bg-white/10 border border-[#E2DFD9] dark:border-white/[0.08] text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+              >
+                <Music className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <span>Şarkı Öner</span>
+              </button>
+            )}
+            {onLeaveCoListen && (
+              <button
+                type="button"
+                onClick={onLeaveCoListen}
+                className="px-2.5 py-1.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 border border-[#E2DFD9] dark:border-white/[0.08] text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                title="Birlikte dinleme oturumundan ayrıl"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={1.85} />
+                <span>Ayrıl</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Desktop 2-Pane Split Layout / Mobile Single-Pane Switch */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 lg:h-[calc(100vh-148px)] lg:min-h-[560px]">
         {/* ==================== LEFT PANE: DIRECTORY, TABS & INBOX ==================== */}
@@ -1187,17 +1231,25 @@ export const ChatTab: React.FC<Props> = ({
                       </div>
                     </div>
 
-                    {onPlayMoment && (
+                    {(onStartCoListen || onPlayMoment) && (
                       <button
                         type="button"
                         onClick={() => {
-                          onPlayMoment(activeConv.matchedTrack, encounterSec);
+                          if (onStartCoListen) {
+                            onStartCoListen(activeChatUser, activeConv.matchedTrack, encounterSec);
+                          } else {
+                            onPlayMoment?.(activeConv.matchedTrack, encounterSec);
+                          }
                           setIsCoListeningActive(true);
                         }}
                         className="studio-btn-primary px-3 py-2 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 active:scale-95 min-h-[38px] shadow-sm"
                       >
-                        <Play className="w-3 h-3 fill-current" strokeWidth={1.75} />
-                        <span className="font-mono tabular-nums">{formattedEncounterTime}</span>
+                        <Headphones className="w-3.5 h-3.5" strokeWidth={1.85} />
+                        <span>
+                          {activeCoListen?.partnerId === activeChatUser.id
+                            ? 'Senkron Aktif'
+                            : 'Birlikte Dinle'}
+                        </span>
                       </button>
                     )}
                   </div>

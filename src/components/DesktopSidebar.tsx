@@ -1,14 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import {
   AudioLines,
   Compass,
   MessageCircle,
   User,
-  Globe,
-  Users,
-  EyeOff,
-  ChevronDown,
-  Check,
   Sun,
   Moon,
   ShieldCheck,
@@ -26,8 +21,8 @@ interface Props {
   unreadCount: number;
   liveListenersCount: number;
   isPlaying: boolean;
-  privacyMode: PrivacyMode;
-  onChangePrivacyMode: (mode: PrivacyMode) => void;
+  privacyMode?: PrivacyMode;
+  onChangePrivacyMode?: (mode: PrivacyMode) => void;
   userProfile: UserProfile;
   themeMode: 'dark' | 'light';
   onToggleTheme: () => void;
@@ -39,24 +34,10 @@ export const DesktopSidebar: React.FC<Props> = ({
   onOpenSettings,
   unreadCount,
   liveListenersCount,
-  privacyMode,
-  onChangePrivacyMode,
   userProfile,
   themeMode,
   onToggleTheme,
 }) => {
-  const [showPrivacyDropdown, setShowPrivacyDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowPrivacyDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const navItems: {
     id: NavTab;
@@ -91,54 +72,6 @@ export const DesktopSidebar: React.FC<Props> = ({
   ];
 
   const isLight = themeMode === 'light';
-
-  const privacyOptions: {
-    id: PrivacyMode;
-    label: string;
-    shortBadge: string;
-    desc: string;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      id: 'public',
-      label: 'Herkese Açık',
-      shortBadge: `Canlı · ${liveListenersCount} Frekans`,
-      desc: 'Şarkı odalarında ve zaman rayında herkesle etkileşimdesin.',
-      icon: (
-        <Globe
-          className={`w-3.5 h-3.5 ${isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'}`}
-          strokeWidth={1.75}
-        />
-      ),
-    },
-    {
-      id: 'friends_only',
-      label: 'Arkadaşlar',
-      shortBadge: `Arkadaşlar · ${liveListenersCount}`,
-      desc: 'Seni yalnızca onaylı arkadaşların canlı odada görebilir.',
-      icon: (
-        <Users
-          className={`w-3.5 h-3.5 ${isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'}`}
-          strokeWidth={1.75}
-        />
-      ),
-    },
-    {
-      id: 'private',
-      label: 'Hayalet Mod',
-      shortBadge: 'Hayalet Mod',
-      desc: 'Tamamen görünmezsin. Kimse hangi saniyede olduğunu göremez.',
-      icon: (
-        <EyeOff
-          className={`w-3.5 h-3.5 ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}
-          strokeWidth={1.75}
-        />
-      ),
-    },
-  ];
-
-  const currentPrivacy =
-    privacyOptions.find((p) => p.id === privacyMode) || privacyOptions[0];
 
   return (
     <aside
@@ -187,109 +120,6 @@ export const DesktopSidebar: React.FC<Props> = ({
             </span>
           </div>
         </button>
-
-        {/* Live Frequency / Privacy Mode Capsule */}
-        <div ref={dropdownRef} className="relative">
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic(12);
-              setShowPrivacyDropdown((prev) => !prev);
-            }}
-            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer border ${
-              isLight
-                ? 'bg-white border-[#E6E4DF] text-[#111113] hover:bg-[#F1EFEA]'
-                : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7] hover:bg-[#1C1C22]'
-            }`}
-            title="Gizlilik Modunu Değiştir"
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              {privacyMode === 'private' ? (
-                <EyeOff
-                  className={`w-3.5 h-3.5 shrink-0 ${
-                    isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                  }`}
-                  strokeWidth={1.75}
-                />
-              ) : (
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
-                  }`}
-                />
-              )}
-              <span className="font-mono tabular-nums truncate">{currentPrivacy.shortBadge}</span>
-            </span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 shrink-0 transition-transform ${
-                isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
-              } ${showPrivacyDropdown ? 'rotate-180' : ''}`}
-              strokeWidth={1.75}
-            />
-          </button>
-
-          {showPrivacyDropdown && (
-            <div
-              className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border p-2 shadow-xl z-50 space-y-1 animate-in fade-in zoom-in-95 duration-150 ${
-                isLight
-                  ? 'border-[#E6E4DF] bg-white text-[#111113]'
-                  : 'border-white/[0.08] bg-[#141418] text-[#F5F5F7]'
-              }`}
-            >
-              {privacyOptions.map((opt) => {
-                const isSelected = privacyMode === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(15);
-                      onChangePrivacyMode(opt.id);
-                      setShowPrivacyDropdown(false);
-                    }}
-                    className={`w-full p-2.5 rounded-xl text-left flex items-start justify-between gap-2 transition cursor-pointer ${
-                      isSelected
-                        ? isLight
-                          ? 'bg-[#111113]/[0.08] border border-[#111113]/15'
-                          : 'bg-white/[0.10] border border-white/15'
-                        : isLight
-                        ? 'hover:bg-[#F1EFEA]/80 border border-transparent'
-                        : 'hover:bg-[#1C1C22] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2 min-w-0">
-                      <div className="mt-0.5 shrink-0">{opt.icon}</div>
-                      <div className="min-w-0">
-                        <div
-                          className={`text-xs font-semibold leading-none ${
-                            isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                          }`}
-                        >
-                          {opt.label}
-                        </div>
-                        <div
-                          className={`text-[10px] mt-1 leading-snug ${
-                            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                          }`}
-                        >
-                          {opt.desc}
-                        </div>
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <Check
-                        className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
-                          isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'
-                        }`}
-                        strokeWidth={1.75}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
         {/* MIDDLE: 4 Fixed Studio Navigation Tabs */}
         <nav className="space-y-1.5 pt-2" aria-label="Ana Bölümler">

@@ -52,8 +52,13 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   onToggleFavorite,
   onOpenNowPlaying,
 }) => {
-  const [volume, setVolume] = useState<number>(100);
-  const [previousVolume, setPreviousVolume] = useState<number>(100);
+  const [volume, setVolume] = useState<number>(() =>
+    Math.round(soundEngine.getVolume() * 100)
+  );
+  const [previousVolume, setPreviousVolume] = useState<number>(() => {
+    const v = Math.round(soundEngine.getVolume() * 100);
+    return v > 0 ? v : 80;
+  });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragSecond, setDragSecond] = useState<number>(currentSecond);
   const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
@@ -279,16 +284,20 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               }`}
             >
               <div
-                className={`h-full rounded-full transition-[width] duration-150 ${
-                  isLight ? 'bg-[#111113]' : 'bg-white'
-                }`}
-                style={{ width: `${progressPct}%` }}
+                className="h-full rounded-full transition-[width,background-color] duration-500"
+                style={{
+                  width: `${progressPct}%`,
+                  backgroundColor: 'var(--dynamic-track-color)',
+                }}
               />
               <div
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full ring-2 shadow-sm pointer-events-none transition-transform duration-150 ${
-                  isLight ? 'bg-[#111113] ring-white' : 'bg-white ring-[#141418]'
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full ring-2 shadow-sm pointer-events-none transition-all duration-300 ${
+                  isLight ? 'ring-white' : 'ring-[#141418]'
                 } ${isDragging ? 'scale-125' : 'opacity-0 group-hover:opacity-100'}`}
-                style={{ left: `${progressPct}%` }}
+                style={{
+                  left: `${progressPct}%`,
+                  backgroundColor: 'var(--dynamic-track-color)',
+                }}
               />
             </div>
           </div>

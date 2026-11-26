@@ -21,7 +21,7 @@ import {
   saveAuthSession,
   clearAuthSession,
 } from './components/AuthScreen';
-import { realtimePresence } from './services/realtimePresenceService';
+import { realtimePresence, CoListenSyncEvent } from './services/realtimePresenceService';
 import {
   SAMPLE_SONGS,
   INITIAL_LOUNGE_USERS,
@@ -41,6 +41,7 @@ import {
   PersonalMusicTaste,
   SubscribedChannelDetail,
   ChatMessage,
+  ActiveCoListenSession,
 } from './types';
 import { soundEngine } from './services/soundEngine';
 import { usePwaUpdate } from './hooks/usePwaUpdate';
@@ -273,7 +274,7 @@ export default function App() {
     if (!currentSong) {
       lastExtractedSongRef.current = '';
       setActiveTheme(DEFAULT_PALETTE);
-      applyThemeToDocument(DEFAULT_PALETTE);
+      applyThemeToDocument(DEFAULT_PALETTE, effectiveTheme);
       return;
     }
     const key = `${currentSong.id}::${currentSong.coverUrl || ''}`;
@@ -283,13 +284,28 @@ export default function App() {
     extractPaletteFromImage(currentSong.coverUrl, currentSong.artist || currentSong.title).then((palette) => {
       if (!isCancelled) {
         setActiveTheme(palette);
-        applyThemeToDocument(palette);
+        applyThemeToDocument(palette, effectiveTheme);
       }
     });
     return () => {
       isCancelled = true;
     };
   }, [currentSong?.id, currentSong?.coverUrl, currentSong?.artist, currentSong?.title]);
+
+  // Re-apply contrast-guarded --dynamic-track-color whenever theme mode or palette changes
+  useEffect(() => {
+    applyThemeToDocument(activeTheme, effectiveTheme);
+  }, [activeTheme, effectiveTheme]);
+
+  // Real-time "Birlikte Dinle" (Co-Listen) live sync session state
+  const [activeCoListen, setActiveCoListen] = useState<ActiveCoListenSession | null>(null);
+  const [coListenSuggestMode, setCoListenSuggestMode] = useState<boolean>(false);
+  const activeCoListenRef = useRef<ActiveCoListenSession | null>(null);
+  const isApplyingRemoteCoListenRef = useRef<boolean>(false);
+  const currentUserIdRef = useRef<string>('local-user');
+  useEffect(() => {
+    activeCoListenRef.current = activeCoListen;
+  }, [activeCoListen]);
 
   const [mySecond, setMySecond] = useState<number>(initialPlaybackRef.current.second);
   const [deepLinkInvite, setDeepLinkInvite] = useState<{
@@ -2186,6 +2202,17 @@ export default function App() {
       lastPlayIntentRef.current = { playing: false, time: now };
       setIsPlaying(false);
       soundEngine.pause();
+      if (activeCoListenRef.current && !isApplyingRemoteCoListenRef.current) {
+        realtimePresence.broadcastCoListenEvent({
+          type: 'pause',
+          sessionId: `colisten_${activeCoListenRef.current.partnerId}`,
+          senderId: currentUserIdRef.current,
+          partnerId: activeCoListenRef.current.partnerId,
+          song: currentSong,
+          second: mySecond,
+          isPlaying: false,
+        });
+      }
     } else {
       lastPlayIntentRef.current = { playing: true, time: now };
       setIsPlaying(true);
@@ -2193,6 +2220,17 @@ export default function App() {
         soundEngine.resume();
       } else {
         soundEngine.playSong(currentSong, mySecond);
+      }
+      if (activeCoListenRef.current && !isApplyingRemoteCoListenRef.current) {
+        realtimePresence.broadcastCoListenEvent({
+          type: 'play',
+          sessionId: `colisten_${activeCoListenRef.current.partnerId}`,
+          senderId: currentUserIdRef.current,
+          partnerId: activeCoListenRef.current.partnerId,
+          song: currentSong,
+          second: mySecond,
+          isPlaying: true,
+        });
       }
     }
   };
@@ -2207,6 +2245,17 @@ export default function App() {
       } catch {}
     }
     soundEngine.seek(safeSec);
+    if (activeCoListenRef.current && !isApplyingRemoteCoListenRef.current) {
+      realtimePresence.broadcastCoListenEvent({
+        type: 'seek',
+        sessionId: `colisten_${activeCoListenRef.current.partnerId}`,
+        senderId: currentUserIdRef.current,
+        partnerId: activeCoListenRef.current.partnerId,
+        song: currentSong || undefined,
+        second: safeSec,
+        isPlaying,
+      });
+    }
   };
 
   const handleSelectTab = (tab: NavTab) => {
@@ -2258,6 +2307,18 @@ export default function App() {
     currentRadioSeedRef.current = playableSong;
     playedSongTitlesRef.current.add(playableSong.title.toLowerCase());
     setMySecond(safeStart);
+
+    if (activeCoListenRef.current && !isApplyingRemoteCoListenRef.current) {
+      realtimePresence.broadcastCoListenEvent({
+        type: 'songChange',
+        sessionId: `colisten_${activeCoListenRef.current.partnerId}`,
+        senderId: currentUserIdRef.current,
+        partnerId: activeCoListenRef.current.partnerId,
+        song: playableSong,
+        second: safeStart,
+        isPlaying: autoPlay || isPlaying,
+      });
+    }
   };
 
   const handleNextSong = async () => {
@@ -2764,6 +2825,116 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    currentUserIdRef.current = firebaseUser?.uid || authSession?.handle || 'local-user';
+  }, [firebaseUser?.uid, authSession?.handle]);
+
+  // Real-time Co-Listen Session Handlers ("Birlikte Dinle")
+  const handleStartCoListen = (user: LoungeUser, track?: Song, second?: number) => {
+    const targetTrack = track || currentSong;
+    const targetSecond = Math.max(
+      0,
+      Math.floor(second !== undefined ? second : user.currentSecond || 0)
+    );
+    const session: ActiveCoListenSession = {
+      partnerId: user.id,
+      partnerName: user.name,
+      partnerAvatar: user.avatarUrl,
+      startedAt: Date.now(),
+    };
+    activeCoListenRef.current = session;
+    setActiveCoListen(session);
+
+    if (targetTrack) {
+      isApplyingRemoteCoListenRef.current = true;
+      handlePlayMoment(targetTrack, targetSecond);
+      setTimeout(() => {
+        isApplyingRemoteCoListenRef.current = false;
+      }, 250);
+      realtimePresence.broadcastCoListenEvent({
+        type: 'songChange',
+        sessionId: `colisten_${user.id}`,
+        senderId: currentUserIdRef.current,
+        partnerId: user.id,
+        song: targetTrack,
+        second: targetSecond,
+        isPlaying: true,
+      });
+    }
+
+    const m = Math.floor(targetSecond / 60);
+    const s = Math.floor(targetSecond % 60);
+    const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    setToastMessage(`${user.name} ile birlikte dinleme başladı (${timeStr}).`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleLeaveCoListen = () => {
+    const currentSession = activeCoListenRef.current;
+    if (currentSession) {
+      realtimePresence.broadcastCoListenEvent({
+        type: 'leave',
+        sessionId: `colisten_${currentSession.partnerId}`,
+        senderId: currentUserIdRef.current,
+        partnerId: currentSession.partnerId,
+      });
+    }
+    activeCoListenRef.current = null;
+    setActiveCoListen(null);
+    setCoListenSuggestMode(false);
+    setToastMessage('Birlikte dinleme oturumundan ayrıldın.');
+    setTimeout(() => setToastMessage(null), 2600);
+  };
+
+  const handleSuggestCoListenSong = () => {
+    setSignatureSlotTarget(null);
+    setCoListenSuggestMode(true);
+    setShowSongPickerModal(true);
+  };
+
+  // Subscribe to incoming real-time Co-Listen sync events (cross-tab / live partner sync)
+  useEffect(() => {
+    const unsubscribe = realtimePresence.subscribeToCoListenEvents((ev: CoListenSyncEvent) => {
+      const currentSession = activeCoListenRef.current;
+      if (!currentSession) return;
+
+      isApplyingRemoteCoListenRef.current = true;
+      try {
+        if (ev.type === 'leave') {
+          activeCoListenRef.current = null;
+          setActiveCoListen(null);
+          setToastMessage(`${currentSession.partnerName} birlikte dinleme oturumundan ayrıldı.`);
+          setTimeout(() => setToastMessage(null), 2800);
+        } else if (ev.type === 'pause') {
+          setIsPlaying(false);
+          soundEngine.pause();
+          if (typeof ev.second === 'number') {
+            setMySecond(Math.max(0, Math.floor(ev.second)));
+          }
+        } else if (ev.type === 'play') {
+          if (typeof ev.second === 'number') {
+            const safeSec = Math.max(0, Math.floor(ev.second));
+            setMySecond(safeSec);
+            soundEngine.seek(safeSec);
+          }
+          setIsPlaying(true);
+          soundEngine.resume();
+        } else if (ev.type === 'seek' && typeof ev.second === 'number') {
+          const safeSec = Math.max(0, Math.floor(ev.second));
+          setMySecond(safeSec);
+          soundEngine.seek(safeSec);
+        } else if (ev.type === 'songChange' && ev.song) {
+          void handleSelectSong(ev.song, ev.isPlaying !== false, ev.second || 0);
+        }
+      } finally {
+        setTimeout(() => {
+          isApplyingRemoteCoListenRef.current = false;
+        }, 250);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Resolve incoming ListenHub Moment Share links (/?track=...&artist=...&t=...)
   const sharedMomentHandledRef = useRef(false);
   useEffect(() => {
@@ -3180,6 +3351,28 @@ export default function App() {
     return [...dedupedReal, ...filteredSimulated];
   }, [discoverableCloudUsers, realLiveListeners, loungeUsers, blockedUserIds]);
 
+  // Exact-track listeners for Sahne (Cold-Start protection: rare non-catalog songs with 0 real listeners show 0 so Yakın Frekans activates)
+  const activeSongListeners = useMemo(() => {
+    if (!currentSong) return [];
+    const isCatalogRoomSong = SAMPLE_SONGS.some(
+      (s) =>
+        s.id === currentSong.id ||
+        (s.title.trim().toLowerCase() === currentSong.title.trim().toLowerCase() &&
+          s.artist.trim().toLowerCase() === currentSong.artist.trim().toLowerCase())
+    );
+    if (isCatalogRoomSong) {
+      return combinedLoungeUsers;
+    }
+    const songTitleLower = currentSong.title.trim().toLowerCase();
+    return combinedLoungeUsers.filter(
+      (u) =>
+        u.isRealUser &&
+        (u.currentSong?.id === currentSong.id ||
+          (u.currentSong?.title &&
+            u.currentSong.title.trim().toLowerCase() === songTitleLower))
+    );
+  }, [currentSong, combinedLoungeUsers]);
+
   // Keep open MiniProfileDrawer friendStatus in sync with real-time Firestore state
   const resolvedDrawerUser = useMemo(() => {
     if (!selectedDrawerUser) return null;
@@ -3322,7 +3515,8 @@ export default function App() {
             <LiveLoungeTab
               currentSong={currentSong}
               mySecond={mySecond}
-              users={combinedLoungeUsers}
+              users={activeSongListeners}
+              nearbyFrequencyUsers={combinedLoungeUsers}
               activePlatform={activePlatform}
               privacyMode={privacyMode}
               onChangePrivacyMode={setPrivacyMode}
@@ -3332,6 +3526,7 @@ export default function App() {
               onSeekSecond={handleSeekSecond}
               onOpenSongPicker={() => {
                 setSignatureSlotTarget(null);
+                setCoListenSuggestMode(false);
                 setShowSongPickerModal(true);
               }}
               onOpenYouTubeConnect={() => {
@@ -3377,6 +3572,10 @@ export default function App() {
               candidateSongs={favoriteSongs.length > 0 ? favoriteSongs : activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
               onWhisperTrack={handleWhisperTrack}
               themeMode={effectiveTheme}
+              activeCoListen={activeCoListen}
+              onStartCoListen={handleStartCoListen}
+              onSuggestCoListenSong={handleSuggestCoListenSong}
+              onLeaveCoListen={handleLeaveCoListen}
             />
           </div>
 
@@ -3466,6 +3665,10 @@ export default function App() {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3200);
               }}
+              activeCoListen={activeCoListen}
+              onStartCoListen={handleStartCoListen}
+              onSuggestCoListenSong={handleSuggestCoListenSong}
+              onLeaveCoListen={handleLeaveCoListen}
               isCloudAuthenticated={Boolean(firebaseUser)}
               isAuthLoading={isGoogleLoading}
               onGoogleSignIn={handleSocialGoogleSignIn}
@@ -3767,16 +3970,21 @@ export default function App() {
         onClose={() => {
           setShowSongPickerModal(false);
           setSignatureSlotTarget(null);
+          setCoListenSuggestMode(false);
         }}
         currentSong={currentSong}
         customTitle={
           signatureSlotTarget !== null
             ? `İmza #${signatureSlotTarget + 1} İçin Parça Seç`
+            : coListenSuggestMode && activeCoListen
+            ? `${activeCoListen.partnerName} İçin Şarkı Öner`
             : undefined
         }
         customSubtitle={
           signatureSlotTarget !== null
             ? 'Profil vitrininde sergilenecek parçayı ara veya link yapıştır'
+            : coListenSuggestMode && activeCoListen
+            ? 'Seçtiğin parça ortak oturumda anında senkronize çalar'
             : undefined
         }
         onSelectSong={(song) => {
@@ -3795,6 +4003,24 @@ export default function App() {
             setSignatureSlotTarget(null);
             setToastMessage(`"${song.title}" #${targetIdx + 1} imza vitrinine eklendi.`);
             setTimeout(() => setToastMessage(null), 2800);
+          } else if (coListenSuggestMode && activeCoListen) {
+            setCoListenSuggestMode(false);
+            void handleSelectSong(song, true, 0);
+            const partnerConv = mergedConversations.find(
+              (c) => c.user.id === activeCoListen.partnerId
+            );
+            if (partnerConv) {
+              handleSendSongMessage(
+                partnerConv.matchId,
+                song,
+                'Birlikte dinleme sıramıza bu parçayı ekledim',
+                0
+              );
+            }
+            setToastMessage(
+              `${activeCoListen.partnerName} ile "${song.title}" senkron çalınıyor.`
+            );
+            setTimeout(() => setToastMessage(null), 3000);
           } else {
             void handleSelectSong(song);
           }
@@ -3831,6 +4057,7 @@ export default function App() {
           onOpenSongPicker={() => {
             setShowNowPlayingModal(false);
             setSignatureSlotTarget(null);
+            setCoListenSuggestMode(false);
             setShowSongPickerModal(true);
           }}
           activePlatform={activePlatform}
@@ -3841,7 +4068,7 @@ export default function App() {
           onOpenRoomListeners={() => {
             setShowRoomListenersModal(true);
           }}
-          listeners={combinedLoungeUsers}
+          listeners={activeSongListeners}
           onSelectUser={(user) => {
             setSelectedDrawerUser(user);
           }}
@@ -3849,6 +4076,9 @@ export default function App() {
             setActiveChatUser(user);
             setActiveTab('chat');
             setShowNowPlayingModal(false);
+          }}
+          onStartCoListen={(user) => {
+            handleStartCoListen(user, currentSong, user.currentSecond);
           }}
           isFavorite={favoriteSongs.some(
             (s) =>
@@ -3866,7 +4096,7 @@ export default function App() {
           isOpen={showRoomListenersModal}
           onClose={() => setShowRoomListenersModal(false)}
           song={currentSong}
-          listeners={combinedLoungeUsers}
+          listeners={activeSongListeners}
           onSelectUser={(user) => {
             setSelectedDrawerUser(user);
             setShowRoomListenersModal(false);
@@ -3875,6 +4105,9 @@ export default function App() {
             setActiveChatUser(user);
             setActiveTab('chat');
             setShowRoomListenersModal(false);
+          }}
+          onStartCoListen={(user) => {
+            handleStartCoListen(user, currentSong, user.currentSecond);
           }}
           onToggleFriend={handleToggleFriend}
           activePlatform={activePlatform}

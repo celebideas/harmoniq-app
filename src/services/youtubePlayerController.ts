@@ -31,6 +31,7 @@ class YouTubePlayerController {
   private lastActualYouTubeSecond: number | null = null;
   private lastInfoDeliveryTime: number = 0;
   private iframeAttachedAt: number = 0;
+  private targetVolume: number = 80;
 
   constructor() {
     this.attachMessageListener();
@@ -168,8 +169,7 @@ class YouTubePlayerController {
         if (data.event === 'onReady' || data.event === 'initialDelivery') {
           this.sendCommand('addEventListener', ['onStateChange']);
           this.sendCommand('addEventListener', ['onError']);
-          this.sendCommand('unMute');
-          this.sendCommand('setVolume', [100]);
+          this.applyCurrentVolume();
           if (data.event === 'onReady') {
             if (this.isPlaying) {
               this.sendCommand('playVideo');
@@ -249,8 +249,7 @@ class YouTubePlayerController {
       const handshake = () => {
         if (this.iframe !== iframe) return;
         this.sendListeningHandshake();
-        this.sendCommand('unMute');
-        this.sendCommand('setVolume', [100]);
+        this.applyCurrentVolume();
       };
       setTimeout(() => {
         handshake();
@@ -363,8 +362,7 @@ class YouTubePlayerController {
 
     // Ensure handshake + play & un-mute commands
     this.sendListeningHandshake();
-    this.sendCommand('unMute');
-    this.sendCommand('setVolume', [100]);
+    this.applyCurrentVolume();
 
     if (isNewVideo && this.iframe) {
       this.sendCommand('loadVideoById', [
@@ -425,6 +423,26 @@ class YouTubePlayerController {
     this.timerLastTimestamp = Date.now();
     this.sendCommand('seekTo', [safeSec, true]);
     this.notifyTime(safeSec);
+  }
+
+  public setVolume(percent: number) {
+    const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+    this.targetVolume = clamped;
+    this.applyCurrentVolume();
+  }
+
+  public getVolume(): number {
+    return this.targetVolume;
+  }
+
+  private applyCurrentVolume() {
+    if (this.targetVolume <= 0) {
+      this.sendCommand('setVolume', [0]);
+      this.sendCommand('mute');
+    } else {
+      this.sendCommand('unMute');
+      this.sendCommand('setVolume', [this.targetVolume]);
+    }
   }
 
   public sendCommand(func: string, args: any[] = []) {

@@ -3,6 +3,7 @@ import {
   Music,
   Globe,
   Users,
+  EyeOff,
   UserMinus,
   MessageCircle,
   RefreshCw,
@@ -427,6 +428,7 @@ export const ProfileTab: React.FC<Props> = ({
   onAcceptFriendRequest,
   onDeclineFriendRequest,
   onCancelSentRequest,
+  onUpdatePrivacyMode,
   onToggleFriend,
   onStartChatWithFriend,
   onOpenSongPicker,
@@ -3702,6 +3704,85 @@ export const ProfileTab: React.FC<Props> = ({
                               </div>
                               <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98] hidden sm:block mt-0.5">
                                 {themeOpt.desc}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section 1.5: Görünürlük & Gizlilik Modu (Herkese Açık | Sadece Arkadaşlar | Hayalet Mod) */}
+                  <div className="space-y-2.5 pt-4 border-t border-[#E6E4DF] dark:border-white/[0.08]">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7]">
+                          Frekans Görünürlüğü
+                        </h4>
+                        <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                          Seni canlı şarkı odalarında ve zaman rayında kimlerin görebileceğini seç
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] shrink-0">
+                        {userProfile.privacyMode === 'private'
+                          ? 'Hayalet Mod'
+                          : userProfile.privacyMode === 'friends_only'
+                          ? 'Sadece Arkadaşlar'
+                          : 'Herkese Açık'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {(
+                        [
+                          {
+                            id: 'public' as const,
+                            label: 'Herkese Açık',
+                            desc: 'Tüm canlı odalarda görünür',
+                            icon: <Globe className="w-4 h-4 text-[#16A34A] dark:text-[#22C55E]" />,
+                          },
+                          {
+                            id: 'friends_only' as const,
+                            label: 'Sadece Arkadaşlar',
+                            desc: 'Yalnızca arkadaşların görür',
+                            icon: <Users className="w-4 h-4 text-[#111113] dark:text-[#F5F5F7]" />,
+                          },
+                          {
+                            id: 'private' as const,
+                            label: 'Hayalet Mod',
+                            desc: 'Odada tamamen görünmez',
+                            icon: <EyeOff className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98]" />,
+                          },
+                        ] as const
+                      ).map((modeOpt) => {
+                        const isSelected = (userProfile.privacyMode || 'public') === modeOpt.id;
+                        return (
+                          <button
+                            key={modeOpt.id}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(15);
+                              onUpdatePrivacyMode(modeOpt.id);
+                            }}
+                            className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1.5 active:scale-95 ${
+                              isSelected
+                                ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] border-[#111113]/35 dark:border-white/35 text-[#111113] dark:text-[#F5F5F7] shadow-sm ring-1 ring-[#111113]/20 dark:ring-white/25'
+                                : 'bg-[#FAF9F6] dark:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.06] text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
+                            }`}
+                          >
+                            {modeOpt.icon}
+                            <div className="min-w-0">
+                              <div
+                                className={`text-xs font-semibold leading-tight ${
+                                  isSelected
+                                    ? 'text-[#111113] dark:text-[#F5F5F7]'
+                                    : 'text-[#63636B] dark:text-[#8E8E98]'
+                                }`}
+                              >
+                                {modeOpt.label}
+                              </div>
+                              <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98] hidden sm:block mt-0.5">
+                                {modeOpt.desc}
                               </div>
                             </div>
                           </button>

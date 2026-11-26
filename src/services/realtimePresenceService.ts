@@ -17,6 +17,20 @@ export interface PresencePayload {
   isRealUser: true;
 }
 
+export type CoListenEventType = 'play' | 'pause' | 'seek' | 'songChange' | 'leave';
+
+export interface CoListenSyncEvent {
+  type: CoListenEventType;
+  sessionId: string;
+  senderTabId: string;
+  senderId: string;
+  partnerId: string;
+  song?: Song;
+  second?: number;
+  isPlaying?: boolean;
+  timestamp: number;
+}
+
 const PRESENCE_TTL_MS = 45000; // 45 seconds timeout
 const CHANNEL_NAME = 'harmoniq_live_presence';
 
@@ -26,9 +40,11 @@ const CHANNEL_NAME = 'harmoniq_live_presence';
  * inside socialFirestoreService.ts to respect strict Firestore security rules.
  */
 class RealtimePresenceService {
+  private tabId: string = `tab_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
   private broadcastChannel: BroadcastChannel | null = null;
   private listeners: Map<string, PresencePayload> = new Map();
   private subscribers: Set<(realUsers: LoungeUser[]) => void> = new Set();
+  private coListenSubscribers: Set<(event: CoListenSyncEvent) => void> = new Set();
   private broadcastIntervalId: ReturnType<typeof setInterval> | null = null;
   private pruneIntervalId: ReturnType<typeof setInterval> | null = null;
   private currentPayload: PresencePayload | null = null;
@@ -45,8 +61,19 @@ class RealtimePresenceService {
       try {
         this.broadcastChannel = new BroadcastChannel(CHANNEL_NAME);
         this.broadcastChannel.onmessage = (event) => {
-          if (event.data && event.data.type === 'presence_heartbeat') {
+          if (!event.data) return;
+          if (event.data.type === 'presence_heartbeat') {
             this.handleIncomingPresence(event.data.payload);
+          } else if (event.data.type === 'co_listen_event' && event.data.payload) {
+            const syncEvent = event.data.payload as CoListenSyncEvent;
+            if (syncEvent.senderTabId === this.tabId) return;
+            this.coListenSubscribers.forEach((cb) => {
+              try {
+                cb(syncEvent);
+              } catch {
+                // ignore subscriber errors
+              }
+            });
           }
         };
       } catch (e) {
@@ -198,6 +225,34 @@ class RealtimePresenceService {
     }
 
     return result;
+  }
+
+  public broadcastCoListenEvent(
+    event: Omit<CoListenSyncEvent, 'senderTabId' | 'timestamp'>
+  ) {
+    if (!this.broadcastChannel) return;
+    const payload: CoListenSyncEvent = {
+      ...event,
+      senderTabId: this.tabId,
+      timestamp: Date.now(),
+    };
+    try {
+      this.broadcastChannel.postMessage({
+        type: 'co_listen_event',
+        payload,
+      });
+    } catch {
+      // ignore channel closed errors
+    }
+  }
+
+  public subscribeToCoListenEvents(
+    callback: (event: CoListenSyncEvent) => void
+  ): () => void {
+    this.coListenSubscribers.add(callback);
+    return () => {
+      this.coListenSubscribers.delete(callback);
+    };
   }
 
   private notifySubscribers() {

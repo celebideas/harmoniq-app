@@ -222,3 +222,11 @@ export interface ComplaintSolution {
   badgeText: string;
 }
 
+export interface ActiveCoListenSession {
+  partnerId: string;
+  partnerName: string;
+  partnerAvatar?: string;
+  startedAt: number;
+}
+
+

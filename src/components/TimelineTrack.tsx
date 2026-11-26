@@ -31,6 +31,7 @@ interface Props {
   onWhisperTrack?: (user: LoungeUser, track: Song, note?: string) => void;
   onShowToast?: (msg: string) => void;
   onOpenRoomListeners?: () => void;
+  onStartCoListen?: (user: LoungeUser) => void;
 }
 
 interface TimelineCluster {
@@ -51,6 +52,7 @@ export const TimelineTrack: React.FC<Props> = ({
   onWhisperTrack,
   onShowToast,
   onOpenRoomListeners,
+  onStartCoListen,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
@@ -147,6 +149,11 @@ export const TimelineTrack: React.FC<Props> = ({
   const handleSyncWithUser = (user: LoungeUser) => {
     triggerHaptic(30);
     setSyncedUser(user);
+    if (onStartCoListen) {
+      onStartCoListen(user);
+      setActiveClusterId(null);
+      return;
+    }
     if (onSeekSecond) {
       onSeekSecond(user.currentSecond);
     }
@@ -269,10 +276,13 @@ export const TimelineTrack: React.FC<Props> = ({
         >
           {/* Thin Unobstructed Monochrome Progress Rail */}
           <div className="relative h-1 w-full rounded-full bg-[#E6E4DF] dark:bg-white/15">
-            {/* Played Progress Fill */}
+            {/* Played Progress Fill (Dynamic Album Color) */}
             <div
-              className="h-full bg-[#111113] dark:bg-white rounded-full transition-[width] duration-200"
-              style={{ width: `${getPercent(mySecond)}%` }}
+              className="h-full rounded-full transition-[width,background-color] duration-500"
+              style={{
+                width: `${getPercent(mySecond)}%`,
+                backgroundColor: 'var(--dynamic-track-color)',
+              }}
             />
 
             {/* Sync Connector Line */}

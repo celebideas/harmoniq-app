@@ -4,14 +4,9 @@ import {
   X,
   Search,
   MessageCircle,
-  UserPlus,
-  UserCheck,
-  Clock,
-  Sparkles,
   MapPin,
   Music,
   Play,
-  Disc3,
 } from 'lucide-react';
 import { Song, LoungeUser, PlatformType } from '../types';
 import { sanitizeFormattedLocation } from '../services/locationService';
@@ -23,13 +18,11 @@ interface Props {
   listeners: LoungeUser[];
   onSelectUser: (user: LoungeUser) => void;
   onStartChatWithUser: (user: LoungeUser) => void;
+  onStartCoListen?: (user: LoungeUser) => void;
   onToggleFriend?: (user: LoungeUser) => void;
   activePlatform: PlatformType;
   themeMode?: 'dark' | 'light';
 }
-
-const stripStrayEmojis = (text: string) =>
-  text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').replace(/\s{2,}/g, ' ').trim();
 
 export const LiveRoomListenersModal: React.FC<Props> = ({
   isOpen,
@@ -38,7 +31,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
   listeners,
   onSelectUser,
   onStartChatWithUser,
-  onToggleFriend,
+  onStartCoListen,
   themeMode,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,7 +81,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
       if (filterMode === 'friends') return user.friendStatus === 'friends';
 
       return true;
-    });
+    }).sort((a, b) => a.currentSecond - b.currentSecond);
   }, [listeners, searchQuery, filterMode]);
 
   if (!isOpen) return null;
@@ -288,47 +281,58 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Scrollable List of Active Listeners */}
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-1">
+        {/* Fixed Top Summary Row */}
+        <div
+          className={`flex items-center justify-between gap-2 px-1 pt-0.5 text-xs ${
+            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+              }`}
+            />
+            <span className={`font-semibold truncate ${isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'}`}>
+              {filteredListeners.length} kişi şu an bu parçada
+            </span>
+          </div>
+          <span className="text-[11px] font-medium shrink-0">Sırala: Saniye</span>
+        </div>
+
+        {/* Scrollable Symmetric Studio List of Active Listeners */}
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
           {filteredListeners.length > 0 ? (
             filteredListeners.map((user) => {
               const displayCity = sanitizeFormattedLocation(user.city);
-              const cleanedQuote = user.statusBubble ? stripStrayEmojis(user.statusBubble) : '';
 
               return (
                 <div
                   key={user.id}
-                  className={`p-3.5 rounded-2xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group border ${
-                    user.isRealUser
-                      ? isLight
-                        ? 'bg-emerald-50/70 border-emerald-500/35'
-                        : 'bg-emerald-950/20 border-emerald-500/35'
-                      : isLight
-                      ? 'bg-[#FAF9F6] border-[#E6E4DF] hover:border-[#111113]/25 dark:border-white/25'
-                      : 'bg-[#1C1C22] border-white/[0.07] hover:border-[#111113]/25 dark:hover:border-white/25'
-                  }`}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 light:bg-[#F1EFEA]/70 border border-white/[0.05] light:border-[#E6E4DF] transition hover:bg-[#1C1C22] light:hover:bg-[#EAE7E0]"
                 >
-                  {/* Left: User Avatar & Metadata */}
-                  <div
+                  {/* Left: Thin Emerald Live Ring Avatar + Name + City, District */}
+                  <button
+                    type="button"
                     onClick={() => {
                       onSelectUser(user);
                       onClose();
                     }}
-                    className="flex items-start gap-3 min-w-0 cursor-pointer flex-1"
+                    className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer"
                   >
                     <div className="relative shrink-0">
                       {user.avatarUrl ? (
                         <img
                           src={user.avatarUrl}
                           alt={user.name}
-                          className={`w-11 h-11 rounded-full object-cover shadow-sm ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
-                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
+                          className={`w-9 h-9 rounded-full object-cover ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#F1EFEA]' : 'ring-offset-[#1C1C22]'
                           }`}
                         />
                       ) : (
                         <div
-                          className={`avatar-circle w-11 h-11 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-sm shadow-sm ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
-                            isLight ? 'ring-offset-[#FAF9F6]' : 'ring-offset-[#1C1C22]'
+                          className={`avatar-circle w-9 h-9 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs ring-[1.5px] ring-emerald-500/80 ring-offset-2 ${
+                            isLight ? 'ring-offset-[#F1EFEA]' : 'ring-offset-[#1C1C22]'
                           }`}
                         >
                           {user.avatarSeed}
@@ -337,166 +341,57 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`text-sm font-bold transition-colors truncate ${
-                            isLight
-                              ? 'text-[#111113] group-hover:text-[#111113]'
-                              : 'text-[#F5F5F7] group-hover:text-[#F5F5F7]'
-                          }`}
-                        >
-                          {user.name}
-                          {!user.isRealUser && user.age ? `, ${user.age}` : ''}
-                        </span>
-
-                        {user.isRealUser && (
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold border inline-flex items-center gap-1 tracking-wide ${
-                              isLight
-                                ? 'bg-emerald-500/12 text-emerald-700 border-emerald-500/30'
-                                : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
-                              }`}
-                            />
-                            <span>GERÇEK CANLI</span>
-                          </span>
-                        )}
-
-                        {user.friendStatus === 'friends' && (
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
-                              isLight
-                                ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] border-[#111113]/15 dark:border-white/15'
-                                : 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#F5F5F7] border-[#111113]/15 dark:border-white/15'
-                            }`}
-                          >
-                            Arkadaş
-                          </span>
-                        )}
-
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-mono border flex items-center gap-1 ${
-                            isLight
-                              ? 'bg-white text-[#111113] border-[#E2DFD9]'
-                              : 'bg-[#141418] text-[#F5F5F7] border-white/[0.08]'
-                          }`}
-                        >
-                          <Clock className="w-2.5 h-2.5 text-[#111113] dark:text-[#F5F5F7]" />
-                          <span>{formatTime(user.currentSecond)}</span>
-                        </span>
-
-                        <span
-                          className={`text-[10px] flex items-center gap-1 ${
-                            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                          }`}
-                        >
-                          {user.platform === 'youtube_music' ? (
-                            <>
-                              <Play className="w-2.5 h-2.5 fill-current text-rose-500" />
-                              <span>YouTube Music</span>
-                            </>
-                          ) : (
-                            <>
-                              <Disc3 className="w-2.5 h-2.5 text-[#16A34A] dark:text-[#22C55E]" />
-                              <span>Spotify</span>
-                            </>
-                          )}
-                        </span>
-
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${
-                            isLight
-                              ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] border-[#111113]/15 dark:border-white/15'
-                              : 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#F5F5F7] border-[#111113]/15 dark:border-white/15'
-                          }`}
-                        >
-                          <Sparkles className="w-2.5 h-2.5 text-[#111113] dark:text-[#F5F5F7]" />
-                          <span>%{user.compatibilityScore || 94} Zevk Uyumu</span>
-                        </span>
-                      </div>
-
                       <div
-                        className={`text-xs mt-1 flex items-center gap-1 truncate ${
-                          isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
+                        className={`text-sm font-semibold truncate ${
+                          isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                         }`}
                       >
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{displayCity}</span>
-                        <span>·</span>
-                        <span className="shrink-0 tabular-nums">{user.distanceKm} km yakında</span>
+                        {user.name}
                       </div>
-
-                      {cleanedQuote && (
-                        <p
-                          className={`text-xs mt-1 italic leading-relaxed line-clamp-1 ${
-                            isLight ? 'text-[#4B443E]' : 'text-[#D6CFC7]'
-                          }`}
-                        >
-                          &ldquo;{cleanedQuote}&rdquo;
-                        </p>
-                      )}
+                      <div className="text-xs text-zinc-400 light:text-[#63636B] truncate">
+                        {displayCity}
+                      </div>
                     </div>
-                  </div>
+                  </button>
 
-                  {/* Right Action Buttons: DM Sohbet & Arkadaş Ekle */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto pt-1 sm:pt-0">
-                    {/* Chat / DM Secondary Button */}
+                  {/* Middle/Right: Monospace Second Badge + Compact Equal Katıl & Chat Buttons */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] light:bg-black/[0.05] text-[#F5F5F7] light:text-[#111113]">
+                      {formatTime(user.currentSecond)}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onStartCoListen) {
+                          onStartCoListen(user);
+                        } else {
+                          onSelectUser(user);
+                        }
+                        onClose();
+                      }}
+                      className="studio-btn-primary h-8 px-3 rounded-lg bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] text-xs font-semibold transition active:scale-95 cursor-pointer"
+                      title={`${user.name} ile birlikte dinle`}
+                    >
+                      Katıl
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
                         onStartChatWithUser(user);
                         onClose();
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 active:scale-[0.96] transition-transform duration-100 ease-out border cursor-pointer ${
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center border transition active:scale-95 cursor-pointer ${
                         isLight
-                          ? 'bg-[#F1EFEA] hover:bg-[#E6E4DF] text-[#111113] border-[#E2DFD9]'
-                          : 'bg-[#141418] hover:bg-[#24242C] text-[#F5F5F7] border-white/10'
+                          ? 'bg-white hover:bg-[#E6E4DF] border-[#E2DFD9] text-[#111113]'
+                          : 'bg-[#141418] hover:bg-white/10 border-white/[0.08] text-[#F5F5F7]'
                       }`}
-                      title={`${user.name} ile doğrudan sohbete geç`}
+                      title={`${user.name} ile sohbet et`}
+                      aria-label={`${user.name} ile sohbet et`}
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
-                      <span>Sohbet Et</span>
+                      <MessageCircle className="w-4 h-4" />
                     </button>
-
-                    {/* Friend Toggle */}
-                    {onToggleFriend && (
-                      <button
-                        type="button"
-                        onClick={() => onToggleFriend(user)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out flex items-center gap-1.5 cursor-pointer ${
-                          user.friendStatus === 'friends'
-                            ? isLight
-                              ? 'bg-[#F1EFEA] text-[#63636B] border border-[#E2DFD9] hover:text-rose-600'
-                              : 'bg-[#141418] text-[#8E8E98] border border-white/10 hover:text-rose-400'
-                            : user.friendStatus === 'pending'
-                            ? isLight
-                              ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] border border-[#111113]/20 dark:border-white/20'
-                              : 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#F5F5F7] border border-[#111113]/20 dark:border-white/20'
-                            : 'studio-btn-primary bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] shadow-sm'
-                        }`}
-                      >
-                        {user.friendStatus === 'friends' ? (
-                          <>
-                            <UserCheck className="w-3.5 h-3.5" />
-                            <span>Arkadaş</span>
-                          </>
-                        ) : user.friendStatus === 'pending' ? (
-                          <>
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>İstek İletildi</span>
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span>Arkadaş Ekle</span>
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
                 </div>
               );

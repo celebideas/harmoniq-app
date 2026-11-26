@@ -27,6 +27,7 @@
     --theme-accent-glow: rgba(255, 255, 255, 0.14);
     --theme-accent-subtle: rgba(255, 255, 255, 0.1);
     --theme-accent-text: #0B0B0D;
+    --dynamic-track-color: #FFFFFF;
   }
 
   html.light {
@@ -45,6 +46,7 @@
     --theme-accent-glow: rgba(17, 17, 19, 0.12);
     --theme-accent-subtle: rgba(17, 17, 19, 0.08);
     --theme-accent-text: #FFFFFF;
+    --dynamic-track-color: #111113;
   }
 
   html {

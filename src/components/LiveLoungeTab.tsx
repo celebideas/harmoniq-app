@@ -13,8 +13,11 @@ import {
   RotateCcw,
   RotateCw,
   Headphones,
+  X,
+  Music,
 } from 'lucide-react';
-import { Song, LoungeUser, PlatformType, PrivacyMode } from '../types';
+import { Song, LoungeUser, PlatformType, PrivacyMode, ActiveCoListenSession } from '../types';
+import { SAMPLE_SONGS, INITIAL_LOUNGE_USERS } from '../data/mockData';
 import { TimelineTrack } from './TimelineTrack';
 import { ytController } from '../services/youtubePlayerController';
 import { soundEngine } from '../services/soundEngine';
@@ -67,6 +70,11 @@ interface Props {
   candidateSongs?: Song[];
   onWhisperTrack?: (user: LoungeUser, track: Song, note?: string) => void;
   themeMode?: 'dark' | 'light';
+  activeCoListen?: ActiveCoListenSession | null;
+  onStartCoListen?: (user: LoungeUser, track?: Song, second?: number) => void;
+  onSuggestCoListenSong?: () => void;
+  onLeaveCoListen?: () => void;
+  nearbyFrequencyUsers?: LoungeUser[];
 }
 
 export const LiveLoungeTab: React.FC<Props> = ({
@@ -85,6 +93,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
   onOpenRoomListeners,
   isPlaying,
   onTogglePlay,
+  onSelectSong,
   onNextSong,
   onPrevSong,
   onShowToast,
@@ -97,6 +106,11 @@ export const LiveLoungeTab: React.FC<Props> = ({
   candidateSongs,
   onWhisperTrack,
   themeMode = 'dark',
+  activeCoListen = null,
+  onStartCoListen,
+  onSuggestCoListenSong,
+  onLeaveCoListen,
+  nearbyFrequencyUsers,
 }) => {
   // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek NEVER reloads the iframe
   const ytIframeSrc = useMemo(() => {
@@ -156,6 +170,48 @@ export const LiveLoungeTab: React.FC<Props> = ({
     privacyMode === 'friends_only'
       ? users.filter((u) => u.friendStatus === 'friends')
       : users;
+
+  // Cold-start protection: 3 nearby-frequency listeners matched to current genre/artist ONLY when room has 0 exact listeners
+  const nearFrequencySuggestions = useMemo(() => {
+    if (displayUsers.length > 0 || !currentSong) return [];
+    const pool =
+      nearbyFrequencyUsers && nearbyFrequencyUsers.length > 0
+        ? nearbyFrequencyUsers
+        : INITIAL_LOUNGE_USERS;
+
+    const songGenreLower = (currentSong.genre || '').toLowerCase();
+    const songArtistLower = (currentSong.artist || '').toLowerCase();
+
+    const scored = pool.map((u, idx) => {
+      const artistsLower = (u.topArtists || []).map((a) => a.toLowerCase());
+      const hasArtistHit = artistsLower.some(
+        (a) => songArtistLower.includes(a) || a.includes(songArtistLower)
+      );
+      const roomSong =
+        SAMPLE_SONGS.find(
+          (s) =>
+            artistsLower.some((a) => s.artist.toLowerCase().includes(a)) ||
+            (songGenreLower && s.genre.toLowerCase().includes(songGenreLower.split('/')[0].trim()))
+        ) || SAMPLE_SONGS[idx % SAMPLE_SONGS.length];
+
+      const hasGenreHit = Boolean(
+        songGenreLower &&
+          roomSong.genre.toLowerCase().includes(songGenreLower.split('/')[0].trim())
+      );
+
+      const compat = Math.min(
+        96,
+        Math.max(88, u.compatibilityScore || (hasArtistHit ? 95 : hasGenreHit ? 92 : 90))
+      );
+      const rank = (hasArtistHit ? 100 : 0) + (hasGenreHit ? 40 : 0) + compat;
+
+      return { user: u, roomSong, compat, rank };
+    });
+
+    return scored
+      .sort((a, b) => b.rank - a.rank)
+      .slice(0, 3);
+  }, [displayUsers.length, currentSong, nearbyFrequencyUsers]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -318,6 +374,48 @@ export const LiveLoungeTab: React.FC<Props> = ({
 
   return (
     <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-6 max-w-xl lg:max-w-6xl mx-auto w-full relative select-none">
+      {/* Sleek Single-Line Active Co-Listen Session Bar */}
+      {activeCoListen && (
+        <div className="mb-4 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.10] shadow-[0_2px_12px_rgba(17,17,19,0.04)] dark:shadow-none flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
+            <span className="text-xs sm:text-[13px] font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
+              {activeCoListen.partnerName} ile birlikte dinliyorsun
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onSuggestCoListenSong && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(12);
+                  onSuggestCoListenSong();
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E6E4DF] dark:hover:bg-white/10 border border-[#E2DFD9] dark:border-white/[0.08] text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+              >
+                <Music className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <span>Şarkı Öner</span>
+              </button>
+            )}
+            {onLeaveCoListen && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(12);
+                  onLeaveCoListen();
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 border border-[#E2DFD9] dark:border-white/[0.08] text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                title="Birlikte dinleme oturumundan ayrıl"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={1.85} />
+                <span>Ayrıl</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
         {/* LEFT 7 COLUMNS (Desktop): Minimalist "Sahne" Player Card + Timeline / Map */}
         <div className="lg:col-span-7 flex flex-col gap-4 min-w-0">
@@ -581,7 +679,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </section>
 
           {/* 2. SINGLE-FOCUSED TIMELINE TRACK */}
-          <section aria-label="Şarkı Zaman Rayı">
+          <section aria-label="Şarkı Zaman Rayı" className="space-y-4">
             <TimelineTrack
               song={currentSong}
               mySecond={mySecond}
@@ -596,7 +694,85 @@ export const LiveLoungeTab: React.FC<Props> = ({
               onWhisperTrack={onWhisperTrack}
               onShowToast={onShowToast}
               onOpenRoomListeners={onOpenRoomListeners}
+              onStartCoListen={onStartCoListen ? (u) => onStartCoListen(u, currentSong, u.currentSecond) : undefined}
             />
+
+            {/* Cold-Start Protection: Shown ONLY when 0 listeners are on this exact rare song */}
+            {displayUsers.length === 0 && nearFrequencySuggestions.length > 0 && (
+              <div className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(17,17,19,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
+                    <h3 className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7] tracking-tight truncate">
+                      Yakın Frekansta Şu An Dinleyenler
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] shrink-0">
+                    {currentSong.genre || 'Benzer Tür'}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {nearFrequencySuggestions.map(({ user, roomSong, compat }) => (
+                    <div
+                      key={`near-${user.id}`}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 light:bg-[#F1EFEA]/70 border border-white/[0.05] light:border-[#E6E4DF]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onSelectUser(user)}
+                        className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer"
+                      >
+                        <div className="relative shrink-0">
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.name}
+                              className="w-9 h-9 rounded-full object-cover ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]"
+                            />
+                          ) : (
+                            <div
+                              className={`avatar-circle w-9 h-9 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]`}
+                            >
+                              {user.avatarSeed}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-semibold text-[#F5F5F7] light:text-[#111113] truncate">
+                              {user.name}
+                            </span>
+                            <span className="text-[11px] font-mono font-semibold text-[#22C55E] light:text-[#16A34A] shrink-0">
+                              %{compat} Yakın Frekans
+                            </span>
+                          </div>
+                          <div className="text-xs text-zinc-400 light:text-[#63636B] truncate">
+                            {roomSong.artist} · {roomSong.title}
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(18);
+                          if (onStartCoListen) {
+                            onStartCoListen(user, roomSong, user.currentSecond);
+                          } else {
+                            onSelectSong(roomSong);
+                          }
+                        }}
+                        className="studio-btn-primary h-8 px-3 rounded-lg bg-white light:bg-[#111113] hover:bg-zinc-200 light:hover:bg-zinc-800 text-[#0B0B0D] light:text-white text-xs font-semibold transition active:scale-95 cursor-pointer shrink-0"
+                      >
+                        Odasına Katıl
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </div>
 

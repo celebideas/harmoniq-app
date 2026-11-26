@@ -111,7 +111,7 @@ export const SongPickerModal: React.FC<Props> = ({
     return merged;
   }, [searchTerm, remoteSongs]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleResolveAndPlay = async (queryText?: string) => {
     const text = (queryText || searchTerm).trim();
@@ -131,17 +131,17 @@ export const SongPickerModal: React.FC<Props> = ({
     }
   };
 
-  const modalContent = (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter"
+      className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] border animate-modal-enter ${
+        className={`relative z-[131] w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] bg-[#141418] light:bg-white border ${
           isLight
-            ? 'bg-white border-[#E6E4DF] text-[#111113]'
-            : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
+            ? 'border-[#E6E4DF] text-[#111113]'
+            : 'border-white/[0.08] text-[#F5F5F7]'
         }`}
       >
         {/* Header */}
@@ -430,8 +430,7 @@ export const SongPickerModal: React.FC<Props> = ({
           <span>YouTube Music veya Spotify linki yapıştırarak da şarkı çalabilirsiniz.</span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

@@ -199,13 +199,73 @@ export async function extractPaletteFromImage(
   });
 }
 
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `#${((1 << 24) + (clamp(r) << 16) + (clamp(g) << 8) + clamp(b))
+    .toString(16)
+    .slice(1)}`;
+}
+
+/**
+ * Ensures the album-art progress color always meets legibility contrast:
+ * - Dark mode: if relative luminance < 0.35, lighten smoothly until >= 0.48
+ * - Light mode: if relative luminance > 0.72, darken smoothly until <= 0.55
+ */
+export function getContrastSafeTrackColor(
+  rgb: [number, number, number],
+  themeMode: 'dark' | 'light'
+): string {
+  let [r, g, b] = rgb.map((v) => Math.max(0, Math.min(255, Math.round(v)))) as [
+    number,
+    number,
+    number,
+  ];
+  const calcLuminance = (rr: number, gg: number, bb: number) =>
+    (0.299 * rr + 0.587 * gg + 0.114 * bb) / 255;
+
+  let lum = calcLuminance(r, g, b);
+
+  if (themeMode === 'dark') {
+    if (lum < 0.35) {
+      let guard = 0;
+      while (lum < 0.48 && guard < 24) {
+        r = Math.round(r + (255 - r) * 0.22);
+        g = Math.round(g + (255 - g) * 0.22);
+        b = Math.round(b + (255 - b) * 0.22);
+        lum = calcLuminance(r, g, b);
+        guard += 1;
+      }
+    }
+  } else {
+    if (lum > 0.72) {
+      let guard = 0;
+      while (lum > 0.55 && guard < 24) {
+        r = Math.round(r * 0.8);
+        g = Math.round(g * 0.8);
+        b = Math.round(b * 0.8);
+        lum = calcLuminance(r, g, b);
+        guard += 1;
+      }
+    }
+  }
+
+  return rgbToHex(r, g, b);
+}
+
 /**
  * Injects dynamic color theme CSS variables directly into document root
  * for instantaneous app-wide reactive theming.
  */
-export function applyThemeToDocument(palette: ExtractedPalette) {
+export function applyThemeToDocument(
+  palette: ExtractedPalette,
+  themeMode?: 'dark' | 'light'
+) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
+  const resolvedMode: 'dark' | 'light' =
+    themeMode || (root.classList.contains('light') ? 'light' : 'dark');
+  const dynamicTrackColor = getContrastSafeTrackColor(palette.rgb, resolvedMode);
+
   root.style.setProperty('--theme-accent', palette.hex);
   root.style.setProperty('--theme-accent-rgb', palette.rgbString);
   root.style.setProperty('--theme-accent-on', palette.onAccent);
@@ -213,4 +273,6 @@ export function applyThemeToDocument(palette: ExtractedPalette) {
   root.style.setProperty('--theme-accent-glow', palette.glow);
   root.style.setProperty('--theme-accent-border', palette.border);
   root.style.setProperty('--theme-accent-subtle', palette.subtleBg);
+  root.style.setProperty('--dynamic-track-color', dynamicTrackColor);
 }
+

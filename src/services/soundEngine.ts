@@ -43,9 +43,22 @@ class RealMusicEngine {
   private trackLoadTimeout: ReturnType<typeof setTimeout> | null = null;
   private previewTimeOffset: number = 0;
   private isPendingMetadataSeek: boolean = false;
+  private volume: number = 0.8;
 
   constructor() {
     if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('listenhub_volume');
+        if (saved !== null) {
+          const parsed = Number(saved);
+          if (Number.isFinite(parsed)) {
+            this.volume = Math.max(0, Math.min(1, parsed));
+          }
+        }
+      } catch {
+        // ignore storage errors
+      }
+      ytController.setVolume(Math.round(this.volume * 100));
       this.initAudioElement();
       this.attachVisibilityListener();
     }
@@ -644,7 +657,8 @@ class RealMusicEngine {
     if (url && this.audio) {
       try {
         this.audio.loop = false;
-        this.audio.volume = 1;
+        this.audio.muted = this.volume === 0;
+        this.audio.volume = this.volume;
 
         let pendingStart: number | null = safeStart > 0 ? safeStart : null;
 
@@ -789,6 +803,8 @@ class RealMusicEngine {
     } else if (this.currentSong?.audioUrl && this.audio) {
       this.isUsingSilentAudio = false;
       this.audio.loop = false;
+      this.audio.muted = this.volume === 0;
+      this.audio.volume = this.volume;
       this.audio.play().catch((err) => console.warn('Audio resume:', err));
     } else {
       this.startSimulatedTimer(this.simulatedSecond, this.currentSong?.durationSeconds || 240);
@@ -883,10 +899,25 @@ class RealMusicEngine {
     return this.currentSong?.id || null;
   }
 
+  public getVolume(): number {
+    return this.volume;
+  }
+
   public setVolume(volume: number): void {
-    if (this.audio) {
-      this.audio.volume = Math.max(0, Math.min(1, volume));
+    const clamped = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0.8));
+    this.volume = clamped;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('listenhub_volume', String(clamped));
+      } catch {
+        // ignore storage errors
+      }
     }
+    if (this.audio && !this.isUsingSilentAudio) {
+      this.audio.muted = clamped === 0;
+      this.audio.volume = clamped;
+    }
+    ytController.setVolume(Math.round(clamped * 100));
   }
 }
 

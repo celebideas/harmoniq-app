@@ -57,6 +57,7 @@ interface Props {
   listeners?: LoungeUser[];
   onSelectUser?: (user: LoungeUser) => void;
   onStartChatWithUser?: (user: LoungeUser) => void;
+  onStartCoListen?: (user: LoungeUser) => void;
   isAudioLoading?: boolean;
 }
 
@@ -150,14 +151,20 @@ const ModernSeekBar: React.FC<ModernSeekBarProps> = ({
     >
       <div className="h-1.5 w-full rounded-full bg-[#E6E4DF] dark:bg-white/15 cursor-pointer relative group">
         <div
-          className="h-full rounded-full bg-[#111113] dark:bg-white transition-[width] duration-150"
-          style={{ width: `${activePercent}%` }}
+          className="h-full rounded-full transition-[width,background-color] duration-500"
+          style={{
+            width: `${activePercent}%`,
+            backgroundColor: 'var(--dynamic-track-color)',
+          }}
         />
         <div
-          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-[#111113] dark:bg-white shadow-sm border-2 border-[#FAF9F6] dark:border-[#0B0B0D] pointer-events-none transition-transform duration-150 ${
+          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-[#FAF9F6] dark:border-[#0B0B0D] pointer-events-none transition-all duration-300 ${
             isDragging ? 'scale-125' : 'group-hover:scale-110'
           }`}
-          style={{ left: `${activePercent}%` }}
+          style={{
+            left: `${activePercent}%`,
+            backgroundColor: 'var(--dynamic-track-color)',
+          }}
         />
       </div>
     </div>
@@ -185,6 +192,7 @@ export const NowPlayingModal: React.FC<Props> = ({
   listeners = [],
   onSelectUser,
   onStartChatWithUser,
+  onStartCoListen,
   isAudioLoading = false,
 }) => {
   // Desktop right-column panel tab (Sözler | Sıradaki | Radyo | Odadakiler)
@@ -650,7 +658,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         );
       }
       return true;
-    });
+    }).sort((a, b) => a.currentSecond - b.currentSecond);
   }, [activeRoomListeners, listenerSearchQuery, listenerFilter, progressSeconds]);
 
   if (!isOpen) return null;
@@ -1141,103 +1149,102 @@ export const NowPlayingModal: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Listener Cards */}
+      {/* Fixed Summary Row */}
+      <div className="flex items-center justify-between gap-2 px-1 pt-0.5 text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
+          <span className="font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
+            {filteredListeners.length} kişi şu an bu parçada
+          </span>
+        </div>
+        <span className="text-[11px] font-medium text-[#63636B] dark:text-[#8E8E98] shrink-0">
+          Sırala: Saniye
+        </span>
+      </div>
+
+      {/* Symmetric 3-Column Studio Listener Rows */}
       <div className="space-y-2">
         {filteredListeners.length === 0 ? (
           <div className="py-10 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
             Arama kriterine uygun dinleyici bulunamadı.
           </div>
         ) : (
-          filteredListeners.map((user) => {
-            const isSynced = Math.abs(user.currentSecond - progressSeconds) <= 10;
-            return (
-              <div
-                key={user.id}
-                className="p-3 rounded-2xl bg-white dark:bg-[#1C1C22]/75 hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.06] transition flex flex-col gap-2"
+          filteredListeners.map((user) => (
+            <div
+              key={user.id}
+              className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 light:bg-[#F1EFEA]/70 border border-white/[0.05] light:border-[#E6E4DF] transition hover:bg-[#1C1C22] light:hover:bg-[#EAE7E0]"
+            >
+              {/* Left: Thin Emerald Live Ring Avatar + Name + City, District */}
+              <button
+                type="button"
+                onClick={() => onSelectUser?.(user)}
+                className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative shrink-0">
-                      <div
-                        className={`avatar-circle w-10 h-10 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold shadow ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#FAF9F6] dark:ring-offset-[#141418]`}
-                      >
-                        {user.name.slice(0, 2).toUpperCase()}
-                      </div>
+                <div className="relative shrink-0">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-full object-cover ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]"
+                    />
+                  ) : (
+                    <div
+                      className={`avatar-circle w-9 h-9 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]`}
+                    >
+                      {user.avatarSeed || user.name.slice(0, 2).toUpperCase()}
                     </div>
+                  )}
+                </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
-                          {user.name}
-                        </span>
-                        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] shrink-0">
-                          · {user.age}
-                        </span>
-                        {user.compatibilityScore && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] text-[10px] font-mono font-bold border border-emerald-500/25 shrink-0">
-                            %{user.compatibilityScore}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] flex items-center gap-1.5 truncate">
-                        <span className="truncate">{user.city}</span>
-                        <span>·</span>
-                        <span className="font-mono tabular-nums shrink-0">{user.distanceKm} km</span>
-                      </div>
-                    </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-[#F5F5F7] light:text-[#111113] truncate">
+                    {user.name}
                   </div>
+                  <div className="text-xs text-zinc-400 light:text-[#63636B] truncate">
+                    {user.city}
+                  </div>
+                </div>
+              </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(12);
+              {/* Middle/Right: Monospace Second Badge + Compact Equal Katıl & MessageCircle */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] light:bg-black/[0.05] text-[#F5F5F7] light:text-[#111113]">
+                  {formatTime(user.currentSecond)}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(15);
+                    if (onStartCoListen) {
+                      onStartCoListen(user);
+                    } else {
                       onSeek(user.currentSecond);
                       onShowToast(
                         `${user.name} ile senkronize olundu (${formatTime(user.currentSecond)})`
                       );
-                    }}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer shrink-0 ${
-                      isSynced
-                        ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] font-bold shadow-sm'
-                        : 'bg-[#F1EFEA] dark:bg-[#141418] hover:bg-[#E6E4DF] dark:hover:bg-white/10 text-[#111113] dark:text-[#F5F5F7] border border-[#E2DFD9] dark:border-white/[0.08]'
-                    }`}
-                    title="Bu dinleyicinin saniyesine sar"
+                    }
+                  }}
+                  className="studio-btn-primary h-8 px-3 rounded-lg bg-white light:bg-[#111113] hover:bg-zinc-200 light:hover:bg-zinc-800 text-[#0B0B0D] light:text-white text-xs font-semibold transition active:scale-95 cursor-pointer"
+                  title={`${user.name} ile birlikte dinle`}
+                >
+                  Katıl
+                </button>
+
+                {onStartChatWithUser && (
+                  <button
+                    type="button"
+                    onClick={() => onStartChatWithUser(user)}
+                    className="w-8 h-8 rounded-lg bg-[#141418] light:bg-white hover:bg-white/10 light:hover:bg-[#E6E4DF] border border-white/[0.08] light:border-[#E2DFD9] text-[#F5F5F7] light:text-[#111113] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                    title={`${user.name} ile sohbet et`}
+                    aria-label={`${user.name} ile sohbet et`}
                   >
-                    <Clock className="w-3 h-3" />
-                    <span className="font-mono tabular-nums">{formatTime(user.currentSecond)}&apos;te</span>
+                    <MessageCircle className="w-4 h-4" />
                   </button>
-                </div>
-
-                {user.statusBubble && (
-                  <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] bg-[#FAF9F6] dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.06] px-2.5 py-1.5 rounded-lg italic">
-                    &ldquo;{user.statusBubble}&rdquo;
-                  </div>
                 )}
-
-                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-[#E6E4DF] dark:border-white/[0.06]">
-                  {onSelectUser && (
-                    <button
-                      type="button"
-                      onClick={() => onSelectUser(user)}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#F1EFEA] dark:bg-[#141418] hover:bg-[#E6E4DF] dark:hover:bg-white/[0.08] text-[#111113] dark:text-[#F5F5F7] transition cursor-pointer"
-                    >
-                      Profili İncele
-                    </button>
-                  )}
-                  {onStartChatWithUser && (
-                    <button
-                      type="button"
-                      onClick={() => onStartChatWithUser(user)}
-                      className="studio-btn-primary px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] transition flex items-center gap-1 cursor-pointer"
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      <span>Sohbet Et</span>
-                    </button>
-                  )}
-                </div>
               </div>
-            );
-          })
+            </div>
+          ))
         )}
       </div>
     </div>
