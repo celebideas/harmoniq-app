@@ -83,7 +83,7 @@ export const BottomNav: React.FC<Props> = ({
   return (
     <nav
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
-      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_8px_30px_rgba(20,20,22,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] overflow-hidden select-none transition-all duration-300"
+      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl bg-white/95 dark:bg-[#171412]/95 backdrop-blur-xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_8px_30px_rgba(24,21,18,0.10)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] overflow-hidden select-none transition-all duration-300"
     >
       {/* UPPER TIER: MINI PLAYER STRIP */}
       {showMiniPlayerStrip && currentSong && (
@@ -97,7 +97,7 @@ export const BottomNav: React.FC<Props> = ({
               className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
               title="Tam Ekran Oynatıcıyı Aç"
             >
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 ring-black/5 dark:ring-white/10">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 ring-1 ring-black/5 dark:ring-[#FFF0E1]/10">
                 {currentSong.coverUrl ? (
                   <img
                     src={currentSong.coverUrl}
@@ -112,10 +112,10 @@ export const BottomNav: React.FC<Props> = ({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                <div className="text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
                   {currentSong.title}
                 </div>
-                <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                <div className="text-[11px] text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
                   {currentSong.artist}
                 </div>
               </div>
@@ -129,7 +129,7 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="studio-btn-primary w-9 h-9 rounded-full bg-[#141416] text-white hover:bg-zinc-800 dark:bg-white dark:text-[#0B0B0D] dark:hover:bg-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center transition active:scale-95 cursor-pointer"
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
@@ -150,7 +150,7 @@ export const BottomNav: React.FC<Props> = ({
                     triggerHaptic(15);
                     onNextSong();
                   }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer"
                   aria-label="Sonraki Şarkı"
                   title="Sonraki Şarkı"
                 >
@@ -160,7 +160,7 @@ export const BottomNav: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* 2px Monochrome Progress Line */}
+          {/* 2px Copper-Amber Progress Line */}
           <div
             onClick={(e) => {
               if (!onSeekSecond || !currentSong) return;
@@ -168,11 +168,11 @@ export const BottomNav: React.FC<Props> = ({
               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
               onSeekSecond(Math.round(ratio * (currentSong.durationSeconds || 1)));
             }}
-            className="h-[2px] w-full bg-[#E8E6E1] dark:bg-white/10 cursor-pointer overflow-hidden"
+            className="h-[2px] w-full bg-[#EAE4DC] dark:bg-[#FFF0E1]/10 cursor-pointer overflow-hidden"
             title="Şarkıda sar"
           >
             <div
-              className="h-full bg-[#141416] dark:bg-white transition-all duration-150"
+              className="h-full bg-gradient-to-r from-[#E87A3E] to-[#D97706] transition-all duration-150"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -195,19 +195,19 @@ export const BottomNav: React.FC<Props> = ({
               aria-current={isActive ? 'page' : undefined}
               className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] font-semibold'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-medium'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] font-medium'
               }`}
             >
               <div className="relative flex items-center justify-center">
-                <IconComp className="w-5 h-5" strokeWidth={1.75} />
+                <IconComp className="w-5 h-5" strokeWidth={isActive ? 2.1 : 1.75} />
 
                 {item.badge !== undefined && (
                   <span
                     className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-semibold leading-none tabular-nums ${
                       item.isLiveBadge
                         ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/20 text-[#16A34A] dark:text-[#22C55E]'
-                        : 'bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                        : 'bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white'
                     }`}
                   >
                     {item.badge}

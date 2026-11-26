@@ -105,13 +105,13 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   return (
     <footer
       aria-label="Masaüstü Medya Çubuğu"
-      className="hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border-t border-[#E8E6E1] dark:border-white/[0.08] select-none transition-colors duration-200"
+      className="hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 bg-white/95 dark:bg-[#171412]/95 backdrop-blur-xl border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] select-none transition-colors duration-200"
     >
       {/* LEFT (w-1/4): Cover + Track Info + Favorite */}
       <div className="w-1/4 min-w-0 flex items-center gap-3.5">
         <div
           onClick={onOpenNowPlaying}
-          className="relative w-13 h-13 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 ring-black/5 dark:ring-white/10 cursor-pointer group"
+          className="relative w-13 h-13 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 ring-1 ring-black/5 dark:ring-[#FFF0E1]/10 cursor-pointer group"
           title="Tam Ekran Oynatıcıyı Aç"
         >
           {currentSong.coverUrl ? (
@@ -133,12 +133,12 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           <button
             type="button"
             onClick={onOpenNowPlaying}
-            className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] hover:opacity-75 transition truncate block max-w-full text-left cursor-pointer"
+            className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] hover:opacity-75 transition truncate block max-w-full text-left cursor-pointer"
             title={currentSong.title}
           >
             {currentSong.title}
           </button>
-          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
+          <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate">
             {currentSong.artist}
           </div>
         </div>
@@ -152,7 +152,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           className={`p-2 rounded-xl transition cursor-pointer shrink-0 ${
             isFavorite
               ? 'text-rose-500 bg-rose-500/10'
-              : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22]'
+              : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A]'
           }`}
           aria-label={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
           title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
@@ -161,7 +161,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* CENTER (w-2/4 max-w-xl): High-Contrast Studio Transport Controls + Minimal Seek Bar */}
+      {/* CENTER (w-2/4 max-w-xl): Copper-Amber Transport Controls + Minimal Seek Bar */}
       <div className="w-2/4 max-w-xl flex flex-col items-center justify-center gap-1.5 px-4">
         <div className="flex items-center gap-4">
           <button
@@ -170,7 +170,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(12);
               onPrevSong();
             }}
-            className="p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition cursor-pointer"
+            className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer"
             aria-label="Önceki Şarkı"
             title="Önceki Şarkı"
           >
@@ -184,7 +184,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(18);
               onTogglePlay();
             }}
-            className="studio-btn-primary w-10 h-10 rounded-full bg-[#141416] text-white hover:bg-zinc-800 dark:bg-white dark:text-[#0B0B0D] dark:hover:bg-zinc-200 flex items-center justify-center active:scale-95 transition cursor-pointer"
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center active:scale-95 transition cursor-pointer"
             aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
             title={isPlaying ? 'Duraklat' : 'Oynat'}
           >
@@ -203,7 +203,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(12);
               onNextSong();
             }}
-            className="p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition cursor-pointer"
+            className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer"
             aria-label="Sonraki Şarkı"
             title="Sonraki Şarkı"
           >
@@ -211,9 +211,9 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Minimal Studio Progress Scrubber */}
+        {/* Minimal Copper-Amber Progress Scrubber */}
         <div className="w-full flex items-center gap-3">
-          <span className="text-[11px] font-mono tabular-nums text-[#63636B] dark:text-[#8E8E98] w-10 text-right shrink-0">
+          <span className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91] w-10 text-right shrink-0">
             {formatTime(displaySecond)}
           </span>
 
@@ -230,13 +230,13 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             aria-valuemax={duration}
             aria-valuenow={displaySecond}
           >
-            <div className="h-1 w-full rounded-full bg-[#E8E6E1] dark:bg-white/15 cursor-pointer relative">
+            <div className="h-1 w-full rounded-full bg-[#EAE4DC] dark:bg-[#FFF0E1]/12 cursor-pointer relative">
               <div
-                className="h-full rounded-full bg-[#141416] dark:bg-white transition-[width] duration-150"
+                className="h-full rounded-full bg-gradient-to-r from-[#E87A3E] to-[#D97706] transition-[width] duration-150"
                 style={{ width: `${progressPct}%` }}
               />
               <div
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#141416] dark:bg-white shadow-sm pointer-events-none transition-transform duration-150 ${
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#E87A3E] ring-2 ring-white dark:ring-[#171412] shadow-sm pointer-events-none transition-transform duration-150 ${
                   isDragging ? 'scale-125' : 'opacity-0 group-hover:opacity-100'
                 }`}
                 style={{ left: `${progressPct}%` }}
@@ -244,7 +244,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             </div>
           </div>
 
-          <span className="text-[11px] font-mono tabular-nums text-[#63636B] dark:text-[#8E8E98] w-10 shrink-0">
+          <span className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91] w-10 shrink-0">
             {formatTime(duration)}
           </span>
         </div>
@@ -256,7 +256,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleToggleMute}
-            className="p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] transition cursor-pointer"
+            className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] transition cursor-pointer"
             aria-label={volume === 0 ? 'Sesi aç' : 'Sesi kapat'}
           >
             {volume === 0 ? (
@@ -274,7 +274,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             value={volume}
             onChange={(e) => handleVolumeChange(Number(e.target.value))}
             aria-label="Ses seviyesi"
-            className="w-full h-1 accent-[#141416] dark:accent-white cursor-pointer rounded-full"
+            className="w-full h-1 accent-[#E87A3E] cursor-pointer rounded-full"
           />
         </div>
 
@@ -284,7 +284,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             triggerHaptic(12);
             onOpenNowPlaying();
           }}
-          className="p-2 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer"
+          className="p-2 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
           aria-label="Tam Ekran Oynatıcıyı Aç"
           title="Tam Ekran Oynatıcıyı Aç"
         >

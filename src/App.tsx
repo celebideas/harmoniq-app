@@ -152,7 +152,7 @@ export default function App() {
     const next = toggleThemeMode(themeMode);
     setThemeMode(next);
     setEffectiveTheme(resolveEffectiveTheme(next));
-    setToastMessage(next === 'dark' ? 'Obsidyen Gece Modu Aktif 🌙' : 'Stüdyo Gündüz Modu Aktif ☀️');
+    setToastMessage(next === 'dark' ? 'Sıcak Gece Stüdyosu Aktif' : 'Sıcak Gündüz Kağıdı Aktif');
     setTimeout(() => setToastMessage(null), 2500);
   };
 
@@ -161,10 +161,10 @@ export default function App() {
     setEffectiveTheme(applyTheme(mode));
     setToastMessage(
       mode === 'dark'
-        ? 'Obsidyen Gece Modu Aktif 🌙'
+        ? 'Sıcak Gece Stüdyosu Aktif'
         : mode === 'light'
-        ? 'Stüdyo Gündüz Modu Aktif ☀️'
-        : 'Otomatik Sistem Teması Aktif 📱'
+        ? 'Sıcak Gündüz Kağıdı Aktif'
+        : 'Otomatik Sistem Teması Aktif'
     );
     setTimeout(() => setToastMessage(null), 2500);
   };
@@ -469,7 +469,7 @@ export default function App() {
     }
     setShowOnboardingModal(false);
     setActiveTab('lounge');
-    setToastMessage(`⚡ Frekans kimliğin hazır! Hoş geldin, ${data.name}.`);
+    setToastMessage(`Frekans kimliğin hazır! Hoş geldin, ${data.name}.`);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -613,7 +613,7 @@ export default function App() {
     const popularPlaylists: UserPlaylist[] = [
       {
         id: 'pl-turkce-rock-klasikler',
-        title: '🎸 Türkçe Rock & Grunge Frekansları',
+        title: 'Türkçe Rock & Grunge Frekansları',
         description: 'Duman, Mor ve Ötesi, Teoman ve döneme damgasını vuran kült riff’ler.',
         coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500&auto=format&fit=crop&q=80',
         trackCount: 4,
@@ -626,7 +626,7 @@ export default function App() {
       },
       {
         id: 'pl-gece-indie-darkwave',
-        title: '⚡ Gece Yarısı Indie & Darkwave',
+        title: 'Gece Yarısı Indie & Darkwave',
         description: 'She Past Away, Jakuzi, Arctic Monkeys ile post-punk ve synth dalgaları.',
         coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
         trackCount: 3,
@@ -639,7 +639,7 @@ export default function App() {
       },
       {
         id: 'pl-kadikoy-akustik-lofi',
-        title: '☕ Kadıköy Akustik & Lo-Fi Odası',
+        title: 'Kadıköy Akustik & Lo-Fi Odası',
         description: 'Yağmurlu Moda sokakları, analog gitarlar ve derin melodi rezonansı.',
         coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
         trackCount: 3,
@@ -2823,16 +2823,16 @@ export default function App() {
   return (
     <div
       className={`min-h-screen ${
-        isLight ? 'bg-[#FAF9F6] text-[#141416]' : 'bg-[#0B0B0D] text-[#F5F5F7]'
-      } flex flex-col font-sans selection:bg-[#141416] selection:text-white dark:selection:bg-white dark:selection:text-[#0B0B0D] relative overflow-x-clip`}
+        isLight ? 'bg-[#FAF8F4] text-[#181512]' : 'bg-[#0E0C0B] text-[#FAF7F2]'
+      } flex flex-col font-sans selection:bg-[#E87A3E]/25 selection:text-[#181512] dark:selection:text-[#FAF7F2] relative overflow-x-clip`}
     >
-      {/* Organic Album Atmosphere — single calm radial glow sampled from active cover art */}
+      {/* Warm Analog Studio Ceiling Glow — blends album cover tone with subtle copper amber */}
       <div
         className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
         style={{
-          background: `radial-gradient(ellipse 80% 40% at 50% -10%, rgba(${activeTheme.rgbString}, ${
-            isLight ? 0.07 : 0.18
-          }), transparent 72%)`,
+          background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, ${
+            isLight ? 0.06 : 0.16
+          }), rgba(232, 122, 62, ${isLight ? 0.06 : 0.14}) 38%, transparent 72%)`,
         }}
       />
 
@@ -2862,7 +2862,7 @@ export default function App() {
 
       <div
         className={`w-full flex-1 flex flex-col lg:pl-72 ${
-          isLight ? 'bg-[#FAF9F6]/85' : 'bg-[#0B0B0D]/82'
+          isLight ? 'bg-[#FAF8F4]/85' : 'bg-[#0E0C0B]/82'
         } relative z-10 transition-colors duration-300`}
       >
         <TopHeader

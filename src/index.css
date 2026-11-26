@@ -8,42 +8,42 @@
     --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-    /* Editorial Studio Minimalism — Obsidian Ink (Dark) */
-    --bg-primary: #0B0B0D;
-    --bg-card: #141418;
-    --bg-elevated: #1C1C22;
-    --text-primary: #F5F5F7;
-    --text-secondary: #8E8E98;
-    --border-subtle: rgba(255, 255, 255, 0.08);
+    /* Warm Analog Studio — Warm Obsidian Studio (Dark) */
+    --bg-primary: #0E0C0B;
+    --bg-card: #171412;
+    --bg-elevated: #211D1A;
+    --text-primary: #FAF7F2;
+    --text-secondary: #A39A91;
+    --border-subtle: rgba(255, 240, 225, 0.08);
 
     /* Semantic Live & Trust Accent */
     --semantic-live: #22C55E;
-    --semantic-warm: #D97706;
+    --semantic-warm: #E87A3E;
 
-    /* Primary Studio Action Tokens (High Contrast Monochrome) */
-    --theme-accent: #F5F5F7;
-    --theme-accent-secondary: #D4D4D8;
-    --theme-accent-rgb: 245, 245, 247;
-    --theme-accent-glow: rgba(255, 255, 255, 0.14);
-    --theme-accent-subtle: rgba(255, 255, 255, 0.08);
-    --theme-accent-text: #0B0B0D;
+    /* Brand & Action Accent (Analog Copper -> Amber) */
+    --theme-accent: #E87A3E;
+    --theme-accent-secondary: #D97706;
+    --theme-accent-rgb: 232, 122, 62;
+    --theme-accent-glow: rgba(232, 122, 62, 0.24);
+    --theme-accent-subtle: rgba(232, 122, 62, 0.15);
+    --theme-accent-text: #FFFFFF;
   }
 
   html.light {
-    /* Editorial Studio Minimalism — Warm Paper (Light) */
-    --bg-primary: #FAF9F6;
+    /* Warm Analog Studio — Warm Cream Paper (Light) */
+    --bg-primary: #FAF8F4;
     --bg-card: #FFFFFF;
-    --bg-elevated: #F1EFEA;
-    --text-primary: #141416;
-    --text-secondary: #63636B;
-    --border-subtle: #E8E6E1;
+    --bg-elevated: #F2EDE6;
+    --text-primary: #181512;
+    --text-secondary: #6B635B;
+    --border-subtle: #EAE4DC;
     --semantic-live: #16A34A;
 
-    --theme-accent: #141416;
-    --theme-accent-secondary: #27272A;
-    --theme-accent-rgb: 20, 20, 22;
-    --theme-accent-glow: rgba(20, 20, 22, 0.12);
-    --theme-accent-subtle: rgba(20, 20, 22, 0.07);
+    --theme-accent: #E87A3E;
+    --theme-accent-secondary: #D97706;
+    --theme-accent-rgb: 232, 122, 62;
+    --theme-accent-glow: rgba(232, 122, 62, 0.18);
+    --theme-accent-subtle: rgba(232, 122, 62, 0.15);
     --theme-accent-text: #FFFFFF;
   }
 
@@ -83,12 +83,12 @@
 }
 
 /* ============================================================================
-   WARM PAPER LIGHT MODE ADAPTIVE RULES (FOR LEGACY DARK-ONLY MODALS/SUBVIEWS)
+   WARM CREAM PAPER LIGHT MODE ADAPTIVE RULES (FOR LEGACY DARK-ONLY SUBVIEWS)
    Native Tailwind `dark:` and `light:` variants handle modernized components.
    ============================================================================ */
 html.light body {
-  background-color: #FAF9F6;
-  color: #141416;
+  background-color: #FAF8F4;
+  color: #181512;
 }
 
 /* Base App & Page Backgrounds */
@@ -96,6 +96,7 @@ html.light .bg-\[\#0A090F\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0A090F\]\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0A090F\]\/85:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0B0B0D\]:not(.keep-dark):not(.keep-dark *):not(.studio-btn-primary),
+html.light .bg-\[\#0E0C0B\]:not(.keep-dark):not(.keep-dark *):not(.studio-btn-primary),
 html.light .bg-\[\#09090B\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#09090B\]\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0C0C0E\]:not(.keep-dark):not(.keep-dark *),
@@ -103,15 +104,15 @@ html.light .bg-\[\#0C0C0E\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0C16\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0C16\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0E12\]:not(.keep-dark):not(.keep-dark *) {
-  background-color: #FAF9F6 !important;
-  color: #141416 !important;
+  background-color: #FAF8F4 !important;
+  color: #181512 !important;
 }
 
 /* Modals & Full Deck Container Surface */
 html.light .bg-\[\#0A0A0C\]:not(.keep-dark):not(.keep-dark *) {
   background-color: #FFFFFF !important;
-  color: #141416 !important;
-  border-color: #E8E6E1 !important;
+  color: #181512 !important;
+  border-color: #EAE4DC !important;
 }
 
 /* Elevated Dark-Only Cards & Legacy Surfaces */
@@ -158,9 +159,9 @@ html.light .bg-neutral-900\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-neutral-900\/80:not(.keep-dark):not(.keep-dark *),
 html.light .bg-neutral-900\/60:not(.keep-dark):not(.keep-dark *) {
   background-color: #FFFFFF !important;
-  color: #141416 !important;
-  border-color: #E8E6E1 !important;
-  box-shadow: 0 2px 12px rgba(20, 20, 22, 0.04) !important;
+  color: #181512 !important;
+  border-color: #EAE4DC !important;
+  box-shadow: 0 4px 20px rgba(24, 21, 18, 0.04) !important;
 }
 
 /* Secondary Inset Surfaces */
@@ -180,8 +181,8 @@ html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *):not(.keep-whit
 html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  background-color: #F1EFEA !important;
-  border-color: #E8E6E1 !important;
+  background-color: #F2EDE6 !important;
+  border-color: #E2D9CE !important;
 }
 
 /* Form inputs & text fields in light mode */
@@ -189,30 +190,36 @@ html.light input:not([type='range']):not(.keep-dark *),
 html.light textarea:not(.keep-dark *),
 html.light select:not(.keep-dark *) {
   background-color: #FFFFFF !important;
-  color: #141416 !important;
-  border-color: #E8E6E1 !important;
+  color: #181512 !important;
+  border-color: #EAE4DC !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #8E8E98 !important;
+  color: #8E847A !important;
 }
 
-/* Text Colors for legacy dark-only blocks (never override solid dark studio buttons, avatars, or media overlays) */
-html.light .text-white:not(.text-force-white):not(.studio-btn-primary):not(.studio-btn-primary *):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-[#141416]"]):not([class*="bg-[#141416]"] *):not([class*="bg-zinc-900"]):not([class*="bg-zinc-900"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-amber-"]):not([class*="bg-amber-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
-html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *),
-html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *),
+/* Text Colors for legacy dark-only blocks (never override solid copper-amber, dark studio buttons, avatars, or media overlays) */
+html.light .text-white:not(.text-force-white):not(.studio-btn-primary):not(.studio-btn-primary *):not(.bg-\[\#E87A3E\]):not(.bg-\[\#E87A3E\] *):not([class*="from-[#E87A3E]"]):not([class*="from-[#E87A3E]"] *):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-[#141416]"]):not([class*="bg-[#141416]"] *):not([class*="bg-[#181512]"]):not([class*="bg-[#181512]"] *):not([class*="bg-zinc-900"]):not([class*="bg-zinc-900"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-amber-"]):not([class*="bg-amber-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
+html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *):not([class*="from-[#E87A3E]"] *),
+html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *):not([class*="from-[#E87A3E]"] *),
 html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not([class*="bg-gradient-"] *),
 html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #141416 !important;
+  color: #181512 !important;
 }
 
-/* Preserve crisp pure white text on primary dark studio buttons, avatars, and media overlays */
+/* Light Mode Contrast Guarantee: Pure White Text & Icons on Copper-Amber CTAs, Solid Buttons, Avatars, and Media Overlays */
+html.light [class*="from-[#E87A3E]"],
+html.light [class*="from-[#E87A3E]"] *,
+html.light .bg-\[\#E87A3E\],
+html.light .bg-\[\#E87A3E\] *,
 html.light .studio-btn-primary,
 html.light .studio-btn-primary *,
 html.light .bg-\[\#141416\].text-white,
 html.light .bg-\[\#141416\].text-white *,
+html.light .bg-\[\#181512\].text-white,
+html.light .bg-\[\#181512\].text-white *,
 html.light .avatar-circle,
 html.light .avatar-circle *,
 html.light .keep-white-on-media,
@@ -238,7 +245,7 @@ html.light .keep-white-on-media .text-zinc-200 {
 }
 
 html.light .keep-white-on-media .text-zinc-950 {
-  color: #0B0B0D !important;
+  color: #0E0C0B !important;
 }
 
 html.light .text-zinc-300:not(.keep-dark *):not(.keep-white-on-media *),
@@ -246,12 +253,12 @@ html.light .text-zinc-400:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-300:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-400:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-\[\#9E9AA8\]:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #63636B !important;
+  color: #6B635B !important;
 }
 
 html.light .text-zinc-500:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-500:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #63636B !important;
+  color: #6B635B !important;
 }
 
 /* Borders */
@@ -270,77 +277,77 @@ html.light .border-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/10:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/15:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/20:not(.keep-dark):not(.keep-dark *) {
-  border-color: #E8E6E1 !important;
+  border-color: #EAE4DC !important;
 }
 
 html.light .divide-zinc-800:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.05\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.06\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.08\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]) {
-  border-color: #E8E6E1 !important;
+  border-color: #EAE4DC !important;
 }
 
-/* Studio Semantic Theme Utility Classes (High-Contrast Monochrome) */
+/* Studio Semantic Theme Utility Classes (Analog Copper & Amber) */
 .bg-accent-theme {
-  background-color: #F5F5F7;
-  color: #0B0B0D !important;
+  background-image: linear-gradient(135deg, #E87A3E, #D97706);
+  color: #FFFFFF !important;
 }
 
 html.light .bg-accent-theme {
-  background-color: #141416;
+  background-image: linear-gradient(135deg, #E87A3E, #D97706);
   color: #FFFFFF !important;
 }
 
 .text-accent-theme {
-  color: #F5F5F7;
+  color: #F49A5E;
 }
 
 html.light .text-accent-theme {
-  color: #141416;
+  color: #D96B2C;
 }
 
 .border-accent-theme {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(232, 122, 62, 0.35);
 }
 
 html.light .border-accent-theme {
-  border-color: #141416;
+  border-color: rgba(217, 107, 44, 0.4);
 }
 
 .bg-accent-subtle {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(232, 122, 62, 0.15);
 }
 
 html.light .bg-accent-subtle {
-  background-color: #F1EFEA;
+  background-color: rgba(232, 122, 62, 0.15);
 }
 
 .glow-accent-theme {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(120, 53, 15, 0.24);
 }
 
-/* Editorial Studio Surface Cards */
+/* Warm Analog Studio Surface Cards */
 .surface-card {
-  background-color: #141418;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #171412;
+  border: 1px solid rgba(255, 240, 225, 0.08);
 }
 
 html.light .surface-card {
   background-color: #FFFFFF;
-  border: 1px solid #E8E6E1;
-  box-shadow: 0 2px 12px rgba(20, 20, 22, 0.04);
-  color: #141416;
+  border: 1px solid #EAE4DC;
+  box-shadow: 0 4px 20px rgba(24, 21, 18, 0.04);
+  color: #181512;
 }
 
 .surface-inner {
-  background-color: #1C1C22;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background-color: #211D1A;
+  border: 1px solid rgba(255, 240, 225, 0.06);
 }
 
 html.light .surface-inner {
-  background-color: #F1EFEA;
-  border: 1px solid #E8E6E1;
-  color: #141416;
+  background-color: #F2EDE6;
+  border: 1px solid #E2D9CE;
+  color: #181512;
 }
 
 /* Custom Studio Animations */
@@ -443,8 +450,8 @@ html.light .surface-inner {
 
 /* ListenHub Interactive Leaflet Map Styles */
 .harmoniq-leaflet-map .leaflet-control-attribution {
-  background: rgba(11, 11, 13, 0.72) !important;
-  color: rgba(212, 212, 216, 0.72) !important;
+  background: rgba(14, 12, 11, 0.75) !important;
+  color: rgba(163, 154, 145, 0.85) !important;
   font-size: 9px !important;
   padding: 2px 6px !important;
   border-top-right-radius: 8px;
@@ -452,8 +459,8 @@ html.light .surface-inner {
 }
 
 html.light .harmoniq-leaflet-map .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.85) !important;
-  color: rgba(99, 99, 107, 0.82) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: rgba(107, 99, 91, 0.85) !important;
 }
 
 .harmoniq-leaflet-map .leaflet-control-attribution a {
@@ -485,11 +492,11 @@ html.light .harmoniq-leaflet-map .leaflet-control-attribution {
   animation: harmoniq-map-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-/* Dark Mode OpenStreetMap Tile Filter (ONLY tile-pane so markers & avatar pins retain true colors) */
+/* Dark Mode OpenStreetMap Tile Filter (Balanced Street/Coast Visibility — ONLY tile-pane so markers & avatar pins retain true colors) */
 html.dark .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(86%) contrast(92%) saturate(75%);
+  filter: invert(93%) hue-rotate(180deg) brightness(96%) contrast(88%) saturate(70%);
 }
 
 html.dark .leaflet-container {
-  background: #0B0B0D !important;
+  background: #0E0C0B !important;
 }

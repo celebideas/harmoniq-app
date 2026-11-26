@@ -4,9 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import {
   Compass,
   MapPin,
-  Flame,
   Zap,
-  Navigation,
   MessageCircle,
   ShieldCheck,
   Music,
@@ -14,6 +12,7 @@ import {
   Plus,
   Minus,
   Crosshair,
+  Loader2,
 } from 'lucide-react';
 import { LoungeUser, Song } from '../types';
 import {
@@ -21,9 +20,7 @@ import {
   CityClusterInfo,
   detectCityKey,
   SupportedCityKey,
-  checkGeolocationPermissionState,
   requestNativeGpsLocation,
-  GeolocationPermissionStatus,
 } from '../services/locationService';
 import { triggerHaptic } from '../services/themeService';
 
@@ -364,7 +361,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
-  const [gpsPermState, setGpsPermState] = useState<GeolocationPermissionStatus>('prompt');
   const [isRequestingGps, setIsRequestingGps] = useState(false);
   const [gpsStatusNote, setGpsStatusNote] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<LatLngTuple | null>(null);
@@ -396,16 +392,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
     return (CITY_COORDS[activeCityKey] || CITY_COORDS.istanbul).center;
   }, [activeCityKey, myCity, gpsCoords]);
 
-  // Clear custom GPS center when user manually switches to another quick city
-  const handleSelectQuickCity = (fullCity: string) => {
-    triggerHaptic(12);
-    setGpsCoords(null);
-    setActiveClusterId(null);
-    if (onChangeCity) {
-      onChangeCity(fullCity);
-    }
-  };
-
   // Sync theme reactively with <html class="dark" | "light">
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -430,18 +416,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    checkGeolocationPermissionState().then((state) => {
-      setGpsPermState(state);
-    });
-  }, []);
-
-  const handleRequestMapGpsPermission = async () => {
+  const handleRequestMapGpsPermission = useCallback(async () => {
+    triggerHaptic(15);
     setIsRequestingGps(true);
     setGpsStatusNote(null);
     try {
       const res = await requestNativeGpsLocation();
-      setGpsPermState(res.permissionState);
+      let resolvedCenter = cityCenter;
       if (
         res.gpsGranted &&
         typeof res.location?.latitude === 'number' &&
@@ -449,25 +430,29 @@ export const ProximityDensityMap: React.FC<Props> = ({
         Number.isFinite(res.location.latitude) &&
         Number.isFinite(res.location.longitude)
       ) {
-        setGpsCoords([res.location.latitude, res.location.longitude]);
+        resolvedCenter = [res.location.latitude, res.location.longitude];
+        setGpsCoords(resolvedCenter);
       } else {
         setGpsCoords(null);
       }
       if (onChangeCity && res.location?.fullLocation) {
         onChangeCity(res.location.fullLocation);
       }
+      const cfg = getFilterMapConfig(activeFilter, resolvedCenter);
+      safeFlyTo(mapRef.current, cfg.center, cfg.zoom, 0.75);
+
       if (res.gpsGranted) {
-        setGpsStatusNote(`📍 Cihaz GPS konumu doğrulandı: ${res.location.fullLocation}`);
+        setGpsStatusNote(`Cihaz GPS konumu doğrulandı: ${res.location.fullLocation}`);
       } else {
         setGpsStatusNote(
-          res.errorReason || `🌐 Şebeke/IP konumu aktif: ${res.location.fullLocation}`
+          res.errorReason || `Şebeke konumu aktif: ${res.location.fullLocation}`
         );
       }
       setTimeout(() => setGpsStatusNote(null), 5000);
     } finally {
       setIsRequestingGps(false);
     }
-  };
+  }, [activeFilter, cityCenter, onChangeCity]);
 
   const selectedUser = useMemo(() => {
     if (!selectedUserId) return null;
@@ -498,14 +483,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
       };
     });
   }, [users, activeCityKey, cityCenter, activeFilter]);
-
-  const quickCities = [
-    { key: 'selcuk', label: 'Selçuk', full: 'Selçuk, İzmir' },
-    { key: 'izmir', label: 'İzmir', full: 'İzmir, Alsancak' },
-    { key: 'antalya', label: 'Antalya', full: 'Antalya, Muratpaşa' },
-    { key: 'ankara', label: 'Ankara', full: 'Ankara, Çankaya' },
-    { key: 'istanbul', label: 'İstanbul', full: 'İstanbul, Kadıköy' },
-  ];
 
   // 1. Initialize Leaflet Map once on mount
   useEffect(() => {
@@ -606,8 +583,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
       }
 
       if (cfg.radiusMeters !== null) {
-        const strokeColor = activeFilter === '1km' ? '#10b981' : '#a855f7';
-        const fillColor = activeFilter === '1km' ? '#10b981' : '#9333ea';
+        const strokeColor = activeFilter === '1km' ? '#22C55E' : '#E87A3E';
+        const fillColor = activeFilter === '1km' ? '#22C55E' : '#E87A3E';
         circleRef.current = L.circle(cityCenter, {
           radius: cfg.radiusMeters,
           color: strokeColor,
@@ -702,13 +679,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
     mapRef.current?.zoomOut(1);
   }, []);
 
-  const handleRecenter = useCallback(() => {
-    triggerHaptic(15);
-    const map = mapRef.current;
-    if (!map) return;
-    const cfg = getFilterMapConfig(activeFilter, cityCenter);
-    safeFlyTo(map, cfg.center, cfg.zoom, 0.75);
-  }, [activeFilter, cityCenter]);
+  const handleRecenterWithGps = useCallback(() => {
+    void handleRequestMapGpsPermission();
+  }, [handleRequestMapGpsPermission]);
 
   const handleClusterClick = (cluster: CityClusterInfo) => {
     triggerHaptic(15);
@@ -753,99 +726,51 @@ export const ProximityDensityMap: React.FC<Props> = ({
   return (
     <div className="space-y-4">
       {/* Real Interactive GIS Proximity & Density Map Card */}
-      <div className="relative rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-4 sm:p-5 overflow-hidden shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none select-none space-y-3.5">
-        {/* Header inside Map Card */}
-        <div className="relative z-10 flex flex-col gap-2.5 pb-3 border-b border-[#E8E6E1] dark:border-white/[0.06] text-xs">
+      <div className="relative rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] p-4 sm:p-5 overflow-hidden shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none select-none space-y-3.5">
+        {/* Clean Header inside Map Card (No city chip clutter or duplicate GPS button) */}
+        <div className="relative z-10 flex flex-col gap-2 pb-3 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
-              <span className="font-bold text-[#141416] dark:text-[#F5F5F7] text-sm tracking-tight">
+              <span className="font-bold text-[#181512] dark:text-[#FAF7F2] text-sm tracking-tight">
                 Canlı Frekans & Yoğunluk Haritası
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                type="button"
-                disabled={isRequestingGps}
-                onClick={handleRequestMapGpsPermission}
-                className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-xl font-semibold transition cursor-pointer active:scale-95 border ${
-                  gpsPermState === 'granted'
-                    ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
-                    : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] border-[#E8E6E1] dark:border-white/[0.08] hover:bg-[#E8E6E1] dark:hover:bg-white/10'
-                }`}
-                title="Tarayıcı veya telefon konum iznini etkinleştir / GPS ile bul"
-              >
-                <Navigation className={`w-3 h-3 ${isRequestingGps ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-                <span>
-                  {isRequestingGps
-                    ? 'Konum Soruluyor...'
-                    : gpsPermState === 'granted'
-                    ? 'GPS Açık · Yenile'
-                    : 'Konum İzni Ver (GPS)'}
-                </span>
-              </button>
-
-              <div className="flex items-center gap-1.5 text-[11px] text-[#63636B] dark:text-[#8E8E98] bg-[#F1EFEA] dark:bg-[#1C1C22] px-2.5 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-white/[0.08]">
-                <Compass className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                <span className="truncate max-w-[155px] font-medium">Merkez: {myCity}</span>
-              </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-[#6B635B] dark:text-[#A39A91] bg-[#F2EDE6] dark:bg-[#211D1A] px-2.5 py-1.5 rounded-xl border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
+              <Compass className="w-3.5 h-3.5 shrink-0 text-[#E87A3E]" strokeWidth={1.75} />
+              <span className="truncate max-w-[170px] font-medium">{myCity}</span>
             </div>
           </div>
 
           {gpsStatusNote && (
-            <div className="px-3 py-1.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-[11px] text-[#141416] dark:text-[#F5F5F7] flex items-center justify-between gap-2">
-              <span>{gpsStatusNote}</span>
+            <div className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[11px] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" strokeWidth={1.75} />
+                <span className="truncate">{gpsStatusNote}</span>
+              </span>
               <button
                 type="button"
                 onClick={() => setGpsStatusNote(null)}
-                className="text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] cursor-pointer"
+                className="text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] cursor-pointer shrink-0"
                 aria-label="Kapat"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={1.75} />
               </button>
             </div>
           )}
-
-          {/* Quick City Selector Pills */}
-          {onChangeCity && (
-            <div className="flex items-center justify-between gap-2 pt-0.5 overflow-x-auto no-scrollbar">
-              <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] font-medium shrink-0">
-                Şehir Odağı:
-              </span>
-              <div className="flex items-center gap-1.5">
-                {quickCities.map((c) => {
-                  const isCurrent = activeCityKey === c.key;
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      onClick={() => handleSelectQuickCity(c.full)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer shrink-0 active:scale-95 ${
-                        isCurrent
-                          ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] font-semibold'
-                          : 'bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 text-[#63636B] dark:text-[#8E8E98] border border-[#E8E6E1] dark:border-white/[0.06]'
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Real Interactive Leaflet Map Canvas */}
         <div
-          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border border-[#E8E6E1] dark:border-white/[0.08] relative z-10 ${
-            effectiveTheme === 'light' ? 'bg-[#F1EFEA]' : 'bg-[#0B0B0D]'
+          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] relative z-10 ${
+            effectiveTheme === 'light' ? 'bg-[#F2EDE6]' : 'bg-[#0E0C0B]'
           }`}
         >
           <div ref={mapContainerRef} className="w-full h-full z-0" />
 
           {/* Active Radius Overlay Label (Top-Left) */}
-          <div className="pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl bg-white/90 dark:bg-[#141418]/90 border border-[#E8E6E1] dark:border-white/[0.08] backdrop-blur-md text-[11px] font-mono tabular-nums font-medium text-[#141416] dark:text-[#F5F5F7] shadow-sm flex items-center gap-1.5">
+          <div className="pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl bg-white/92 dark:bg-[#171412]/92 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] backdrop-blur-md text-[11px] font-mono tabular-nums font-medium text-[#181512] dark:text-[#FAF7F2] shadow-sm flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
             <span>
               {activeFilter === '1km'
@@ -858,13 +783,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
             </span>
           </div>
 
-          {/* Compact Zoom & Recenter Controls (Bottom-Right) */}
+          {/* Compact Zoom & GPS Locate Controls (Bottom-Right) */}
           <div className="absolute bottom-3 right-3 z-[450] flex flex-col gap-1.5">
-            <div className="flex flex-col rounded-xl overflow-hidden bg-white/95 dark:bg-[#141418]/95 border border-[#E8E6E1] dark:border-white/[0.1] backdrop-blur-xl shadow-md">
+            <div className="flex flex-col rounded-xl overflow-hidden bg-white/95 dark:bg-[#171412]/95 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] backdrop-blur-xl shadow-md">
               <button
                 type="button"
                 onClick={handleZoomIn}
-                className="w-9 h-9 flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer border-b border-[#E8E6E1] dark:border-white/[0.08]"
+                className="w-9 h-9 flex items-center justify-center text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
                 title="Yakınlaştır"
                 aria-label="Haritayı yakınlaştır"
               >
@@ -873,7 +798,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleZoomOut}
-                className="w-9 h-9 flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer"
                 title="Uzaklaştır"
                 aria-label="Haritayı uzaklaştır"
               >
@@ -883,19 +808,24 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
             <button
               type="button"
-              onClick={handleRecenter}
-              className="w-9 h-9 rounded-xl bg-white/95 dark:bg-[#141418]/95 border border-[#E8E6E1] dark:border-white/[0.1] backdrop-blur-xl shadow-md flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
-              title="Konuma Odaklan"
-              aria-label="Konuma odaklan"
+              disabled={isRequestingGps}
+              onClick={handleRecenterWithGps}
+              className="w-9 h-9 rounded-xl bg-white/95 dark:bg-[#171412]/95 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] backdrop-blur-xl shadow-md flex items-center justify-center text-[#E87A3E] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition active:scale-95 cursor-pointer disabled:opacity-60"
+              title="GPS Konumumu Bul ve Odaklan"
+              aria-label="GPS konumumu bul ve odaklan"
             >
-              <Crosshair className="w-4 h-4" strokeWidth={1.75} />
+              {isRequestingGps ? (
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+              ) : (
+                <Crosshair className="w-4 h-4" strokeWidth={1.75} />
+              )}
             </button>
           </div>
         </div>
 
         {/* Active Selected User Info Callout Card */}
         {selectedUser && (
-          <div className="relative z-30 p-4 rounded-2xl bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] space-y-3">
+          <div className="relative z-30 p-4 rounded-2xl bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-3">
             {/* Top Row */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -904,7 +834,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     src={selectedUser.avatarUrl}
                     alt={selectedUser.name}
                     referrerPolicy="no-referrer"
-                    className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#E8E6E1] dark:border-white/10"
+                    className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/10"
                   />
                 ) : (
                   <div
@@ -915,10 +845,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-[#141416] dark:text-[#F5F5F7] text-sm sm:text-base leading-tight truncate">
+                  <h4 className="font-bold text-[#181512] dark:text-[#FAF7F2] text-sm sm:text-base leading-tight truncate">
                     {selectedUser.name}, {selectedUser.age}
                   </h4>
-                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] font-medium mt-0.5 flex items-center gap-1">
+                  <p className="text-xs text-[#6B635B] dark:text-[#A39A91] font-medium mt-0.5 flex items-center gap-1">
                     <MapPin className="w-3 h-3 shrink-0" strokeWidth={1.75} />
                     <span className="truncate">{selectedUser.city}</span>
                   </p>
@@ -926,13 +856,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-mono font-semibold tabular-nums">
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-mono font-semibold tabular-nums">
                   {selectedUser.distanceKm} km
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedUserId(null)}
-                  className="w-8 h-8 rounded-full bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer"
                   title="Kapat"
                   aria-label="Kullanıcı kartını kapat"
                 >
@@ -955,20 +885,20 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 <span>Güven · {selectedUser.trustScore || 99}</span>
               </span>
 
-              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                <Zap className="w-3 h-3" strokeWidth={1.75} />
+              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                <Zap className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
                 <span>%{selectedUser.compatibilityScore || 94} Uyum</span>
               </span>
 
-              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                <Music className="w-3 h-3" strokeWidth={1.75} />
+              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                <Music className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
                 <span>{formatTime(selectedUser.currentSecond)}</span>
               </span>
             </div>
 
             {/* Status Quote */}
-            <div className="p-2.5 rounded-xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08]">
-              <p className="text-xs text-[#141416] dark:text-[#F5F5F7] italic leading-relaxed">
+            <div className="p-2.5 rounded-xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
+              <p className="text-xs text-[#181512] dark:text-[#FAF7F2] italic leading-relaxed">
                 "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor.`}"
               </p>
             </div>
@@ -983,7 +913,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSeekSecond(selectedUser.currentSecond);
                   }
                 }}
-                className="studio-btn-primary min-h-[42px] py-2 px-3 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                className="min-h-[42px] py-2 px-3 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <span className="font-mono tabular-nums">
                   {formatTime(selectedUser.currentSecond)} Anına Katıl
@@ -1000,7 +930,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSelectUser(selectedUser);
                   }
                 }}
-                className="min-h-[42px] py-2 px-3 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/10 text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                className="min-h-[42px] py-2 px-3 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 text-[#181512] dark:text-[#FAF7F2] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
                 <span>Mesaj Gönder</span>
@@ -1010,9 +940,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
         )}
 
         {/* Neighborhood Density Clusters (Real Districts + Diğer Şehirler) */}
-        <div className="relative z-10 pt-3.5 border-t border-[#E8E6E1] dark:border-white/[0.06] space-y-2.5">
-          <div className="flex items-center justify-between text-[11px] text-[#63636B] dark:text-[#8E8E98] gap-2">
-            <span className="font-semibold text-[#141416] dark:text-[#F5F5F7]">
+        <div className="relative z-10 pt-3.5 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] space-y-2.5">
+          <div className="flex items-center justify-between text-[11px] text-[#6B635B] dark:text-[#A39A91] gap-2">
+            <span className="font-semibold text-[#181512] dark:text-[#FAF7F2]">
               Semt Yoğunluğu ({myCity.split(',')[0].trim()})
             </span>
             <span className="truncate max-w-[160px]">{currentSong.title}</span>
@@ -1032,11 +962,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   onClick={() => handleClusterClick(cluster)}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer active:scale-95 flex flex-col justify-between gap-2 ${
                     isActive
-                      ? 'bg-[#141416]/[0.05] dark:bg-white/[0.08] border-[#141416]/40 dark:border-white/30 text-[#141416] dark:text-[#F5F5F7]'
-                      : 'bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border-[#E8E6E1] dark:border-white/[0.07] text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22]'
+                      ? 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#181512] dark:text-[#FAF7F2]'
+                      : 'bg-[#FAF8F4] dark:bg-[#211D1A]/75 border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A]'
                   }`}
                 >
-                  <div className="font-semibold text-xs leading-snug text-[#141416] dark:text-[#F5F5F7]">
+                  <div className="font-semibold text-xs leading-snug text-[#181512] dark:text-[#FAF7F2]">
                     {displayLabel}
                   </div>
 
@@ -1045,11 +975,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
                       <span className="font-semibold text-[#16A34A] dark:text-[#22C55E]">
                         {cluster.count} kişi
                       </span>
-                      <span className="text-[#63636B] dark:text-[#8E8E98]">
+                      <span className="text-[#6B635B] dark:text-[#A39A91]">
                         {cluster.avgDistance} km
                       </span>
                     </div>
-                    <div className="text-[10px] font-medium text-[#63636B] dark:text-[#8E8E98]">
+                    <div className="text-[10px] font-medium text-[#6B635B] dark:text-[#A39A91]">
                       {isRemoteCluster
                         ? 'Türkiye Geneli'
                         : cluster.density === 'high'

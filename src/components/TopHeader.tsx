@@ -78,7 +78,7 @@ export const TopHeader: React.FC<Props> = ({
       label: 'Hayalet Mod',
       shortBadge: 'Hayalet Mod',
       desc: 'Tamamen görünmezsin. Kimse hangi saniyede olduğunu göremez.',
-      icon: <EyeOff className="w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />,
+      icon: <EyeOff className="w-3.5 h-3.5 text-[#6B635B] dark:text-[#A39A91]" strokeWidth={1.75} />,
     },
   ];
 
@@ -91,12 +91,12 @@ export const TopHeader: React.FC<Props> = ({
     <header
       className={`lg:hidden sticky top-0 z-40 border-b backdrop-blur-xl select-none transition-colors duration-200 ${
         isLight
-          ? 'bg-[#FAF9F6]/90 border-[#E8E6E1] text-[#141416]'
-          : 'bg-[#0B0B0D]/88 border-white/[0.08] text-[#F5F5F7]'
+          ? 'bg-[#FAF8F4]/92 border-[#EAE4DC] text-[#181512]'
+          : 'bg-[#0E0C0B]/88 border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-        {/* LEFT: Minimalist ListenHub SVG Emblem & Title */}
+        {/* LEFT: Warm Copper ListenHub SVG Emblem & Title */}
         <button
           type="button"
           onClick={() => {
@@ -105,14 +105,14 @@ export const TopHeader: React.FC<Props> = ({
           }}
           className="flex items-center gap-2.5 cursor-pointer group shrink-0 text-left"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] flex items-center justify-center shrink-0 transition-transform group-active:scale-95">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 flex items-center justify-center shrink-0 transition-transform group-active:scale-95">
             <ListenHubLogo className="w-5 h-5" />
           </div>
           <div className="leading-none">
             <span className="text-sm font-bold tracking-tight block">
               ListenHub
             </span>
-            <span className="text-[10px] text-[#63636B] dark:text-[#8E8E98] block mt-0.5">
+            <span className="text-[10px] text-[#6B635B] dark:text-[#A39A91] block mt-0.5">
               Canlı Müzik Ağı
             </span>
           </div>
@@ -128,13 +128,13 @@ export const TopHeader: React.FC<Props> = ({
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 transition cursor-pointer active:scale-95 border ${
               privacyMode === 'private'
-                ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98]'
-                : 'bg-white dark:bg-[#141418] border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7]'
+                ? 'bg-[#F2EDE6] dark:bg-[#211D1A] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91]'
+                : 'bg-white dark:bg-[#171412] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2]'
             }`}
             title="Gizlilik Modunu Değiştir"
           >
             {privacyMode === 'private' ? (
-              <EyeOff className="w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98] shrink-0" strokeWidth={1.75} />
+              <EyeOff className="w-3.5 h-3.5 text-[#6B635B] dark:text-[#A39A91] shrink-0" strokeWidth={1.75} />
             ) : (
               <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
             )}
@@ -142,7 +142,7 @@ export const TopHeader: React.FC<Props> = ({
               {currentPrivacy.shortBadge}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98] transition-transform ${
+              className={`w-3.5 h-3.5 text-[#6B635B] dark:text-[#A39A91] transition-transform ${
                 showPrivacyDropdown ? 'rotate-180' : ''
               }`}
               strokeWidth={1.75}
@@ -150,12 +150,12 @@ export const TopHeader: React.FC<Props> = ({
           </button>
 
           {showPrivacyDropdown && (
-            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-68 rounded-2xl border border-[#E8E6E1] dark:border-white/[0.08] bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-2.5 py-1.5 border-b border-[#E8E6E1] dark:border-white/[0.08] mb-1">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-68 rounded-2xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-2.5 py-1.5 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] mb-1">
                 <div className="text-[11px] font-semibold">
                   Frekans Görünürlüğü
                 </div>
-                <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98]">
+                <div className="text-[10px] text-[#6B635B] dark:text-[#A39A91]">
                   Seni canlı odalarda kimlerin görebileceğini seç
                 </div>
               </div>
@@ -174,8 +174,8 @@ export const TopHeader: React.FC<Props> = ({
                       }}
                       className={`w-full p-2.5 rounded-xl text-left flex items-start justify-between gap-2.5 transition cursor-pointer ${
                         isSelected
-                          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.12]'
-                          : 'hover:bg-[#F1EFEA]/70 dark:hover:bg-white/[0.04] border border-transparent'
+                          ? 'bg-[#E87A3E]/15 border border-[#E87A3E]/25'
+                          : 'hover:bg-[#F2EDE6]/80 dark:hover:bg-[#211D1A] border border-transparent'
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -184,7 +184,7 @@ export const TopHeader: React.FC<Props> = ({
                           <div className="text-xs font-semibold leading-none">
                             {opt.label}
                           </div>
-                          <div className="text-[10px] mt-1 leading-snug text-[#63636B] dark:text-[#8E8E98]">
+                          <div className="text-[10px] mt-1 leading-snug text-[#6B635B] dark:text-[#A39A91]">
                             {opt.desc}
                           </div>
                         </div>
@@ -206,14 +206,14 @@ export const TopHeader: React.FC<Props> = ({
             <button
               type="button"
               onClick={onToggleTheme}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E8E6E1] dark:border-white/[0.08] bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition cursor-pointer active:scale-95"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer active:scale-95"
               title={themeMode === 'dark' ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
               aria-label="Tema değiştir"
             >
               {themeMode === 'dark' ? (
-                <Sun className="w-4 h-4" strokeWidth={1.75} />
+                <Sun className="w-4 h-4 text-[#F49A5E]" strokeWidth={1.75} />
               ) : (
-                <Moon className="w-4 h-4" strokeWidth={1.75} />
+                <Moon className="w-4 h-4 text-[#6B635B]" strokeWidth={1.75} />
               )}
             </button>
           )}
@@ -227,8 +227,8 @@ export const TopHeader: React.FC<Props> = ({
               }}
               className={`flex items-center justify-center cursor-pointer p-0.5 rounded-full ring-1 transition active:scale-95 ${
                 activeTab === 'profile'
-                  ? 'ring-[#141416] dark:ring-white'
-                  : 'ring-[#E8E6E1] dark:ring-white/15 hover:ring-[#141416]/50 dark:hover:ring-white/40'
+                  ? 'ring-[#E87A3E]'
+                  : 'ring-[#EAE4DC] dark:ring-[#FFF0E1]/15 hover:ring-[#E87A3E]/60'
               }`}
               title="Ben"
             >
@@ -240,7 +240,7 @@ export const TopHeader: React.FC<Props> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="avatar-circle w-full h-full bg-[#1C1C22] dark:bg-[#27272A] flex items-center justify-center text-white text-[11px] font-semibold">
+                  <div className="avatar-circle w-full h-full bg-[#211D1A] flex items-center justify-center text-white text-[11px] font-semibold">
                     {userProfile.avatarSeed}
                   </div>
                 )}

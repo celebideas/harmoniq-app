@@ -147,13 +147,13 @@ const ModernSeekBar: React.FC<ModernSeekBarProps> = ({
       className="py-3 select-none touch-none cursor-pointer group"
       title="Sarmak için dokun veya sürükle"
     >
-      <div className="h-1.5 w-full rounded-full bg-[#E8E6E1] dark:bg-white/15 cursor-pointer relative group">
+      <div className="h-1.5 w-full rounded-full bg-[#EAE4DC] dark:bg-[#FFF0E1]/15 cursor-pointer relative group">
         <div
-          className="h-full rounded-full bg-[#141416] dark:bg-white transition-[width] duration-150"
+          className="h-full rounded-full bg-gradient-to-r from-[#E87A3E] to-[#D97706] transition-[width] duration-150"
           style={{ width: `${activePercent}%` }}
         />
         <div
-          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-[#141416] dark:bg-white shadow-sm border-2 border-[#FAF9F6] dark:border-[#0B0B0D] pointer-events-none transition-transform duration-150 ${
+          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-[#E87A3E] shadow-sm border-2 border-[#FAF8F4] dark:border-[#0E0C0B] pointer-events-none transition-transform duration-150 ${
             isDragging ? 'scale-125' : 'group-hover:scale-110'
           }`}
           style={{ left: `${activePercent}%` }}
@@ -332,7 +332,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         avatarGradient: 'from-emerald-500 to-teal-700',
         platform: 'youtube_music' as PlatformType,
         currentSecond: Math.max(0, progressSeconds - 8),
-        statusBubble: 'Gitar solosu tüyler ürpertiyor 🔥',
+        statusBubble: 'Gitar solosu tüyler ürpertiyor',
         topArtists: ['Duman', 'Mor ve Ötesi', 'Teoman'],
         bio: 'Kadıköy sahilinde indie & rock dinleyicisi.',
         trustScore: 98,
@@ -350,7 +350,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         avatarGradient: 'from-purple-500 to-pink-600',
         platform: 'youtube_music' as PlatformType,
         currentSecond: progressSeconds,
-        statusBubble: 'Aynı saniyedeyiz! ⚡',
+        statusBubble: 'Aynı saniyedeyiz!',
         topArtists: ['Duman', 'Arctic Monkeys', 'Jakuzi'],
         bio: 'Konserlerde ön sıralarda buluşalım.',
         trustScore: 95,
@@ -566,7 +566,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         avatarGradient: 'from-rose-500 to-orange-500',
         platform: 'youtube_music' as PlatformType,
         currentSecond: progressSeconds,
-        statusBubble: 'Aynı frekanstayız ⚡',
+        statusBubble: 'Aynı frekanstayız',
         topArtists: ['Duman', 'Mor ve Ötesi'],
         bio: 'ListenHub canlı dinleyicisi.',
         trustScore: 98,
@@ -636,7 +636,7 @@ export const NowPlayingModal: React.FC<Props> = ({
     } else {
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
-      onShowToast(`"${song.title}" favorilerine eklendi! ❤️`);
+      onShowToast(`"${song.title}" favorilerine eklendi.`);
     }
 
     if (onToggleFavorite) {
@@ -647,10 +647,10 @@ export const NowPlayingModal: React.FC<Props> = ({
   const handleToggleRepeat = () => {
     if (repeatMode === 'off') {
       setRepeatMode('all');
-      onShowToast('Tümünü Tekrarla Açık 🔁');
+      onShowToast('Tümünü Tekrarla Açık');
     } else if (repeatMode === 'all') {
       setRepeatMode('one');
-      onShowToast('Tek Şarkıyı Tekrarla Açık 🔂');
+      onShowToast('Tek Şarkıyı Tekrarla Açık');
     } else {
       setRepeatMode('off');
       onShowToast('Tekrar Kapalı');
@@ -672,7 +672,7 @@ export const NowPlayingModal: React.FC<Props> = ({
       }
       setIsLoadingRadio(false);
       onShowToast(
-        `📻 ${radio?.stationName || song.artist + ' Radyosu'} başlatıldı! 35+ parça kesintisiz akıyor.`
+        `${radio?.stationName || song.artist + ' Radyosu'} başlatıldı. 35+ parça kesintisiz akıyor.`
       );
     } catch {
       setIsLoadingRadio(false);
@@ -697,10 +697,10 @@ export const NowPlayingModal: React.FC<Props> = ({
       <div className="flex-1" onClick={onClose} />
 
       {/* Main Bottom Sheet / Full Player Container */}
-      <div className="relative w-full max-w-xl mx-auto bg-[#FAF9F6] dark:bg-[#0B0B0D] text-[#141416] dark:text-[#F5F5F7] border-t border-x border-[#E8E6E1] dark:border-white/[0.08] rounded-t-[28px] p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto no-scrollbar space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="relative w-full max-w-xl mx-auto bg-[#FAF8F4] dark:bg-[#0E0C0B] text-[#181512] dark:text-[#FAF7F2] border-t border-x border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-t-[28px] p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto no-scrollbar space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Top Grab Handle & Header Bar */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-10 h-1 rounded-full bg-[#141416]/15 dark:bg-white/20 cursor-pointer" onClick={onClose} />
+          <div className="w-10 h-1 rounded-full bg-[#181512]/15 dark:bg-[#FFF0E1]/20 cursor-pointer" onClick={onClose} />
 
           <div className="w-full flex items-center justify-between pt-1">
             <button
@@ -771,13 +771,13 @@ export const NowPlayingModal: React.FC<Props> = ({
           )}
 
           {/* Mode Switcher (Kapak | Sözler | Oda) */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] mb-4 z-10">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] mb-4 z-10">
             <button
               onClick={() => handleSelectViewMode('cover')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                 viewMode === 'cover'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <Music className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -785,10 +785,10 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
             <button
               onClick={() => handleSelectViewMode('lyrics')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                 viewMode === 'lyrics'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <Mic2 className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -796,7 +796,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setShowListenersSheet(true)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-[#141416] dark:text-[#F5F5F7] hover:bg-white/70 dark:hover:bg-white/[0.08] active:scale-95 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-[#181512] dark:text-[#FAF7F2] hover:bg-white/70 dark:hover:bg-[#FFF0E1]/[0.08] active:scale-95 cursor-pointer"
               title="Odadaki dinleyicileri incele"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
@@ -891,7 +891,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                     href={getGoogleLyricsSearchUrl(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="studio-btn-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] text-xs font-semibold transition active:scale-95"
+                    className="studio-btn-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold transition active:scale-95"
                   >
                     <span>Sözleri Web&apos;de Ara</span>
                     <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -981,10 +981,10 @@ export const NowPlayingModal: React.FC<Props> = ({
               setIsShuffle(!isShuffle);
               onShowToast(!isShuffle ? 'Karışık çalma açık' : 'Karışık çalma kapalı');
             }}
-            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer ${
+            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer border ${
               isShuffle
-                ? 'text-[#141416] dark:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
-                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
             }`}
             title="Karışık Çal"
           >
@@ -994,16 +994,16 @@ export const NowPlayingModal: React.FC<Props> = ({
           {/* Previous Track */}
           <button
             onClick={onPrevSong}
-            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition flex items-center justify-center active:scale-90 cursor-pointer"
+            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition flex items-center justify-center active:scale-90 cursor-pointer"
             title="Önceki Şarkı"
           >
             <SkipBack className="w-6 h-6 fill-current" />
           </button>
 
-          {/* Big Monochrome Studio Play / Pause Button */}
+          {/* Big Copper-Amber Play / Pause Button */}
           <button
             onClick={onTogglePlay}
-            className="studio-btn-primary w-16 h-16 min-h-[64px] min-w-[64px] rounded-full bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] shadow-md flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+            className="studio-btn-primary w-16 h-16 min-h-[64px] min-w-[64px] rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
             title={isPlaying ? 'Durdur' : 'Çal'}
           >
             {isAudioLoading ? (
@@ -1018,7 +1018,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           {/* Next Track */}
           <button
             onClick={onNextSong}
-            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition flex items-center justify-center active:scale-90 cursor-pointer"
+            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition flex items-center justify-center active:scale-90 cursor-pointer"
             title="Bir Sonraki Şarkı"
           >
             <SkipForward className="w-6 h-6 fill-current" />
@@ -1027,10 +1027,10 @@ export const NowPlayingModal: React.FC<Props> = ({
           {/* Repeat Button */}
           <button
             onClick={handleToggleRepeat}
-            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer ${
+            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer border ${
               repeatMode !== 'off'
-                ? 'text-[#141416] dark:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
-                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
             }`}
             title="Tekrar Modu"
           >
@@ -1043,15 +1043,15 @@ export const NowPlayingModal: React.FC<Props> = ({
         </div>
 
         {/* 5. TABS: QUEUE, RADIO GENERATOR, LYRICS */}
-        <div className="space-y-3 pt-3 border-t border-[#E8E6E1] dark:border-white/[0.08]">
+        <div className="space-y-3 pt-3 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
           {/* Tab Selector */}
-          <div className="grid grid-cols-3 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] p-1 border border-[#E8E6E1] dark:border-white/[0.06]">
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] p-1 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
             <button
               onClick={() => handleSelectTab('queue')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'queue'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <ListMusic className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1059,10 +1059,10 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
             <button
               onClick={() => handleSelectTab('radio')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'radio'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <Radio className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1070,10 +1070,10 @@ export const NowPlayingModal: React.FC<Props> = ({
             </button>
             <button
               onClick={() => handleSelectTab('lyrics')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'lyrics'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               <Mic2 className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1164,7 +1164,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                     </div>
                     <button
                       onClick={handleStartRadio}
-                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] text-xs font-semibold shrink-0 transition flex items-center gap-1 min-h-[34px] cursor-pointer"
+                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold shrink-0 transition flex items-center gap-1 min-h-[34px] cursor-pointer"
                     >
                       <span>Yenile</span>
                     </button>
@@ -1284,7 +1284,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                     href={getGoogleLyricsSearchUrl(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="studio-btn-primary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] text-xs font-semibold transition active:scale-95"
+                    className="studio-btn-primary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold transition active:scale-95"
                   >
                     <span>Sözleri Web&apos;de Ara</span>
                     <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1302,29 +1302,29 @@ export const NowPlayingModal: React.FC<Props> = ({
             onClick={() => setShowListenersSheet(false)}
           >
             <div
-              className="w-full bg-[#FAF9F6] dark:bg-[#141418] border-t border-[#E8E6E1] dark:border-white/[0.1] rounded-t-[24px] p-4 sm:p-5 shadow-2xl flex flex-col max-h-[82vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+              className="w-full bg-[#FAF8F4] dark:bg-[#171412] border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] rounded-t-[24px] p-4 sm:p-5 shadow-2xl flex flex-col max-h-[82vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Grab handle */}
               <div
-                className="w-10 h-1 rounded-full bg-[#141416]/15 dark:bg-white/20 mx-auto mb-3 cursor-pointer"
+                className="w-10 h-1 rounded-full bg-[#181512]/15 dark:bg-[#FFF0E1]/20 mx-auto mb-3 cursor-pointer"
                 onClick={() => setShowListenersSheet(false)}
               />
 
               {/* Sheet Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                  <div className="w-8 h-8 rounded-xl bg-[#E87A3E]/15 border border-[#E87A3E]/30 flex items-center justify-center text-[#D96B2C] dark:text-[#F49A5E]">
                     <Flame className="w-4 h-4 fill-current" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#181512] dark:text-[#FAF7F2] flex items-center gap-2">
                       <span>Canlı Oda Dinleyicileri</span>
-                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[11px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] text-[11px] font-mono font-bold">
                         {activeRoomListeners.length} Dinleyici
                       </span>
                     </h3>
-                    <p className="text-[11px] text-zinc-400">
+                    <p className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">
                       "{song.title}" parçasını şu an aynı anda dinleyenler
                     </p>
                   </div>
@@ -1332,7 +1332,7 @@ export const NowPlayingModal: React.FC<Props> = ({
 
                 <button
                   onClick={() => setShowListenersSheet(false)}
-                  className="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white transition"
+                  className="p-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] transition cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1341,18 +1341,18 @@ export const NowPlayingModal: React.FC<Props> = ({
               {/* Search & Quick Filters */}
               <div className="py-2.5 space-y-2">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B635B] dark:text-[#A39A91]" />
                   <input
                     type="text"
                     value={sheetSearchQuery}
                     onChange={(e) => setSheetSearchQuery(e.target.value)}
                     placeholder="Dinleyici adı veya şehir ara..."
-                    className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-accent-theme"
+                    className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs text-[#181512] dark:text-[#FAF7F2] placeholder-[#6B635B] dark:placeholder-[#A39A91] focus:outline-none focus:border-[#E87A3E]/50"
                   />
                   {sheetSearchQuery && (
                     <button
                       onClick={() => setSheetSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] text-xs cursor-pointer"
                     >
                       ×
                     </button>
@@ -1363,31 +1363,31 @@ export const NowPlayingModal: React.FC<Props> = ({
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
                   <button
                     onClick={() => setSheetFilter('all')}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 ${
+                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 border cursor-pointer ${
                       sheetFilter === 'all'
-                        ? 'bg-white text-zinc-950 font-bold'
-                        : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.06]'
+                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25 font-semibold'
+                        : 'bg-white dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06]'
                     }`}
                   >
                     Tümü ({activeRoomListeners.length})
                   </button>
                   <button
                     onClick={() => setSheetFilter('synced')}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 flex items-center gap-1 ${
+                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 flex items-center gap-1 border cursor-pointer ${
                       sheetFilter === 'synced'
-                        ? 'bg-accent-theme text-zinc-950 font-bold'
-                        : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.06]'
+                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25 font-semibold'
+                        : 'bg-white dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06]'
                     }`}
                   >
-                    <Zap className="w-3 h-3" />
+                    <Zap className="w-3 h-3 text-[#E87A3E]" />
                     <span>Aynı Saniyede (±15s)</span>
                   </button>
                   <button
                     onClick={() => setSheetFilter('kadikoy')}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 ${
+                    className={`px-2.5 py-1 rounded-lg font-medium transition shrink-0 border cursor-pointer ${
                       sheetFilter === 'kadikoy'
-                        ? 'bg-white text-zinc-950 font-bold'
-                        : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.06]'
+                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25 font-semibold'
+                        : 'bg-white dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06]'
                     }`}
                   >
                     Kadıköy / Moda
@@ -1398,7 +1398,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               {/* Scrollable list of listeners */}
               <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-0.5">
                 {filteredSheetListeners.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-zinc-500">
+                  <div className="py-8 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
                     Arama kriterine uygun dinleyici bulunamadı.
                   </div>
                 ) : (
@@ -1407,7 +1407,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                     return (
                       <div
                         key={user.id}
-                        className="p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition flex flex-col gap-2 group"
+                        className="p-3 rounded-2xl bg-white dark:bg-[#211D1A]/80 hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] transition flex flex-col gap-2 group"
                       >
                         <div className="flex items-center justify-between">
                           {/* User Avatar + Info */}
@@ -1419,25 +1419,25 @@ export const NowPlayingModal: React.FC<Props> = ({
                                 {user.name.slice(0, 2).toUpperCase()}
                               </div>
                               {/* Online green indicator */}
-                              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-zinc-950 animate-pulse" />
+                              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#16A34A] dark:bg-[#22C55E] border-2 border-[#FAF8F4] dark:border-[#171412]" />
                             </div>
 
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-white truncate">
+                                <span className="text-xs font-bold text-[#181512] dark:text-[#FAF7F2] truncate">
                                   {user.name}
                                 </span>
-                                <span className="text-[11px] text-zinc-400">· {user.age}</span>
+                                <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">· {user.age}</span>
                                 {user.compatibilityScore && (
-                                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] text-[10px] font-mono font-bold border border-emerald-500/25">
                                     %{user.compatibilityScore}
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                              <div className="text-[11px] text-[#6B635B] dark:text-[#A39A91] flex items-center gap-1.5">
                                 <span>{user.city}</span>
                                 <span>·</span>
-                                <span className="text-zinc-500">{user.distanceKm} km</span>
+                                <span className="font-mono tabular-nums">{user.distanceKm} km</span>
                               </div>
                             </div>
                           </div>
@@ -1448,39 +1448,39 @@ export const NowPlayingModal: React.FC<Props> = ({
                               onClick={() => {
                                 onSeek(user.currentSecond);
                                 onShowToast(
-                                  `⚡ ${user.name} ile senkronize olundu (${formatTime(
+                                  `${user.name} ile senkronize olundu (${formatTime(
                                     user.currentSecond
                                   )})`
                                 );
                               }}
-                              className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition flex items-center gap-1 ${
+                              className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
                                 isSynced
-                                  ? 'bg-accent-theme text-zinc-950 font-bold shadow'
-                                  : 'bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 border border-white/[0.08]'
+                                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white font-bold shadow-sm'
+                                  : 'bg-[#F2EDE6] dark:bg-[#171412] hover:bg-[#E87A3E]/15 text-[#181512] dark:text-[#FAF7F2] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
                               }`}
                               title="Bu dinleyicinin saniyesine sar"
                             >
-                              <Clock className="w-3 h-3 text-accent-theme" />
-                              <span className="font-mono">{formatTime(user.currentSecond)}'te</span>
+                              <Clock className={`w-3 h-3 ${isSynced ? 'text-white' : 'text-[#E87A3E]'}`} />
+                              <span className="font-mono tabular-nums">{formatTime(user.currentSecond)}'te</span>
                             </button>
                           </div>
                         </div>
 
                         {/* Status quote bubble if present */}
                         {user.statusBubble && (
-                          <div className="text-[11px] text-zinc-300 bg-white/[0.02] border border-white/[0.04] px-2.5 py-1 rounded-lg italic">
+                          <div className="text-[11px] text-[#6B635B] dark:text-[#A39A91] bg-[#FAF8F4] dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] px-2.5 py-1 rounded-lg italic">
                             "{user.statusBubble}"
                           </div>
                         )}
 
                         {/* Quick action buttons */}
-                        <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-white/[0.04]">
+                        <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06]">
                           {onSelectUser && (
                             <button
                               onClick={() => {
                                 onSelectUser(user);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 transition"
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-[#F2EDE6] dark:bg-[#171412] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
                             >
                               Profili İncele
                             </button>
@@ -1490,7 +1490,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                               onClick={() => {
                                 onStartChatWithUser(user);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-accent-theme/15 hover:bg-accent-theme text-accent-theme hover:text-zinc-950 border border-accent-theme/30 transition flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-[#E87A3E]/15 hover:bg-[#E87A3E] text-[#D96B2C] dark:text-[#F49A5E] hover:text-white border border-[#E87A3E]/30 transition flex items-center gap-1 cursor-pointer"
                             >
                               <MessageCircle className="w-3 h-3" />
                               <span>Sohbet Et</span>

@@ -325,7 +325,42 @@ export function cloudConversationToLoungeConversation(
   };
 }
 
+const profileSyncChains = new Map<string, Promise<void>>();
+
+function clampHttpUrl(val: string | undefined | null, maxLen: number): string {
+  const s = (val ?? '').trim();
+  if (!s) return '';
+  if (s.startsWith('https://') || s.startsWith('http://')) {
+    return s.slice(0, maxLen);
+  }
+  return '';
+}
+
 export async function syncUserProfileToFirestore(params: {
+  firebaseUser: User;
+  displayName: string;
+  handle?: string;
+  avatarUrl?: string;
+  avatarSeed?: string;
+  avatarGradient?: string;
+  city: string;
+  bio: string;
+  topGenres: string[];
+  currentSong: Song;
+  currentSecond: number;
+  statusBubble?: string;
+  privacyMode: PrivacyMode;
+}): Promise<void> {
+  const uid = params.firebaseUser.uid;
+  const previous = profileSyncChains.get(uid) || Promise.resolve();
+  const next = previous
+    .catch(() => {})
+    .then(() => runSerializedProfileSync(params));
+  profileSyncChains.set(uid, next);
+  return next;
+}
+
+async function runSerializedProfileSync(params: {
   firebaseUser: User;
   displayName: string;
   handle?: string;
@@ -347,7 +382,8 @@ export async function syncUserProfileToFirestore(params: {
 
   const displayName = clampStr(params.displayName || user.displayName, 60, 'Müzik Kaşifi');
   const handle = cleanHandle(params.handle || user.email?.split('@')[0], displayName);
-  const avatarUrl = clampStr(params.avatarUrl || user.photoURL || '', 500, '');
+  const avatarUrl =
+    clampHttpUrl(params.avatarUrl, 500) || clampHttpUrl(user.photoURL, 500);
   const avatarSeed = clampStr(
     params.avatarSeed ||
       displayName
@@ -358,7 +394,7 @@ export async function syncUserProfileToFirestore(params: {
     4,
     'MK'
   );
-  const avatarGradient = clampStr(params.avatarGradient, 120, 'from-purple-600 to-emerald-600');
+  const avatarGradient = clampStr(params.avatarGradient, 120, 'from-[#E87A3E] to-[#D97706]');
   const city = clampStr(params.city, 80, 'İstanbul, Kadıköy');
   const bio = clampStr(params.bio, 240, 'Müzik ruhun gerçek frekansıdır.');
   const topGenres = (params.topGenres || [])
@@ -395,12 +431,21 @@ export async function syncUserProfileToFirestore(params: {
     if (existingSnap.exists()) {
       await updateDoc(profileRef, editableFields);
     } else {
-      await setDoc(profileRef, {
-        uid,
-        trustScore: 98,
-        ...editableFields,
-        createdAt: serverTimestamp(),
-      });
+      try {
+        await setDoc(profileRef, {
+          uid,
+          trustScore: 98,
+          ...editableFields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (createErr) {
+        const recheck = await getDoc(profileRef);
+        if (recheck.exists()) {
+          await updateDoc(profileRef, editableFields);
+        } else {
+          throw createErr;
+        }
+      }
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, profilePath);
@@ -418,13 +463,26 @@ export async function syncUserProfileToFirestore(params: {
         updatedAt: serverTimestamp(),
       });
     } else {
-      await setDoc(privateRef, {
-        uid,
-        email,
-        privacyMode: params.privacyMode,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      try {
+        await setDoc(privateRef, {
+          uid,
+          email,
+          privacyMode: params.privacyMode,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (createErr) {
+        const recheckPrivate = await getDoc(privateRef);
+        if (recheckPrivate.exists()) {
+          await updateDoc(privateRef, {
+            email,
+            privacyMode: params.privacyMode,
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          throw createErr;
+        }
+      }
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, privatePath);

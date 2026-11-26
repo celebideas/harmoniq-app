@@ -157,8 +157,8 @@ const PlaylistRowItem = React.memo<{
     onClick={() => onView(playlist)}
     className={`p-3 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl transition border ${
       isPlaying
-        ? 'bg-purple-500/10 border-purple-500/40 shadow-sm'
-        : 'bg-white/90 dark:bg-white/[0.03] border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 hover:bg-purple-50/40 dark:hover:bg-white/[0.05]'
+        ? 'bg-[#E87A3E]/10 border-[#E87A3E]/40 shadow-sm'
+        : 'bg-white dark:bg-[#171412] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/35 hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
     }`}
   >
     <div className="flex items-center gap-3 min-w-0">
@@ -168,8 +168,8 @@ const PlaylistRowItem = React.memo<{
           alt={playlist.title}
           loading="lazy"
           decoding="async"
-          className={`w-12 h-12 rounded-xl object-cover shrink-0 bg-zinc-200 dark:bg-zinc-900 border ${
-            isPlaying ? 'border-purple-500/50 ring-2 ring-purple-500/30' : 'border-zinc-200 dark:border-white/[0.08]'
+          className={`w-12 h-12 rounded-xl object-cover shrink-0 bg-[#F2EDE6] dark:bg-[#211D1A] border ${
+            isPlaying ? 'border-[#E87A3E]/50 ring-2 ring-[#E87A3E]/25' : 'border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]'
           }`}
         />
       </div>
@@ -178,19 +178,19 @@ const PlaylistRowItem = React.memo<{
           <h4
             className={`text-sm font-semibold truncate transition ${
               isPlaying
-                ? 'text-purple-600 dark:text-purple-400 font-bold'
-                : 'text-zinc-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300'
+                ? 'text-[#D96B2C] dark:text-[#F49A5E] font-bold'
+                : 'text-[#181512] dark:text-[#FAF7F2] group-hover:text-[#D96B2C] dark:group-hover:text-[#F49A5E]'
             }`}
           >
             {playlist.title}
           </h4>
           {isPlaying && (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] border border-emerald-500/30 text-[10px] font-bold shrink-0">
               Aktif
             </span>
           )}
         </div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+        <p className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5 font-mono tabular-nums">
           {playlist.tracks?.length || playlist.trackCount} parça · {playlist.duration}
         </p>
       </div>
@@ -206,8 +206,8 @@ const PlaylistRowItem = React.memo<{
           }}
           className={`px-3 py-2 min-h-[38px] rounded-xl font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer ${
             isPlaying
-              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-md shadow-purple-500/20'
-              : 'bg-zinc-100 dark:bg-white/[0.07] hover:bg-purple-600 text-zinc-800 dark:text-zinc-200 hover:text-white'
+              ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-md shadow-amber-950/20'
+              : 'bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E87A3E] text-[#181512] dark:text-[#FAF7F2] hover:text-white'
           }`}
         >
           {isPlaying ? (
@@ -227,7 +227,7 @@ const PlaylistRowItem = React.memo<{
             e.stopPropagation();
             onDelete(playlist.id);
           }}
-          className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 transition cursor-pointer"
+          className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-rose-500 transition cursor-pointer"
           title="Listeyi Kaldır"
         >
           <Trash2 className="w-4 h-4" />
@@ -245,7 +245,7 @@ const FavoriteSongRowItem = React.memo<{
 }>(({ song, formattedDuration, onPlay, onToggleFavorite }) => (
   <div
     onClick={() => onPlay && onPlay(song)}
-    className="p-2.5 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl bg-white/90 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 hover:bg-purple-50/40 dark:hover:bg-white/[0.05] transition"
+    className="p-2.5 flex items-center justify-between gap-3 group cursor-pointer rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/35 hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none transition"
   >
     <div className="flex items-center gap-3 min-w-0">
       {song.coverUrl ? (
@@ -254,25 +254,25 @@ const FavoriteSongRowItem = React.memo<{
           alt={song.title}
           loading="lazy"
           decoding="async"
-          className="w-11 h-11 rounded-xl object-cover shrink-0 bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.08]"
+          className="w-11 h-11 rounded-xl object-cover shrink-0 bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
         />
       ) : (
-        <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 shrink-0 border border-zinc-200 dark:border-white/[0.08]">
+        <div className="w-11 h-11 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] flex items-center justify-center text-[#6B635B] dark:text-[#A39A91] shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
           <Music className="w-4 h-4" />
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-300 transition">
+        <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate group-hover:text-[#D96B2C] dark:group-hover:text-[#F49A5E] transition">
           {song.title}
         </div>
-        <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+        <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
           {song.artist} {song.album ? `· ${song.album}` : ''}
         </div>
       </div>
     </div>
 
     <div className="flex items-center gap-2 shrink-0">
-      <span className="text-xs text-zinc-500 tabular-nums">
+      <span className="font-mono text-xs text-[#6B635B] dark:text-[#A39A91] tabular-nums">
         {formattedDuration}
       </span>
       {onToggleFavorite && (
@@ -298,7 +298,7 @@ const FavoriteArtistRowItem = React.memo<{
   onStartRadio?: (name: string) => void;
   onToggleFavorite?: (name: string) => void;
 }>(({ artistName, avatarInfo, onStartRadio, onToggleFavorite }) => (
-  <div className="p-2.5 flex items-center justify-between gap-3 group rounded-2xl bg-white/90 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.07] hover:border-purple-500/35 transition">
+  <div className="p-2.5 flex items-center justify-between gap-3 group rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/35 shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none transition">
     <div className="flex items-center gap-3 min-w-0">
       {avatarInfo.url ? (
         <img
@@ -306,21 +306,21 @@ const FavoriteArtistRowItem = React.memo<{
           alt={artistName}
           loading="lazy"
           decoding="async"
-          className="w-11 h-11 rounded-xl object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-white/10 bg-zinc-200 dark:bg-zinc-900"
+          className="w-11 h-11 rounded-xl object-cover shrink-0 ring-1 ring-[#EAE4DC] dark:ring-[#FFF0E1]/10 bg-[#F2EDE6] dark:bg-[#211D1A]"
         />
       ) : (
         <div
-          className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${avatarInfo.gradient || 'from-purple-600 to-pink-500'} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/15 relative overflow-hidden`}
+          className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${avatarInfo.gradient || 'from-[#E87A3E] to-[#D97706]'} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/15 relative overflow-hidden`}
         >
           <span className="relative z-10">{avatarInfo.initials}</span>
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate flex items-center gap-1.5">
+        <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate flex items-center gap-1.5">
           <span className="truncate">{artistName}</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Doğrulanmış Sanatçı" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" title="Doğrulanmış Sanatçı" />
         </div>
-        <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+        <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
           Kişisel Radyo Hazır
         </div>
       </div>
@@ -331,7 +331,7 @@ const FavoriteArtistRowItem = React.memo<{
         <button
           type="button"
           onClick={() => onStartRadio(artistName)}
-          className="px-3 py-1.5 min-h-[36px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-purple-600 text-zinc-800 dark:text-zinc-200 hover:text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+          className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E87A3E] text-[#181512] dark:text-[#FAF7F2] hover:text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
         >
           <Radio className="w-3.5 h-3.5" />
           <span>Radyo</span>
@@ -341,7 +341,7 @@ const FavoriteArtistRowItem = React.memo<{
         <button
           type="button"
           onClick={() => onToggleFavorite(artistName)}
-          className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-zinc-400 hover:text-rose-500 transition cursor-pointer active:scale-95"
+          className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-[#6B635B] dark:text-[#A39A91] hover:text-rose-500 transition cursor-pointer active:scale-95"
           title="Kaldır"
         >
           <X className="w-4 h-4" />
@@ -506,7 +506,7 @@ export const ProfileTab: React.FC<Props> = ({
     const samplePls: UserPlaylist[] = [
       {
         id: 'pl-turkce-rock-klasikler',
-        title: '🎸 Türkçe Rock & Grunge Frekansları',
+        title: 'Türkçe Rock & Grunge Frekansları',
         description: 'Duman, Mor ve Ötesi, Teoman ve döneme damgasını vuran kült riff’ler.',
         coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500&auto=format&fit=crop&q=80',
         trackCount: 4,
@@ -519,7 +519,7 @@ export const ProfileTab: React.FC<Props> = ({
       },
       {
         id: 'pl-gece-indie-darkwave',
-        title: '⚡ Gece Yarısı Indie & Darkwave',
+        title: 'Gece Yarısı Indie & Darkwave',
         description: 'She Past Away, Jakuzi, Arctic Monkeys ile post-punk ve synth dalgaları.',
         coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
         trackCount: 3,
@@ -532,7 +532,7 @@ export const ProfileTab: React.FC<Props> = ({
       },
       {
         id: 'pl-kadikoy-akustik-lofi',
-        title: '☕ Kadıköy Akustik & Lo-Fi Odası',
+        title: 'Kadıköy Akustik & Lo-Fi Odası',
         description: 'Yağmurlu Moda sokakları, analog gitarlar ve derin melodi rezonansı.',
         coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
         trackCount: 3,
@@ -548,7 +548,7 @@ export const ProfileTab: React.FC<Props> = ({
       localStorage.setItem('harmoniq_user_playlists', JSON.stringify(samplePls));
       localStorage.setItem('harmoniq_user_favorite_songs', JSON.stringify(SAMPLE_SONGS.slice(0, 4)));
     }
-    setToastNotice('🔥 Popüler Rock & Indie koleksiyonu kütüphanene eklendi!');
+    setToastNotice('Popüler Rock & Indie koleksiyonu kütüphanene eklendi.');
     setTimeout(() => setToastNotice(null), 3500);
     if (typeof window !== 'undefined') {
       window.location.reload();
@@ -581,10 +581,10 @@ export const ProfileTab: React.FC<Props> = ({
         onUpdateCity(loc.fullLocation);
       }
       const label = res.gpsGranted
-        ? `📍 Cihaz GPS izni doğrulandı ve konum güncellendi: ${loc.fullLocation}`
+        ? `Cihaz GPS izni doğrulandı ve konum güncellendi: ${loc.fullLocation}`
         : res.errorReason
         ? `${res.errorReason} (${loc.fullLocation})`
-        : `🌐 Şebeke/IP ile algılandı: ${loc.fullLocation}`;
+        : `Şebeke/IP ile algılandı: ${loc.fullLocation}`;
       setLocationStatusMessage(label);
       setTimeout(() => setLocationStatusMessage(null), 6000);
       return loc;
@@ -607,7 +607,7 @@ export const ProfileTab: React.FC<Props> = ({
       if (onUpdateCity) {
         onUpdateCity(loc.fullLocation);
       }
-      setLocationStatusMessage(`🌐 Şebeke/IP ile konum belirlendi: ${loc.fullLocation}`);
+      setLocationStatusMessage(`Şebeke/IP ile konum belirlendi: ${loc.fullLocation}`);
       setTimeout(() => setLocationStatusMessage(null), 4500);
       return loc;
     } catch {
@@ -1091,7 +1091,7 @@ export const ProfileTab: React.FC<Props> = ({
     } catch {}
     setEditingTop4Slot(null);
     setTop4SearchQuery('');
-    setToastNotice(`📌 "${song.title}" #${slotIndex + 1} vitrinine atandı!`);
+    setToastNotice(`"${song.title}" #${slotIndex + 1} vitrinine atandı.`);
     setTimeout(() => setToastNotice(null), 3000);
   };
 
@@ -1648,18 +1648,18 @@ export const ProfileTab: React.FC<Props> = ({
     subscribedChannels.length === 0;
 
   const STUDIO_GENRE_BARS = [
-    { bar: 'bg-[#141416] dark:bg-[#F5F5F7]', dot: 'bg-[#141416] dark:bg-[#F5F5F7]' },
+    { bar: 'bg-[#E87A3E]', dot: 'bg-[#E87A3E]' },
     { bar: 'bg-[#16A34A] dark:bg-[#22C55E]', dot: 'bg-[#16A34A] dark:bg-[#22C55E]' },
-    { bar: 'bg-[#A16207] dark:bg-[#D97706]', dot: 'bg-[#A16207] dark:bg-[#D97706]' },
-    { bar: 'bg-[#71717A] dark:bg-[#8E8E98]', dot: 'bg-[#71717A] dark:bg-[#8E8E98]' },
-    { bar: 'bg-[#A1A1AA] dark:bg-[#52525B]', dot: 'bg-[#A1A1AA] dark:bg-[#52525B]' },
+    { bar: 'bg-[#D97706]', dot: 'bg-[#D97706]' },
+    { bar: 'bg-[#A39A91]', dot: 'bg-[#A39A91]' },
+    { bar: 'bg-[#6B635B]', dot: 'bg-[#6B635B]' },
   ];
 
   return (
     <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-5 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
       {/* Toast Notice Banner */}
       {toastNotice && (
-        <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.12] text-[#141416] dark:text-[#F5F5F7] text-xs font-medium shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.12] text-[#181512] dark:text-[#FAF7F2] text-xs font-medium shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
           <span>{toastNotice}</span>
         </div>
@@ -1672,7 +1672,7 @@ export const ProfileTab: React.FC<Props> = ({
            =================================================================== */}
         <div className="lg:col-span-5 space-y-5 min-w-0">
           {/* 1. EDITORIAL STUDIO PROFILE CARD */}
-          <section className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-5 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
+          <section className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] p-5 shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none">
             <div className="flex items-start gap-4 min-w-0">
               {/* Left: Uploadable Avatar Circle (Empty dashed state when no photo) */}
               <button
@@ -1686,14 +1686,14 @@ export const ProfileTab: React.FC<Props> = ({
                   <img
                     src={activeProfileAvatar}
                     alt={userProfile.name}
-                    className="w-[72px] h-[72px] rounded-full object-cover border border-[#E8E6E1] dark:border-white/[0.12] group-hover:opacity-90 transition"
+                    className="w-[72px] h-[72px] rounded-full object-cover border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.12] group-hover:opacity-90 transition"
                   />
                 ) : (
-                  <div className="w-[72px] h-[72px] rounded-full border-2 border-dashed border-zinc-400/50 dark:border-white/20 bg-[#F1EFEA]/60 dark:bg-[#1C1C22]/60 flex items-center justify-center text-[#63636B] dark:text-[#8E8E98] group-hover:border-[#141416]/50 dark:group-hover:border-white/40 transition">
+                  <div className="w-[72px] h-[72px] rounded-full border-2 border-dashed border-[#A39A91]/50 dark:border-[#FFF0E1]/20 bg-[#F2EDE6]/70 dark:bg-[#211D1A]/70 flex items-center justify-center text-[#6B635B] dark:text-[#A39A91] group-hover:border-[#E87A3E]/60 transition">
                     <UserIcon className="w-6 h-6 opacity-50" strokeWidth={1.5} />
                   </div>
                 )}
-                <span className="studio-btn-primary absolute -bottom-0.5 -right-0.5 h-6 px-1.5 rounded-full bg-[#141416] text-white dark:bg-[#F5F5F7] dark:text-[#0B0B0D] border-2 border-white dark:border-[#141418] flex items-center justify-center gap-0.5 shadow-sm">
+                <span className="studio-btn-primary absolute -bottom-0.5 -right-0.5 h-6 px-1.5 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-2 border-white dark:border-[#171412] flex items-center justify-center gap-0.5 shadow-sm">
                   <Camera className="w-3 h-3" strokeWidth={2} />
                   <Plus className="w-2.5 h-2.5" strokeWidth={2.5} />
                 </span>
@@ -1701,11 +1701,11 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Middle: Bold Name, @handle · City, Trust Score Emerald Badge */}
               <div className="min-w-0 flex-1 space-y-1.5">
-                <h1 className="text-lg font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight truncate leading-snug">
+                <h1 className="text-lg font-bold text-[#181512] dark:text-[#FAF7F2] tracking-tight truncate leading-snug">
                   {userProfile.youtubeAccount?.name || userProfile.name}
                 </h1>
 
-                <div className="flex items-center flex-wrap gap-1.5 font-mono text-xs text-[#63636B] dark:text-[#8E8E98]">
+                <div className="flex items-center flex-wrap gap-1.5 font-mono text-xs text-[#6B635B] dark:text-[#A39A91]">
                   <span className="truncate max-w-[140px]">
                     {userProfile.youtubeAccount?.handle || '@muziksever'}
                   </span>
@@ -1716,10 +1716,10 @@ export const ProfileTab: React.FC<Props> = ({
                       setManualCityInput(userProfile.city);
                       setShowLocationModal(true);
                     }}
-                    className="inline-flex items-center gap-1 text-[#141416] dark:text-[#F5F5F7] hover:underline underline-offset-2 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[#181512] dark:text-[#FAF7F2] hover:underline underline-offset-2 cursor-pointer"
                     title="Şehri güncelle"
                   >
-                    <MapPin className="w-3 h-3 text-[#63636B] dark:text-[#8E8E98] shrink-0" strokeWidth={1.75} />
+                    <MapPin className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" strokeWidth={1.75} />
                     <span className="truncate">{userProfile.city}</span>
                   </button>
                 </div>
@@ -1728,7 +1728,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowTrustScoreModal(true)}
-                    className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
+                    className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
                     title="Şeffaf Güven Kalkanı Detaylarını İncele"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
@@ -1737,7 +1737,7 @@ export const ProfileTab: React.FC<Props> = ({
                 </div>
 
                 {userProfile.bio && (
-                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] pt-1 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-[#6B635B] dark:text-[#A39A91] pt-1 line-clamp-2 leading-relaxed">
                     {userProfile.bio}
                   </p>
                 )}
@@ -1747,7 +1747,7 @@ export const ProfileTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => openSettingsModal('profile')}
-                className="w-10 h-10 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] text-[#141416] dark:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer shrink-0 active:scale-95"
+                className="w-10 h-10 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer shrink-0 active:scale-95"
                 title="Profil, Tema ve Müzik Servisi Ayarları"
                 aria-label="Ayarlar"
               >
@@ -1757,17 +1757,17 @@ export const ProfileTab: React.FC<Props> = ({
           </section>
 
           {/* MOBILE-ONLY SEGMENTED SWITCHER (Hidden on desktop where both columns show together) */}
-          <div className="lg:hidden grid grid-cols-2 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06]">
+          <div className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
             <button
               type="button"
               onClick={() => {
                 triggerHaptic(10);
                 setProfileSection('library');
               }}
-              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap border ${
                 profileSection === 'library'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               Kütüphanem
@@ -1778,10 +1778,10 @@ export const ProfileTab: React.FC<Props> = ({
                 triggerHaptic(10);
                 setProfileSection('insights');
               }}
-              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap border ${
                 profileSection === 'insights'
-                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                  : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
               Haftalık Özet
@@ -1790,20 +1790,20 @@ export const ProfileTab: React.FC<Props> = ({
 
           {/* 2. HAFTALIK DİNLEME ÖZETİ — REAL LISTENING ANALYTICS */}
           <div className={profileSection === 'insights' ? 'block' : 'hidden lg:block'}>
-            <section className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-5 space-y-5 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
+            <section className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] p-5 space-y-5 shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none">
               {!hasRealListeningData ? (
                 <div className="py-7 px-3 text-center flex flex-col items-center justify-center space-y-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7]">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] flex items-center justify-center text-[#E87A3E]">
                     <Headphones className="w-5 h-5" strokeWidth={1.75} />
                   </div>
                   <div className="space-y-1 max-w-sm">
-                    <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                    <div className="font-mono text-[11px] uppercase tracking-wider text-[#6B635B] dark:text-[#A39A91]">
                       Haftalık Dinleme Özeti
                     </div>
-                    <h2 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7]">
+                    <h2 className="text-base font-bold text-[#181512] dark:text-[#FAF7F2]">
                       Henüz dinleme verisi yok
                     </h2>
-                    <p className="text-xs text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
+                    <p className="text-xs text-[#6B635B] dark:text-[#A39A91] leading-relaxed">
                       İlk parçanı açtığında gerçek dinleme süren ve tür dağılımın burada oluşmaya başlayacak.
                     </p>
                   </div>
@@ -1811,7 +1811,7 @@ export const ProfileTab: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => onPlaySong(SAMPLE_SONGS[0])}
-                      className="studio-btn-primary px-4 py-2.5 min-h-[42px] rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] text-xs font-semibold transition active:scale-95 flex items-center gap-2 cursor-pointer"
+                      className="studio-btn-primary px-4 py-2.5 min-h-[42px] rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold transition active:scale-95 flex items-center gap-2 cursor-pointer"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" />
                       <span>İlk Parçayı Başlat</span>
@@ -1823,10 +1823,10 @@ export const ProfileTab: React.FC<Props> = ({
                   {/* Header + Prominent Mono Listening Duration */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                      <div className="font-mono text-[11px] uppercase tracking-wider text-[#6B635B] dark:text-[#A39A91]">
                         Haftalık Dinleme Özeti
                       </div>
-                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#141416] dark:text-[#F5F5F7] tabular-nums">
+                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#181512] dark:text-[#FAF7F2] tabular-nums">
                         {weeklyHours > 0
                           ? `${weeklyHours}s ${weeklyRemainingMinutes}dk`
                           : weeklyRemainingMinutes > 0
@@ -1835,7 +1835,7 @@ export const ProfileTab: React.FC<Props> = ({
                           ? `${weeklyTotalSeconds}sn`
                           : '0dk'}
                       </div>
-                      <p className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                      <p className="text-xs text-[#6B635B] dark:text-[#A39A91] tabular-nums">
                         {weeklyScrobbleCount > 0
                           ? `${weeklyScrobbleCount} parça · ${weeklyPersona}`
                           : weeklyPersona}
@@ -1845,7 +1845,7 @@ export const ProfileTab: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => setShowStoryCardModal(true)}
-                      className="px-3 py-2 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] text-[#141416] dark:text-[#F5F5F7] transition flex items-center gap-1.5 text-xs font-medium cursor-pointer shrink-0 active:scale-95"
+                      className="px-3 py-2 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#181512] dark:text-[#FAF7F2] transition flex items-center gap-1.5 text-xs font-medium cursor-pointer shrink-0 active:scale-95"
                       title="Dinleme özetini kart olarak paylaş"
                     >
                       <Share2 className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1853,8 +1853,8 @@ export const ProfileTab: React.FC<Props> = ({
                     </button>
                   </div>
 
-                  {/* Clean Monochrome Filter Segmented Control */}
-                  <div className="grid grid-cols-3 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] text-xs">
+                  {/* Clean Warm Filter Segmented Control */}
+                  <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] text-xs">
                     {[
                       { id: 'all' as const, label: 'Genel' },
                       { id: 'genres' as const, label: 'Türler' },
@@ -1864,10 +1864,10 @@ export const ProfileTab: React.FC<Props> = ({
                         key={tab.id}
                         type="button"
                         onClick={() => setWeeklyFilter(tab.id)}
-                        className={`py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+                        className={`py-1.5 rounded-lg font-semibold transition cursor-pointer border ${
                           weeklyFilter === tab.id
-                            ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                            : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                            ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                            : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
                         }`}
                       >
                         {tab.label}
@@ -2055,7 +2055,7 @@ export const ProfileTab: React.FC<Props> = ({
                           <button
                             type="button"
                             onClick={() => onPlaySong(weeklyAnthemSong)}
-                            className="studio-btn-primary px-3.5 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 min-h-[36px] active:scale-95"
+                            className="studio-btn-primary px-3.5 py-2 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 min-h-[36px] active:scale-95"
                           >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             <span>Çal</span>
@@ -2162,15 +2162,15 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
 
             {isLibraryCompletelyEmpty ? (
-              <div className="py-9 px-5 sm:px-8 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-center space-y-4 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7]">
+              <div className="py-9 px-5 sm:px-8 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-center space-y-4 shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] flex items-center justify-center text-[#E87A3E]">
                   <Library className="w-5 h-5" strokeWidth={1.75} />
                 </div>
                 <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+                  <h3 className="text-base font-bold text-[#181512] dark:text-[#FAF7F2] tracking-tight">
                     Müzik Kütüphaneni Bağla
                   </h3>
-                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] max-w-md mx-auto leading-relaxed">
+                  <p className="text-xs text-[#6B635B] dark:text-[#A39A91] max-w-md mx-auto leading-relaxed">
                     YouTube Music veya Spotify çalma listelerini bağlayıp kütüphaneni eşle ya da örnek koleksiyonla hemen keşfet.
                   </p>
                 </div>
@@ -2178,7 +2178,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowSettingsModal(true)}
-                    className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                    className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                   >
                     <Link2 className="w-4 h-4" strokeWidth={1.75} />
                     <span>Kütüphaneni Bağla</span>
@@ -2186,7 +2186,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={handleLoadPopularCollection}
-                    className="studio-btn-primary w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                    className="studio-btn-primary w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                   >
                     <Music className="w-4 h-4" strokeWidth={1.75} />
                     <span>Örnek Koleksiyonu Yükle</span>
@@ -2196,7 +2196,7 @@ export const ProfileTab: React.FC<Props> = ({
             ) : (
               <>
                 {/* Clean Studio Segmented Control (Listeler | Favoriler | Sanatçılar) */}
-                <div className="grid grid-cols-3 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06]">
+                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]">
                   {[
                     { id: 'playlists' as const, label: 'Listeler', count: syncedPlaylists.length },
                     { id: 'favorites' as const, label: 'Favoriler', count: favoriteSongs.length },
@@ -2211,14 +2211,14 @@ export const ProfileTab: React.FC<Props> = ({
                           setActiveLibraryTab(tab.id);
                           setLibrarySearchQuery('');
                         }}
-                        className={`px-2.5 py-2 text-xs font-semibold rounded-lg min-h-[38px] whitespace-nowrap transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`px-2.5 py-2 text-xs font-semibold rounded-lg min-h-[38px] whitespace-nowrap transition cursor-pointer flex items-center justify-center gap-1.5 border ${
                           isActive
-                            ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                            : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                            ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                            : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
                         }`}
                       >
                         <span>{tab.label}</span>
-                        <span className="font-mono text-[11px] opacity-65 tabular-nums">
+                        <span className="font-mono text-[11px] opacity-75 tabular-nums">
                           {tab.count}
                         </span>
                       </button>
@@ -2228,7 +2228,7 @@ export const ProfileTab: React.FC<Props> = ({
 
                 {/* Search Input for the active tab */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
+                  <Search className="w-4 h-4 text-[#6B635B] dark:text-[#A39A91] absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
                   <input
                     type="text"
                     value={librarySearchQuery}
@@ -2240,13 +2240,13 @@ export const ProfileTab: React.FC<Props> = ({
                         ? 'Favori parçalarda ara...'
                         : 'Sanatçılarda ara...'
                     }
-                    className="w-full pl-10 pr-8 py-2.5 min-h-[42px] bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] rounded-xl text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none focus:border-[#141416]/40 dark:focus:border-white/30 transition"
+                    className="w-full pl-10 pr-8 py-2.5 min-h-[42px] bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none focus:border-[#E87A3E]/50 transition"
                   />
                   {librarySearchQuery && (
                     <button
                       type="button"
                       onClick={() => setLibrarySearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#63636B] hover:text-[#141416] dark:text-[#8E8E98] dark:hover:text-[#F5F5F7] cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B635B] hover:text-[#181512] dark:text-[#A39A91] dark:hover:text-[#FAF7F2] cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" strokeWidth={1.75} />
                     </button>
@@ -2267,14 +2267,14 @@ export const ProfileTab: React.FC<Props> = ({
                   return (
                     <div className="space-y-4">
                       {syncedPlaylists.length === 0 ? (
-                        <div className="py-8 px-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] text-center space-y-2.5">
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="py-8 px-4 rounded-2xl bg-[#FAF8F4] dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-center space-y-2.5">
+                          <p className="text-xs text-[#6B635B] dark:text-[#A39A91]">
                             Henüz çalma listen yok. Hesap bağlantılarını Ayarlar & Hesap üzerinden yönetebilirsin.
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowSettingsModal(true)}
-                            className="px-3.5 py-2 rounded-xl bg-zinc-900 dark:bg-white/10 text-white text-xs font-semibold hover:bg-purple-600 transition cursor-pointer"
+                            className="studio-btn-primary px-3.5 py-2 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white text-xs font-semibold transition cursor-pointer"
                           >
                             Ayarlar & Hesap'ı Aç
                           </button>
@@ -2355,15 +2355,15 @@ export const ProfileTab: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => onPlaySongsList(favoriteSongs, true)}
-                              className="px-3 py-1.5 min-h-[36px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.1] text-zinc-800 dark:text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+                              className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#181512] dark:text-[#FAF7F2] text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
                             >
-                              <Shuffle className="w-3.5 h-3.5 text-purple-600 dark:text-lime-400" />
+                              <Shuffle className="w-3.5 h-3.5 text-[#E87A3E]" />
                               <span>Karışık</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => onPlaySongsList(favoriteSongs, false)}
-                              className="px-3.5 py-1.5 min-h-[36px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                              className="studio-btn-primary px-3.5 py-1.5 min-h-[36px] rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-amber-950/20"
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
                               <span>Tümünü Çal</span>
@@ -2742,43 +2742,44 @@ export const ProfileTab: React.FC<Props> = ({
 
       {/* Quick Location Settings Modal */}
       {showLocationModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-5 text-xs text-zinc-300 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] rounded-2xl w-full max-w-md p-5 text-xs text-[#6B635B] dark:text-[#A39A91] shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-lime-400/10 text-lime-400">
+                <div className="p-2 rounded-xl bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E]">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold text-white text-sm">Konum Ayarları</h3>
-                  <p className="text-[11px] text-zinc-400">Canlı GPS algılama veya elle giriş</p>
+                  <h3 className="font-heading font-semibold text-[#181512] dark:text-[#FAF7F2] text-sm">Konum Ayarları</h3>
+                  <p className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">Canlı GPS algılama veya elle giriş</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowLocationModal(false)}
-                className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] flex items-center justify-center cursor-pointer"
+                aria-label="Kapat"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Current Status Box */}
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.07] flex items-center justify-between">
               <div>
-                <div className="text-[11px] text-zinc-400">Mevcut Seçili Konum</div>
-                <div className="text-sm font-semibold text-white flex items-center gap-2 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
+                <div className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">Mevcut Seçili Konum</div>
+                <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] flex items-center gap-2 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
                   <span>{userProfile.city || 'Belirtilmedi'}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                   geoPermissionState === 'granted'
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] border border-emerald-500/30'
                     : geoPermissionState === 'denied'
-                    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                    : 'bg-lime-400/15 text-lime-300 border border-lime-400/30'
+                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                    : 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/30'
                 }`}>
                   {geoPermissionState === 'granted'
                     ? 'Site Konum İzni: Açık (GPS)'
@@ -2786,7 +2787,7 @@ export const ProfileTab: React.FC<Props> = ({
                     ? 'Site İzni: Kapalı (IP Aktif)'
                     : 'Site İzni: Sorulmaya Hazır'}
                 </span>
-                <span className="text-[10px] text-zinc-400">
+                <span className="text-[10px] text-[#6B635B] dark:text-[#A39A91]">
                   {isAutoLocation ? 'Otomatik Konum' : 'Elle Ayarlandı'}
                 </span>
               </div>
@@ -2800,7 +2801,7 @@ export const ProfileTab: React.FC<Props> = ({
                 onClick={async () => {
                   await handleDetectLiveLocation();
                 }}
-                className="w-full py-3 px-4 rounded-xl bg-lime-400 hover:bg-lime-300 text-zinc-950 font-semibold flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-lime-400/20 disabled:opacity-50"
+                className="studio-btn-primary w-full py-3 px-4 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-amber-950/20 disabled:opacity-50"
               >
                 <Navigation className={`w-4 h-4 ${isDetectingLocation ? 'animate-spin' : ''}`} />
                 <span>
@@ -2818,40 +2819,41 @@ export const ProfileTab: React.FC<Props> = ({
                 onClick={async () => {
                   await handleDetectIpLocation();
                 }}
-                className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium flex items-center justify-center gap-2 cursor-pointer transition border border-white/[0.08] disabled:opacity-50"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.1] text-[#181512] dark:text-[#FAF7F2] font-medium flex items-center justify-center gap-2 cursor-pointer transition border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] disabled:opacity-50"
               >
-                <Globe className="w-3.5 h-3.5 text-lime-400" />
+                <Globe className="w-3.5 h-3.5 text-[#E87A3E]" />
                 <span>Şebeke / IP ile Otomatik Bul (İzin İstemez)</span>
               </button>
 
-              <p className="text-[10px] text-zinc-400 text-center">
-                Üstteki yeşil butona dokunduğunuzda telefon ve web tarayıcınız "Konum İzni" penceresini açar ve site izinlerine Konum seçeneğini ekler.
+              <p className="text-[10px] text-[#6B635B] dark:text-[#A39A91] text-center">
+                Üstteki butona dokunduğunuzda telefon ve web tarayıcınız "Konum İzni" penceresini açar ve site izinlerine Konum seçeneğini ekler.
               </p>
             </div>
 
             {/* Permission Troubleshooting Helper Box */}
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-zinc-300 space-y-1">
-              <div className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
-                <span>⚠️ Tarayıcı 'Konum İzni Reddedildi' Uyarısı Verirse:</span>
+            <div className="p-3 rounded-xl bg-[#E87A3E]/10 border border-[#E87A3E]/25 text-[#6B635B] dark:text-[#A39A91] space-y-1">
+              <div className="text-[11px] font-semibold text-[#D96B2C] dark:text-[#F49A5E] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>Tarayıcı 'Konum İzni Reddedildi' Uyarısı Verirse:</span>
               </div>
-              <ul className="text-[10px] text-zinc-400 list-disc list-inside space-y-0.5 leading-relaxed">
+              <ul className="text-[10px] text-[#6B635B] dark:text-[#A39A91] list-disc list-inside space-y-0.5 leading-relaxed">
                 <li>
-                  <strong className="text-zinc-200">Chrome:</strong> Adres çubuğundaki sol kilit (🔒) simgesine dokunun → <strong className="text-zinc-200">İzinler</strong> → <strong className="text-zinc-200">Konum</strong> → <strong className="text-zinc-200">İzin Ver</strong>.
+                  <strong className="text-[#181512] dark:text-[#FAF7F2]">Chrome:</strong> Adres çubuğundaki sol kilit simgesine dokunun → <strong className="text-[#181512] dark:text-[#FAF7F2]">İzinler</strong> → <strong className="text-[#181512] dark:text-[#FAF7F2]">Konum</strong> → <strong className="text-[#181512] dark:text-[#FAF7F2]">İzin Ver</strong>.
                 </li>
                 <li>
-                  <strong className="text-zinc-200">Safari (iOS):</strong> Adres çubuğundaki <strong className="text-zinc-200">aA</strong> → <strong className="text-zinc-200">Web Sitesi Ayarları</strong> → <strong className="text-zinc-200">Konum: İzin Ver</strong>.
+                  <strong className="text-[#181512] dark:text-[#FAF7F2]">Safari (iOS):</strong> Adres çubuğundaki <strong className="text-[#181512] dark:text-[#FAF7F2]">aA</strong> → <strong className="text-[#181512] dark:text-[#FAF7F2]">Web Sitesi Ayarları</strong> → <strong className="text-[#181512] dark:text-[#FAF7F2]">Konum: İzin Ver</strong>.
                 </li>
                 <li>
-                  Veya yukarıdaki <strong className="text-lime-400">"Şebeke / IP ile Otomatik Bul"</strong> butonuna dokunarak izin vermeden doğrudan bağlanabilirsiniz.
+                  Veya yukarıdaki <strong className="text-[#D96B2C] dark:text-[#F49A5E]">"Şebeke / IP ile Otomatik Bul"</strong> butonuna dokunarak izin vermeden doğrudan bağlanabilirsiniz.
                 </li>
               </ul>
             </div>
 
             {/* Divider */}
             <div className="flex items-center gap-3 py-0.5">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">veya Elle Yazın</span>
-              <div className="flex-1 h-px bg-white/10" />
+              <div className="flex-1 h-px bg-[#EAE4DC] dark:bg-[#FFF0E1]/10" />
+              <span className="text-[10px] text-[#6B635B] dark:text-[#A39A91] uppercase tracking-wider font-semibold">veya Elle Yazın</span>
+              <div className="flex-1 h-px bg-[#EAE4DC] dark:bg-[#FFF0E1]/10" />
             </div>
 
             {/* Manual Form */}
@@ -2868,12 +2870,12 @@ export const ProfileTab: React.FC<Props> = ({
                     }
                   }}
                   placeholder="Örn: Kadıköy, İstanbul veya İzmir"
-                  className="flex-1 px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-lime-400/50"
+                  className="flex-1 px-3.5 py-2.5 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none focus:border-[#E87A3E]/50"
                 />
                 <button
                   type="button"
                   onClick={() => handleSaveManualLocation(manualCityInput)}
-                  className="px-4 py-2.5 bg-white/[0.08] hover:bg-white/[0.15] text-white font-medium rounded-xl cursor-pointer transition"
+                  className="px-4 py-2.5 bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E87A3E] text-[#181512] dark:text-[#FAF7F2] hover:text-white font-medium rounded-xl cursor-pointer transition"
                 >
                   Uygula
                 </button>
@@ -2881,7 +2883,7 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Quick suggestions */}
               <div className="space-y-1">
-                <span className="text-[10px] text-zinc-400 font-medium">Hızlı Şehir Seçenekleri:</span>
+                <span className="text-[10px] text-[#6B635B] dark:text-[#A39A91] font-medium">Hızlı Şehir Seçenekleri:</span>
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {[
                     'Selçuk, İzmir',
@@ -2897,7 +2899,7 @@ export const ProfileTab: React.FC<Props> = ({
                       key={cityOption}
                       type="button"
                       onClick={() => handleSaveManualLocation(cityOption)}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.06] text-[11px] cursor-pointer transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E87A3E]/15 text-[#181512] dark:text-[#FAF7F2] hover:text-[#D96B2C] dark:hover:text-[#F49A5E] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-[11px] cursor-pointer transition"
                     >
                       {cityOption}
                     </button>
@@ -2908,8 +2910,8 @@ export const ProfileTab: React.FC<Props> = ({
 
             {/* Status Feedback Message */}
             {locationStatusMessage && (
-              <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-300 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-lime-400" />
+              <div className="p-2.5 rounded-xl bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-[11px] text-[#181512] dark:text-[#FAF7F2] flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" />
                 <span>{locationStatusMessage}</span>
               </div>
             )}
@@ -3093,21 +3095,21 @@ export const ProfileTab: React.FC<Props> = ({
           onClick={() => setShowSettingsModal(false)}
         >
           <div
-            className="relative w-full max-w-lg bg-white dark:bg-[#14121E] border border-zinc-200 dark:border-white/[0.08] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+            className="relative w-full max-w-lg bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Modal Header + 2-Tab Switcher */}
-            <div className="px-6 pt-5 pb-4 border-b border-zinc-200 dark:border-white/[0.08] space-y-4 shrink-0">
+            <div className="px-6 pt-5 pb-4 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-4 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <div className="w-9 h-9 rounded-xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#D96B2C] dark:text-[#F49A5E]">
                     <Settings className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-heading font-bold text-zinc-900 dark:text-white">
+                    <h3 className="text-base font-heading font-bold text-[#181512] dark:text-[#FAF7F2]">
                       Ayarlar & Hesap
                     </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-[#6B635B] dark:text-[#A39A91]">
                       Profil bilgilerin, görünüm ve müzik servisleri
                     </p>
                   </div>
@@ -3116,7 +3118,7 @@ export const ProfileTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowSettingsModal(false)}
-                  className="p-2 rounded-xl text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
+                  className="p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer"
                   aria-label="Kapat"
                 >
                   <X className="w-5 h-5" />
@@ -3124,14 +3126,14 @@ export const ProfileTab: React.FC<Props> = ({
               </div>
 
               {/* Clean 2-Tab Selector */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.07]">
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.07]">
                 <button
                   type="button"
                   onClick={() => setSettingsTab('profile')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border ${
                     settingsTab === 'profile'
-                      ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
                   }`}
                 >
                   <UserIcon className="w-3.5 h-3.5" />
@@ -3140,10 +3142,10 @@ export const ProfileTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setSettingsTab('account')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 border ${
                     settingsTab === 'account'
-                      ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
                   }`}
                 >
                   <Youtube className="w-3.5 h-3.5" />
@@ -3171,7 +3173,7 @@ export const ProfileTab: React.FC<Props> = ({
                       className="relative group cursor-pointer focus:outline-none"
                       title="Cihazından profil fotoğrafı yükle"
                     >
-                      <div className="w-24 h-24 rounded-full border-2 border-dashed border-purple-500/50 p-1 group-hover:border-purple-500 transition flex items-center justify-center bg-zinc-100/80 dark:bg-white/[0.03]">
+                      <div className="w-24 h-24 rounded-full border-2 border-dashed border-[#E87A3E]/50 p-1 group-hover:border-[#E87A3E] transition flex items-center justify-center bg-[#F2EDE6]/80 dark:bg-[#211D1A]">
                         {tempAvatarUrl ? (
                           <img
                             src={tempAvatarUrl}
@@ -3179,12 +3181,12 @@ export const ProfileTab: React.FC<Props> = ({
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
-                          <div className="avatar-circle w-full h-full rounded-full bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center text-white font-heading font-bold text-2xl">
+                          <div className="avatar-circle w-full h-full rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] flex items-center justify-center text-white font-heading font-bold text-2xl">
                             {userProfile.avatarSeed || <UserIcon className="w-8 h-8" />}
                           </div>
                         )}
                       </div>
-                      <span className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white border-2 border-white dark:border-[#14121E] flex items-center justify-center shadow-lg group-hover:scale-105 transition">
+                      <span className="studio-btn-primary absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-2 border-white dark:border-[#171412] flex items-center justify-center shadow-lg group-hover:scale-105 transition">
                         {tempAvatarUrl ? <Camera className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
                       </span>
                     </button>
@@ -3193,9 +3195,9 @@ export const ProfileTab: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.07] hover:bg-zinc-200 dark:hover:bg-white/[0.12] border border-zinc-200 dark:border-white/[0.08] text-zinc-800 dark:text-white font-semibold flex items-center gap-1.5 cursor-pointer transition"
+                        className="px-3.5 py-2 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.12] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] font-semibold flex items-center gap-1.5 cursor-pointer transition"
                       >
-                        <Upload className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                        <Upload className="w-3.5 h-3.5 text-[#E87A3E]" />
                         <span>Fotoğraf Yükle</span>
                       </button>
 
@@ -3215,8 +3217,8 @@ export const ProfileTab: React.FC<Props> = ({
                   {/* Profile Fields: Name, @handle, Bio, City */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
-                        <UserIcon className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                      <label className="text-[#6B635B] dark:text-[#A39A91] font-semibold flex items-center gap-1.5">
+                        <UserIcon className="w-3.5 h-3.5 text-[#E87A3E]" />
                         <span>Görünen İsim</span>
                       </label>
                       <input
@@ -3224,13 +3226,13 @@ export const ProfileTab: React.FC<Props> = ({
                         value={tempName}
                         onChange={(e) => setTempName(e.target.value)}
                         placeholder="İsminiz"
-                        className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] focus:outline-none focus:border-[#E87A3E]"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
-                        <AtSign className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                      <label className="text-[#6B635B] dark:text-[#A39A91] font-semibold flex items-center gap-1.5">
+                        <AtSign className="w-3.5 h-3.5 text-[#E87A3E]" />
                         <span>Kullanıcı Adı</span>
                       </label>
                       <input
@@ -3238,13 +3240,13 @@ export const ProfileTab: React.FC<Props> = ({
                         value={tempHandle}
                         onChange={(e) => setTempHandle(e.target.value)}
                         placeholder="@kullaniciadi"
-                        className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] focus:outline-none focus:border-[#E87A3E]"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-zinc-600 dark:text-zinc-400 font-semibold block">
+                    <label className="text-[#6B635B] dark:text-[#A39A91] font-semibold block">
                       Hakkımda (Bio)
                     </label>
                     <textarea
@@ -3252,14 +3254,14 @@ export const ProfileTab: React.FC<Props> = ({
                       value={tempBio}
                       onChange={(e) => setTempBio(e.target.value)}
                       placeholder="Müzik zevkinden veya favori türlerinden kısaca bahset..."
-                      className="w-full p-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500 resize-none"
+                      className="w-full p-3 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] focus:outline-none focus:border-[#E87A3E] resize-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-zinc-600 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                      <label className="text-[#6B635B] dark:text-[#A39A91] font-semibold flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#E87A3E]" />
                         <span>Şehir / Konum</span>
                       </label>
                       <button
@@ -3271,7 +3273,7 @@ export const ProfileTab: React.FC<Props> = ({
                             setTempCity(loc.fullLocation);
                           }
                         }}
-                        className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        className="text-[11px] text-[#D96B2C] dark:text-[#F49A5E] hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <Navigation className={`w-3 h-3 ${isDetectingLocation ? 'animate-spin' : ''}`} />
                         <span>{isDetectingLocation ? 'Bulunuyor...' : 'Canlı GPS Al'}</span>
@@ -3282,7 +3284,7 @@ export const ProfileTab: React.FC<Props> = ({
                       value={tempCity}
                       onChange={(e) => setTempCity(e.target.value)}
                       placeholder="Örn: İstanbul, Kadıköy"
-                      className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] focus:outline-none focus:border-[#E87A3E]"
                     />
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {[
@@ -3296,14 +3298,14 @@ export const ProfileTab: React.FC<Props> = ({
                           key={opt.label}
                           type="button"
                           onClick={() => setTempCity(opt.value)}
-                          className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200 dark:hover:bg-white/[0.1] border border-zinc-200 dark:border-white/[0.08] text-[11px] text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E87A3E]/15 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[11px] text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
                         >
                           {opt.label}
                         </button>
                       ))}
                     </div>
                     {locationStatusMessage && (
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pt-0.5">
+                      <p className="text-[11px] text-[#6B635B] dark:text-[#A39A91] pt-0.5">
                         {locationStatusMessage}
                       </p>
                     )}
@@ -3315,24 +3317,24 @@ export const ProfileTab: React.FC<Props> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <h4 className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                          <Sun className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                        <h4 className="text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] flex items-center gap-2">
+                          <Sun className="w-4 h-4 text-[#E87A3E]" />
                           <span>Görünüm ve Tema</span>
                         </h4>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                          Göz yormayan karanlık veya ferah aydınlık mod
+                        <p className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">
+                          Sıcak Analog Gece veya Krem Kağıt Gündüz
                         </p>
                       </div>
-                      <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full bg-purple-500/10">
+                      <span className="text-[10px] font-semibold text-[#D96B2C] dark:text-[#F49A5E] px-2 py-0.5 rounded-full bg-[#E87A3E]/15">
                         {currentTheme === 'dark' ? 'Karanlık' : currentTheme === 'light' ? 'Aydınlık' : 'Sistem'}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'dark' as ThemeMode, label: 'Karanlık', desc: 'Obsidyen Gece', icon: <Moon className="w-4 h-4 text-indigo-500 dark:text-indigo-400" /> },
-                        { id: 'light' as ThemeMode, label: 'Aydınlık', desc: 'Stüdyo Gündüz', icon: <Sun className="w-4 h-4 text-amber-500 dark:text-amber-400" /> },
-                        { id: 'system' as ThemeMode, label: 'Sistem', desc: 'Cihaza Duyarlı', icon: <Monitor className="w-4 h-4 text-cyan-500 dark:text-cyan-400" /> },
+                        { id: 'dark' as ThemeMode, label: 'Karanlık', desc: 'Sıcak Kömür', icon: <Moon className="w-4 h-4 text-[#E87A3E]" /> },
+                        { id: 'light' as ThemeMode, label: 'Aydınlık', desc: 'Krem Kağıt', icon: <Sun className="w-4 h-4 text-[#D97706]" /> },
+                        { id: 'system' as ThemeMode, label: 'Sistem', desc: 'Cihaza Duyarlı', icon: <Monitor className="w-4 h-4 text-[#A39A91]" /> },
                       ].map((themeOpt) => {
                         const isSelected = currentTheme === themeOpt.id;
                         return (
@@ -3342,16 +3344,16 @@ export const ProfileTab: React.FC<Props> = ({
                             onClick={() => handleThemeChange(themeOpt.id)}
                             className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1.5 active:scale-95 ${
                               isSelected
-                                ? 'bg-purple-500/10 border-purple-500 text-zinc-900 dark:text-white shadow-sm ring-1 ring-purple-500/30'
-                                : 'bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                                ? 'bg-[#E87A3E]/15 border-[#E87A3E] text-[#181512] dark:text-[#FAF7F2] shadow-sm ring-1 ring-[#E87A3E]/30'
+                                : 'bg-[#FAF8F4] dark:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                             }`}
                           >
                             {themeOpt.icon}
                             <div className="min-w-0">
-                              <div className={`text-xs font-semibold ${isSelected ? 'text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                              <div className={`text-xs font-semibold ${isSelected ? 'text-[#181512] dark:text-[#FAF7F2]' : 'text-[#6B635B] dark:text-[#A39A91]'}`}>
                                 {themeOpt.label}
                               </div>
-                              <div className="text-[10px] text-zinc-500 hidden sm:block mt-0.5">
+                              <div className="text-[10px] text-[#6B635B] dark:text-[#A39A91] hidden sm:block mt-0.5">
                                 {themeOpt.desc}
                               </div>
                             </div>
@@ -3527,18 +3529,18 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
 
             {/* Sticky Bottom Footer: Değişiklikleri Kaydet */}
-            <div className="sticky bottom-0 px-6 py-3.5 bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/[0.08] flex items-center gap-2.5 shrink-0 z-20">
+            <div className="sticky bottom-0 px-6 py-3.5 bg-white/95 dark:bg-[#171412]/95 backdrop-blur-xl border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] flex items-center gap-2.5 shrink-0 z-20">
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="px-4 min-h-[44px] py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.11] text-zinc-700 dark:text-zinc-300 font-semibold text-xs transition cursor-pointer"
+                className="px-4 min-h-[44px] py-2.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/[0.11] text-[#181512] dark:text-[#FAF7F2] font-semibold text-xs transition cursor-pointer"
               >
                 İptal
               </button>
               <button
                 type="button"
                 onClick={handleSaveSettingsChanges}
-                className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition active:scale-[0.98] cursor-pointer"
+                className="studio-btn-primary flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-bold text-xs shadow-lg shadow-amber-950/25 transition active:scale-[0.98] cursor-pointer"
               >
                 Değişiklikleri Kaydet
               </button>

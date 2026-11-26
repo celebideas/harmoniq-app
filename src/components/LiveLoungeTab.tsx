@@ -294,11 +294,11 @@ export const LiveLoungeTab: React.FC<Props> = ({
             aria-label="Şu Anda Çalan"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="relative rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none p-4 overflow-hidden"
+            className="relative rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-4 overflow-hidden"
           >
             {/* Swipe Visual Feedback */}
             {swipeHint && (
-              <div className="absolute inset-0 z-30 bg-[#0B0B0D]/75 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 z-30 bg-[#0E0C0B]/75 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                 <div className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white font-semibold text-xs flex items-center gap-2">
                   {swipeHint === 'next' ? (
                     <>
@@ -320,7 +320,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <div
                 className={
                   showKlipMode
-                    ? 'mb-3.5 rounded-xl overflow-hidden border border-[#E8E6E1] dark:border-white/[0.08] aspect-video w-full bg-black relative block'
+                    ? 'mb-3.5 rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] aspect-video w-full bg-black relative block'
                     : 'fixed -bottom-48 -right-48 w-56 h-36 opacity-0 pointer-events-none z-[-10]'
                 }
               >
@@ -344,7 +344,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   triggerHaptic(12);
                   onOpenNowPlaying();
                 }}
-                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer transition-transform active:scale-95 bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08]"
+                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer transition-transform active:scale-95 bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
                 title="Tam ekran oynatıcıyı aç"
                 aria-label={`${currentSong.title} tam ekran oynatıcıyı aç`}
               >
@@ -366,15 +366,15 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 onClick={onOpenNowPlaying}
                 className="min-w-0 flex-1 cursor-pointer group/title"
               >
-                <h2 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7] truncate leading-snug tracking-tight group-hover/title:opacity-75 transition-opacity">
+                <h2 className="text-base font-bold text-[#181512] dark:text-[#FAF7F2] truncate leading-snug tracking-tight group-hover/title:opacity-75 transition-opacity">
                   {currentSong.title}
                 </h2>
-                <p className="text-sm text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                <p className="text-sm text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
                   {currentSong.artist}
                 </p>
               </div>
 
-              {/* Right: Clean Search Button + Circular High-Contrast Play/Pause */}
+              {/* Right: Clean Search Button + Circular Copper-Amber Play/Pause */}
               <div className="flex items-center gap-2 shrink-0">
                 {currentSong.youtubeVideoId && (
                   <button
@@ -385,8 +385,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     }}
                     className={`w-9 h-9 rounded-full border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                       showKlipMode
-                        ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] border-transparent'
-                        : 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/30'
+                        : 'bg-[#F2EDE6] dark:bg-[#211D1A] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                     }`}
                     title={showKlipMode ? 'Klip görünümünü kapat' : 'Video klip görünümü'}
                     aria-label={showKlipMode ? 'Klip görünümünü kapat' : 'Video klip görünümü'}
@@ -401,7 +401,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(12);
                     onOpenSongPicker();
                   }}
-                  className="w-10 h-10 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer active:scale-95"
+                  className="w-10 h-10 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer active:scale-95"
                   title="Şarkı ara veya değiştir"
                   aria-label="Şarkı ara veya değiştir"
                 >
@@ -414,7 +414,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(20);
                     onTogglePlay();
                   }}
-                  className="studio-btn-primary w-12 h-12 rounded-full bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
+                  className="studio-btn-primary w-12 h-12 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-lg shadow-amber-950/20"
                   title={isPlaying ? 'Duraklat' : 'Oynat'}
                   aria-label={isPlaying ? 'Şarkıyı duraklat' : 'Şarkıyı oynat'}
                 >
@@ -462,15 +462,15 @@ export const LiveLoungeTab: React.FC<Props> = ({
             )}
 
             {/* Quiet Studio Control Strip: Timeline | Harita | Liste + Distance Filter */}
-            <div className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none p-3 space-y-2.5">
-              <div className="grid grid-cols-3 gap-1 p-1 bg-[#F1EFEA] dark:bg-[#1C1C22] rounded-xl text-xs">
+            <div className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-3 space-y-2.5">
+              <div className="grid grid-cols-3 gap-1 p-1 bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] rounded-xl text-xs">
                 <button
                   type="button"
                   onClick={() => setLoungeViewMode('timeline')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     loungeViewMode === 'timeline'
-                      ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
                   }`}
                 >
                   <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
@@ -482,8 +482,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   onClick={() => setLoungeViewMode('map')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     loungeViewMode === 'map'
-                      ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
-                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
@@ -493,7 +493,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={onOpenRoomListeners}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] transition cursor-pointer flex items-center justify-center gap-1.5 border border-transparent"
                 >
                   <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                   <span className="truncate font-mono tabular-nums">
@@ -527,14 +527,14 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       key={f.id}
                       type="button"
                       onClick={() => setDistanceFilter(f.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 border ${
                         isSelected
-                          ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                          : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                          ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold border-[#E87A3E]/25'
+                          : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]'
                       }`}
                     >
                       <span>{f.label}</span>
-                      <span className="font-mono tabular-nums text-[10px] opacity-75">
+                      <span className="font-mono tabular-nums text-[10px] opacity-80">
                         {f.count}
                       </span>
                     </button>
@@ -544,14 +544,14 @@ export const LiveLoungeTab: React.FC<Props> = ({
             </div>
 
             {distanceFilteredUsers.length === 0 && loungeViewMode === 'timeline' && (
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-center space-y-2">
-                <p className="text-xs text-[#141416] dark:text-[#F5F5F7] font-medium">
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-center space-y-2">
+                <p className="text-xs text-[#181512] dark:text-[#FAF7F2] font-medium">
                   Seçili yarıçapta şu anda başka dinleyici yok.
                 </p>
                 <button
                   type="button"
                   onClick={() => setDistanceFilter('all')}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
                 >
                   Tüm Dinleyicileri Göster
                 </button>
@@ -565,19 +565,19 @@ export const LiveLoungeTab: React.FC<Props> = ({
           {/* 3. SAKİN "SANİYE ANILARI" BÖLÜMÜ */}
           <section
             aria-label="Saniye Anıları"
-            className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3.5"
+            className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3.5"
           >
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+              <h3 className="text-sm font-bold text-[#181512] dark:text-[#FAF7F2] tracking-tight">
                 Saniye Anıları
               </h3>
-              <span className="text-[11px] font-mono tabular-nums text-[#63636B] dark:text-[#8E8E98]">
+              <span className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91]">
                 {vibeNotes.length} anı
               </span>
             </div>
 
             {/* Clean Editorial Quote Rows (Comment left, clickable mono timestamp right) */}
-            <div className="divide-y divide-[#E8E6E1] dark:divide-white/[0.06]">
+            <div className="divide-y divide-[#EAE4DC] dark:divide-[#FFF0E1]/[0.06]">
               {vibeNotes.slice(0, 5).map((vibe) => {
                 const isNearCurrent = Math.abs(mySecond - vibe.second) <= 5;
                 return (
@@ -593,10 +593,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
                         vibe.isMine ? '' : 'cursor-pointer group/vibe'
                       }`}
                     >
-                      <p className="text-xs sm:text-[13px] text-[#141416] dark:text-[#F5F5F7] leading-relaxed">
+                      <p className="text-xs sm:text-[13px] text-[#181512] dark:text-[#FAF7F2] leading-relaxed">
                         "{vibe.note}"
                       </p>
-                      <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] group-hover/vibe:text-[#141416] dark:group-hover/vibe:text-[#F5F5F7] transition-colors block truncate">
+                      <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] group-hover/vibe:text-[#181512] dark:group-hover/vibe:text-[#FAF7F2] transition-colors block truncate">
                         {vibe.userName}
                       </span>
                     </div>
@@ -607,7 +607,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 transition cursor-pointer active:scale-95 ${
                         isNearCurrent
                           ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/30 dark:border-[#22C55E]/30'
-                          : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] hover:bg-[#E8E6E1] dark:hover:bg-white/10 border border-[#E8E6E1] dark:border-white/[0.08]'
+                          : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
                       }`}
                       title={`${formatTime(vibe.second)} anına sar`}
                     >
@@ -621,7 +621,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             {/* Single-line Calm Note Input */}
             <form
               onSubmit={handleSendCustomNote}
-              className="pt-2 border-t border-[#E8E6E1] dark:border-white/[0.06] flex items-center gap-2"
+              className="pt-2 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] flex items-center gap-2"
             >
               <input
                 type="text"
@@ -629,12 +629,12 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 onChange={(e) => setCustomNoteText(e.target.value)}
                 placeholder={`${formatTime(mySecond)} anına kısa bir not bırak...`}
                 maxLength={100}
-                className="flex-1 min-w-0 h-10 px-3 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] focus:border-[#141416]/40 dark:focus:border-white/30 text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none transition"
+                className="flex-1 min-w-0 h-10 px-3 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] focus:border-[#E87A3E]/60 text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none transition"
               />
               <button
                 type="submit"
                 disabled={!customNoteText.trim()}
-                className="studio-btn-primary w-10 h-10 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] flex items-center justify-center shrink-0 transition active:scale-95 cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed"
+                className="studio-btn-primary w-10 h-10 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center shrink-0 transition active:scale-95 cursor-pointer shadow-lg shadow-amber-950/20 disabled:opacity-35 disabled:cursor-not-allowed"
                 title="Not bırak"
                 aria-label="Not bırak"
               >
@@ -644,7 +644,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
           </section>
 
           {/* Quiet Room Listeners & Continuous Radio Card */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none space-y-3">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none space-y-3">
             <div className="flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex -space-x-1.5 shrink-0">
@@ -656,7 +656,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       className={`avatar-circle w-8 h-8 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform overflow-hidden ${
                         u.isRealUser
                           ? 'ring-2 ring-[#16A34A] dark:ring-[#22C55E] z-10'
-                          : 'ring-2 ring-white dark:ring-[#141418]'
+                          : 'ring-2 ring-white dark:ring-[#171412]'
                       }`}
                     >
                       {u.avatarUrl ? (
@@ -668,10 +668,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   ))}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                  <div className="text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
                     Odadaki Dinleyiciler
                   </div>
-                  <div className="text-[11px] font-mono tabular-nums text-[#63636B] dark:text-[#8E8E98] truncate">
+                  <div className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91] truncate">
                     {distanceFilteredUsers.length + 1} kişi aynı şarkıda
                   </div>
                 </div>
@@ -680,14 +680,14 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={onOpenRoomListeners}
-                className="px-3 py-1.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer shrink-0"
               >
                 Tümü
               </button>
             </div>
 
-            <div className="pt-2.5 border-t border-[#E8E6E1] dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
-              <span className="text-[#63636B] dark:text-[#8E8E98] truncate">
+            <div className="pt-2.5 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] flex items-center justify-between gap-2 text-xs">
+              <span className="text-[#6B635B] dark:text-[#A39A91] truncate">
                 {nextRadioSong ? `Sıradaki: ${nextRadioSong.title}` : 'Sürekli Akış'}
               </span>
               <button
@@ -696,7 +696,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer shrink-0 border ${
                   autoRadioEnabled
                     ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
-                    : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] border-[#E8E6E1] dark:border-white/[0.08]'
+                    : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
                 }`}
               >
                 {autoRadioEnabled ? 'Radyo Açık' : 'Radyo Kapalı'}

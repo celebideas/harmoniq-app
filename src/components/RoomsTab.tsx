@@ -148,8 +148,8 @@ const ArtistCardCompact: React.FC<{
       onClick={onEnter}
       className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center shrink-0 group ${
         isCurrentArtist
-          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
-          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
+          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
+          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
       }`}
     >
       <div className="relative mb-2.5">
@@ -159,7 +159,7 @@ const ArtistCardCompact: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#E8E6E1] dark:border-white/[0.08] bg-[#1C1C22] group-hover:scale-105 transition-transform"
+            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-[#211D1A] group-hover:scale-105 transition-transform"
           />
         ) : (
           <div
@@ -170,10 +170,10 @@ const ArtistCardCompact: React.FC<{
         )}
       </div>
 
-      <span className="text-xs font-bold text-[#141416] dark:text-[#F5F5F7] truncate w-full">
+      <span className="text-xs font-bold text-[#181512] dark:text-[#FAF7F2] truncate w-full">
         {room.artist}
       </span>
-      <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
+      <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] truncate w-full mt-0.5">
         {room.topSongTitle}
       </span>
 
@@ -198,8 +198,8 @@ const ArtistRoomRow: React.FC<{
       onClick={onEnter}
       className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrentArtist
-          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
-          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
+          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
+          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -209,7 +209,7 @@ const ArtistRoomRow: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#E8E6E1] dark:border-white/[0.08] bg-[#1C1C22]"
+            className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-[#211D1A]"
           />
         ) : (
           <div
@@ -220,10 +220,10 @@ const ArtistRoomRow: React.FC<{
         )}
 
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+          <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
             {room.artist}
           </div>
-          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+          <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
             {room.topSongTitle} · {room.genre}
           </div>
         </div>
@@ -237,8 +237,8 @@ const ArtistRoomRow: React.FC<{
         <div
           className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
             isCurrentArtist
-              ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-              : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D]'
+              ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+              : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] group-hover:bg-[#E87A3E] group-hover:text-white'
           }`}
           title={`${room.artist} Odasına Gir`}
         >
@@ -264,12 +264,12 @@ const SongRoomRow: React.FC<{
       onClick={onSelect}
       className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrent
-          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
-          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
+          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
+          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 border border-[#E8E6E1] dark:border-white/[0.08]">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
           {song.coverUrl ? (
             <img
               src={song.coverUrl}
@@ -286,10 +286,10 @@ const SongRoomRow: React.FC<{
         </div>
 
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+          <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
             {song.title}
           </div>
-          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+          <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
             {song.artist} · <span className="font-mono tabular-nums">{formatDuration(song.durationSeconds)}</span>
           </div>
         </div>
@@ -300,7 +300,7 @@ const SongRoomRow: React.FC<{
           <LiveMiniEqualizer />
           <span>{listenerCount}</span>
         </span>
-        <div className="w-8 h-8 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D] flex items-center justify-center transition">
+        <div className="w-8 h-8 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] group-hover:bg-[#E87A3E] group-hover:text-white flex items-center justify-center transition">
           <ChevronRight className="w-4 h-4" strokeWidth={1.75} />
         </div>
       </div>
@@ -604,7 +604,7 @@ export const RoomsTab: React.FC<Props> = ({
         <div
           role="tablist"
           aria-label="Keşfet görünümü"
-          className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#F1EFEA] dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] w-full sm:w-auto sm:min-w-[290px]"
+          className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#F2EDE6] dark:bg-[#171412] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] w-full sm:w-auto sm:min-w-[290px]"
         >
           <button
             type="button"
@@ -616,8 +616,8 @@ export const RoomsTab: React.FC<Props> = ({
             }}
             className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
               exploreLens === 'rooms'
-                ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
+                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
             }`}
           >
             <Disc3 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
@@ -634,8 +634,8 @@ export const RoomsTab: React.FC<Props> = ({
             }}
             className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
               exploreLens === 'map'
-                ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
+                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
             }`}
           >
             <MapPin className="w-4 h-4 shrink-0" strokeWidth={1.75} />
@@ -679,10 +679,10 @@ export const RoomsTab: React.FC<Props> = ({
                   key={f.id}
                   type="button"
                   onClick={() => setMapDistanceFilter(f.id)}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 border ${
                     isSelected
-                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                      : 'bg-white dark:bg-[#141418] text-[#63636B] dark:text-[#8E8E98] border border-[#E8E6E1] dark:border-white/[0.08] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                      : 'bg-white dark:bg-[#171412] text-[#6B635B] dark:text-[#A39A91] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                   }`}
                 >
                   <span>{f.label}</span>
@@ -724,8 +724,8 @@ export const RoomsTab: React.FC<Props> = ({
                   title={mood.desc}
                   className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition whitespace-nowrap shrink-0 cursor-pointer border active:scale-95 ${
                     isSelected
-                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] border-transparent'
-                      : 'bg-white dark:bg-[#141418] text-[#63636B] dark:text-[#8E8E98] border-[#E8E6E1] dark:border-white/[0.08] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
+                      : 'bg-white dark:bg-[#171412] text-[#6B635B] dark:text-[#A39A91] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                   }`}
                 >
                   {mood.label}
@@ -736,21 +736,21 @@ export const RoomsTab: React.FC<Props> = ({
 
           {/* Kişisel Frekansın Studio Strip */}
           {onStartPersonalRadio && (
-            <div className="p-4 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none flex items-center justify-between gap-3">
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#D96B2C] dark:text-[#F49A5E] shrink-0">
                   <Radio className="w-5 h-5" strokeWidth={1.75} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight truncate">
+                    <h3 className="text-sm font-bold text-[#181512] dark:text-[#FAF7F2] tracking-tight truncate">
                       Kişisel Frekansın
                     </h3>
                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#16A34A] dark:text-[#22C55E] shrink-0">
                       <LiveMiniEqualizer />
                     </span>
                   </div>
-                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                  <p className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
                     {favoriteArtists.length > 0
                       ? `${favoriteArtists.filter((a) => !NON_ARTIST_BLACKLIST.test(a)).slice(0, 3).join(', ')} ve kütüphanen`
                       : 'Kişisel zevkine özel kesintisiz canlı akış'}
@@ -764,7 +764,7 @@ export const RoomsTab: React.FC<Props> = ({
                   triggerHaptic(20);
                   onStartPersonalRadio();
                 }}
-                className="studio-btn-primary px-4 py-2.5 min-h-[40px] rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer"
+                className="studio-btn-primary px-4 py-2.5 min-h-[40px] rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current ml-0.5" strokeWidth={1.75} />
                 <span>Başlat</span>
@@ -775,7 +775,7 @@ export const RoomsTab: React.FC<Props> = ({
           {/* Sleek Search Bar */}
           <div className="relative">
             <Search
-              className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="w-4 h-4 text-[#6B635B] dark:text-[#A39A91] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               strokeWidth={1.75}
             />
             <input
@@ -783,13 +783,13 @@ export const RoomsTab: React.FC<Props> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Sanatçı veya şarkı odası ara..."
-              className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] focus:border-[#141416]/40 dark:focus:border-white/30 rounded-xl text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none transition"
+              className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] focus:border-[#E87A3E]/50 rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none transition"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] cursor-pointer"
                 aria-label="Temizle"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -798,7 +798,7 @@ export const RoomsTab: React.FC<Props> = ({
           </div>
 
           {/* Minimalist Underline Sub-Tabs */}
-          <div className="flex items-center gap-6 border-b border-[#E8E6E1] dark:border-white/[0.07] overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-6 border-b border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] overflow-x-auto no-scrollbar">
             {[
               { id: 'all', label: 'Tümü' },
               { id: 'artists', label: `Sanatçılar (${filteredArtistRooms.length})` },
@@ -816,13 +816,13 @@ export const RoomsTab: React.FC<Props> = ({
                   }}
                   className={`pb-3 text-xs whitespace-nowrap transition-colors relative cursor-pointer ${
                     isActive
-                      ? 'text-[#141416] dark:text-[#F5F5F7] font-bold'
-                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-medium'
+                      ? 'text-[#D96B2C] dark:text-[#F49A5E] font-bold'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] font-medium'
                   }`}
                 >
                   {tab.label}
                   {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#141416] dark:bg-white rounded-full" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E87A3E] rounded-full" />
                   )}
                 </button>
               );
@@ -835,10 +835,10 @@ export const RoomsTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setSelectedGenreFilter('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 border ${
                   selectedGenreFilter === 'all'
-                    ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                    : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
+                    ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold border-[#E87A3E]/25'
+                    : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] bg-[#F2EDE6] dark:bg-[#211D1A] border-transparent'
                 }`}
               >
                 Tümü
@@ -848,10 +848,10 @@ export const RoomsTab: React.FC<Props> = ({
                   key={genre}
                   type="button"
                   onClick={() => setSelectedGenreFilter(genre)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 border ${
                     selectedGenreFilter === genre
-                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
-                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
+                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold border-[#E87A3E]/25'
+                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] bg-[#F2EDE6] dark:bg-[#211D1A] border-transparent'
                   }`}
                 >
                   {genre}
@@ -866,10 +866,10 @@ export const RoomsTab: React.FC<Props> = ({
               <section className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                    <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
                       Sanatçı Frekansları
                     </span>
-                    <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
+                    <span className="text-[#6B635B] dark:text-[#A39A91] font-mono tabular-nums">
                       ({filteredArtistRooms.length})
                     </span>
                   </div>
@@ -877,14 +877,14 @@ export const RoomsTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setFilterMode('artists')}
-                    className="text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-semibold text-xs transition cursor-pointer"
+                    className="text-[#D96B2C] dark:text-[#F49A5E] hover:underline font-semibold text-xs transition cursor-pointer"
                   >
                     Tümünü Gör →
                   </button>
                 </div>
 
                 {filteredArtistRooms.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  <div className="py-6 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
                     Aramanıza uygun müzik sanatçısı bulunamadı.
                   </div>
                 ) : (
@@ -906,8 +906,8 @@ export const RoomsTab: React.FC<Props> = ({
               </section>
 
               <section className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-[#63636B] dark:text-[#8E8E98]">
-                  <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                <div className="flex items-center justify-between text-xs text-[#6B635B] dark:text-[#A39A91]">
+                  <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
                     Aktif Şarkı Odaları
                   </span>
                   <span className="font-mono tabular-nums text-[11px]">
@@ -916,7 +916,7 @@ export const RoomsTab: React.FC<Props> = ({
                 </div>
 
                 {filteredSongRooms.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  <div className="py-6 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
                     Aramanıza uygun şarkı odası bulunamadı.
                   </div>
                 ) : (
@@ -949,7 +949,7 @@ export const RoomsTab: React.FC<Props> = ({
                         triggerHaptic(10);
                         setAllModeSongLimit((prev) => prev + 6);
                       }}
-                      className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer"
+                      className="w-full py-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
                     >
                       Daha Fazla Oda Göster (+{filteredSongRooms.length - allModeSongLimit})
                     </button>
@@ -964,10 +964,10 @@ export const RoomsTab: React.FC<Props> = ({
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                  <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
                     Tüm Sanatçı Frekansları
                   </span>
-                  <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
+                  <span className="text-[#6B635B] dark:text-[#A39A91] font-mono tabular-nums">
                     ({filteredArtistRooms.length})
                   </span>
                 </div>
@@ -978,7 +978,7 @@ export const RoomsTab: React.FC<Props> = ({
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-medium border transition cursor-pointer ${
                     onlyMusicChannels
                       ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
-                      : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] border-[#E8E6E1] dark:border-white/[0.08]'
+                      : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]'
                   }`}
                 >
                   Yalnızca Müzik Kanalları
@@ -986,7 +986,7 @@ export const RoomsTab: React.FC<Props> = ({
               </div>
 
               {filteredArtistRooms.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                <div className="py-8 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
                   Aramanıza uygun müzik sanatçısı frekansı bulunamadı.
                 </div>
               ) : (
@@ -1014,7 +1014,7 @@ export const RoomsTab: React.FC<Props> = ({
                           triggerHaptic(10);
                           setVisibleArtistsCount((prev) => prev + 12);
                         }}
-                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer min-h-[44px]"
+                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer min-h-[44px]"
                       >
                         Daha Fazla Sanatçı Yükle (+{filteredArtistRooms.length - visibleArtistsCount})
                       </button>
@@ -1028,15 +1028,15 @@ export const RoomsTab: React.FC<Props> = ({
           {/* SECTION C: ŞARKI ODALARI */}
           {filterMode === 'songs' && (
             <section className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#63636B] dark:text-[#8E8E98]">
-                <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+              <div className="flex items-center justify-between text-xs text-[#6B635B] dark:text-[#A39A91]">
+                <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
                   Tüm Şarkı Odaları ({filteredSongRooms.length})
                 </span>
                 <span>Senkron dinleme</span>
               </div>
 
               {filteredSongRooms.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                <div className="py-8 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
                   Aramanıza uygun şarkı odası bulunamadı.
                 </div>
               ) : (
@@ -1069,7 +1069,7 @@ export const RoomsTab: React.FC<Props> = ({
                           triggerHaptic(10);
                           setVisibleSongsCount((prev) => prev + 12);
                         }}
-                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer min-h-[44px]"
+                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer min-h-[44px]"
                       >
                         Daha Fazla Şarkı Odası Yükle (+{filteredSongRooms.length - visibleSongsCount})
                       </button>
@@ -1084,7 +1084,7 @@ export const RoomsTab: React.FC<Props> = ({
           {filterMode === 'personal' && (
             <section className="space-y-4">
               {syncedPlaylists.length === 0 ? (
-                <div className="py-10 text-center text-xs text-[#63636B] dark:text-[#8E8E98] space-y-1">
+                <div className="py-10 text-center text-xs text-[#6B635B] dark:text-[#A39A91] space-y-1">
                   <p>Henüz senkronize edilmiş çalma listeniz bulunmuyor.</p>
                   <p className="opacity-75">Ben sekmesinden listelerinizi bağlayabilirsiniz.</p>
                 </div>
@@ -1094,7 +1094,7 @@ export const RoomsTab: React.FC<Props> = ({
                     <div
                       key={pl.id}
                       onClick={() => onPlayPlaylist && onPlayPlaylist(pl)}
-                      className="p-3.5 rounded-2xl bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-between gap-3 group cursor-pointer transition"
+                      className="p-3.5 rounded-2xl bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none flex items-center justify-between gap-3 group cursor-pointer transition"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
@@ -1102,19 +1102,19 @@ export const RoomsTab: React.FC<Props> = ({
                           alt={pl.title}
                           loading="lazy"
                           decoding="async"
-                          className="w-12 h-12 rounded-xl object-cover shrink-0 bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08]"
+                          className="w-12 h-12 rounded-xl object-cover shrink-0 bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
                         />
                         <div className="min-w-0">
-                          <h4 className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                          <h4 className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
                             {pl.title}
                           </h4>
-                          <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 font-mono tabular-nums">
+                          <p className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5 font-mono tabular-nums">
                             {pl.tracks?.length || pl.trackCount} parça · {pl.duration}
                           </p>
                         </div>
                       </div>
 
-                      <div className="w-8 h-8 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D] flex items-center justify-center transition shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] group-hover:bg-[#E87A3E] group-hover:text-white flex items-center justify-center transition shrink-0">
                         <Play className="w-3.5 h-3.5 fill-current ml-0.5" strokeWidth={1.75} />
                       </div>
                     </div>
