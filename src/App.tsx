@@ -48,6 +48,7 @@ import {
   fetchArtistRadio,
   fetchMoreRadioRecommendations,
   fetchYouTubeVideoIdForSong,
+  resolveMusicLinkOrQuery,
   searchITunesAudio,
   syncYouTubeLibraryByInput,
   TURKISH_ROCK_RADIO_POOL,
@@ -2438,6 +2439,53 @@ export default function App() {
     setToastMessage(`"${track.title}" ${timeStr} anından çalınıyor.`);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // Resolve incoming ListenHub Moment Share links (/?track=...&artist=...&t=...)
+  const sharedMomentHandledRef = useRef(false);
+  useEffect(() => {
+    if (sharedMomentHandledRef.current || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const sharedTrack = params.get('track')?.trim();
+    if (!sharedTrack) return;
+
+    sharedMomentHandledRef.current = true;
+    const sharedArtist = params.get('artist')?.trim() || '';
+    const sharedSecond = Math.max(0, Math.floor(Number(params.get('t')) || 0));
+
+    // Clean query params so reloads don't re-trigger
+    try {
+      params.delete('track');
+      params.delete('artist');
+      params.delete('t');
+      const remaining = params.toString();
+      const nextUrl = `${window.location.pathname}${remaining ? `?${remaining}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, '', nextUrl);
+    } catch {
+      // ignore history errors in sandboxed iframes
+    }
+
+    const matchLocal = SAMPLE_SONGS.find(
+      (s) =>
+        s.title.trim().toLowerCase() === sharedTrack.toLowerCase() &&
+        (!sharedArtist || s.artist.trim().toLowerCase() === sharedArtist.toLowerCase())
+    );
+
+    if (matchLocal) {
+      handlePlayMoment(matchLocal, sharedSecond);
+      return;
+    }
+
+    const query = sharedArtist ? `${sharedArtist} - ${sharedTrack}` : sharedTrack;
+    void resolveMusicLinkOrQuery(query)
+      .then((resolvedSong) => {
+        if (resolvedSong) {
+          handlePlayMoment(resolvedSong, sharedSecond);
+        }
+      })
+      .catch(() => {
+        // fallback silently to default track if unresolvable
+      });
+  }, []);
 
   const resolvedDisplayName =
     googleUser?.name ||

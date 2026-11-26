@@ -102,7 +102,7 @@ export const BottomNav: React.FC<Props> = ({
                 triggerHaptic(15);
                 onOpenNowPlaying?.();
               }}
-              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
+              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.96] transition-transform duration-100 ease-out"
               title="Tam Ekran Oynatıcıyı Aç"
             >
               <div
@@ -149,7 +149,7 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="w-9 h-9 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
@@ -170,7 +170,7 @@ export const BottomNav: React.FC<Props> = ({
                     triggerHaptic(15);
                     onNextSong();
                   }}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                     isLight
                       ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                       : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -219,7 +219,7 @@ export const BottomNav: React.FC<Props> = ({
                 onSelectTab(item.id);
               }}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-transform duration-100 ease-out cursor-pointer active:scale-[0.96] ${
                 isActive
                   ? isLight
                     ? 'bg-[#E87A3E]/15 text-[#D96B2C] font-semibold'

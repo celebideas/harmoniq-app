@@ -56,6 +56,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   const [previousVolume, setPreviousVolume] = useState<number>(100);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragSecond, setDragSecond] = useState<number>(currentSecond);
+  const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
   const trackRef = useRef<HTMLDivElement>(null);
 
   const isLight = themeMode === 'light';
@@ -162,9 +163,11 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           type="button"
           onClick={() => {
             triggerHaptic(15);
+            setIsHeartPopping(true);
+            window.setTimeout(() => setIsHeartPopping(false), 220);
             onToggleFavorite(currentSong);
           }}
-          className={`p-2 rounded-xl transition cursor-pointer shrink-0 ${
+          className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0 ${
             isFavorite
               ? 'text-rose-500 bg-rose-500/10'
               : isLight
@@ -174,7 +177,12 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           aria-label={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
           title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
         >
-          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} strokeWidth={1.75} />
+          <Heart
+            className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''} ${
+              isHeartPopping ? 'animate-heart-pulse' : ''
+            }`}
+            strokeWidth={1.75}
+          />
         </button>
       </div>
 
@@ -187,7 +195,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(12);
               onPrevSong();
             }}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
               isLight
                 ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                 : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -205,7 +213,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(18);
               onTogglePlay();
             }}
-            className="w-10 h-10 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center active:scale-95 transition cursor-pointer"
+            className="w-10 h-10 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
             aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
             title={isPlaying ? 'Duraklat' : 'Oynat'}
           >
@@ -224,7 +232,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
               triggerHaptic(12);
               onNextSong();
             }}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
               isLight
                 ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                 : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -293,7 +301,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleToggleMute}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
               isLight
                 ? 'text-[#6B635B] hover:text-[#181512]'
                 : 'text-[#A39A91] hover:text-[#FAF7F2]'
@@ -325,7 +333,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             triggerHaptic(12);
             onOpenNowPlaying();
           }}
-          className={`p-2 rounded-xl border transition cursor-pointer ${
+          className={`p-2 rounded-xl border active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
             isLight
               ? 'bg-[#F2EDE6] hover:bg-[#EAE4DC] border-[#E2D9CE] text-[#181512]'
               : 'bg-[#211D1A] hover:bg-[#FFF0E1]/10 border-[#FFF0E1]/[0.08] text-[#FAF7F2]'

@@ -103,9 +103,9 @@ export const TopHeader: React.FC<Props> = ({
             triggerHaptic(10);
             onSelectTab('lounge');
           }}
-          className="flex items-center gap-2.5 cursor-pointer group shrink-0 text-left"
+          className="flex items-center gap-2.5 cursor-pointer group shrink-0 text-left active:scale-[0.96] transition-transform duration-100 ease-out"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 flex items-center justify-center shrink-0 transition-transform group-active:scale-95">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 flex items-center justify-center shrink-0">
             <ListenHubLogo className="w-5 h-5" />
           </div>
           <div className="leading-none">
@@ -126,7 +126,7 @@ export const TopHeader: React.FC<Props> = ({
               triggerHaptic(15);
               setShowPrivacyDropdown((prev) => !prev);
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 transition cursor-pointer active:scale-95 border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer border ${
               privacyMode === 'private'
                 ? 'bg-[#F2EDE6] dark:bg-[#211D1A] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91]'
                 : 'bg-white dark:bg-[#171412] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2]'
@@ -206,7 +206,7 @@ export const TopHeader: React.FC<Props> = ({
             <button
               type="button"
               onClick={onToggleTheme}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition cursor-pointer active:scale-95"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-white dark:bg-[#171412] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
               title={themeMode === 'dark' ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
               aria-label="Tema değiştir"
             >
@@ -225,7 +225,7 @@ export const TopHeader: React.FC<Props> = ({
                 triggerHaptic(10);
                 onSelectTab('profile');
               }}
-              className={`flex items-center justify-center cursor-pointer p-0.5 rounded-full ring-1 transition active:scale-95 ${
+              className={`flex items-center justify-center cursor-pointer p-0.5 rounded-full ring-1 active:scale-[0.96] transition-transform duration-100 ease-out ${
                 activeTab === 'profile'
                   ? 'ring-[#E87A3E]'
                   : 'ring-[#EAE4DC] dark:ring-[#FFF0E1]/15 hover:ring-[#E87A3E]/60'

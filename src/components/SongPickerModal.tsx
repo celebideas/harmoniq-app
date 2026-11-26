@@ -126,12 +126,12 @@ export const SongPickerModal: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] border ${
+        className={`relative w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] border animate-modal-enter ${
           isLight
             ? 'bg-white border-[#EAE4DC] text-[#181512]'
             : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -165,7 +165,7 @@ export const SongPickerModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className={`p-1.5 rounded-xl transition min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+            className={`p-1.5 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
               isLight
                 ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#EAE4DC]'
                 : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -215,7 +215,7 @@ export const SongPickerModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => handleResolveAndPlay()}
                 disabled={isResolving}
-                className="studio-btn-primary absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs transition flex items-center gap-1 shadow-sm cursor-pointer"
+                className="studio-btn-primary absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs active:scale-[0.96] transition-transform duration-100 ease-out flex items-center gap-1 shadow-sm cursor-pointer"
               >
                 {isResolving ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -243,7 +243,7 @@ export const SongPickerModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => handleResolveAndPlay()}
                 disabled={isResolving}
-                className={`w-full p-2.5 rounded-xl bg-[#E87A3E]/12 border border-[#E87A3E]/30 hover:bg-[#E87A3E]/20 text-xs font-semibold flex items-center justify-between gap-2 transition cursor-pointer ${
+                className={`w-full p-2.5 rounded-xl bg-[#E87A3E]/12 border border-[#E87A3E]/30 hover:bg-[#E87A3E]/20 text-xs font-semibold flex items-center justify-between gap-2 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                   isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
                 }`}
               >
@@ -285,7 +285,7 @@ export const SongPickerModal: React.FC<Props> = ({
                   key={query}
                   type="button"
                   onClick={() => handleResolveAndPlay(query)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-medium active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                     isLight
                       ? 'bg-[#FAF8F4] border-[#EAE4DC] hover:border-[#E87A3E]/50 hover:bg-[#F2EDE6] text-[#181512]'
                       : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/50 hover:bg-[#2B2521] text-[#FAF7F2]'
@@ -340,7 +340,7 @@ export const SongPickerModal: React.FC<Props> = ({
                   onSelectSong(song);
                   onClose();
                 }}
-                className={`w-full p-3 rounded-2xl flex items-center justify-between transition text-left border cursor-pointer ${
+                className={`w-full p-3 rounded-2xl flex items-center justify-between active:scale-[0.96] transition-transform duration-100 ease-out text-left border cursor-pointer ${
                   isSelected
                     ? isLight
                       ? 'bg-[#E87A3E]/12 border-[#E87A3E]/45 text-[#181512]'

@@ -346,7 +346,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   triggerHaptic(12);
                   onOpenNowPlaying();
                 }}
-                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer transition-transform active:scale-95 bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
+                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
                 title="Tam ekran oynatıcıyı aç"
                 aria-label={`${currentSong.title} tam ekran oynatıcıyı aç`}
               >
@@ -366,7 +366,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               {/* Center: Crisp Song Title + Calm Artist Subtitle */}
               <div
                 onClick={onOpenNowPlaying}
-                className="min-w-0 flex-1 cursor-pointer group/title"
+                className="min-w-0 flex-1 cursor-pointer group/title active:scale-[0.98] transition-transform duration-100 ease-out"
               >
                 <h2 className="text-base font-bold text-[#181512] dark:text-[#FAF7F2] truncate leading-snug tracking-tight group-hover/title:opacity-75 transition-opacity">
                   {currentSong.title}
@@ -385,7 +385,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       triggerHaptic(10);
                       setShowKlipMode((prev) => !prev);
                     }}
-                    className={`w-9 h-9 rounded-full border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                    className={`w-9 h-9 rounded-full border flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                       showKlipMode
                         ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/30'
                         : 'bg-[#F2EDE6] dark:bg-[#211D1A] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
@@ -403,7 +403,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(12);
                     onOpenSongPicker();
                   }}
-                  className="w-10 h-10 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer active:scale-95"
+                  className="w-10 h-10 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
                   title="Şarkı ara veya değiştir"
                   aria-label="Şarkı ara veya değiştir"
                 >
@@ -416,7 +416,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(20);
                     onTogglePlay();
                   }}
-                  className="studio-btn-primary w-12 h-12 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-lg shadow-amber-950/20"
+                  className="studio-btn-primary w-12 h-12 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-lg shadow-amber-950/20"
                   title={isPlaying ? 'Duraklat' : 'Oynat'}
                   aria-label={isPlaying ? 'Şarkıyı duraklat' : 'Şarkıyı oynat'}
                 >
@@ -470,7 +470,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setLoungeViewMode('timeline')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 ${
                     loungeViewMode === 'timeline'
                       ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
                       : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
@@ -483,7 +483,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setLoungeViewMode('map')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 ${
                     loungeViewMode === 'map'
                       ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
                       : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
@@ -496,7 +496,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={onOpenRoomListeners}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] transition cursor-pointer flex items-center justify-center gap-1.5 border border-transparent"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 border border-transparent"
                 >
                   <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                   <span className="truncate font-mono tabular-nums">
@@ -530,7 +530,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       key={f.id}
                       type="button"
                       onClick={() => setDistanceFilter(f.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center gap-1.5 border ${
                         isSelected
                           ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] font-semibold border-[#E87A3E]/25'
                           : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06]'
@@ -607,7 +607,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => handleVibeRowSeek(vibe)}
-                      className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 transition cursor-pointer active:scale-95 ${
+                      className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                         isNearCurrent
                           ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/30 dark:border-[#22C55E]/30'
                           : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
@@ -637,7 +637,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={!customNoteText.trim()}
-                className="studio-btn-primary w-10 h-10 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center shrink-0 transition active:scale-95 cursor-pointer shadow-lg shadow-amber-950/20 disabled:opacity-35 disabled:cursor-not-allowed"
+                className="studio-btn-primary w-10 h-10 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-lg shadow-amber-950/20 disabled:opacity-35 disabled:cursor-not-allowed"
                 title="Not bırak"
                 aria-label="Not bırak"
               >
@@ -656,7 +656,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                       key={u.id}
                       onClick={() => onSelectUser(u)}
                       title={`${u.name} (${u.distanceKm} km)`}
-                      className={`avatar-circle w-8 h-8 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 transition-transform overflow-hidden ${
+                      className={`avatar-circle w-8 h-8 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 active:scale-[0.96] transition-transform duration-100 ease-out overflow-hidden ${
                         u.isRealUser
                           ? 'ring-2 ring-[#16A34A] dark:ring-[#22C55E] z-10'
                           : 'ring-2 ring-white dark:ring-[#171412]'
@@ -683,7 +683,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={onOpenRoomListeners}
-                className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0"
               >
                 Tümü
               </button>
@@ -696,7 +696,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => onToggleAutoRadio?.(!autoRadioEnabled)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer shrink-0 border ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0 border ${
                   autoRadioEnabled
                     ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
                     : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'

@@ -147,7 +147,7 @@ const ArtistCardCompact: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center shrink-0 group ${
+      className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex flex-col items-center text-center shrink-0 group ${
         isCurrentArtist
           ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
           : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
@@ -197,7 +197,7 @@ const ArtistRoomRow: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
+      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out min-h-[68px] ${
         isCurrentArtist
           ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
           : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
@@ -263,7 +263,7 @@ const SongRoomRow: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
+      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out min-h-[68px] ${
         isCurrent
           ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
           : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'

@@ -106,12 +106,12 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter select-none"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-lg rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[86vh] overflow-y-auto no-scrollbar pb-[max(1.5rem,env(safe-area-inset-bottom))] border ${
+        className={`relative w-full max-w-lg rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[86vh] overflow-y-auto no-scrollbar pb-[max(1.5rem,env(safe-area-inset-bottom))] border animate-modal-enter ${
           isLight
             ? 'bg-white border-[#EAE4DC] text-[#181512]'
             : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -219,7 +219,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
             <button
               type="button"
               onClick={handleFriendClick}
-              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 min-h-[42px] cursor-pointer ${
+              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-transform duration-100 ease-out active:scale-[0.96] min-h-[42px] cursor-pointer ${
                 isFriends
                   ? isLight
                     ? 'bg-emerald-500/12 border-emerald-500/30 text-emerald-700'
@@ -270,7 +270,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`p-2 rounded-xl active:scale-95 transition min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer ${
+              className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer ${
                 isLight
                   ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                   : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -378,7 +378,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                       setStatusLikesCount((prev) => prev + 1);
                     }
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer ${
                     hasLikedStatus
                       ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
                       : isLight
@@ -523,7 +523,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                   `Ben de ${formatTime(user.currentSecond)} saniyesindeyim, harika zamanlama!`
                 )
               }
-              className={`p-3 rounded-xl border text-left transition active:scale-[0.98] font-medium min-h-[44px] cursor-pointer ${
+              className={`p-3 rounded-xl border text-left transition-transform duration-100 ease-out active:scale-[0.96] font-medium min-h-[44px] cursor-pointer ${
                 isLight
                   ? 'bg-[#FAF8F4] hover:bg-[#F2EDE6] border-[#EAE4DC] hover:border-[#E87A3E]/45 text-[#181512]'
                   : 'bg-[#211D1A] hover:bg-[#2B2521] border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/45 text-[#FAF7F2]'
@@ -536,7 +536,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               onClick={() =>
                 onSendFrequency(user, 'Bu şarkı bittikten sonra sıradaki parçayı sen önerir misin?')
               }
-              className={`p-3 rounded-xl border text-left transition active:scale-[0.98] font-medium min-h-[44px] cursor-pointer ${
+              className={`p-3 rounded-xl border text-left transition-transform duration-100 ease-out active:scale-[0.96] font-medium min-h-[44px] cursor-pointer ${
                 isLight
                   ? 'bg-[#FAF8F4] hover:bg-[#F2EDE6] border-[#EAE4DC] hover:border-[#E87A3E]/45 text-[#181512]'
                   : 'bg-[#211D1A] hover:bg-[#2B2521] border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/45 text-[#FAF7F2]'
@@ -551,7 +551,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => onSendFrequency(user)}
-          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 active:scale-95 min-h-[48px] cursor-pointer"
+          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs uppercase tracking-wider transition-transform duration-100 ease-out flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 active:scale-[0.96] min-h-[48px] cursor-pointer"
         >
           <Radio className="w-4 h-4 stroke-[2.25]" />
           <span>Frekans Gönder ve Sohbeti Aç</span>

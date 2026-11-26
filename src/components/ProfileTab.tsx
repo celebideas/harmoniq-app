@@ -2929,12 +2929,12 @@ export const ProfileTab: React.FC<Props> = ({
          ===================================================================== */}
       {showTrustScoreModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
           onClick={() => setShowTrustScoreModal(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`relative w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar border ${
+            className={`relative w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar border animate-modal-enter ${
               isLightTheme
                 ? 'bg-white border-[#EAE4DC] text-[#181512]'
                 : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -3293,11 +3293,11 @@ export const ProfileTab: React.FC<Props> = ({
          ===================================================================== */}
       {showSettingsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
           onClick={() => setShowSettingsModal(false)}
         >
           <div
-            className={`relative w-full max-w-lg rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border ${
+            className={`relative w-full max-w-lg rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border animate-modal-enter ${
               isLightTheme
                 ? 'bg-white border-[#EAE4DC] text-[#181512]'
                 : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -3332,7 +3332,7 @@ export const ProfileTab: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowSettingsModal(false)}
-                  className={`p-2 rounded-xl transition cursor-pointer ${
+                  className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                     isLightTheme
                       ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                       : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -3343,7 +3343,7 @@ export const ProfileTab: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* Clean 2-Tab Selector (Unambiguous Reactive Active Highlight) */}
+              {/* Clean 2-Tab Selector (Unambiguous Reactive Active Highlight & Crisp Light/Dark Inactive Contrast) */}
               <div
                 role="tablist"
                 aria-label="Ayarlar sekmeleri"
@@ -3358,12 +3358,10 @@ export const ProfileTab: React.FC<Props> = ({
                   role="tab"
                   aria-selected={settingsTab === 'profile'}
                   onClick={() => setSettingsTab('profile')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
+                  className={`py-2 px-3 rounded-xl text-xs transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer flex items-center justify-center gap-1.5 border outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E87A3E]/40 ${
                     settingsTab === 'profile'
-                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
-                      : isLightTheme
-                      ? 'bg-transparent text-[#6B635B] hover:text-[#181512] border-transparent'
-                      : 'bg-transparent text-[#A39A91] hover:text-[#FAF7F2] border-transparent'
+                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white font-semibold border-transparent shadow-sm'
+                      : 'bg-transparent border-transparent font-medium text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                   }`}
                 >
                   <UserIcon className="w-3.5 h-3.5" />
@@ -3374,12 +3372,10 @@ export const ProfileTab: React.FC<Props> = ({
                   role="tab"
                   aria-selected={settingsTab === 'account'}
                   onClick={() => setSettingsTab('account')}
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
+                  className={`py-2 px-3 rounded-xl text-xs transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer flex items-center justify-center gap-1.5 border outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E87A3E]/40 ${
                     settingsTab === 'account'
-                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
-                      : isLightTheme
-                      ? 'bg-transparent text-[#6B635B] hover:text-[#181512] border-transparent'
-                      : 'bg-transparent text-[#A39A91] hover:text-[#FAF7F2] border-transparent'
+                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white font-semibold border-transparent shadow-sm'
+                      : 'bg-transparent border-transparent font-medium text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
                   }`}
                 >
                   <Youtube className="w-3.5 h-3.5" />

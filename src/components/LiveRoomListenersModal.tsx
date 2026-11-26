@@ -101,12 +101,12 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xl animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-2xl rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden space-y-4 border ${
+        className={`relative w-full max-w-2xl rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden space-y-4 border animate-modal-enter ${
           isLight
             ? 'bg-white border-[#EAE4DC] text-[#181512]'
             : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -183,7 +183,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
               isLight
                 ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
                 : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -232,7 +232,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('all')}
-            className={`px-3 py-1.5 transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 cursor-pointer ${
               filterMode === 'all' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -241,7 +241,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('1km')}
-            className={`px-3 py-1.5 transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 flex items-center gap-1.5 cursor-pointer ${
               filterMode === '1km' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -251,7 +251,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('5km')}
-            className={`px-3 py-1.5 transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 flex items-center gap-1.5 cursor-pointer ${
               filterMode === '5km' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -261,7 +261,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('solo')}
-            className={`px-3 py-1.5 transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 flex items-center gap-1.5 cursor-pointer ${
               filterMode === 'solo' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -271,7 +271,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('kadikoy')}
-            className={`px-3 py-1.5 transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 cursor-pointer ${
               filterMode === 'kadikoy' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -280,7 +280,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('ytm')}
-            className={`px-3 py-1.5 transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 flex items-center gap-1.5 cursor-pointer ${
               filterMode === 'ytm' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -290,7 +290,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setFilterMode('friends')}
-            className={`px-3 py-1.5 transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1.5 active:scale-[0.96] transition-transform duration-100 ease-out shrink-0 cursor-pointer ${
               filterMode === 'friends' ? activeChipClass : inactiveChipClass
             }`}
           >
@@ -474,7 +474,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                         onStartChatWithUser(user);
                         onClose();
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 active:scale-[0.96] transition-transform duration-100 ease-out border cursor-pointer ${
                         isLight
                           ? 'bg-[#F2EDE6] hover:bg-[#EAE4DC] text-[#181512] border-[#E2D9CE]'
                           : 'bg-[#171412] hover:bg-[#2B2521] text-[#FAF7F2] border-[#FFF0E1]/10'
@@ -490,7 +490,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => onToggleFriend(user)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out flex items-center gap-1.5 cursor-pointer ${
                           user.friendStatus === 'friends'
                             ? isLight
                               ? 'bg-[#F2EDE6] text-[#6B635B] border border-[#E2D9CE] hover:text-rose-600'

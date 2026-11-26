@@ -157,7 +157,7 @@ export const DesktopSidebar: React.FC<Props> = ({
             triggerHaptic(10);
             onSelectTab('lounge');
           }}
-          className={`w-full flex items-center gap-3.5 p-2.5 rounded-2xl cursor-pointer group transition text-left ${
+          className={`w-full flex items-center gap-3.5 p-2.5 rounded-2xl cursor-pointer group active:scale-[0.96] transition-transform duration-100 ease-out text-left ${
             isLight ? 'hover:bg-[#F2EDE6]' : 'hover:bg-[#171412]'
           }`}
         >
@@ -190,7 +190,7 @@ export const DesktopSidebar: React.FC<Props> = ({
               triggerHaptic(12);
               setShowPrivacyDropdown((prev) => !prev);
             }}
-            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 transition cursor-pointer border ${
+            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer border ${
               isLight
                 ? 'bg-white border-[#EAE4DC] text-[#181512] hover:bg-[#F2EDE6]'
                 : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2] hover:bg-[#211D1A]'
@@ -296,7 +296,7 @@ export const DesktopSidebar: React.FC<Props> = ({
                   onSelectTab(item.id);
                 }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full px-4 py-3.5 rounded-xl text-[15px] flex items-center justify-between gap-3.5 transition-all cursor-pointer ${
+                className={`w-full px-4 py-3.5 rounded-xl text-[15px] flex items-center justify-between gap-3.5 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                   isActive
                     ? isLight
                       ? 'bg-[#E87A3E]/15 text-[#D96B2C] font-semibold border border-[#E87A3E]/25'
@@ -339,7 +339,7 @@ export const DesktopSidebar: React.FC<Props> = ({
         <button
           type="button"
           onClick={onToggleTheme}
-          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition cursor-pointer ${
+          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
             isLight
               ? 'bg-white hover:bg-[#F2EDE6] border-[#EAE4DC] text-[#181512]'
               : 'bg-[#171412] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
@@ -366,7 +366,7 @@ export const DesktopSidebar: React.FC<Props> = ({
             }
           }}
           title="Ayarlar & Hesap"
-          className={`w-full p-3 rounded-2xl border flex items-center gap-3 text-left transition cursor-pointer group ${
+          className={`w-full p-3 rounded-2xl border flex items-center gap-3 text-left active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer group ${
             isLight
               ? 'bg-white hover:bg-[#F2EDE6] border-[#EAE4DC] shadow-[0_4px_20px_rgba(24,21,18,0.04)]'
               : 'bg-[#171412] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08] shadow-none'

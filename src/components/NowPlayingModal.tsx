@@ -19,6 +19,7 @@ import {
   Clock,
   Flame,
   Music,
+  Music2,
   Loader2,
   Users,
   X,
@@ -596,10 +597,11 @@ export const NowPlayingModal: React.FC<Props> = ({
 
   const effectiveIsLiked = isFavorite !== undefined ? isFavorite : isLiked;
 
-  // Like button action with pop animation & haptic
+  // Like button action with crisp 220ms pulse animation & haptic
   const handleToggleLike = () => {
-    setIsHeartPopping(true);
-    setTimeout(() => setIsHeartPopping(false), 350);
+    setIsHeartPopping(false);
+    requestAnimationFrame(() => setIsHeartPopping(true));
+    setTimeout(() => setIsHeartPopping(false), 240);
 
     // Browser haptic feedback if available
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -660,9 +662,45 @@ export const NowPlayingModal: React.FC<Props> = ({
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    onShowToast(`"${song.title} - ${song.artist}" bağlantısı kopyalandı.`);
+  const handleShare = async () => {
+    triggerHaptic(15);
+    const shareUrl = `${window.location.origin}/?track=${encodeURIComponent(
+      song.title
+    )}&artist=${encodeURIComponent(song.artist)}&t=${Math.floor(progressSeconds)}`;
+    const shareText = `ListenHub'da ${song.artist} – ${song.title} (${formatTime(
+      progressSeconds
+    )}) anına katıl!`;
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'ListenHub',
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = shareUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        // ignore
+      }
+      document.body.removeChild(textarea);
+    }
+    onShowToast('ListenHub an bağlantısı kopyalandı');
   };
 
   // Find upcoming queue songs (other songs after current)
@@ -673,65 +711,55 @@ export const NowPlayingModal: React.FC<Props> = ({
       : allSongs.filter((s) => s.id !== song.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 dark:bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 dark:bg-black/80 backdrop-blur-xl animate-backdrop-enter">
       {/* Click outside to close (top backdrop area) */}
       <div className="flex-1" onClick={onClose} />
 
       {/* Main Bottom Sheet / Full Player Container */}
-      <div className="relative w-full max-w-xl mx-auto bg-[#FAF8F4] dark:bg-[#0E0C0B] text-[#181512] dark:text-[#FAF7F2] border-t border-x border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-t-[28px] p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto no-scrollbar space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="animate-modal-enter relative w-full max-w-xl mx-auto bg-[#FAF8F4] dark:bg-[#0E0C0B] text-[#181512] dark:text-[#FAF7F2] border-t border-x border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] rounded-t-[28px] p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto no-scrollbar space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Top Grab Handle & Header Bar */}
         <div className="flex flex-col items-center gap-2">
           <div className="w-10 h-1 rounded-full bg-[#181512]/15 dark:bg-[#FFF0E1]/20 cursor-pointer" onClick={onClose} />
 
           <div className="w-full flex items-center justify-between pt-1">
             <button
+              type="button"
               onClick={onClose}
-              className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition flex items-center justify-center active:scale-95 cursor-pointer"
+              className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
               title="Kapat / Simge Durumuna Küçült"
+              aria-label="Kapat"
             >
               <ChevronDown className="w-5 h-5" strokeWidth={1.75} />
             </button>
 
-            {/* Platform & Status Badge */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-[#63636B] dark:text-[#8E8E98] font-medium truncate max-w-[140px] sm:max-w-xs flex items-center gap-1.5">
-                <Radio className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E]" strokeWidth={1.75} />
-                <span>
-                  {activePlatform === 'youtube_music'
-                    ? 'YouTube Music'
-                    : activePlatform === 'spotify'
-                    ? 'Spotify'
-                    : 'Apple Music'}
-                </span>
+            {/* Passive Source Info Label (No external redirect links) */}
+            <div className="flex items-center gap-1.5 text-xs text-[#6B635B] dark:text-[#A39A91] font-medium truncate max-w-[180px] sm:max-w-xs">
+              <Music2 className="w-3.5 h-3.5 shrink-0 text-[#E87A3E]" strokeWidth={1.75} />
+              <span className="truncate">
+                {activePlatform === 'youtube_music'
+                  ? 'YouTube Music'
+                  : activePlatform === 'spotify'
+                  ? 'Spotify'
+                  : 'Apple Music'}
               </span>
-
-              {song.youtubeVideoId && (
-                <a
-                  href={`https://music.youtube.com/watch?v=${song.youtubeVideoId}&t=${Math.floor(
-                    progressSeconds
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="min-h-[28px] flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] transition active:scale-95"
-                >
-                  <span>YT Music</span>
-                  <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
-                </a>
-              )}
             </div>
 
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={handleShare}
-                className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition flex items-center justify-center active:scale-95 cursor-pointer"
-                title="Şarkıyı Paylaş"
+                className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
+                title="ListenHub Anını Paylaş"
+                aria-label="ListenHub Anını Paylaş"
               >
                 <Share2 className="w-4 h-4" strokeWidth={1.75} />
               </button>
               <button
+                type="button"
                 onClick={onOpenSongPicker}
-                className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.06] transition flex items-center justify-center active:scale-95 cursor-pointer"
+                className="min-h-[42px] min-w-[42px] p-2 rounded-xl text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
                 title="Şarkı Değiştir / Ara"
+                aria-label="Şarkı Değiştir"
               >
                 <ListMusic className="w-5 h-5" strokeWidth={1.75} />
               </button>
@@ -932,17 +960,18 @@ export const NowPlayingModal: React.FC<Props> = ({
 
           {/* Like Heart Button */}
           <button
+            type="button"
             onClick={handleToggleLike}
-            className={`p-2.5 rounded-xl border transition-all active:scale-95 flex flex-col items-center gap-0.5 min-w-[52px] cursor-pointer ${
+            className={`p-2.5 rounded-xl border transition-transform duration-100 ease-out active:scale-[0.96] flex flex-col items-center gap-0.5 min-w-[52px] cursor-pointer ${
               effectiveIsLiked
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-                : 'bg-white dark:bg-[#141418] border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                : 'bg-white dark:bg-[#171412] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
             }`}
             title="Şarkıyı Beğen"
           >
             <Heart
-              className={`w-5 h-5 transition-transform duration-200 ${
-                isHeartPopping ? 'scale-125 text-rose-500' : 'scale-100'
+              className={`w-5 h-5 ${
+                isHeartPopping ? 'animate-heart-pulse text-rose-500' : ''
               } ${effectiveIsLiked ? 'fill-current text-rose-500' : ''}`}
               strokeWidth={1.75}
             />
@@ -968,11 +997,12 @@ export const NowPlayingModal: React.FC<Props> = ({
         <div className="flex items-center justify-between px-2 pt-1 pb-1">
           {/* Shuffle Button */}
           <button
+            type="button"
             onClick={() => {
               setIsShuffle(!isShuffle);
               onShowToast(!isShuffle ? 'Karışık çalma açık' : 'Karışık çalma kapalı');
             }}
-            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer border ${
+            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer border ${
               isShuffle
                 ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
                 : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
@@ -984,8 +1014,9 @@ export const NowPlayingModal: React.FC<Props> = ({
 
           {/* Previous Track */}
           <button
+            type="button"
             onClick={onPrevSong}
-            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition flex items-center justify-center active:scale-90 cursor-pointer"
+            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
             title="Önceki Şarkı"
           >
             <SkipBack className="w-6 h-6 fill-current" />
@@ -993,8 +1024,9 @@ export const NowPlayingModal: React.FC<Props> = ({
 
           {/* Big Copper-Amber Play / Pause Button */}
           <button
+            type="button"
             onClick={onTogglePlay}
-            className="studio-btn-primary w-16 h-16 min-h-[64px] min-w-[64px] rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+            className="studio-btn-primary w-16 h-16 min-h-[64px] min-w-[64px] rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/30 flex items-center justify-center transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer"
             title={isPlaying ? 'Durdur' : 'Çal'}
           >
             {isAudioLoading ? (
@@ -1008,8 +1040,9 @@ export const NowPlayingModal: React.FC<Props> = ({
 
           {/* Next Track */}
           <button
+            type="button"
             onClick={onNextSong}
-            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition flex items-center justify-center active:scale-90 cursor-pointer"
+            className="min-h-[48px] min-w-[48px] p-3 rounded-xl text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center cursor-pointer"
             title="Bir Sonraki Şarkı"
           >
             <SkipForward className="w-6 h-6 fill-current" />
@@ -1017,8 +1050,9 @@ export const NowPlayingModal: React.FC<Props> = ({
 
           {/* Repeat Button */}
           <button
+            type="button"
             onClick={handleToggleRepeat}
-            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer border ${
+            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl flex items-center justify-center transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer border ${
               repeatMode !== 'off'
                 ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
                 : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
@@ -1040,9 +1074,9 @@ export const NowPlayingModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleSelectTab('queue')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`py-1.5 text-xs font-semibold rounded-lg transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'queue'
-                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-transparent shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
@@ -1052,9 +1086,9 @@ export const NowPlayingModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleSelectTab('radio')}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`py-1.5 text-xs font-semibold rounded-lg transition-transform duration-100 ease-out active:scale-[0.96] flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === 'radio'
-                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] shadow-sm'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-transparent shadow-sm'
                   : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border-transparent'
               }`}
             >
@@ -1081,7 +1115,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                       onSelectSong(nextSong);
                       onShowToast(`Şimdi çalıyor: ${nextSong.title} - ${nextSong.artist}`);
                     }}
-                    className="w-full p-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06] transition flex items-center justify-between text-left group cursor-pointer"
+                    className="w-full p-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06] active:scale-[0.96] transition-transform duration-100 ease-out flex items-center justify-between text-left group cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="font-mono text-xs text-[#63636B] dark:text-[#8E8E98] w-4 text-center tabular-nums">
@@ -1146,7 +1180,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                     </div>
                     <button
                       onClick={handleStartRadio}
-                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold shrink-0 transition flex items-center gap-1 min-h-[34px] cursor-pointer"
+                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 text-xs font-semibold shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out flex items-center gap-1 min-h-[34px] cursor-pointer"
                     >
                       <span>Yenile</span>
                     </button>
@@ -1163,7 +1197,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                             onSelectSong(rTrack);
                             onShowToast(`Radyo: ${rTrack.title} çalınıyor`);
                           }}
-                          className={`w-full p-2.5 rounded-xl border transition flex items-center justify-between text-left group min-h-[44px] cursor-pointer ${
+                          className={`w-full p-2.5 rounded-xl border active:scale-[0.96] transition-transform duration-100 ease-out flex items-center justify-between text-left group min-h-[44px] cursor-pointer ${
                             isCurrent
                               ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#16A34A]/40 dark:border-[#22C55E]/40'
                               : 'bg-[#FAF9F6] dark:bg-[#0B0B0D]/60 border-[#E8E6E1] dark:border-white/[0.06] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22]'
@@ -1209,11 +1243,11 @@ export const NowPlayingModal: React.FC<Props> = ({
         {/* 6. IN-PLAYER LISTENERS BOTTOM SHEET (Stay inside player modal!) */}
         {showListenersSheet && (
           <div
-            className="absolute inset-0 z-40 bg-black/60 dark:bg-black/75 backdrop-blur-md rounded-t-[28px] flex flex-col justify-end overflow-hidden animate-in fade-in duration-200"
+            className="absolute inset-0 z-40 bg-black/60 dark:bg-black/75 backdrop-blur-md rounded-t-[28px] flex flex-col justify-end overflow-hidden animate-backdrop-enter"
             onClick={() => setShowListenersSheet(false)}
           >
             <div
-              className="w-full bg-[#FAF8F4] dark:bg-[#171412] border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] rounded-t-[24px] p-4 sm:p-5 shadow-2xl flex flex-col max-h-[82vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+              className="animate-modal-enter w-full bg-[#FAF8F4] dark:bg-[#171412] border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] rounded-t-[24px] p-4 sm:p-5 shadow-2xl flex flex-col max-h-[82vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Grab handle */}
