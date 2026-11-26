@@ -2279,9 +2279,18 @@ export default function App() {
           isFetchingMoreRadioRef.current = false;
           if (newTracks && newTracks.length > 0) {
             setActiveQueue((prev) => {
+              const existingIds = new Set(prev.map((p) => p.id));
               const existingKeys = new Set(prev.map((p) => `${p.artist.toLowerCase()} - ${p.title.toLowerCase()}`));
-              const fresh = newTracks.filter((t) => !existingKeys.has(`${t.artist.toLowerCase()} - ${t.title.toLowerCase()}`));
-              return [...prev, ...fresh];
+              const fresh: Song[] = [];
+              for (const t of newTracks) {
+                const k = `${t.artist.toLowerCase()} - ${t.title.toLowerCase()}`;
+                if (!existingIds.has(t.id) && !existingKeys.has(k)) {
+                  existingIds.add(t.id);
+                  existingKeys.add(k);
+                  fresh.push(t);
+                }
+              }
+              return fresh.length > 0 ? [...prev, ...fresh] : prev;
             });
           }
         })
@@ -2298,7 +2307,20 @@ export default function App() {
     } else {
       const more = await fetchMoreRadioRecommendations(radioSeed, playedSongTitlesRef.current);
       if (more.length > 0) {
-        setActiveQueue((prev) => [...prev, ...more]);
+        setActiveQueue((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const existingKeys = new Set(prev.map((p) => `${p.artist.toLowerCase()} - ${p.title.toLowerCase()}`));
+          const fresh: Song[] = [];
+          for (const t of more) {
+            const k = `${t.artist.toLowerCase()} - ${t.title.toLowerCase()}`;
+            if (!existingIds.has(t.id) && !existingKeys.has(k)) {
+              existingIds.add(t.id);
+              existingKeys.add(k);
+              fresh.push(t);
+            }
+          }
+          return fresh.length > 0 ? [...prev, ...fresh] : prev;
+        });
         const nextSong = more[0];
         playedSongTitlesRef.current.add(nextSong.title.toLowerCase());
         setNextRadioSong(more[1] || null);

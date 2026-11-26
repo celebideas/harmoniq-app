@@ -318,19 +318,22 @@ export const ChatTab: React.FC<Props> = ({
         s.artist.toLowerCase().includes(q) ||
         s.genre.toLowerCase().includes(q)
     );
-    if (q.length < 2) return localMatches;
 
     const merged: Song[] = [];
     const seen = new Set<string>();
+    const seenIds = new Set<string>();
     const pushUnique = (song: Song) => {
       const key = `${song.artist.trim().toLowerCase()}::${song.title.trim().toLowerCase()}`;
-      if (seen.has(key)) return;
+      if (seen.has(key) || (song.id && seenIds.has(song.id))) return;
       seen.add(key);
+      if (song.id) seenIds.add(song.id);
       merged.push(song);
     };
 
     localMatches.forEach(pushUnique);
-    remoteShareSongs.forEach(pushUnique);
+    if (q.length >= 2) {
+      remoteShareSongs.forEach(pushUnique);
+    }
     return merged;
   }, [allSongs, songSearchTerm, remoteShareSongs]);
 

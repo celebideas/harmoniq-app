@@ -884,11 +884,13 @@ export async function generateRadioForSong(
     ]);
 
     const seenKeys = new Set<string>();
+    const seenIds = new Set<string>();
     const tracks: Song[] = [];
 
     if (seedSong && seedSong.title && seedSong.title !== `${seedSong.artist} Radyosu`) {
       const key = `${seedSong.artist.toLowerCase()} - ${seedSong.title.toLowerCase()}`;
       seenKeys.add(key);
+      if (seedSong.id) seenIds.add(seedSong.id);
       tracks.push({
         ...seedSong,
         timelineMarkers: buildDynamicTimelineMarkers(seedSong.durationSeconds, seedSong.genre),
@@ -933,8 +935,9 @@ export async function generateRadioForSong(
           continue;
         }
         const key = `${song.artist.toLowerCase()} - ${song.title.toLowerCase()}`;
-        if (!seenKeys.has(key)) {
+        if (!seenKeys.has(key) && !seenIds.has(song.id)) {
           seenKeys.add(key);
+          seenIds.add(song.id);
           tracks.push(song);
         }
       }
@@ -943,8 +946,9 @@ export async function generateRadioForSong(
     // Supplement with curated Turkish Rock & Alternative hits so there are always real hits
     for (const poolItem of TURKISH_ROCK_RADIO_POOL) {
       const key = `${poolItem.artist.toLowerCase()} - ${poolItem.title.toLowerCase()}`;
-      if (!seenKeys.has(key)) {
+      if (!seenKeys.has(key) && !seenIds.has(poolItem.id)) {
         seenKeys.add(key);
+        seenIds.add(poolItem.id);
         const duration = poolItem.durationSeconds;
         tracks.push({
           id: poolItem.id,
@@ -1035,6 +1039,8 @@ export async function fetchMoreRadioRecommendations(
 
   const moreTracks: Song[] = [];
   const seenKeys = new Set<string>();
+  const seenIds = new Set<string>();
+  if (seedSong?.id) seenIds.add(seedSong.id);
 
   for (const item of [...res1, ...res2]) {
     if (!item.trackName || !item.artistName) continue;
@@ -1049,8 +1055,9 @@ export async function fetchMoreRadioRecommendations(
     const key = `${song.artist.toLowerCase()} - ${song.title.toLowerCase()}`;
     const simpleTitle = song.title.toLowerCase();
 
-    if (!playedSet.has(simpleTitle) && !playedSet.has(key) && !seenKeys.has(key)) {
+    if (!playedSet.has(simpleTitle) && !playedSet.has(key) && !seenKeys.has(key) && !seenIds.has(song.id)) {
       seenKeys.add(key);
+      seenIds.add(song.id);
       moreTracks.push(song);
     }
   }
@@ -1058,8 +1065,9 @@ export async function fetchMoreRadioRecommendations(
   if (moreTracks.length < 5) {
     for (const poolItem of TURKISH_ROCK_RADIO_POOL) {
       const key = `${poolItem.artist.toLowerCase()} - ${poolItem.title.toLowerCase()}`;
-      if (!playedSet.has(poolItem.title.toLowerCase()) && !seenKeys.has(key)) {
+      if (!playedSet.has(poolItem.title.toLowerCase()) && !seenKeys.has(key) && !seenIds.has(poolItem.id)) {
         seenKeys.add(key);
+        seenIds.add(poolItem.id);
         moreTracks.push({
           id: poolItem.id,
           title: poolItem.title,

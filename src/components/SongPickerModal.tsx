@@ -97,10 +97,12 @@ export const SongPickerModal: React.FC<Props> = ({
 
     const merged: Song[] = [];
     const seen = new Set<string>();
+    const seenIds = new Set<string>();
     const pushUnique = (song: Song) => {
       const key = `${song.artist.trim().toLowerCase()}::${song.title.trim().toLowerCase()}`;
-      if (seen.has(key)) return;
+      if (seen.has(key) || seenIds.has(song.id)) return;
       seen.add(key);
+      if (song.id) seenIds.add(song.id);
       merged.push(song);
     };
 

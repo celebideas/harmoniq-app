@@ -788,12 +788,18 @@ export const NowPlayingModal: React.FC<Props> = ({
     }, 2000);
   };
 
-  // Upcoming queue songs
+  // Upcoming queue songs (strictly deduplicated by id)
   const currentIndex = allSongs.findIndex((s) => s.id === song.id);
-  const queueSongs =
+  const rawQueueSongs =
     currentIndex !== -1
       ? [...allSongs.slice(currentIndex + 1), ...allSongs.slice(0, currentIndex)]
       : allSongs.filter((s) => s.id !== song.id);
+  const seenQueueIds = new Set<string>([song.id]);
+  const queueSongs = rawQueueSongs.filter((s) => {
+    if (!s?.id || seenQueueIds.has(s.id)) return false;
+    seenQueueIds.add(s.id);
+    return true;
+  });
 
   // Reusable Lyrics Content Renderer
   const renderLyricsContent = (
@@ -926,7 +932,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         <div className="space-y-1.5">
           {queueSongs.map((nextSong, idx) => (
             <button
-              key={nextSong.id}
+              key={`${nextSong.id}-${idx}`}
               type="button"
               onClick={() => {
                 triggerHaptic(12);
@@ -1012,11 +1018,11 @@ export const NowPlayingModal: React.FC<Props> = ({
           </div>
 
           <div className="space-y-1.5">
-            {radioStation.tracks.map((rTrack) => {
+            {radioStation.tracks.map((rTrack, idx) => {
               const isCurrent = rTrack.id === song.id;
               return (
                 <button
-                  key={rTrack.id}
+                  key={`${rTrack.id}-${idx}`}
                   type="button"
                   onClick={() => {
                     triggerHaptic(12);

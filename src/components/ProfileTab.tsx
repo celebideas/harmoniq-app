@@ -4143,11 +4143,11 @@ export const ProfileTab: React.FC<Props> = ({
                     (s.album && s.album.toLowerCase().includes(q))
                   );
                 })
-                .map((song) => {
+                .map((song, idx) => {
                   const isSelected = displayedTop4Tracks[editingTop4Slot]?.id === song.id;
                   return (
                     <div
-                      key={song.id}
+                      key={`${song.id}-${idx}`}
                       onClick={() => handleAssignSongToTop4Slot(song, editingTop4Slot)}
                       className={`pt-2 pb-2 px-2.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition ${
                         isSelected

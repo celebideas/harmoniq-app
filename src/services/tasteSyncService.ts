@@ -262,11 +262,13 @@ export function generatePersonalizedRadioQueue(
   // Aggregate all tracks from playlists and favorite songs
   const allPlaylistTracks: Song[] = [];
   const trackMap = new Map<string, Song>();
+  const seenIds = new Set<string>();
 
   [...favoriteSongs, ...playlists.flatMap((p) => p.tracks || [])].forEach((track) => {
     const key = `${track.artist.toLowerCase()} - ${track.title.toLowerCase()}`;
-    if (!trackMap.has(key)) {
+    if (!trackMap.has(key) && !seenIds.has(track.id)) {
       trackMap.set(key, track);
+      if (track.id) seenIds.add(track.id);
       allPlaylistTracks.push(track);
     }
   });
