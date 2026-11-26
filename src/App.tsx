@@ -914,10 +914,21 @@ export default function App() {
     });
     const unsubState = soundEngine.onStateChange((playing) => {
       const elapsed = Date.now() - lastPlayIntentRef.current.time;
-      if (elapsed < 1500 && playing !== lastPlayIntentRef.current.playing) {
+      if (playing === lastPlayIntentRef.current.playing) {
+        lastPlayIntentRef.current.time = 0;
+      } else if (elapsed < 900) {
         return;
       }
       setIsPlaying((prev) => (prev === playing ? prev : playing));
+    });
+    const unsubDuration = soundEngine.onDurationChange((realDuration) => {
+      if (!Number.isFinite(realDuration) || realDuration <= 30) return;
+      const rounded = Math.round(realDuration);
+      setCurrentSong((prev) => {
+        if (!prev) return prev;
+        if (Math.abs((prev.durationSeconds || 0) - rounded) < 2) return prev;
+        return { ...prev, durationSeconds: rounded };
+      });
     });
     const unsubLoading = soundEngine.onLoadingChange((loading) => {
       setIsAudioLoading(loading);
@@ -932,13 +943,15 @@ export default function App() {
     return () => {
       unsubTime();
       unsubState();
+      unsubDuration();
       unsubLoading();
     };
   }, []);
 
-  // Persist currentSong & playback second to localStorage so user always resumes their own real track
+  // Persist currentSong & playback second to localStorage and keep soundEngine primed
   const lastPersistedSecRef = useRef<number>(-1);
   useEffect(() => {
+    soundEngine.primeSong(currentSong);
     if (typeof window === 'undefined' || !currentSong) return;
     try {
       localStorage.setItem(LAST_PLAYED_SONG_KEY, JSON.stringify(currentSong));

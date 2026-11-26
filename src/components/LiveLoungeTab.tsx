@@ -13,11 +13,15 @@ import {
   Video,
   Disc3,
   Link2,
+  RotateCcw,
+  RotateCw,
+  Headphones,
 } from 'lucide-react';
 import { Song, LoungeUser, PlatformType, PrivacyMode } from '../types';
 import { TimelineTrack } from './TimelineTrack';
 import { ProximityDensityMap, RadiusSlider, ALL_TURKEY_RADIUS } from './ProximityDensityMap';
 import { ytController } from '../services/youtubePlayerController';
+import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
 
 interface VibeNote {
@@ -106,6 +110,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
     const startSec = ytController.getPendingSeekSecond() ?? 0;
     const autoPlayFlag = ytController.getIsPlaying() ? '1' : '0';
     return `https://www.youtube.com/embed/${currentSong.youtubeVideoId}?autoplay=${autoPlayFlag}&start=${startSec}&enablejsapi=1&playsinline=1&origin=${origin}&widgetid=1`;
+  }, [currentSong?.youtubeVideoId]);
+
+  useEffect(() => {
+    ytController.setActiveVideoId(currentSong?.youtubeVideoId || null);
   }, [currentSong?.youtubeVideoId]);
 
   // Per-song Saniye Anıları stored in localStorage (zero hardcoded Duman notes)
@@ -377,22 +385,136 @@ export const LiveLoungeTab: React.FC<Props> = ({
 
             {/* Embedded YouTube Player (kept mounted for uninterrupted playback) */}
             {currentSong.youtubeVideoId && (
-              <div
-                className={
-                  showKlipMode
-                    ? 'mb-3.5 rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] aspect-video w-full bg-black relative block'
-                    : 'fixed -bottom-48 -right-48 w-56 h-36 opacity-0 pointer-events-none z-[-10]'
-                }
-              >
-                <iframe
-                  ref={(el) => ytController.setIframe(el)}
-                  src={ytIframeSrc}
-                  title="ListenHub YouTube Music Player"
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+              <>
+                <div
+                  className={
+                    showKlipMode
+                      ? 'mb-2.5 rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] aspect-video w-full bg-black relative block'
+                      : 'fixed -bottom-48 -right-48 w-56 h-36 opacity-0 pointer-events-none z-[-10]'
+                  }
+                >
+                  <iframe
+                    ref={(el) => ytController.setIframe(el)}
+                    src={ytIframeSrc}
+                    onLoad={() => ytController.sendListeningHandshake()}
+                    title="ListenHub YouTube Music Player"
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+
+                {/* Single-Tap Video Control Strip (100% Synced with soundEngine & YouTube IFrame) */}
+                {showKlipMode && (() => {
+                  const totalDur = Math.max(1, Math.round(currentSong.durationSeconds || 240));
+                  const clampedSec = Math.min(totalDur, Math.max(0, Math.floor(mySecond)));
+                  const progressPct = Math.min(100, Math.max(0, (clampedSec / totalDur) * 100));
+                  const handleVideoSeek = (nextSec: number) => {
+                    const target = Math.min(totalDur, Math.max(0, Math.floor(nextSec)));
+                    soundEngine.primeSong(currentSong);
+                    onSeekSecond(target);
+                  };
+
+                  return (
+                    <div
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onTouchEnd={(e) => e.stopPropagation()}
+                      className="mb-3.5 rounded-xl p-2.5 sm:p-3 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-2.5"
+                    >
+                      {/* Draggable Progress Bar + Live Monospace Timestamp */}
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="range"
+                          min={0}
+                          max={totalDur}
+                          step={1}
+                          value={clampedSec}
+                          onChange={(e) => handleVideoSeek(Number(e.target.value))}
+                          aria-label="Video ilerleme çubuğu"
+                          style={{
+                            background: `linear-gradient(to right, #E87A3E 0%, #D97706 ${progressPct}%, ${
+                              themeMode === 'light' ? '#E2D9CE' : 'rgba(255,240,225,0.14)'
+                            } ${progressPct}%, ${
+                              themeMode === 'light' ? '#E2D9CE' : 'rgba(255,240,225,0.14)'
+                            } 100%)`,
+                          }}
+                          className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-[#E87A3E] focus:outline-none"
+                        />
+                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#6B635B] dark:text-[#A39A91] shrink-0">
+                          {formatTime(clampedSec)} / {formatTime(totalDur)}
+                        </span>
+                      </div>
+
+                      {/* Transport Controls: -10 sn · Play/Pause · +10 sn · Sese Dön */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(12);
+                              handleVideoSeek(clampedSec - 10);
+                            }}
+                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
+                            title="10 saniye geri sar"
+                            aria-label="10 saniye geri sar"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.85} />
+                            <span className="font-mono tabular-nums">-10 sn</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(18);
+                              onTogglePlay();
+                            }}
+                            className="studio-btn-primary h-9 px-3.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-md shadow-amber-950/20 text-xs font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5"
+                            title={isPlaying ? 'Videoyu duraklat' : 'Videoyu oynat'}
+                            aria-label={isPlaying ? 'Videoyu duraklat' : 'Videoyu oynat'}
+                          >
+                            {isAudioLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                            ) : isPlaying ? (
+                              <Pause className="w-4 h-4 fill-current" strokeWidth={1.85} />
+                            ) : (
+                              <Play className="w-4 h-4 fill-current ml-0.5" strokeWidth={1.85} />
+                            )}
+                            <span>{isPlaying ? 'Duraklat' : 'Oynat'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(12);
+                              handleVideoSeek(clampedSec + 10);
+                            }}
+                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
+                            title="10 saniye ileri sar"
+                            aria-label="10 saniye ileri sar"
+                          >
+                            <RotateCw className="w-3.5 h-3.5" strokeWidth={1.85} />
+                            <span className="font-mono tabular-nums">+10 sn</span>
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(12);
+                            setShowKlipMode(false);
+                          }}
+                          className="h-9 px-3 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                          title="Sadece ses moduna dön"
+                          aria-label="Sadece ses moduna dön"
+                        >
+                          <Headphones className="w-3.5 h-3.5 text-[#E87A3E]" strokeWidth={1.85} />
+                          <span>Sese Dön</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             )}
 
             {/* Ultra-Minimalist Row: Pure Cover (Left) · Title/Artist (Center) · Search + Play/Pause (Right) */}

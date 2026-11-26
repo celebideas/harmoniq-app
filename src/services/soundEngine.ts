@@ -19,6 +19,7 @@ class RealMusicEngine {
   private hasTriggeredEndForCurrentSong: boolean = false;
   private timeUpdateCallbacks: ((sec: number) => void)[] = [];
   private stateChangeCallbacks: ((playing: boolean) => void)[] = [];
+  private durationChangeCallbacks: ((durationSec: number) => void)[] = [];
   private loadingCallbacks: ((loading: boolean) => void)[] = [];
   private errorFallbackHandler: ((failedSong: Song) => void) | null = null;
   private simulatedInterval: any = null;
@@ -49,28 +50,43 @@ class RealMusicEngine {
       this.attachVisibilityListener();
     }
 
-    // Connect YouTube controller events
+    // Connect YouTube controller events (bidirectional sync with YouTube iframe)
     ytController.onTimeUpdate((sec) => {
-      if (this.currentSong?.youtubeVideoId) {
+      if (this.currentSong?.youtubeVideoId || ytController.getCurrentVideoId()) {
         this.simulatedSecond = sec;
         this.notifyTimeUpdate(sec);
       }
     });
 
     ytController.onStateChange((playing) => {
-      if (this.currentSong?.youtubeVideoId) {
+      if (this.currentSong?.youtubeVideoId || ytController.getCurrentVideoId()) {
         if (playing) {
           this.clearTrackLoadingLock();
         }
         if (this.shouldIgnoreExternalState(playing)) {
           return;
         }
+        // Once confirmed or externally toggled via YouTube iframe, clear stale guard lock
+        this.expectedPlayingState = null;
         this.isPlaying = playing;
         this.notifyStateChange(playing);
         this.syncMediaSessionPlaybackState(playing);
         if (playing) {
           this.setIsLoading(false);
         }
+      }
+    });
+
+    ytController.onDurationChange((durationSec) => {
+      if (
+        (this.currentSong?.youtubeVideoId || ytController.getCurrentVideoId()) &&
+        durationSec > 30
+      ) {
+        if (this.currentSong) {
+          this.currentSong = { ...this.currentSong, durationSeconds: durationSec };
+          this.updatePositionState(this.getCurrentTime(), durationSec);
+        }
+        this.notifyDurationChange(durationSec);
       }
     });
 
@@ -88,6 +104,22 @@ class RealMusicEngine {
         this.triggerErrorFallback(this.currentSong);
       }
     });
+  }
+
+  public primeSong(song: Song | null) {
+    if (!song) {
+      if (!this.isPlaying) {
+        this.currentSong = null;
+        ytController.setActiveVideoId(null);
+      }
+      return;
+    }
+    if (!this.currentSong || (!this.isPlaying && this.currentSong.id !== song.id)) {
+      this.currentSong = song;
+      if (song.youtubeVideoId) {
+        ytController.setActiveVideoId(song.youtubeVideoId);
+      }
+    }
   }
 
   private startTrackLoadingLock() {
@@ -405,6 +437,13 @@ class RealMusicEngine {
     };
   }
 
+  public onDurationChange(callback: (durationSec: number) => void) {
+    this.durationChangeCallbacks.push(callback);
+    return () => {
+      this.durationChangeCallbacks = this.durationChangeCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
   public onLoadingChange(callback: (loading: boolean) => void) {
     this.loadingCallbacks.push(callback);
     // Emit immediate current state
@@ -448,18 +487,24 @@ class RealMusicEngine {
   }
 
   private shouldIgnoreExternalState(incomingPlaying: boolean): boolean {
-    if (
-      this.expectedPlayingState !== null &&
-      Date.now() - this.lastUserActionTime < 1500 &&
-      incomingPlaying !== this.expectedPlayingState
-    ) {
-      return true;
+    if (this.expectedPlayingState !== null) {
+      if (incomingPlaying === this.expectedPlayingState) {
+        this.expectedPlayingState = null;
+        return false;
+      }
+      if (Date.now() - this.lastUserActionTime < 850) {
+        return true;
+      }
     }
     return false;
   }
 
   private notifyTimeUpdate(sec: number) {
     this.timeUpdateCallbacks.forEach((cb) => cb(sec));
+  }
+
+  private notifyDurationChange(durationSec: number) {
+    this.durationChangeCallbacks.forEach((cb) => cb(durationSec));
   }
 
   private notifyStateChange(playing: boolean) {

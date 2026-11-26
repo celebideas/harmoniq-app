@@ -547,9 +547,13 @@ html.light .harmoniq-leaflet-map .leaflet-control-attribution {
   animation: harmoniq-map-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-/* Dark Mode OpenStreetMap Tile Filter (Balanced Street/Coast Visibility — ONLY tile-pane so markers & avatar pins retain true colors) */
-html.dark .leaflet-tile-pane {
-  filter: invert(93%) hue-rotate(180deg) brightness(96%) contrast(88%) saturate(70%);
+/* Dark Mode Roadmap Tile Filter (Applied ONLY in roadmap mode; satellite preserves natural colors) */
+html.dark .harmoniq-leaflet-map:not(.map-satellite-mode) .leaflet-tile-pane {
+  filter: invert(93%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+.map-satellite-mode .leaflet-tile-pane {
+  filter: none !important;
 }
 
 html.dark .leaflet-container {

@@ -467,6 +467,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
   const [isRequestingGps, setIsRequestingGps] = useState(false);
   const [gpsStatusNote, setGpsStatusNote] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<LatLngTuple | null>(null);
+  const [mapStyle, setMapStyle] = useState<'roadmap' | 'satellite'>('roadmap');
   const [observedTheme, setObservedTheme] = useState<'dark' | 'light'>(() => {
     if (typeof document !== 'undefined') {
       return document.documentElement.classList.contains('light') ? 'light' : 'dark';
@@ -596,15 +597,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       minZoom: 4,
-      maxZoom: 18,
+      maxZoom: 20,
       attributionControl: true,
     });
 
     map.attributionControl.setPrefix('');
-    tileLayerRef.current = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap',
-    }).addTo(map);
     listenerLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
@@ -637,6 +634,43 @@ export const ProximityDensityMap: React.FC<Props> = ({
       listenerLayerRef.current = null;
     };
   }, []);
+
+  // 2. Sync Google Maps Tile Layer (Roadmap / Satellite) with automatic OpenStreetMap fallback on tileerror
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
+
+    let fallenBackToOsm = false;
+    const tileUrl =
+      mapStyle === 'satellite'
+        ? 'https://mt{s}.google.com/vt/lyrs=y&hl=tr&x={x}&y={y}&z={z}'
+        : 'https://mt{s}.google.com/vt/lyrs=m&hl=tr&x={x}&y={y}&z={z}';
+
+    const googleLayer = L.tileLayer(tileUrl, {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: mapStyle === 'satellite' ? '&copy; Google Uydu' : '&copy; Google Haritalar',
+    });
+
+    googleLayer.on('tileerror', () => {
+      if (fallenBackToOsm || !mapRef.current || tileLayerRef.current !== googleLayer) return;
+      fallenBackToOsm = true;
+      mapRef.current.removeLayer(googleLayer);
+      const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap',
+      }).addTo(mapRef.current);
+      tileLayerRef.current = osmLayer;
+    });
+
+    googleLayer.addTo(map);
+    tileLayerRef.current = googleLayer;
+  }, [mapStyle]);
 
   // 3. Update User Center Marker ("Sen"), Metric Radar Circle, and Smooth FlyTo on city/radius change
   useEffect(() => {
@@ -913,7 +947,9 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
         {/* Real Interactive Leaflet Map Canvas */}
         <div
-          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border relative z-10 ${
+          className={`harmoniq-leaflet-map ${
+            mapStyle === 'satellite' ? 'map-satellite-mode' : ''
+          } h-[340px] sm:h-[380px] rounded-xl overflow-hidden border relative z-10 ${
             isLight
               ? 'border-[#EAE4DC] bg-[#F2EDE6]'
               : 'border-[#FFF0E1]/[0.08] bg-[#0E0C0B]'
@@ -921,17 +957,67 @@ export const ProximityDensityMap: React.FC<Props> = ({
         >
           <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-          {/* Active Radius Overlay Label (Top-Left) */}
+          {/* Compact Harita | Uydu Toggle Pill (Top-Left) */}
           <div
-            className={`pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-[11px] font-mono tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
-              isLight
+            role="group"
+            aria-label="Harita katman seçici"
+            className={`absolute top-3 left-3 z-[450] p-0.5 rounded-xl border backdrop-blur-md shadow-md flex items-center gap-0.5 ${
+              mapStyle === 'satellite'
+                ? 'keep-dark bg-[#171412]/88 border-white/15'
+                : isLight
+                ? 'bg-white/95 border-[#EAE4DC]'
+                : 'bg-[#171412]/92 border-[#FFF0E1]/[0.1]'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                setMapStyle('roadmap');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                mapStyle === 'roadmap'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+                  : mapStyle === 'satellite'
+                  ? 'text-white/80 hover:text-white'
+                  : isLight
+                  ? 'text-[#6B635B] hover:text-[#181512]'
+                  : 'text-[#A39A91] hover:text-[#FAF7F2]'
+              }`}
+            >
+              Harita
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                setMapStyle('satellite');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                mapStyle === 'satellite'
+                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+                  : isLight
+                  ? 'text-[#6B635B] hover:text-[#181512]'
+                  : 'text-[#A39A91] hover:text-[#FAF7F2]'
+              }`}
+            >
+              Uydu
+            </button>
+          </div>
+
+          {/* Active Radius Overlay Label (Top-Right) */}
+          <div
+            className={`pointer-events-none absolute top-3 right-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-[11px] font-mono tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
+              mapStyle === 'satellite'
+                ? 'keep-dark bg-[#171412]/88 border-white/15 text-white'
+                : isLight
                 ? 'bg-white/92 border-[#EAE4DC] text-[#181512]'
                 : 'bg-[#171412]/92 border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                isLight ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
+                isLight && mapStyle !== 'satellite' ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
               }`}
             />
             <span>
