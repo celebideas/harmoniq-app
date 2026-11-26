@@ -411,6 +411,7 @@ export default function App() {
   });
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession());
+  const [shouldOpenProfileSettings, setShouldOpenProfileSettings] = useState<boolean>(false);
 
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -2822,36 +2823,27 @@ export default function App() {
   return (
     <div
       className={`min-h-screen ${
-        isLight ? 'bg-[#F5F4F8] text-[#14121E]' : 'bg-[#0A090F] text-[#F4F3F8]'
-      } flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-x-clip`}
+        isLight ? 'bg-[#FAF9F6] text-[#141416]' : 'bg-[#0B0B0D] text-[#F5F5F7]'
+      } flex flex-col font-sans selection:bg-[#141416] selection:text-white dark:selection:bg-white dark:selection:text-[#0B0B0D] relative overflow-x-clip`}
     >
-      {/* Top Ceiling Ambient Glow (Velvet Pitch & Electric Resonance) */}
+      {/* Organic Album Atmosphere — single calm radial glow sampled from active cover art */}
       <div
-        className="fixed inset-x-0 top-0 h-56 pointer-events-none z-0"
+        className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
         style={{
-          background:
-            'radial-gradient(ellipse 80% 50% at 50% -15%, rgba(147, 51, 234, 0.20), transparent)',
+          background: `radial-gradient(ellipse 80% 40% at 50% -10%, rgba(${activeTheme.rgbString}, ${
+            isLight ? 0.07 : 0.18
+          }), transparent 72%)`,
         }}
       />
-
-      {/* Dynamic Cover Ambient Glow across the Canvas */}
-      {currentSong.coverUrl && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <img
-            src={currentSong.coverUrl}
-            alt=""
-            aria-hidden="true"
-            className={`w-[520px] h-[520px] object-cover rounded-full blur-[130px] absolute -top-24 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
-              isLight ? 'opacity-10' : 'opacity-15'
-            }`}
-          />
-        </div>
-      )}
 
       {/* Desktop Left Sidebar (>= 1024px) */}
       <DesktopSidebar
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
+        onOpenSettings={() => {
+          setActiveTab('profile');
+          setShouldOpenProfileSettings(true);
+        }}
         unreadCount={totalUnread}
         liveListenersCount={
           privacyMode === 'friends_only'
@@ -2870,8 +2862,8 @@ export default function App() {
 
       <div
         className={`w-full flex-1 flex flex-col lg:pl-72 ${
-          isLight ? 'bg-[#F5F4F8]/95 shadow-sm' : 'bg-[#0A090F]/90'
-        } relative z-10 transition-all duration-300`}
+          isLight ? 'bg-[#FAF9F6]/85' : 'bg-[#0B0B0D]/82'
+        } relative z-10 transition-colors duration-300`}
       >
         <TopHeader
           currentSong={currentSong}
@@ -2931,7 +2923,7 @@ export default function App() {
               onUpdateCity={(city) => {
                 const updated = setManualLocation(city);
                 setUserCity(updated.city);
-                setToastMessage(`📍 Konum ve Yoğunluk Haritası "${updated.city}" olarak güncellendi`);
+                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.city}" olarak güncellendi`);
                 setTimeout(() => setToastMessage(null), 3000);
               }}
               candidateSongs={favoriteSongs.length > 0 ? favoriteSongs : activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
@@ -2961,6 +2953,20 @@ export default function App() {
               onStartArtistRadio={async (artistName) => {
                 await handleStartArtistRadioByName(artistName);
                 setActiveTab('lounge');
+              }}
+              users={combinedLoungeUsers}
+              onSelectUser={(user) => setSelectedDrawerUser(user)}
+              onDirectChat={(user) => handleSendFrequency(user)}
+              onSeekSecond={(sec) => {
+                handleSeekSecond(sec);
+                setActiveTab('lounge');
+              }}
+              userCity={userCity}
+              onUpdateCity={(city) => {
+                const updated = setManualLocation(city);
+                setUserCity(updated.city);
+                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.city}" olarak güncellendi`);
+                setTimeout(() => setToastMessage(null), 3000);
               }}
             />
           )}
@@ -3074,6 +3080,8 @@ export default function App() {
               onChangeThemeMode={handleThemeModeChange}
               onLoadPopularCollection={handleLoadPopularCollection}
               onLogout={handleFullLogout}
+              shouldOpenSettings={shouldOpenProfileSettings}
+              onConsumeOpenSettings={() => setShouldOpenProfileSettings(false)}
             />
           )}
         </main>

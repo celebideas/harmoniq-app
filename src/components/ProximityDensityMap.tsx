@@ -640,9 +640,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
       const gradientCss = resolveAvatarGradientCss(user.avatarGradient);
 
       const ringColor = user.isRealUser
-        ? '#10b981'
+        ? '#22C55E'
         : isSelected
-        ? '#a855f7'
+        ? effectiveTheme === 'light'
+          ? '#141416'
+          : '#F5F5F7'
         : effectiveTheme === 'light'
         ? '#ffffff'
         : 'rgba(255,255,255,0.85)';
@@ -650,10 +652,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
       const size = isSelected ? 40 : 34;
       const opacity = inActiveRange ? 1 : 0.36;
       const glowShadow = isSelected
-        ? '0 0 0 3px rgba(168,85,247,0.45), 0 6px 18px rgba(0,0,0,0.55)'
+        ? '0 0 0 3px rgba(34,197,94,0.35), 0 6px 18px rgba(0,0,0,0.45)'
         : user.isRealUser
-        ? '0 0 0 3px rgba(16,185,129,0.45), 0 4px 14px rgba(0,0,0,0.45)'
-        : '0 4px 12px rgba(0,0,0,0.45)';
+        ? '0 0 0 3px rgba(34,197,94,0.4), 0 4px 14px rgba(0,0,0,0.4)'
+        : '0 4px 12px rgba(0,0,0,0.35)';
 
       const avatarInner = safeAvatarUrl
         ? `<img src="${escapeHtml(safeAvatarUrl)}" alt="${safeName}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;display:block;" />`
@@ -666,7 +668,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
         html: `
           <div class="keep-dark" style="position:relative;width:${size}px;height:${size}px;border-radius:9999px;padding:2px;background:${ringColor};box-shadow:${glowShadow};opacity:${opacity};transition:transform 0.2s ease, opacity 0.2s ease;cursor:pointer;" title="${safeName} (${user.distanceKm} km)">
             ${avatarInner}
-            <span style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:9999px;background:#10b981;border:2px solid #0a090f;box-shadow:0 0 6px rgba(16,185,129,0.8);"></span>
+            <span style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:9999px;background:#22C55E;border:2px solid #0B0B0D;"></span>
           </div>
         `,
       });
@@ -751,16 +753,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
   return (
     <div className="space-y-4">
       {/* Real Interactive GIS Proximity & Density Map Card */}
-      <div className="relative rounded-3xl bg-white/95 dark:bg-[#14121E]/95 border border-[#E4E2EC] dark:border-white/[0.08] p-4 sm:p-5 overflow-hidden shadow-2xl select-none space-y-3.5">
-        {/* Header inside Map Card with City Synchronizer & GPS Permission Trigger */}
-        <div className="relative z-10 flex flex-col gap-2.5 pb-3 border-b border-zinc-200/80 dark:border-white/[0.06] text-xs">
+      <div className="relative rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-4 sm:p-5 overflow-hidden shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none select-none space-y-3.5">
+        {/* Header inside Map Card */}
+        <div className="relative z-10 flex flex-col gap-2.5 pb-3 border-b border-[#E8E6E1] dark:border-white/[0.06] text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-              <span className="font-heading font-bold text-zinc-900 dark:text-white text-sm">
+              <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+              <span className="font-bold text-[#141416] dark:text-[#F5F5F7] text-sm tracking-tight">
                 Canlı Frekans & Yoğunluk Haritası
               </span>
             </div>
@@ -770,47 +769,48 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 type="button"
                 disabled={isRequestingGps}
                 onClick={handleRequestMapGpsPermission}
-                className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full font-semibold transition cursor-pointer active:scale-95 ${
+                className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-xl font-semibold transition cursor-pointer active:scale-95 border ${
                   gpsPermState === 'granted'
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25'
-                    : 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/35 hover:bg-purple-500/25'
+                    ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
+                    : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] border-[#E8E6E1] dark:border-white/[0.08] hover:bg-[#E8E6E1] dark:hover:bg-white/10'
                 }`}
                 title="Tarayıcı veya telefon konum iznini etkinleştir / GPS ile bul"
               >
-                <Navigation className={`w-3 h-3 ${isRequestingGps ? 'animate-spin' : ''}`} />
+                <Navigation className={`w-3 h-3 ${isRequestingGps ? 'animate-spin' : ''}`} strokeWidth={1.75} />
                 <span>
                   {isRequestingGps
                     ? 'Konum Soruluyor...'
                     : gpsPermState === 'granted'
-                    ? 'GPS Açık • Yenile'
+                    ? 'GPS Açık · Yenile'
                     : 'Konum İzni Ver (GPS)'}
                 </span>
               </button>
 
-              <div className="flex items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.04] px-2.5 py-1.5 rounded-full border border-zinc-200 dark:border-white/[0.08]">
-                <Compass className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+              <div className="flex items-center gap-1.5 text-[11px] text-[#63636B] dark:text-[#8E8E98] bg-[#F1EFEA] dark:bg-[#1C1C22] px-2.5 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-white/[0.08]">
+                <Compass className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                 <span className="truncate max-w-[155px] font-medium">Merkez: {myCity}</span>
               </div>
             </div>
           </div>
 
           {gpsStatusNote && (
-            <div className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/10 text-[11px] text-zinc-800 dark:text-zinc-200 flex items-center justify-between gap-2">
+            <div className="px-3 py-1.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-[11px] text-[#141416] dark:text-[#F5F5F7] flex items-center justify-between gap-2">
               <span>{gpsStatusNote}</span>
               <button
                 type="button"
                 onClick={() => setGpsStatusNote(null)}
-                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs cursor-pointer"
+                className="text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] cursor-pointer"
+                aria-label="Kapat"
               >
-                ✕
+                <X className="w-3.5 h-3.5" strokeWidth={1.75} />
               </button>
             </div>
           )}
 
-          {/* Quick City Selector Pills (Selçuk, İzmir, Antalya, Ankara, İstanbul) */}
+          {/* Quick City Selector Pills */}
           {onChangeCity && (
             <div className="flex items-center justify-between gap-2 pt-0.5 overflow-x-auto no-scrollbar">
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium shrink-0">
+              <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] font-medium shrink-0">
                 Şehir Odağı:
               </span>
               <div className="flex items-center gap-1.5">
@@ -823,8 +823,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                       onClick={() => handleSelectQuickCity(c.full)}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer shrink-0 active:scale-95 ${
                         isCurrent
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold shadow-sm'
-                          : 'bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.09] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/[0.06]'
+                          ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] font-semibold'
+                          : 'bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 text-[#63636B] dark:text-[#8E8E98] border border-[#E8E6E1] dark:border-white/[0.06]'
                       }`}
                     >
                       {c.label}
@@ -838,73 +838,65 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
         {/* Real Interactive Leaflet Map Canvas */}
         <div
-          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 relative z-10 ${
-            effectiveTheme === 'light' ? 'bg-[#EFEFF4]' : 'bg-[#0B0A11]'
+          className={`harmoniq-leaflet-map h-[340px] sm:h-[380px] rounded-xl overflow-hidden border border-[#E8E6E1] dark:border-white/[0.08] relative z-10 ${
+            effectiveTheme === 'light' ? 'bg-[#F1EFEA]' : 'bg-[#0B0B0D]'
           }`}
         >
           <div ref={mapContainerRef} className="w-full h-full z-0" />
 
           {/* Active Radius Overlay Label (Top-Left) */}
-          <div className="pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl bg-white/85 dark:bg-[#0F0D18]/85 border border-zinc-200/80 dark:border-white/10 backdrop-blur-md text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 shadow-sm flex items-center gap-1.5">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                activeFilter === '1km'
-                  ? 'bg-emerald-500'
-                  : activeFilter === 'all'
-                  ? 'bg-amber-400'
-                  : 'bg-purple-500'
-              }`}
-            />
+          <div className="pointer-events-none absolute top-3 left-3 z-[420] px-2.5 py-1 rounded-xl bg-white/90 dark:bg-[#141418]/90 border border-[#E8E6E1] dark:border-white/[0.08] backdrop-blur-md text-[11px] font-mono tabular-nums font-medium text-[#141416] dark:text-[#F5F5F7] shadow-sm flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
             <span>
               {activeFilter === '1km'
-                ? '1 km • Yürüme Çemberi'
+                ? '1 km · Yürüme'
                 : activeFilter === '5km'
-                ? '5 km • İlçe Çemberi'
+                ? '5 km · İlçe'
                 : activeFilter === 'city'
-                ? '15 km • Şehir Çemberi'
+                ? '15 km · Şehir'
                 : 'Türkiye Geneli'}
             </span>
           </div>
 
-          {/* Compact Glass Zoom & Recenter Controls (Bottom-Right) */}
+          {/* Compact Zoom & Recenter Controls (Bottom-Right) */}
           <div className="absolute bottom-3 right-3 z-[450] flex flex-col gap-1.5">
-            <div className="flex flex-col rounded-xl overflow-hidden bg-white/90 dark:bg-[#12101B]/90 border border-zinc-200 dark:border-white/15 backdrop-blur-xl shadow-lg">
+            <div className="flex flex-col rounded-xl overflow-hidden bg-white/95 dark:bg-[#141418]/95 border border-[#E8E6E1] dark:border-white/[0.1] backdrop-blur-xl shadow-md">
               <button
                 type="button"
                 onClick={handleZoomIn}
-                className="w-9 h-9 flex items-center justify-center text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 transition active:scale-95 cursor-pointer border-b border-zinc-200/80 dark:border-white/10"
+                className="w-9 h-9 flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer border-b border-[#E8E6E1] dark:border-white/[0.08]"
                 title="Yakınlaştır"
                 aria-label="Haritayı yakınlaştır"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4" strokeWidth={1.75} />
               </button>
               <button
                 type="button"
                 onClick={handleZoomOut}
-                className="w-9 h-9 flex items-center justify-center text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 transition active:scale-95 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
                 title="Uzaklaştır"
                 aria-label="Haritayı uzaklaştır"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-4 h-4" strokeWidth={1.75} />
               </button>
             </div>
 
             <button
               type="button"
               onClick={handleRecenter}
-              className="w-9 h-9 rounded-xl bg-white/90 dark:bg-[#12101B]/90 border border-zinc-200 dark:border-white/15 backdrop-blur-xl shadow-lg flex items-center justify-center text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 transition active:scale-95 cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-white/95 dark:bg-[#141418]/95 border border-[#E8E6E1] dark:border-white/[0.1] backdrop-blur-xl shadow-md flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
               title="Konuma Odaklan"
               aria-label="Konuma odaklan"
             >
-              <Crosshair className="w-4 h-4" />
+              <Crosshair className="w-4 h-4" strokeWidth={1.75} />
             </button>
           </div>
         </div>
 
-        {/* Active Selected User Info Callout Banner (Spacious, Multi-Row Clean Card) */}
+        {/* Active Selected User Info Callout Card */}
         {selectedUser && (
-          <div className="relative z-30 p-4 rounded-2xl bg-white/95 dark:bg-[#1E1B2E]/95 border border-zinc-200 dark:border-white/15 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200 space-y-3 shadow-xl">
-            {/* 1. Üst Satır: Avatar, İsim & Yaş, Konum ve Sağda Mesafe & Kapat Butonu */}
+          <div className="relative z-30 p-4 rounded-2xl bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] space-y-3">
+            {/* Top Row */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {selectedUser.avatarUrl ? (
@@ -912,80 +904,77 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     src={selectedUser.avatarUrl}
                     alt={selectedUser.name}
                     referrerPolicy="no-referrer"
-                    className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-purple-500/50 shadow-md"
+                    className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#E8E6E1] dark:border-white/10"
                   />
                 ) : (
                   <div
-                    className={`w-12 h-12 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-purple-500/50 shadow-md`}
+                    className={`w-11 h-11 rounded-full bg-gradient-to-tr ${selectedUser.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0`}
                   >
                     {selectedUser.avatarSeed}
                   </div>
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-heading font-bold text-zinc-900 dark:text-white text-base leading-tight truncate">
-                      {selectedUser.name}, {selectedUser.age}
-                    </h4>
-                  </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                  <h4 className="font-bold text-[#141416] dark:text-[#F5F5F7] text-sm sm:text-base leading-tight truncate">
+                    {selectedUser.name}, {selectedUser.age}
+                  </h4>
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] font-medium mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 shrink-0" strokeWidth={1.75} />
                     <span className="truncate">{selectedUser.city}</span>
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold tabular-nums">
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-mono font-semibold tabular-nums">
                   {selectedUser.distanceKm} km
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedUserId(null)}
-                  className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-500 dark:text-zinc-300 flex items-center justify-center transition cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer"
                   title="Kapat"
                   aria-label="Kullanıcı kartını kapat"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" strokeWidth={1.75} />
                 </button>
               </div>
             </div>
 
-            {/* 2. Rozetler Satırı */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Metadata Row */}
+            <div className="flex items-center gap-1.5 flex-wrap">
               {selectedUser.isRealUser && (
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 text-xs font-black flex items-center gap-1.5 shrink-0 animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span>🟢 GERÇEK CANLI</span>
+                <span className="px-2 py-0.5 rounded-lg bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[11px] font-mono font-semibold flex items-center gap-1.5 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+                  <span>Canlı</span>
                 </span>
               )}
 
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Güven: %{selectedUser.trustScore || 99}</span>
+              <span className="px-2 py-0.5 rounded-lg bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                <ShieldCheck className="w-3 h-3" strokeWidth={1.75} />
+                <span>Güven · {selectedUser.trustScore || 99}</span>
               </span>
 
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                <Zap className="w-3.5 h-3.5 text-emerald-500 fill-current" />
+              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                <Zap className="w-3 h-3" strokeWidth={1.75} />
                 <span>%{selectedUser.compatibilityScore || 94} Uyum</span>
               </span>
 
-              <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/25 text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                <Music className="w-3.5 h-3.5 text-purple-500" />
-                <span>{formatTime(selectedUser.currentSecond)} Anında</span>
+              <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                <Music className="w-3 h-3" strokeWidth={1.75} />
+                <span>{formatTime(selectedUser.currentSecond)}</span>
               </span>
             </div>
 
-            {/* 3. Durum Notu */}
-            <div className="p-3 rounded-xl bg-zinc-100/80 dark:bg-black/40 border border-zinc-200 dark:border-white/10 flex items-start gap-2.5 shadow-sm">
-              <MessageCircle className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-zinc-700 dark:text-zinc-200 italic font-medium leading-relaxed">
-                "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor 🎸`}"
+            {/* Status Quote */}
+            <div className="p-2.5 rounded-xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08]">
+              <p className="text-xs text-[#141416] dark:text-[#F5F5F7] italic leading-relaxed">
+                "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor.`}"
               </p>
             </div>
 
-            {/* 4. Alt Satır (2 Net ve Konforlu Aksiyon Butonu) */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+            {/* Two Crisp Studio Actions */}
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
               <button
                 type="button"
                 onClick={() => {
@@ -994,9 +983,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSeekSecond(selectedUser.currentSecond);
                   }
                 }}
-                className="min-h-[42px] py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                className="studio-btn-primary min-h-[42px] py-2 px-3 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
               >
-                <span>🔗 {formatTime(selectedUser.currentSecond)} Saniyesine Katıl</span>
+                <span className="font-mono tabular-nums">
+                  {formatTime(selectedUser.currentSecond)} Anına Katıl
+                </span>
               </button>
 
               <button
@@ -1009,23 +1000,22 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSelectUser(selectedUser);
                   }
                 }}
-                className="min-h-[42px] py-2.5 px-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                className="min-h-[42px] py-2 px-3 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/10 text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Frekans Gönder</span>
+                <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <span>Mesaj Gönder</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Density Hotspot Zones & Cluster Indicators (3 Real Districts + Diğer Şehirler) */}
-        <div className="relative z-10 pt-3.5 border-t border-zinc-200/80 dark:border-white/[0.06] space-y-2.5">
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 gap-2">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Yoğunluk Kümeleri ({myCity.split(',')[0].trim()}):</span>
+        {/* Neighborhood Density Clusters (Real Districts + Diğer Şehirler) */}
+        <div className="relative z-10 pt-3.5 border-t border-[#E8E6E1] dark:border-white/[0.06] space-y-2.5">
+          <div className="flex items-center justify-between text-[11px] text-[#63636B] dark:text-[#8E8E98] gap-2">
+            <span className="font-semibold text-[#141416] dark:text-[#F5F5F7]">
+              Semt Yoğunluğu ({myCity.split(',')[0].trim()})
             </span>
-            <span className="truncate max-w-[160px]">Şarkı: {currentSong.title}</span>
+            <span className="truncate max-w-[160px]">{currentSong.title}</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1042,43 +1032,31 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   onClick={() => handleClusterClick(cluster)}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer active:scale-95 flex flex-col justify-between gap-2 ${
                     isActive
-                      ? 'bg-purple-500/12 border-purple-500/60 text-zinc-900 dark:text-white shadow-sm ring-1 ring-purple-500/25'
-                      : 'bg-zinc-50 dark:bg-white/[0.025] border-zinc-200/90 dark:border-white/[0.07] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/[0.05]'
+                      ? 'bg-[#141416]/[0.05] dark:bg-white/[0.08] border-[#141416]/40 dark:border-white/30 text-[#141416] dark:text-[#F5F5F7]'
+                      : 'bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border-[#E8E6E1] dark:border-white/[0.07] text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22]'
                   }`}
                 >
-                  {/* Full Unclipped District / Cluster Title */}
-                  <div className="font-semibold text-xs leading-snug text-zinc-900 dark:text-white">
+                  <div className="font-semibold text-xs leading-snug text-[#141416] dark:text-[#F5F5F7]">
                     {displayLabel}
                   </div>
 
-                  {/* Metrics Row: Count + Avg Distance + Density */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-1 text-[10.5px] tabular-nums">
-                      <span className="font-bold text-purple-600 dark:text-purple-300">
+                    <div className="flex items-center justify-between gap-1 text-[10.5px] font-mono tabular-nums">
+                      <span className="font-semibold text-[#16A34A] dark:text-[#22C55E]">
                         {cluster.count} kişi
                       </span>
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        Ort. {cluster.avgDistance} km
+                      <span className="text-[#63636B] dark:text-[#8E8E98]">
+                        {cluster.avgDistance} km
                       </span>
                     </div>
-                    <div
-                      className={`text-[10px] font-medium ${
-                        isRemoteCluster
-                          ? 'text-sky-600 dark:text-sky-400'
-                          : cluster.density === 'high'
-                          ? 'text-amber-600 dark:text-amber-400'
-                          : cluster.density === 'medium'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-zinc-500 dark:text-zinc-400'
-                      }`}
-                    >
+                    <div className="text-[10px] font-medium text-[#63636B] dark:text-[#8E8E98]">
                       {isRemoteCluster
-                        ? '🗺️ Türkiye Geneli'
+                        ? 'Türkiye Geneli'
                         : cluster.density === 'high'
-                        ? '🔥 Yüksek Yoğunluk'
+                        ? 'Yüksek Yoğunluk'
                         : cluster.density === 'medium'
-                        ? '⚡ Orta Yoğunluk'
-                        : '📍 Aktif Bölge'}
+                        ? 'Orta Yoğunluk'
+                        : 'Aktif Bölge'}
                     </div>
                   </div>
                 </button>

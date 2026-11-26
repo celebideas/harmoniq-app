@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { LoungeConversation, LoungeUser, Song, FriendRequest } from '../types';
 import { searchTracks } from '../services/musicResolver';
+import { LiveMiniEqualizer } from './LiveMiniEqualizer';
 
 type SocialPaneTab = 'chats' | 'friends' | 'requests';
 
@@ -265,7 +266,7 @@ export const ChatTab: React.FC<Props> = ({
   const renderUserAvatar = (user: LoungeUser, sizeClass = 'w-11 h-11') => (
     <div className="relative shrink-0">
       <div
-        className={`${sizeClass} rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs ring-1 ring-black/10 dark:ring-white/10 overflow-hidden shadow-sm`}
+        className={`${sizeClass} rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs border border-[#E8E6E1] dark:border-white/[0.08] overflow-hidden`}
       >
         {user.avatarUrl ? (
           <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
@@ -274,7 +275,12 @@ export const ChatTab: React.FC<Props> = ({
         )}
       </div>
       {user.isOnline && (
-        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-[#12111A]" />
+        <span
+          className="absolute -bottom-1 -right-1 px-1 py-0.5 rounded-md bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.1] shadow-xs flex items-center justify-center"
+          title="Canlı dinliyor"
+        >
+          <LiveMiniEqualizer />
+        </span>
       )}
     </div>
   );
@@ -346,45 +352,45 @@ export const ChatTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 space-y-6">
-      {/* Desktop 2-Pane Split Layout (w-80 inbox + flex-1 chat) / Mobile Single-Pane Switch */}
+    <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-6 space-y-5">
+      {/* Desktop 2-Pane Split Layout / Mobile Single-Pane Switch */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 lg:h-[calc(100vh-148px)] lg:min-h-[560px]">
         {/* ==================== LEFT PANE: DIRECTORY, TABS & INBOX ==================== */}
         <section
           className={`${
             activeConv && activeChatUser ? 'hidden lg:flex' : 'flex'
-          } flex-col bg-white dark:bg-[#12111A]/90 border border-[#E4E2EC] dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-lg lg:h-full`}
+          } flex-col bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none rounded-2xl overflow-hidden lg:h-full`}
         >
           {/* Left Header */}
-          <div className="p-4 sm:p-5 border-b border-[#E4E2EC] dark:border-white/[0.07] space-y-3.5 shrink-0">
+          <div className="p-4 sm:p-5 border-b border-[#E8E6E1] dark:border-white/[0.07] space-y-3.5 shrink-0">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-lg font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                  Sosyal & Mesajlar
+                <h1 className="text-lg font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+                  Sohbet
                 </h1>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
                   {isCloudAuthenticated
                     ? 'Bulut senkronizasyonu aktif · Gerçek zamanlı'
-                    : 'Gerçek çok kullanıcılı sohbet ve arkadaşlıklar'}
+                    : 'Aynı şarkıdan başlayan sohbetler'}
                 </p>
               </div>
-              <div className="text-right tabular-nums">
-                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {conversations.length} Sohbet
+              <div className="text-right font-mono tabular-nums">
+                <span className="text-xs font-medium text-[#16A34A] dark:text-[#22C55E] inline-flex items-center gap-1.5">
+                  <LiveMiniEqualizer />
+                  <span>{conversations.length}</span>
                 </span>
               </div>
             </div>
 
-            {/* Mobile-Only Single Cloud Connect Action (Desktop uses the single Right Empty-State CTA, zero duplication) */}
+            {/* Mobile-Only Single Cloud Connect Action */}
             {!isCloudAuthenticated && onGoogleSignIn && (
-              <div className="lg:hidden p-3 rounded-2xl bg-gradient-to-r from-purple-500/10 via-emerald-500/10 to-transparent border border-purple-500/20 flex items-center justify-between gap-2.5">
+              <div className="lg:hidden p-3 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-between gap-2.5">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                    <Cloud className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <div className="text-xs font-bold text-[#141416] dark:text-[#F5F5F7] flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
                     <span className="truncate">Bulut Sohbeti Aç</span>
                   </div>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 truncate">
+                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] mt-0.5 truncate">
                     Cihazlar arası anlık mesajlaşma
                   </p>
                 </div>
@@ -392,68 +398,68 @@ export const ChatTab: React.FC<Props> = ({
                   type="button"
                   onClick={onGoogleSignIn}
                   disabled={isAuthLoading}
-                  className="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:brightness-110 disabled:opacity-60 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0 min-h-[44px] cursor-pointer shadow-sm"
+                  className="studio-btn-primary px-3 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 disabled:opacity-60 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0 min-h-[40px] cursor-pointer"
                 >
                   {isAuthLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={1.75} />
                   ) : (
-                    <LogIn className="w-3.5 h-3.5" />
+                    <LogIn className="w-3.5 h-3.5" strokeWidth={1.75} />
                   )}
-                  <span>Hesap Bağla</span>
+                  <span>Bağla</span>
                 </button>
               </div>
             )}
 
             {/* Unified Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.75} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Kullanıcı adı (@handle), isim veya şehir ara..."
-                className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-zinc-100/90 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] text-xs text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition min-h-[42px]"
+                placeholder="Kullanıcı adı, isim veya şehir ara..."
+                className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none focus:border-[#141416]/40 dark:focus:border-white/30 transition min-h-[42px]"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-white cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] cursor-pointer"
                   aria-label="Aramayı temizle"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3.5 h-3.5" strokeWidth={1.75} />
                 </button>
               )}
             </div>
 
             {/* Segmented Tabs: Sohbetler | Arkadaşlar | İstekler */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]">
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22]">
               <button
                 type="button"
                 onClick={() => setSocialTab('chats')}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
+                className={`px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
                   socialTab === 'chats'
-                    ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                    ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                    : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                <MessageSquare className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                 <span className="truncate">Sohbetler</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSocialTab('friends')}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
+                className={`px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
                   socialTab === 'friends'
-                    ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                    ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                    : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                 }`}
               >
-                <Users className="w-3.5 h-3.5 shrink-0" />
+                <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                 <span className="truncate">Arkadaşlar</span>
                 {friendsList.length > 0 && (
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
+                  <span className="text-[10px] font-mono font-semibold text-[#16A34A] dark:text-[#22C55E] tabular-nums shrink-0">
                     {friendsList.length}
                   </span>
                 )}
@@ -462,16 +468,16 @@ export const ChatTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setSocialTab('requests')}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[40px] ${
+                className={`px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[38px] ${
                   socialTab === 'requests'
-                    ? 'bg-white dark:bg-white/[0.12] text-zinc-950 dark:text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                    ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                    : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                 }`}
               >
-                <UserPlus className="w-3.5 h-3.5 shrink-0" />
+                <UserPlus className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
                 <span className="truncate">İstekler</span>
                 {incomingRequests.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-zinc-950 text-[10px] font-extrabold tabular-nums shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] text-white dark:text-[#0B0B0D] text-[10px] font-mono font-bold tabular-nums shrink-0">
                     {incomingRequests.length}
                   </span>
                 )}
@@ -569,15 +575,9 @@ export const ChatTab: React.FC<Props> = ({
                             className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95 transition"
                           >
                             <div className="relative">
-                              <div
-                                className={`w-12 h-12 rounded-full p-[2px] ${
-                                  user.isRealUser
-                                    ? 'bg-gradient-to-tr from-emerald-400 via-teal-400 to-lime-300'
-                                    : 'bg-gradient-to-tr from-purple-500/70 to-emerald-400/70'
-                                }`}
-                              >
+                              <div className="w-12 h-12 rounded-full p-[2px] border border-[#16A34A]/50 dark:border-[#22C55E]/50">
                                 <div
-                                  className={`w-full h-full rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs ring-2 ring-white dark:ring-[#12111A] overflow-hidden`}
+                                  className={`w-full h-full rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-xs overflow-hidden`}
                                 >
                                   {user.avatarUrl ? (
                                     <img
@@ -590,8 +590,11 @@ export const ChatTab: React.FC<Props> = ({
                                   )}
                                 </div>
                               </div>
+                              <span className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded-md bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.1] flex items-center justify-center">
+                                <LiveMiniEqualizer />
+                              </span>
                             </div>
-                            <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-500 max-w-[64px] truncate">
+                            <span className="text-[11px] font-medium text-[#141416] dark:text-[#F5F5F7] max-w-[64px] truncate">
                               {user.name.split(' ')[0]}
                             </span>
                           </button>
@@ -933,20 +936,20 @@ export const ChatTab: React.FC<Props> = ({
         <section
           className={`${
             activeConv && activeChatUser ? 'flex' : 'hidden lg:flex'
-          } flex-col bg-white dark:bg-[#12111A]/90 border border-[#E4E2EC] dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-lg lg:h-full min-h-[540px]`}
+          } flex-col bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none rounded-2xl overflow-hidden lg:h-full min-h-[540px]`}
         >
           {activeConv && activeChatUser ? (
             <>
               {/* Chat Header */}
-              <div className="px-4 py-3 border-b border-[#E4E2EC] dark:border-white/[0.08] flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-900/60 shrink-0">
+              <div className="px-4 py-3 border-b border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-between bg-[#FAF9F6] dark:bg-[#141418] shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <button
                     type="button"
                     onClick={onBackToList}
-                    className="lg:hidden px-2.5 py-2 text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1] transition cursor-pointer min-h-[44px] flex items-center gap-1 text-xs font-semibold shrink-0"
+                    className="lg:hidden px-2.5 py-2 text-[#141416] dark:text-[#F5F5F7] rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/10 transition cursor-pointer min-h-[44px] flex items-center gap-1 text-xs font-semibold shrink-0"
                     aria-label="Geri Dön"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
                     <span>Geri</span>
                   </button>
 
@@ -957,19 +960,15 @@ export const ChatTab: React.FC<Props> = ({
                     {renderUserAvatar(activeChatUser, 'w-10 h-10')}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-zinc-900 dark:text-white truncate group-hover:text-emerald-500 transition">
+                        <span className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
                           {activeChatUser.name}
                         </span>
-                        {activeConv.isCloudConversation && (
-                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-                            · Gerçek Zamanlı
-                          </span>
-                        )}
+                        {activeChatUser.isOnline && <LiveMiniEqualizer />}
                       </div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1.5">
+                      <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate flex items-center gap-1.5">
                         <span>{activeChatUser.city}</span>
                         <span>·</span>
-                        <span>{activeChatUser.isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}</span>
+                        <span>{activeChatUser.isOnline ? 'Canlı dinliyor' : 'Çevrimdışı'}</span>
                       </div>
                     </div>
                   </div>
@@ -981,7 +980,7 @@ export const ChatTab: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => onOpenUserProfile(activeChatUser)}
-                      className="px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.12] text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition cursor-pointer min-h-[38px]"
+                      className="px-3 py-2 rounded-xl bg-[#F1EFEA] hover:bg-[#E8E6E1] dark:bg-[#1C1C22] dark:hover:bg-white/10 text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer min-h-[38px]"
                     >
                       Profil
                     </button>
@@ -989,7 +988,7 @@ export const ChatTab: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Single-Strip Shared Track Encounter Banner */}
+              {/* Single-Strip Shared Track Encounter Banner ("Tanışma Anı") */}
               {(() => {
                 const encounterSec = activeConv.matchedSecond || 0;
                 const formattedEncounterTime = formatTime(encounterSec);
@@ -1002,9 +1001,9 @@ export const ChatTab: React.FC<Props> = ({
                 );
 
                 return (
-                  <div className="mx-3.5 mt-3 p-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/35 border border-emerald-500/25 flex items-center justify-between gap-3 shrink-0">
+                  <div className="mx-3.5 mt-3 p-2.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-[#141418] shrink-0">
                         {activeConv.matchedTrack.coverUrl ? (
                           <img
                             src={activeConv.matchedTrack.coverUrl}
@@ -1015,21 +1014,22 @@ export const ChatTab: React.FC<Props> = ({
                           <div
                             className={`w-full h-full bg-gradient-to-tr ${activeConv.matchedTrack.coverGradient} flex items-center justify-center text-white`}
                           >
-                            <Music className="w-4 h-4" />
+                            <Music className="w-4 h-4" strokeWidth={1.75} />
                           </div>
                         )}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                          Ortak Frekans & Tanışma Anı
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-[#16A34A] dark:text-[#22C55E]">
+                          Tanışma Anı
                         </div>
-                        <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">
-                          {activeConv.matchedTrack.title} · {formattedEncounterTime} anında buluştunuz
+                        <div className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                          {activeConv.matchedTrack.title} ·{' '}
+                          <span className="font-mono tabular-nums">{formattedEncounterTime}</span>
                         </div>
-                        <div className="mt-1 w-full h-1 bg-zinc-200 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div className="mt-1 w-full h-1 bg-[#E8E6E1] dark:bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-emerald-500 rounded-full"
+                            className="h-full bg-[#141416] dark:bg-white rounded-full"
                             style={{ width: `${encounterProgressPct}%` }}
                           />
                         </div>
@@ -1043,14 +1043,10 @@ export const ChatTab: React.FC<Props> = ({
                           onPlayMoment(activeConv.matchedTrack, encounterSec);
                           setIsCoListeningActive(true);
                         }}
-                        className={`px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 active:scale-95 min-h-[40px] ${
-                          isCoListeningActive && currentSong?.id === activeConv.matchedTrack.id
-                            ? 'bg-emerald-500 text-zinc-950'
-                            : 'bg-emerald-400 hover:bg-emerald-300 text-zinc-950'
-                        }`}
+                        className="studio-btn-primary px-3 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 active:scale-95 min-h-[38px]"
                       >
-                        <Play className="w-3 h-3 fill-current" />
-                        <span className="tabular-nums">{formattedEncounterTime}'den Dinle</span>
+                        <Play className="w-3 h-3 fill-current" strokeWidth={1.75} />
+                        <span className="font-mono tabular-nums">{formattedEncounterTime}</span>
                       </button>
                     )}
                   </div>
@@ -1061,12 +1057,12 @@ export const ChatTab: React.FC<Props> = ({
               <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 min-h-[240px]">
                 {activeConv.messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-8 space-y-2">
-                    <Headphones className="w-8 h-8 text-emerald-500/70" />
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    <Headphones className="w-8 h-8 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.5} />
+                    <p className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7]">
                       {activeChatUser.name} ile sohbeti başlat
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs">
-                      Aşağıdaki müzikal buzkırıcılardan birini seç veya şu an çalan şarkının bir saniyesini paylaş.
+                    <p className="text-xs text-[#63636B] dark:text-[#8E8E98] max-w-xs">
+                      Şu an çalan şarkının bir saniyesini paylaş veya doğrudan yaz.
                     </p>
                   </div>
                 ) : (
@@ -1082,8 +1078,8 @@ export const ChatTab: React.FC<Props> = ({
                         <div
                           className={`max-w-[85%] sm:max-w-[75%] rounded-2xl text-xs leading-relaxed p-3.5 ${
                             isMe
-                              ? 'bg-purple-600 text-force-white dark:bg-white dark:text-zinc-950 font-medium rounded-br-sm shadow-sm'
-                              : 'bg-zinc-100 dark:bg-white/[0.07] border border-zinc-200/80 dark:border-white/[0.08] text-zinc-900 dark:text-zinc-100 rounded-bl-sm'
+                              ? 'studio-btn-primary bg-[#141416] text-white dark:bg-[#F5F5F7] dark:text-[#0B0B0D] font-medium rounded-br-sm'
+                              : 'bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06] text-[#141416] dark:text-[#F5F5F7] rounded-bl-sm'
                           }`}
                         >
                           {shouldShowSharedSongCard && msg.sharedSong && (
@@ -1100,10 +1096,10 @@ export const ChatTab: React.FC<Props> = ({
                                   onPlaySong(msg.sharedSong!);
                                 }
                               }}
-                              className="keep-dark mb-2.5 p-2.5 rounded-xl flex items-center justify-between gap-2.5 cursor-pointer transition border bg-zinc-950 border-emerald-500/40 text-white hover:border-emerald-400"
+                              className="keep-dark mb-2.5 p-2.5 rounded-xl flex items-center justify-between gap-2.5 cursor-pointer transition border bg-[#0B0B0D] border-white/[0.12] text-white hover:border-white/30"
                             >
                               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 shrink-0">
+                                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-[#1C1C22] shrink-0">
                                   {msg.sharedSong.coverUrl ? (
                                     <img
                                       src={msg.sharedSong.coverUrl}
@@ -1115,29 +1111,29 @@ export const ChatTab: React.FC<Props> = ({
                                       className={`w-full h-full bg-gradient-to-tr ${msg.sharedSong.coverGradient}`}
                                     />
                                   )}
-                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                    <Play className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
+                                  <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                                    <Play className="w-3.5 h-3.5 text-white fill-white" />
                                   </div>
                                 </div>
 
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold text-white truncate">
+                                    <span className="text-xs font-semibold text-white truncate">
                                       {msg.sharedSong.title}
                                     </span>
                                     {msg.sharedTimestampSecond !== undefined && (
-                                      <span className="text-[10px] font-mono font-bold text-emerald-400 shrink-0 tabular-nums">
+                                      <span className="text-[10px] font-mono font-semibold text-[#22C55E] shrink-0 tabular-nums">
                                         {formatTime(msg.sharedTimestampSecond)}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[11px] text-zinc-400 truncate">
+                                  <div className="text-[11px] text-[#8E8E98] truncate">
                                     {msg.sharedSong.artist}
                                   </div>
                                 </div>
                               </div>
 
-                              <span className="px-2.5 py-1 rounded-lg bg-emerald-400 text-zinc-950 font-bold text-[11px] shrink-0">
+                              <span className="px-2.5 py-1 rounded-lg bg-white text-[#0B0B0D] font-semibold text-[11px] shrink-0">
                                 Dinle
                               </span>
                             </div>
@@ -1146,8 +1142,7 @@ export const ChatTab: React.FC<Props> = ({
                           <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                         </div>
 
-                        <span className="text-[10px] text-zinc-500 mt-1 px-1 flex items-center gap-1 tabular-nums">
-                          {msg.isIcebreaker && <Sparkles className="w-2.5 h-2.5 text-amber-400" />}
+                        <span className="text-[10px] font-mono text-[#63636B] dark:text-[#8E8E98] mt-1 px-1 flex items-center gap-1 tabular-nums">
                           <span>{msg.timestamp}</span>
                         </span>
                       </div>
@@ -1158,10 +1153,9 @@ export const ChatTab: React.FC<Props> = ({
               </div>
 
               {/* Musical Icebreakers Bar */}
-              <div className="px-3 py-2 border-t border-[#E4E2EC] dark:border-white/[0.06] bg-zinc-50/70 dark:bg-black/25 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-1">
-                  <Sparkles className="w-3 h-3 text-amber-500" />
-                  Buzkırıcı:
+              <div className="px-3 py-2 border-t border-[#E8E6E1] dark:border-white/[0.06] bg-[#FAF9F6] dark:bg-[#0B0B0D]/40 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+                <span className="text-[10px] font-semibold text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider shrink-0 pl-1">
+                  Hızlı Başlangıç
                 </span>
                 {[
                   'Bu şarkının solosu hakkında ne düşünüyorsun?',
@@ -1172,7 +1166,7 @@ export const ChatTab: React.FC<Props> = ({
                     key={prompt}
                     type="button"
                     onClick={() => handleSendIcebreaker(prompt)}
-                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-zinc-700 dark:text-zinc-200 text-xs shrink-0 whitespace-nowrap transition cursor-pointer border border-zinc-200 dark:border-white/[0.08]"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F1EFEA] dark:bg-[#1C1C22] dark:hover:bg-white/10 text-[#141416] dark:text-[#F5F5F7] text-xs shrink-0 whitespace-nowrap transition cursor-pointer border border-[#E8E6E1] dark:border-white/[0.08]"
                   >
                     {prompt}
                   </button>
@@ -1182,7 +1176,7 @@ export const ChatTab: React.FC<Props> = ({
               {/* Composer */}
               <form
                 onSubmit={handleSend}
-                className="p-3 sm:p-3.5 border-t border-[#E4E2EC] dark:border-white/[0.08] flex items-center gap-2 bg-zinc-50/90 dark:bg-zinc-900/60 shrink-0"
+                className="p-3 sm:p-3.5 border-t border-[#E8E6E1] dark:border-white/[0.08] flex items-center gap-2 bg-[#FAF9F6] dark:bg-[#141418] shrink-0"
               >
                 <button
                   type="button"
@@ -1191,15 +1185,15 @@ export const ChatTab: React.FC<Props> = ({
                     setSelectedSongToShare(targetSong);
                     const sec = currentSecond || 0;
                     setShareTimestampSecond(sec);
-                    setSongComment(`Bu şarkının ${formatTime(sec)} saniyesini dinle!`);
+                    setSongComment(`Bu şarkının ${formatTime(sec)} saniyesini dinle.`);
                     setShowSongPickerModal(true);
                   }}
-                  className="px-3 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 transition cursor-pointer flex items-center gap-1.5 shrink-0 min-h-[44px]"
+                  className="px-3 py-2.5 rounded-xl bg-[#F1EFEA] hover:bg-[#E8E6E1] dark:bg-[#1C1C22] dark:hover:bg-white/10 text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] transition cursor-pointer flex items-center gap-1.5 shrink-0 min-h-[44px]"
                   title="Şarkı ve saniye paylaş"
                 >
-                  <Music className="w-4 h-4" />
-                  <span className="text-xs font-bold hidden sm:inline">An Paylaş</span>
-                  <Plus className="w-3.5 h-3.5" />
+                  <Music className="w-4 h-4" strokeWidth={1.75} />
+                  <span className="text-xs font-semibold hidden sm:inline">An Paylaş</span>
+                  <Plus className="w-3.5 h-3.5" strokeWidth={1.75} />
                 </button>
 
                 <input
@@ -1207,31 +1201,31 @@ export const ChatTab: React.FC<Props> = ({
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Mesaj yaz..."
-                  className="flex-1 py-2.5 px-4 bg-white dark:bg-white/[0.05] border border-zinc-200 dark:border-white/[0.08] rounded-2xl text-xs text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition min-h-[44px]"
+                  className="flex-1 py-2.5 px-4 bg-white dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] rounded-xl text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none focus:border-[#141416]/40 dark:focus:border-white/30 transition min-h-[44px]"
                 />
 
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="p-2.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-30 disabled:pointer-events-none text-zinc-950 font-bold rounded-2xl transition cursor-pointer active:scale-95 shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="studio-btn-primary p-2.5 bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 disabled:opacity-30 disabled:pointer-events-none text-white dark:text-[#0B0B0D] font-bold rounded-xl transition cursor-pointer active:scale-95 shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="Gönder"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" strokeWidth={1.75} />
                 </button>
               </form>
             </>
           ) : (
             /* Desktop Empty State when no conversation is selected */
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-              <div className="w-16 h-16 rounded-3xl bg-emerald-500/12 border border-emerald-500/25 flex items-center justify-center text-emerald-500">
-                <MessageSquare className="w-8 h-8" />
+              <div className="w-14 h-14 rounded-2xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7]">
+                <MessageSquare className="w-6 h-6" strokeWidth={1.75} />
               </div>
               <div className="space-y-1.5 max-w-sm">
-                <h2 className="text-lg font-heading font-bold text-zinc-900 dark:text-white">
-                  Bir Sohbet Seç veya Yeni Frekans Başlat
+                <h2 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7]">
+                  Bir Sohbet Seç
                 </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  Sol panelden devam eden konuşmalarını açabilir, arkadaşlık isteklerini yönetebilir veya @kullanıcıadı ile gerçek dinleyicileri bulup anlık mesajlaşabilirsin.
+                <p className="text-xs text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
+                  Sol panelden devam eden konuşmalarını açabilir veya aynı saniyede karşılaştığın dinleyicilerle sohbet başlatabilirsin.
                 </p>
               </div>
               {!isCloudAuthenticated && onGoogleSignIn && (
@@ -1239,12 +1233,12 @@ export const ChatTab: React.FC<Props> = ({
                   type="button"
                   onClick={onGoogleSignIn}
                   disabled={isAuthLoading}
-                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-purple-500/25 min-h-[44px]"
+                  className="studio-btn-primary px-5 py-3 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-2 transition cursor-pointer min-h-[44px]"
                 >
                   {isAuthLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
                   ) : (
-                    <LogIn className="w-4 h-4" />
+                    <LogIn className="w-4 h-4" strokeWidth={1.75} />
                   )}
                   <span>Hesap / Bulut Sohbeti Bağla</span>
                 </button>

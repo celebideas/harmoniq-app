@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Music,
-  Users,
   Play,
   ChevronRight,
   Radio,
   Search,
   X,
-  Sparkles,
+  MapPin,
+  Disc3,
 } from 'lucide-react';
-import { Song, UserPlaylist, PersonalMusicTaste } from '../types';
+import { Song, UserPlaylist, PersonalMusicTaste, LoungeUser } from '../types';
 import { SAMPLE_SONGS } from '../data/mockData';
 import {
   isMusicArtistOrChannel,
@@ -18,6 +18,8 @@ import {
   getArtistArtwork,
 } from '../services/artistFilterService';
 import { triggerHaptic } from '../services/themeService';
+import { LiveMiniEqualizer } from './LiveMiniEqualizer';
+import { ProximityDensityMap, DistanceFilter } from './ProximityDensityMap';
 
 interface Props {
   currentSong: Song;
@@ -29,10 +31,17 @@ interface Props {
   favoriteSongs?: Song[];
   personalTaste?: PersonalMusicTaste;
   onStartArtistRadio?: (artistName: string) => void;
+  users?: LoungeUser[];
+  onSelectUser?: (user: LoungeUser) => void;
+  onDirectChat?: (user: LoungeUser) => void;
+  onSeekSecond?: (sec: number) => void;
+  userCity?: string;
+  onUpdateCity?: (city: string) => void;
 }
 
 type RoomFilterMode = 'all' | 'artists' | 'songs' | 'personal';
 type MoodTunerId = 'all' | 'energy' | 'night' | 'rock' | 'discovery';
+type ExploreLens = 'rooms' | 'map';
 
 interface ArtistRoomInfo {
   artist: string;
@@ -73,10 +82,10 @@ const CURATED_DEFAULT_ARTISTS = [
 ];
 
 const MOOD_TUNER_OPTIONS: { id: MoodTunerId; label: string; desc: string }[] = [
-  { id: 'energy', label: '⚡ Yüksek Enerji', desc: 'Yüksek BPM, elektronik ve dinamik ritimler' },
-  { id: 'night', label: '🌙 Gece & Melankoli', desc: 'Darkwave, synthpop, akustik ve gece tınıları' },
-  { id: 'rock', label: '🎸 Gitar & Rock', desc: 'Türkçe Rock, grunge ve alternatif gitar rifleri' },
-  { id: 'discovery', label: '🔮 Derin Keşif', desc: 'Saykodelik, post-punk ve bağımsız sahne' },
+  { id: 'all', label: 'Tümü', desc: 'Tüm canlı odalar ve sanatçı frekansları' },
+  { id: 'energy', label: 'Yüksek Enerji', desc: 'Yüksek BPM, elektronik ve dinamik ritimler' },
+  { id: 'night', label: 'Gece', desc: 'Darkwave, synthpop ve gece tınıları' },
+  { id: 'rock', label: 'Akustik & Rock', desc: 'Türkçe Rock, akustik ve alternatif gitar' },
 ];
 
 function inferArtistGenre(artistName: string, fallbackGenre?: string): string {
@@ -137,10 +146,10 @@ const ArtistCardCompact: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`min-w-[144px] max-w-[154px] p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center shrink-0 group ${
+      className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center shrink-0 group ${
         isCurrentArtist
-          ? 'bg-purple-500/10 border-purple-500/40 shadow-lg shadow-purple-500/10'
-          : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-100/90 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
+          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
       }`}
     >
       <div className="relative mb-2.5">
@@ -150,37 +159,27 @@ const ArtistCardCompact: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-13 h-13 rounded-2xl object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-white/15 bg-zinc-900 group-hover:scale-105 transition-transform"
+            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#E8E6E1] dark:border-white/[0.08] bg-[#1C1C22] group-hover:scale-105 transition-transform"
           />
         ) : (
           <div
-            className={`w-13 h-13 rounded-2xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/[0.08] relative overflow-hidden group-hover:scale-105 transition-transform`}
+            className={`w-13 h-13 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/[0.08] relative overflow-hidden group-hover:scale-105 transition-transform`}
           >
-            <div className="absolute inset-0 bg-black/25 flex items-center justify-center opacity-40">
-              <Music className="w-5 h-5 text-white" />
-            </div>
             <span className="relative z-10">{room.avatarSeed}</span>
-          </div>
-        )}
-        {isCurrentArtist && (
-          <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white flex items-center gap-0.5 shadow-md">
-            <span className="w-0.5 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-0.5 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-0.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
         )}
       </div>
 
-      <span className="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors truncate w-full">
+      <span className="text-xs font-bold text-[#141416] dark:text-[#F5F5F7] truncate w-full">
         {room.artist}
       </span>
-      <span className="text-[10px] text-zinc-500 dark:text-[#9E9AA8] truncate w-full mt-0.5">
+      <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
         {room.topSongTitle}
       </span>
 
-      <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono tabular-nums px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span>{room.totalLiveListeners} dinleyici</span>
+      <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-[#16A34A] dark:text-[#22C55E] font-mono tabular-nums">
+        <LiveMiniEqualizer />
+        <span>{room.totalLiveListeners}</span>
       </div>
     </div>
   );
@@ -197,10 +196,10 @@ const ArtistRoomRow: React.FC<{
   return (
     <div
       onClick={onEnter}
-      className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
+      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrentArtist
-          ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
-          : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
+          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -210,52 +209,40 @@ const ArtistRoomRow: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-11 h-11 rounded-xl object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-white/10 bg-zinc-900"
+            className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#E8E6E1] dark:border-white/[0.08] bg-[#1C1C22]"
           />
         ) : (
           <div
-            className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/[0.08] relative overflow-hidden`}
+            className={`avatar-circle w-11 h-11 rounded-xl bg-gradient-to-tr ${room.avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 border border-white/[0.08]`}
           >
-            <div className="absolute inset-0 bg-black/25 flex items-center justify-center opacity-40">
-              <Music className="w-4 h-4 text-white" />
-            </div>
-            <span className="relative z-10">{room.avatarSeed}</span>
+            {room.avatarSeed}
           </div>
         )}
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-500 dark:group-hover:text-purple-400 transition">
-              {room.artist}
-            </span>
-            {isCurrentArtist && (
-              <div className="flex items-end gap-0.5 h-3 ml-0.5 shrink-0">
-                <span className="w-0.5 bg-purple-500 h-2 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-0.5 bg-fuchsia-500 h-3 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-0.5 bg-pink-500 h-1.5 animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            )}
+          <div className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+            {room.artist}
           </div>
-          <div className="text-xs text-zinc-500 dark:text-[#9E9AA8] truncate mt-0.5">
-            {room.topSongTitle} <span className="text-zinc-400 dark:text-zinc-600">•</span> {room.genre}
+          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+            {room.topSongTitle} · {room.genre}
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 shrink-0">
-        <span className="text-xs text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 font-mono">
-          <Users className="w-3.5 h-3.5 text-emerald-500" />
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-mono font-medium">
+          <LiveMiniEqualizer />
           <span>{room.totalLiveListeners}</span>
         </span>
         <div
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition ${
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
             isCurrentArtist
-              ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-              : 'bg-zinc-200/70 dark:bg-white/[0.05] text-zinc-600 dark:text-zinc-300 group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-500 group-hover:text-white'
+              ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+              : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D]'
           }`}
           title={`${room.artist} Odasına Gir`}
         >
-          <Radio className="w-3.5 h-3.5" />
+          <Radio className="w-3.5 h-3.5" strokeWidth={1.75} />
         </div>
       </div>
     </div>
@@ -275,14 +262,14 @@ const SongRoomRow: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
+      className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.99] transition min-h-[68px] ${
         isCurrent
-          ? 'bg-purple-500/10 border-purple-500/35 shadow-sm'
-          : 'bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border-[#E4E2EC] dark:border-white/[0.08]'
+          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#141416]/30 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
-        <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-zinc-200 dark:border-white/[0.08]">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 border border-[#E8E6E1] dark:border-white/[0.08]">
           {song.coverUrl ? (
             <img
               src={song.coverUrl}
@@ -293,37 +280,28 @@ const SongRoomRow: React.FC<{
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-tr ${song.coverGradient} flex items-center justify-center`}>
-              <Music className="w-4 h-4 text-white" />
+              <Music className="w-4 h-4 text-white" strokeWidth={1.75} />
             </div>
           )}
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white group-hover:text-purple-500 dark:group-hover:text-purple-400 transition truncate">
-              {song.title}
-            </span>
-            {isCurrent && (
-              <div className="flex items-end gap-0.5 h-3">
-                <span className="w-0.5 bg-purple-500 h-2 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-0.5 bg-fuchsia-500 h-3 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-0.5 bg-pink-500 h-1.5 animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            )}
+          <div className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+            {song.title}
           </div>
-          <div className="text-xs text-zinc-500 dark:text-[#9E9AA8] truncate mt-0.5">
-            {song.artist} <span className="text-zinc-400 dark:text-zinc-600">•</span> {formatDuration(song.durationSeconds)}
+          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+            {song.artist} · <span className="font-mono tabular-nums">{formatDuration(song.durationSeconds)}</span>
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-xs text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 font-mono">
-          <Users className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-mono font-medium">
+          <LiveMiniEqualizer />
           <span>{listenerCount}</span>
         </span>
-        <div className="w-8 h-8 rounded-full bg-zinc-200/70 dark:bg-white/[0.04] group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-500 text-zinc-600 dark:text-zinc-400 group-hover:text-white flex items-center justify-center transition">
-          <ChevronRight className="w-4 h-4" />
+        <div className="w-8 h-8 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D] flex items-center justify-center transition">
+          <ChevronRight className="w-4 h-4" strokeWidth={1.75} />
         </div>
       </div>
     </div>
@@ -340,7 +318,15 @@ export const RoomsTab: React.FC<Props> = ({
   favoriteSongs = [],
   personalTaste,
   onStartArtistRadio,
+  users = [],
+  onSelectUser,
+  onDirectChat,
+  onSeekSecond,
+  userCity,
+  onUpdateCity,
 }) => {
+  const [exploreLens, setExploreLens] = useState<ExploreLens>('rooms');
+  const [mapDistanceFilter, setMapDistanceFilter] = useState<DistanceFilter>('all');
   const [filterMode, setFilterMode] = useState<RoomFilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenreFilter, setSelectedGenreFilter] = useState<string>('all');
@@ -612,462 +598,532 @@ export const RoomsTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-5 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-6 select-none">
-      {/* 1. Editorial Header */}
-      <div className="flex items-baseline justify-between border-b border-zinc-200 dark:border-white/[0.06] pb-3.5">
-        <div>
-          <h1 className="text-xl font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
-            Canlı Odalar
-          </h1>
-          <p className="text-xs text-zinc-500 dark:text-[#9E9AA8] mt-0.5">
-            Senkronize müzik frekansları ve ortak dinleyiciler
-          </p>
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-8 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-5 select-none">
+      {/* 1. Studio 2-Lens Switcher (Canlı Odalar | Harita) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div
+          role="tablist"
+          aria-label="Keşfet görünümü"
+          className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#F1EFEA] dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] w-full sm:w-auto sm:min-w-[290px]"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={exploreLens === 'rooms'}
+            onClick={() => {
+              triggerHaptic(12);
+              setExploreLens('rooms');
+            }}
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+              exploreLens === 'rooms'
+                ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+            }`}
+          >
+            <Disc3 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+            <span>Canlı Odalar</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={exploreLens === 'map'}
+            onClick={() => {
+              triggerHaptic(12);
+              setExploreLens('map');
+            }}
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+              exploreLens === 'map'
+                ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+            }`}
+          >
+            <MapPin className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+            <span>Harita</span>
+          </button>
         </div>
-        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono tabular-nums flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{140 + artistRooms.length * 4} canlı frekans</span>
-        </span>
+
+        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs">
+          <span className="text-[#16A34A] dark:text-[#22C55E] font-mono tabular-nums flex items-center gap-1.5 font-medium">
+            <LiveMiniEqualizer />
+            <span>{140 + artistRooms.length * 4} canlı dinleyici</span>
+          </span>
+        </div>
       </div>
 
-      {/* 2. Kişisel Frekansın Hero Kartı + 4'lü Ruh Hali Seçici (Mood Tuner) */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] shadow-xl space-y-3.5 relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-44 h-44 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center text-purple-500 dark:text-purple-400 shrink-0 shadow-inner">
-              <Radio className="w-6 h-6 animate-pulse" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
-                  Kişisel Frekansın
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
-                  Canlı Akış
-                </span>
-              </div>
-              <p className="text-xs text-zinc-500 dark:text-[#9E9AA8] truncate mt-0.5">
-                {favoriteArtists.length > 0
-                  ? `${favoriteArtists.filter((a) => !NON_ARTIST_BLACKLIST.test(a)).slice(0, 3).join(', ')} ve senin kütüphanen`
-                  : 'Kişisel zevkine özel kesintisiz canlı frekans'}
-              </p>
-            </div>
+      {/* LENS 2: HARİTA (Real Interactive OpenStreetMap + Leaflet ProximityDensityMap) */}
+      {exploreLens === 'map' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'all' as DistanceFilter, label: 'Tümü', count: users.length },
+              {
+                id: '1km' as DistanceFilter,
+                label: '1 km',
+                count: users.filter((u) => u.distanceKm <= 1).length,
+              },
+              {
+                id: '5km' as DistanceFilter,
+                label: '5 km',
+                count: users.filter((u) => u.distanceKm <= 5).length,
+              },
+              {
+                id: 'city' as DistanceFilter,
+                label: '15 km',
+                count: users.filter((u) => u.distanceKm <= 15).length,
+              },
+            ].map((f) => {
+              const isSelected = mapDistanceFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setMapDistanceFilter(f.id)}
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                      : 'bg-white dark:bg-[#141418] text-[#63636B] dark:text-[#8E8E98] border border-[#E8E6E1] dark:border-white/[0.08] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
+                  }`}
+                >
+                  <span>{f.label}</span>
+                  <span className="font-mono tabular-nums text-[10px] opacity-75">{f.count}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 relative z-10">
-            {onStartPersonalRadio && (
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(20);
-                  onStartPersonalRadio();
-                }}
-                className="px-4 py-2.5 min-h-[42px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer shadow-lg shadow-purple-500/25"
-              >
-                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                <span>Frekansa Gir</span>
-              </button>
-            )}
-          </div>
+          <ProximityDensityMap
+            users={users}
+            activeFilter={mapDistanceFilter}
+            onChangeFilter={setMapDistanceFilter}
+            onSelectUser={onSelectUser || (() => {})}
+            onDirectChat={onDirectChat}
+            onSeekSecond={onSeekSecond}
+            currentSong={currentSong}
+            myCity={userCity}
+            onChangeCity={onUpdateCity}
+          />
         </div>
+      )}
 
-        {/* 4'lü Ruh Hali Seçici (Mood Tuner) */}
-        <div className="pt-2.5 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-zinc-500 dark:text-[#9E9AA8]">
-              Frekans Akışı & Ruh Hali (Mood Tuner):
-            </span>
-            {selectedMood !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setSelectedMood('all')}
-                className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-              >
-                Tümünü Göster
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* LENS 1: CANLI ODALAR */}
+      {exploreLens === 'rooms' && (
+        <div className="space-y-5">
+          {/* Quiet 4-Chip Mood Bar (Tümü | Yüksek Enerji | Gece | Akustik & Rock) */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {MOOD_TUNER_OPTIONS.map((mood) => {
               const isSelected = selectedMood === mood.id;
               return (
                 <button
                   key={mood.id}
                   type="button"
-                  onClick={() => handleSelectMoodTuner(mood.id)}
+                  onClick={() => {
+                    triggerHaptic(12);
+                    setSelectedMood(mood.id);
+                  }}
                   title={mood.desc}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition whitespace-nowrap shrink-0 cursor-pointer border active:scale-95 ${
                     isSelected
-                      ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white border-transparent shadow-md shadow-purple-500/20'
-                      : 'bg-[#ECEAF2]/80 dark:bg-[#1E1B2E]/75 hover:bg-zinc-200/80 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-200 border-[#DFDCE8] dark:border-white/[0.07]'
+                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] border-transparent'
+                      : 'bg-white dark:bg-[#141418] text-[#63636B] dark:text-[#8E8E98] border-[#E8E6E1] dark:border-white/[0.08] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                   }`}
                 >
-                  <span className="truncate">{mood.label}</span>
+                  {mood.label}
                 </button>
               );
             })}
           </div>
-        </div>
-      </div>
 
-      {/* 3. Sleek Search Bar */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Sanatçı veya şarkı ara..."
-          className="w-full pl-10 pr-9 py-2.5 bg-white/95 dark:bg-[#14121E]/90 border border-[#E4E2EC] dark:border-white/[0.08] focus:border-purple-500/50 rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none transition"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* 4. Minimalist Underline Navigation Tabs */}
-      <div className="flex items-center gap-6 border-b border-zinc-200 dark:border-white/[0.06] overflow-x-auto no-scrollbar">
-        {[
-          { id: 'all', label: 'Tümü' },
-          { id: 'artists', label: `Sanatçı Frekansları (${filteredArtistRooms.length})` },
-          { id: 'songs', label: `Şarkı Odaları (${filteredSongRooms.length})` },
-          { id: 'personal', label: `Listelerim (${syncedPlaylists.length})` },
-        ].map((tab) => {
-          const isActive = filterMode === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                triggerHaptic(10);
-                setFilterMode(tab.id as RoomFilterMode);
-              }}
-              className={`pb-3 text-xs font-medium whitespace-nowrap transition-colors relative cursor-pointer ${
-                isActive
-                  ? 'text-zinc-900 dark:text-white font-bold'
-                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
-              }`}
-            >
-              {tab.label}
-              {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 rounded-full" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 5. Understated Genre Selectors */}
-      {availableGenres.length > 0 && filterMode !== 'personal' && (
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => setSelectedGenreFilter('all')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer shrink-0 ${
-              selectedGenreFilter === 'all'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
-            }`}
-          >
-            Tümü
-          </button>
-          {availableGenres.map((genre) => (
-            <button
-              key={genre}
-              type="button"
-              onClick={() => setSelectedGenreFilter(genre)}
-              className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition cursor-pointer shrink-0 ${
-                selectedGenreFilter === genre
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200/60 dark:bg-white/[0.04]'
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* SECTION A: "TÜMÜ" MODE — YATAY SANATÇI KARUSELİ & İLK 6 ŞARKI ODASI */}
-      {filterMode === 'all' && (
-        <div className="space-y-6">
-          {/* A1. Sanatçı Frekansları (Yatay Kaydırılabilir Snap-Scroll Kartlar) */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-zinc-900 dark:text-white">Sanatçı Frekansları</span>
-                <span className="text-zinc-500 font-mono">({filteredArtistRooms.length})</span>
+          {/* Kişisel Frekansın Studio Strip */}
+          {onStartPersonalRadio && (
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7] shrink-0">
+                  <Radio className="w-5 h-5" strokeWidth={1.75} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight truncate">
+                      Kişisel Frekansın
+                    </h3>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#16A34A] dark:text-[#22C55E] shrink-0">
+                      <LiveMiniEqualizer />
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                    {favoriteArtists.length > 0
+                      ? `${favoriteArtists.filter((a) => !NON_ARTIST_BLACKLIST.test(a)).slice(0, 3).join(', ')} ve kütüphanen`
+                      : 'Kişisel zevkine özel kesintisiz canlı akış'}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOnlyMusicChannels(!onlyMusicChannels)}
-                  className={`px-2 py-0.5 rounded-lg text-[11px] font-medium border flex items-center gap-1 transition cursor-pointer ${
-                    onlyMusicChannels
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                      : 'bg-zinc-200/70 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-white/[0.08]'
-                  }`}
-                  title="Kurumsal ve müzik dışı kanallar filtrelendi"
-                >
-                  <Sparkles className="w-3 h-3 text-emerald-500 shrink-0" />
-                  <span className="hidden xs:inline">Yalnızca Müzik Sanatçıları</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFilterMode('artists')}
-                  className="text-purple-600 dark:text-purple-400 hover:underline font-semibold text-xs transition cursor-pointer flex items-center gap-0.5"
-                >
-                  <span>Tümünü Gör ({filteredArtistRooms.length})</span>
-                  <span>→</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(20);
+                  onStartPersonalRadio();
+                }}
+                className="studio-btn-primary px-4 py-2.5 min-h-[40px] rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current ml-0.5" strokeWidth={1.75} />
+                <span>Başlat</span>
+              </button>
             </div>
+          )}
 
-            {filteredArtistRooms.length === 0 ? (
-              <div className="py-6 text-center text-xs text-zinc-500">
-                Aramanıza uygun müzik sanatçısı bulunamadı.
-              </div>
-            ) : (
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)] lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:pr-0 lg:[mask-image:none] lg:[-webkit-mask-image:none]">
-                {filteredArtistRooms.slice(0, 8).map((room) => {
-                  const isCurrentArtist = currentSong.artist.toLowerCase() === room.artist.toLowerCase();
-                  return (
-                    <ArtistCardCompact
-                      key={room.artist}
-                      room={room}
-                      isCurrentArtist={isCurrentArtist}
-                      onEnter={() => handleEnterArtistRoom(room)}
-                    />
-                  );
-                })}
-              </div>
+          {/* Sleek Search Bar */}
+          <div className="relative">
+            <Search
+              className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              strokeWidth={1.75}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Sanatçı veya şarkı odası ara..."
+              className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] focus:border-[#141416]/40 dark:focus:border-white/30 rounded-xl text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] cursor-pointer"
+                aria-label="Temizle"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={1.75} />
+              </button>
             )}
-          </section>
+          </div>
 
-          {/* A2. Aktif Şarkı Odaları (İlk 6 Oda + "Daha Fazla Göster" Butonu) */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-zinc-900 dark:text-white">Aktif Şarkı Odaları</span>
-                <span>• Senkron dinleme</span>
-              </div>
-              <span className="font-mono text-[11px] text-zinc-500">
-                {Math.min(allModeSongLimit, filteredSongRooms.length)} / {filteredSongRooms.length} oda
-              </span>
-            </div>
-
-            {filteredSongRooms.length === 0 ? (
-              <div className="py-6 text-center text-xs text-zinc-500">
-                Aramanıza uygun şarkı odası bulunamadı.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-                {filteredSongRooms.slice(0, allModeSongLimit).map((song, index) => {
-                  const isCurrent = song.id === currentSong.id;
-                  const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
-                  return (
-                    <SongRoomRow
-                      key={song.id || index}
-                      song={song}
-                      isCurrent={isCurrent}
-                      listenerCount={listenerCount}
-                      onSelect={() => {
-                        triggerHaptic(15);
-                        onSelectRoom(song);
-                      }}
-                      formatDuration={formatDuration}
-                    />
-                  );
-                })}
-              </div>
-            )}
-
-            {filteredSongRooms.length > allModeSongLimit && (
-              <div className="pt-1 text-center">
+          {/* Minimalist Underline Sub-Tabs */}
+          <div className="flex items-center gap-6 border-b border-[#E8E6E1] dark:border-white/[0.07] overflow-x-auto no-scrollbar">
+            {[
+              { id: 'all', label: 'Tümü' },
+              { id: 'artists', label: `Sanatçılar (${filteredArtistRooms.length})` },
+              { id: 'songs', label: `Şarkı Odaları (${filteredSongRooms.length})` },
+              { id: 'personal', label: `Listelerim (${syncedPlaylists.length})` },
+            ].map((tab) => {
+              const isActive = filterMode === tab.id;
+              return (
                 <button
+                  key={tab.id}
                   type="button"
                   onClick={() => {
                     triggerHaptic(10);
-                    setAllModeSongLimit((prev) => prev + 6);
+                    setFilterMode(tab.id as RoomFilterMode);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className={`pb-3 text-xs whitespace-nowrap transition-colors relative cursor-pointer ${
+                    isActive
+                      ? 'text-[#141416] dark:text-[#F5F5F7] font-bold'
+                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-medium'
+                  }`}
                 >
-                  <span>Daha Fazla Oda Göster (+{filteredSongRooms.length - allModeSongLimit})</span>
-                  <span>↓</span>
+                  {tab.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#141416] dark:bg-white rounded-full" />
+                  )}
                 </button>
-              </div>
-            )}
-          </section>
-        </div>
-      )}
-
-      {/* SECTION B: "SANATÇI FREKANSLARI" TEK BAŞINA SEÇİLDİYSE */}
-      {filterMode === 'artists' && (
-        <section className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-zinc-900 dark:text-white">Tüm Sanatçı Frekansları</span>
-              <span className="text-zinc-500 font-mono">({filteredArtistRooms.length})</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setOnlyMusicChannels(!onlyMusicChannels)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto ${
-                onlyMusicChannels
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                  : 'bg-zinc-200/70 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-white/[0.08]'
-              }`}
-            >
-              <Sparkles className="w-3 h-3 text-emerald-500 shrink-0" />
-              <span>Yalnızca Müzik Kanalları</span>
-            </button>
+              );
+            })}
           </div>
 
-          {filteredArtistRooms.length === 0 ? (
-            <div className="py-8 text-center text-xs text-zinc-500">
-              Aramanıza uygun müzik sanatçısı frekansı bulunamadı.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-                {filteredArtistRooms.slice(0, visibleArtistsCount).map((room) => {
-                  const isCurrentArtist = currentSong.artist.toLowerCase() === room.artist.toLowerCase();
-                  return (
-                    <ArtistRoomRow
-                      key={room.artist}
-                      room={room}
-                      isCurrentArtist={isCurrentArtist}
-                      onEnter={() => handleEnterArtistRoom(room)}
-                    />
-                  );
-                })}
-              </div>
-
-              {filteredArtistRooms.length > visibleArtistsCount && (
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setVisibleArtistsCount((prev) => prev + 12);
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
-                  >
-                    <span>Daha Fazla Sanatçı Yükle (+{filteredArtistRooms.length - visibleArtistsCount})</span>
-                    <span>↓</span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      )}
-
-      {/* SECTION C: "ŞARKI ODALARI" TEK BAŞINA SEÇİLDİYSE */}
-      {filterMode === 'songs' && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span className="font-bold text-zinc-900 dark:text-white">Tüm Şarkı Odaları ({filteredSongRooms.length})</span>
-            <span>Senkron dinleme</span>
-          </div>
-
-          {filteredSongRooms.length === 0 ? (
-            <div className="py-8 text-center text-xs text-zinc-500">
-              Aramanıza uygun şarkı odası bulunamadı.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-                {filteredSongRooms.slice(0, visibleSongsCount).map((song, index) => {
-                  const isCurrent = song.id === currentSong.id;
-                  const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
-                  return (
-                    <SongRoomRow
-                      key={song.id || index}
-                      song={song}
-                      isCurrent={isCurrent}
-                      listenerCount={listenerCount}
-                      onSelect={() => {
-                        triggerHaptic(15);
-                        onSelectRoom(song);
-                      }}
-                      formatDuration={formatDuration}
-                    />
-                  );
-                })}
-              </div>
-
-              {filteredSongRooms.length > visibleSongsCount && (
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setVisibleSongsCount((prev) => prev + 12);
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.07] border border-zinc-200 dark:border-white/[0.06] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
-                  >
-                    <span>Daha Fazla Şarkı Odası Yükle (+{filteredSongRooms.length - visibleSongsCount})</span>
-                    <span>↓</span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      )}
-
-      {/* SECTION D: PERSONAL PLAYLISTS */}
-      {filterMode === 'personal' && (
-        <section className="space-y-4">
-          {syncedPlaylists.length === 0 ? (
-            <div className="py-10 text-center text-xs text-zinc-500 space-y-1">
-              <p>Henüz senkronize edilmiş çalma listeniz bulunmuyor.</p>
-              <p className="text-zinc-400">Kütüphanem sekmesinden listelerinizi bağlayabilirsiniz.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-              {syncedPlaylists.map((pl) => (
-                <div
-                  key={pl.id}
-                  onClick={() => onPlayPlaylist && onPlayPlaylist(pl)}
-                  className="p-3 rounded-2xl bg-white/95 dark:bg-[#14121E]/90 hover:bg-zinc-50 dark:hover:bg-[#1E1B2E]/90 border border-[#E4E2EC] dark:border-white/[0.08] flex items-center justify-between gap-3 group cursor-pointer transition"
+          {/* Understated Genre Selectors */}
+          {availableGenres.length > 0 && filterMode !== 'personal' && (
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedGenreFilter('all')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 ${
+                  selectedGenreFilter === 'all'
+                    ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                    : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
+                }`}
+              >
+                Tümü
+              </button>
+              {availableGenres.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => setSelectedGenreFilter(genre)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-xl transition cursor-pointer shrink-0 ${
+                    selectedGenreFilter === genre
+                      ? 'studio-btn-primary bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
+                      : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] bg-[#F1EFEA] dark:bg-[#1C1C22]'
+                  }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={pl.coverUrl}
-                      alt={pl.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 bg-zinc-900 border border-zinc-200 dark:border-white/[0.08]"
-                    />
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-500 dark:group-hover:text-purple-400 transition">
-                        {pl.title}
-                      </h4>
-                      <p className="text-xs text-zinc-500 dark:text-[#9E9AA8] truncate mt-0.5">
-                        {pl.tracks?.length || pl.trackCount} parça • {pl.duration}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="w-8 h-8 rounded-full bg-zinc-200/70 dark:bg-white/[0.04] group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-500 text-zinc-600 dark:text-zinc-400 group-hover:text-white flex items-center justify-center transition shrink-0">
-                    <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                  </div>
-                </div>
+                  {genre}
+                </button>
               ))}
             </div>
           )}
-        </section>
+
+          {/* SECTION A: TÜMÜ */}
+          {filterMode === 'all' && (
+            <div className="space-y-6">
+              <section className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                      Sanatçı Frekansları
+                    </span>
+                    <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
+                      ({filteredArtistRooms.length})
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode('artists')}
+                    className="text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-semibold text-xs transition cursor-pointer"
+                  >
+                    Tümünü Gör →
+                  </button>
+                </div>
+
+                {filteredArtistRooms.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                    Aramanıza uygun müzik sanatçısı bulunamadı.
+                  </div>
+                ) : (
+                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 pt-0.5 scroll-smooth pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)] lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:pr-0 lg:[mask-image:none] lg:[-webkit-mask-image:none]">
+                    {filteredArtistRooms.slice(0, 8).map((room) => {
+                      const isCurrentArtist =
+                        currentSong.artist.toLowerCase() === room.artist.toLowerCase();
+                      return (
+                        <ArtistCardCompact
+                          key={room.artist}
+                          room={room}
+                          isCurrentArtist={isCurrentArtist}
+                          onEnter={() => handleEnterArtistRoom(room)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                    Aktif Şarkı Odaları
+                  </span>
+                  <span className="font-mono tabular-nums text-[11px]">
+                    {Math.min(allModeSongLimit, filteredSongRooms.length)} / {filteredSongRooms.length}
+                  </span>
+                </div>
+
+                {filteredSongRooms.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                    Aramanıza uygun şarkı odası bulunamadı.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+                    {filteredSongRooms.slice(0, allModeSongLimit).map((song, index) => {
+                      const isCurrent = song.id === currentSong.id;
+                      const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
+                      return (
+                        <SongRoomRow
+                          key={song.id || index}
+                          song={song}
+                          isCurrent={isCurrent}
+                          listenerCount={listenerCount}
+                          onSelect={() => {
+                            triggerHaptic(15);
+                            onSelectRoom(song);
+                          }}
+                          formatDuration={formatDuration}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {filteredSongRooms.length > allModeSongLimit && (
+                  <div className="pt-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(10);
+                        setAllModeSongLimit((prev) => prev + 6);
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer"
+                    >
+                      Daha Fazla Oda Göster (+{filteredSongRooms.length - allModeSongLimit})
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+
+          {/* SECTION B: SANATÇI FREKANSLARI */}
+          {filterMode === 'artists' && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                    Tüm Sanatçı Frekansları
+                  </span>
+                  <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
+                    ({filteredArtistRooms.length})
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setOnlyMusicChannels(!onlyMusicChannels)}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-medium border transition cursor-pointer ${
+                    onlyMusicChannels
+                      ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
+                      : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] border-[#E8E6E1] dark:border-white/[0.08]'
+                  }`}
+                >
+                  Yalnızca Müzik Kanalları
+                </button>
+              </div>
+
+              {filteredArtistRooms.length === 0 ? (
+                <div className="py-8 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  Aramanıza uygun müzik sanatçısı frekansı bulunamadı.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+                    {filteredArtistRooms.slice(0, visibleArtistsCount).map((room) => {
+                      const isCurrentArtist =
+                        currentSong.artist.toLowerCase() === room.artist.toLowerCase();
+                      return (
+                        <ArtistRoomRow
+                          key={room.artist}
+                          room={room}
+                          isCurrentArtist={isCurrentArtist}
+                          onEnter={() => handleEnterArtistRoom(room)}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {filteredArtistRooms.length > visibleArtistsCount && (
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(10);
+                          setVisibleArtistsCount((prev) => prev + 12);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer min-h-[44px]"
+                      >
+                        Daha Fazla Sanatçı Yükle (+{filteredArtistRooms.length - visibleArtistsCount})
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
+          {/* SECTION C: ŞARKI ODALARI */}
+          {filterMode === 'songs' && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[#63636B] dark:text-[#8E8E98]">
+                <span className="font-bold text-[#141416] dark:text-[#F5F5F7]">
+                  Tüm Şarkı Odaları ({filteredSongRooms.length})
+                </span>
+                <span>Senkron dinleme</span>
+              </div>
+
+              {filteredSongRooms.length === 0 ? (
+                <div className="py-8 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  Aramanıza uygun şarkı odası bulunamadı.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+                    {filteredSongRooms.slice(0, visibleSongsCount).map((song, index) => {
+                      const isCurrent = song.id === currentSong.id;
+                      const listenerCount = [19, 14, 22, 8, 11, 16, 27, 9][index % 8];
+                      return (
+                        <SongRoomRow
+                          key={song.id || index}
+                          song={song}
+                          isCurrent={isCurrent}
+                          listenerCount={listenerCount}
+                          onSelect={() => {
+                            triggerHaptic(15);
+                            onSelectRoom(song);
+                          }}
+                          formatDuration={formatDuration}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {filteredSongRooms.length > visibleSongsCount && (
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(10);
+                          setVisibleSongsCount((prev) => prev + 12);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] transition cursor-pointer min-h-[44px]"
+                      >
+                        Daha Fazla Şarkı Odası Yükle (+{filteredSongRooms.length - visibleSongsCount})
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
+          {/* SECTION D: PERSONAL PLAYLISTS */}
+          {filterMode === 'personal' && (
+            <section className="space-y-4">
+              {syncedPlaylists.length === 0 ? (
+                <div className="py-10 text-center text-xs text-[#63636B] dark:text-[#8E8E98] space-y-1">
+                  <p>Henüz senkronize edilmiş çalma listeniz bulunmuyor.</p>
+                  <p className="opacity-75">Ben sekmesinden listelerinizi bağlayabilirsiniz.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+                  {syncedPlaylists.map((pl) => (
+                    <div
+                      key={pl.id}
+                      onClick={() => onPlayPlaylist && onPlayPlaylist(pl)}
+                      className="p-3.5 rounded-2xl bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-between gap-3 group cursor-pointer transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={pl.coverUrl}
+                          alt={pl.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-12 h-12 rounded-xl object-cover shrink-0 bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08]"
+                        />
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                            {pl.title}
+                          </h4>
+                          <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 font-mono tabular-nums">
+                            {pl.tracks?.length || pl.trackCount} parça · {pl.duration}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="w-8 h-8 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] group-hover:bg-[#141416] group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-[#0B0B0D] flex items-center justify-center transition shrink-0">
+                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" strokeWidth={1.75} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+        </div>
       )}
     </div>
   );

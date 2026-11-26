@@ -44,7 +44,7 @@ export function applyTheme(mode: ThemeMode): 'dark' | 'light' {
   // Update mobile status bar theme-color meta tags
   const metaThemes = document.querySelectorAll('meta[name="theme-color"]');
   metaThemes.forEach((meta) => {
-    meta.setAttribute('content', effective === 'light' ? '#F5F4F8' : '#0A090F');
+    meta.setAttribute('content', effective === 'light' ? '#FAF9F6' : '#0B0B0D');
   });
 
   return effective;

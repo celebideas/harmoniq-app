@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Headphones,
   Mail,
   Lock,
   User,
@@ -12,6 +11,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { triggerHaptic } from '../services/themeService';
+import { ListenHubLogo } from './ListenHubLogo';
 
 export interface AuthSession {
   userId: string;
@@ -310,95 +310,53 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   return (
-    <div className="keep-dark fixed inset-0 z-[100] min-h-screen w-full overflow-y-auto bg-[#0A090F] text-[#FAFAFA] flex flex-col items-center justify-center px-4 py-8 sm:px-6 selection:bg-purple-500/30">
-      {/* Ambient Breathing Purple-Fuchsia Soundwave Aura */}
+    <div className="keep-dark fixed inset-0 z-[100] min-h-screen w-full overflow-y-auto bg-[#0B0B0D] text-[#F5F5F7] flex flex-col items-center justify-center px-4 py-8 sm:px-6 selection:bg-white/20">
+      {/* Subtle Neutral Studio Spotlight */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
         <div
-          className="animate-auth-breathe absolute -top-28 left-1/2 -translate-x-1/2 w-[540px] h-[360px] rounded-full blur-[120px]"
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[560px] h-[340px] rounded-full blur-[120px]"
           style={{
             background:
-              'radial-gradient(circle, rgba(147,51,234,0.42) 0%, rgba(236,72,153,0.24) 48%, rgba(10,9,15,0) 75%)',
+              'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(11,11,13,0) 72%)',
           }}
         />
-        <div
-          className="animate-auth-breathe absolute -bottom-32 left-1/2 -translate-x-1/2 w-[620px] h-[320px] rounded-full blur-[130px]"
-          style={{
-            animationDelay: '2.4s',
-            background:
-              'radial-gradient(circle, rgba(219,39,119,0.28) 0%, rgba(147,51,234,0.2) 50%, rgba(10,9,15,0) 75%)',
-          }}
-        />
-        {/* Subtle acoustic wave lines across background */}
-        <svg
-          className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-72 opacity-[0.14]"
-          viewBox="0 0 1440 280"
-          preserveAspectRatio="none"
-          fill="none"
-        >
-          <path
-            d="M0 140 Q 180 40 360 140 T 720 140 T 1080 140 T 1440 140"
-            stroke="url(#authWaveGrad1)"
-            strokeWidth="2"
-          />
-          <path
-            d="M0 165 Q 200 245 400 165 T 800 165 T 1200 165 T 1440 165"
-            stroke="url(#authWaveGrad2)"
-            strokeWidth="1.5"
-          />
-          <defs>
-            <linearGradient id="authWaveGrad1" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#9333EA" stopOpacity="0" />
-              <stop offset="35%" stopColor="#A855F7" stopOpacity="1" />
-              <stop offset="65%" stopColor="#EC4899" stopOpacity="1" />
-              <stop offset="100%" stopColor="#EC4899" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="authWaveGrad2" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#EC4899" stopOpacity="0" />
-              <stop offset="50%" stopColor="#9333EA" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#9333EA" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
       </div>
 
       {/* Main Content Container */}
       <div className="relative z-10 w-full max-w-md space-y-6 my-auto">
-        {/* Top Brand & Value Proposition */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 blur-xl opacity-55" />
-            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 via-fuchsia-600 to-pink-500 flex items-center justify-center shadow-2xl border border-white/20">
-              <Headphones className="w-8 h-8 text-white" />
-            </div>
+        {/* Top Brand & Editorial Value Proposition */}
+        <div className="flex flex-col items-center text-center space-y-3.5">
+          <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] text-[#0B0B0D] flex items-center justify-center shadow-lg border border-white/10">
+            <ListenHubLogo className="w-7 h-7" />
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="font-heading text-3xl sm:text-4xl font-black tracking-tight text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F5F5F7]">
               ListenHub
             </h1>
-            <p className="text-sm sm:text-[15px] text-zinc-300 leading-relaxed max-w-xs mx-auto [text-wrap:balance]">
-              Aynı şarkının aynı saniyesinde frekansını yakala.
+            <p className="text-sm sm:text-[15px] text-[#8E8E98] leading-relaxed max-w-xs mx-auto [text-wrap:balance]">
+              Aynı şarkının aynı saniyesinde, gerçekten orada olanlarla.
             </p>
           </div>
         </div>
 
-        {/* Auth Glass Surface Card */}
-        <div className="rounded-3xl bg-[#14121E]/90 border border-white/[0.09] backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.65)] p-5 sm:p-7 space-y-5">
+        {/* Matte Studio Card */}
+        <div className="rounded-2xl bg-[#141418] border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.65)] p-5 sm:p-7 space-y-5">
           {/* Segmented Tab Switcher */}
           <div
             role="tablist"
             aria-label="Hesap işlemleri"
-            className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#0C0B13] border border-white/[0.07]"
+            className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[#0B0B0D] border border-white/[0.06]"
           >
             <button
               type="button"
               role="tab"
               aria-selected={mode === 'login'}
               onClick={() => handleModeSwitch('login')}
-              className={`min-h-[44px] rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 mode === 'login'
-                  ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-600/25'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-[#F5F5F7] text-[#0B0B0D] shadow-xs'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7]'
               }`}
             >
               Giriş Yap
@@ -408,10 +366,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               role="tab"
               aria-selected={mode === 'signup'}
               onClick={() => handleModeSwitch('signup')}
-              className={`min-h-[44px] rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 mode === 'signup'
-                  ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-600/25'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-[#F5F5F7] text-[#0B0B0D] shadow-xs'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7]'
               }`}
             >
               Kayıt Ol
@@ -422,9 +380,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           {error && (
             <div
               role="alert"
-              className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-150"
+              className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-150"
             >
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" strokeWidth={1.75} />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
@@ -433,11 +391,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
             {mode === 'signup' && (
               <div className="space-y-1.5">
-                <label htmlFor="auth-name" className="block text-xs font-medium text-zinc-300">
+                <label htmlFor="auth-name" className="block text-xs font-medium text-[#8E8E98]">
                   Ad / Rumuz
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <User className="w-4 h-4 text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.75} />
                   <input
                     id="auth-name"
                     type="text"
@@ -449,18 +407,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     }}
                     placeholder="Örn: Deniz, Gece Dinleyicisi..."
                     maxLength={32}
-                    className="w-full min-h-[46px] pl-10 pr-4 rounded-xl bg-[#0C0B13] border border-white/[0.1] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/25 text-sm text-white placeholder:text-zinc-500 outline-none transition"
+                    className="w-full min-h-[46px] pl-10 pr-4 rounded-xl bg-[#0B0B0D] border border-white/[0.1] focus:border-white/35 text-sm text-[#F5F5F7] placeholder:text-[#8E8E98]/60 outline-none transition"
                   />
                 </div>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label htmlFor="auth-email" className="block text-xs font-medium text-zinc-300">
+              <label htmlFor="auth-email" className="block text-xs font-medium text-[#8E8E98]">
                 E-posta
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Mail className="w-4 h-4 text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.75} />
                 <input
                   id="auth-email"
                   type="email"
@@ -471,17 +429,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     if (error) setError(null);
                   }}
                   placeholder="ornek@eposta.com"
-                  className="w-full min-h-[46px] pl-10 pr-4 rounded-xl bg-[#0C0B13] border border-white/[0.1] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/25 text-sm text-white placeholder:text-zinc-500 outline-none transition"
+                  className="w-full min-h-[46px] pl-10 pr-4 rounded-xl bg-[#0B0B0D] border border-white/[0.1] focus:border-white/35 text-sm text-[#F5F5F7] placeholder:text-[#8E8E98]/60 outline-none transition"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="auth-password" className="block text-xs font-medium text-zinc-300">
+              <label htmlFor="auth-password" className="block text-xs font-medium text-[#8E8E98]">
                 Şifre
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Lock className="w-4 h-4 text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.75} />
                 <input
                   id="auth-password"
                   type={showPassword ? 'text' : 'password'}
@@ -492,15 +450,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     if (error) setError(null);
                   }}
                   placeholder={mode === 'signup' ? 'En az 6 karakter' : 'Şifreni gir'}
-                  className="w-full min-h-[46px] pl-10 pr-12 rounded-xl bg-[#0C0B13] border border-white/[0.1] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/25 text-sm text-white placeholder:text-zinc-500 outline-none transition"
+                  className="w-full min-h-[46px] pl-10 pr-12 rounded-xl bg-[#0B0B0D] border border-white/[0.1] focus:border-white/35 text-sm text-[#F5F5F7] placeholder:text-[#8E8E98]/60 outline-none transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white transition cursor-pointer"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#8E8E98] hover:text-[#F5F5F7] transition cursor-pointer"
                   aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" strokeWidth={1.75} /> : <Eye className="w-4 h-4" strokeWidth={1.75} />}
                 </button>
               </div>
             </div>
@@ -508,7 +466,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || isGoogleLoading}
-              className="w-full min-h-[48px] mt-1 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 hover:brightness-110 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-[0_8px_28px_rgba(147,51,234,0.4)] transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+              className="w-full min-h-[48px] mt-1 px-4 rounded-xl bg-[#F5F5F7] hover:bg-zinc-200 text-[#0B0B0D] font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -517,8 +475,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 </>
               ) : (
                 <>
-                  <span>{mode === 'signup' ? 'Frekans Hesabı Oluştur' : 'Giriş Yap'}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{mode === 'signup' ? 'Hesap Oluştur' : 'Giriş Yap'}</span>
+                  <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
                 </>
               )}
             </button>
@@ -527,7 +485,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           {/* Divider */}
           <div className="relative flex items-center justify-center py-0.5">
             <div className="w-full border-t border-white/[0.08]" />
-            <span className="px-3 text-xs text-zinc-400 bg-[#14121E] shrink-0">veya</span>
+            <span className="px-3 text-xs text-[#8E8E98] bg-[#141418] shrink-0">veya</span>
             <div className="w-full border-t border-white/[0.08]" />
           </div>
 
@@ -537,11 +495,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               type="button"
               onClick={handleGoogleClick}
               disabled={isGoogleLoading || isSubmitting}
-              className="w-full min-h-[48px] px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-sm"
+              className="w-full min-h-[46px] px-4 rounded-xl bg-[#1C1C22] hover:bg-white/[0.1] border border-white/[0.1] text-[#F5F5F7] font-semibold text-sm flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
             >
               {isGoogleLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-zinc-900" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#F5F5F7]" />
                   <span>Google ile Bağlanıyor...</span>
                 </>
               ) : (
@@ -573,17 +531,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               type="button"
               onClick={handleGuestContinue}
               disabled={isSubmitting || isGoogleLoading}
-              className="w-full min-h-[44px] px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+              className="w-full min-h-[42px] px-4 rounded-xl bg-transparent hover:bg-white/[0.05] text-[#8E8E98] hover:text-[#F5F5F7] font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
             >
-              <Compass className="w-4 h-4 text-purple-400" />
+              <Compass className="w-4 h-4" strokeWidth={1.75} />
               <span>Misafir Olarak Keşfet</span>
             </button>
           </div>
         </div>
 
         {/* Quiet Footer Note */}
-        <p className="text-center text-xs text-zinc-500 leading-relaxed px-4">
-          Devam ederek müzikal frekans odalarına katılmayı kabul edersin. Hesabını dilediğin zaman Ayarlar üzerinden kapatabilirsin.
+        <p className="text-center text-xs text-[#8E8E98]/80 leading-relaxed px-4">
+          Devam ederek müzikal dinleme odalarına katılmayı kabul edersin. Hesabını dilediğin zaman Ayarlar üzerinden kapatabilirsin.
         </p>
       </div>
     </div>

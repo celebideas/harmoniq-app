@@ -1,9 +1,9 @@
 import React from 'react';
 import {
-  Radio,
-  Disc3,
+  AudioLines,
+  Compass,
   MessageCircle,
-  Library,
+  User,
   Play,
   Pause,
   SkipForward,
@@ -52,15 +52,15 @@ export const BottomNav: React.FC<Props> = ({
   }[] = [
     {
       id: 'lounge',
-      label: 'Canlı',
-      IconComponent: Radio,
+      label: 'Sahne',
+      IconComponent: AudioLines,
       badge: liveCount,
       isLiveBadge: true,
     },
     {
       id: 'rooms',
-      label: 'Odalar',
-      IconComponent: Disc3,
+      label: 'Keşfet',
+      IconComponent: Compass,
     },
     {
       id: 'chat',
@@ -70,8 +70,8 @@ export const BottomNav: React.FC<Props> = ({
     },
     {
       id: 'profile',
-      label: 'Kütüphanem',
-      IconComponent: Library,
+      label: 'Ben',
+      IconComponent: User,
     },
   ];
 
@@ -83,13 +83,12 @@ export const BottomNav: React.FC<Props> = ({
   return (
     <nav
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
-      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-3xl bg-white/95 dark:bg-[#14121E]/95 backdrop-blur-2xl border border-zinc-200/90 dark:border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.55)] overflow-hidden select-none transition-all duration-300"
+      className="lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_8px_30px_rgba(20,20,22,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] overflow-hidden select-none transition-all duration-300"
     >
-      {/* UPPER TIER: MINI PLAYER STRIP (Visible on Odalar, Sohbet, Kütüphanem tabs) */}
+      {/* UPPER TIER: MINI PLAYER STRIP */}
       {showMiniPlayerStrip && currentSong && (
         <div className="relative">
           <div className="flex items-center justify-between px-3.5 py-2.5 gap-3">
-            {/* Left: Album Cover (w-10 h-10 rounded-xl) + Song & Artist Info */}
             <div
               onClick={() => {
                 triggerHaptic(15);
@@ -98,7 +97,7 @@ export const BottomNav: React.FC<Props> = ({
               className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group active:scale-[0.99] transition-transform"
               title="Tam Ekran Oynatıcıyı Aç"
             >
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0 ring-1 ring-black/10 dark:ring-white/10 shadow-sm">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 ring-black/5 dark:ring-white/10">
                 {currentSong.coverUrl ? (
                   <img
                     src={currentSong.coverUrl}
@@ -113,16 +112,15 @@ export const BottomNav: React.FC<Props> = ({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-zinc-900 dark:text-zinc-50 truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                <div className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
                   {currentSong.title}
                 </div>
-                <div className="text-[11px] text-[#646073] dark:text-[#9E9AA8] truncate mt-0.5">
+                <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                   {currentSong.artist}
                 </div>
               </div>
             </div>
 
-            {/* Right: Play/Pause + Next Controls */}
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
@@ -131,16 +129,16 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="w-9 h-9 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white flex items-center justify-center shadow-[0_4px_14px_rgba(147,51,234,0.35)] transition active:scale-95 cursor-pointer"
+                className="studio-btn-primary w-9 h-9 rounded-full bg-[#141416] text-white hover:bg-zinc-800 dark:bg-white dark:text-[#0B0B0D] dark:hover:bg-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer"
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
                 {isAudioLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-force-white" />
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
                 ) : isPlaying ? (
-                  <Pause className="w-4 h-4 fill-current text-force-white" />
+                  <Pause className="w-4 h-4 fill-current" strokeWidth={1.75} />
                 ) : (
-                  <Play className="w-4 h-4 fill-current ml-0.5 text-force-white" />
+                  <Play className="w-4 h-4 fill-current ml-0.5" strokeWidth={1.75} />
                 )}
               </button>
 
@@ -152,17 +150,17 @@ export const BottomNav: React.FC<Props> = ({
                     triggerHaptic(15);
                     onNextSong();
                   }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/[0.06] transition active:scale-95 cursor-pointer"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition active:scale-95 cursor-pointer"
                   aria-label="Sonraki Şarkı"
                   title="Sonraki Şarkı"
                 >
-                  <SkipForward className="w-4 h-4 fill-current" />
+                  <SkipForward className="w-4 h-4" strokeWidth={1.75} />
                 </button>
               )}
             </div>
           </div>
 
-          {/* 2px Electric Violet Progress Line connecting Upper & Lower Tiers */}
+          {/* 2px Monochrome Progress Line */}
           <div
             onClick={(e) => {
               if (!onSeekSecond || !currentSong) return;
@@ -170,18 +168,18 @@ export const BottomNav: React.FC<Props> = ({
               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
               onSeekSecond(Math.round(ratio * (currentSong.durationSeconds || 1)));
             }}
-            className="h-[2px] w-full bg-zinc-200 dark:bg-white/[0.08] cursor-pointer overflow-hidden"
+            className="h-[2px] w-full bg-[#E8E6E1] dark:bg-white/10 cursor-pointer overflow-hidden"
             title="Şarkıda sar"
           >
             <div
-              className="h-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-all duration-150"
+              className="h-full bg-[#141416] dark:bg-white transition-all duration-150"
               style={{ width: `${progressPct}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* LOWER TIER: 4 MAIN TABS (Canlı, Odalar, Sohbet, Kütüphanem) */}
+      {/* LOWER TIER: 4 FIXED TABS (Sahne, Keşfet, Sohbet, Ben) */}
       <div className="grid grid-cols-4 gap-1.5 px-2.5 py-2">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -195,21 +193,21 @@ export const BottomNav: React.FC<Props> = ({
                 onSelectTab(item.id);
               }}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center min-h-[54px] py-2 px-2 rounded-2xl transition-all cursor-pointer active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-purple-500/12 text-purple-600 dark:text-purple-400 font-bold'
-                  : 'text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-zinc-200 font-medium'
+                  ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] font-semibold'
+                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] font-medium'
               }`}
             >
               <div className="relative flex items-center justify-center">
-                <IconComp className="w-5 h-5" strokeWidth={isActive ? 2.4 : 1.9} />
+                <IconComp className="w-5 h-5" strokeWidth={1.75} />
 
                 {item.badge !== undefined && (
                   <span
-                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none tabular-nums ${
+                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-semibold leading-none tabular-nums ${
                       item.isLiveBadge
-                        ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
-                        : 'bg-gradient-to-r from-purple-600 to-pink-500 text-force-white shadow-xs'
+                        ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/20 text-[#16A34A] dark:text-[#22C55E]'
+                        : 'bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D]'
                     }`}
                   >
                     {item.badge}
@@ -217,7 +215,7 @@ export const BottomNav: React.FC<Props> = ({
                 )}
               </div>
 
-              <span className="text-[11px] font-semibold mt-1 tracking-normal leading-none">
+              <span className="text-[11px] mt-1 tracking-normal leading-none">
                 {item.label}
               </span>
             </button>

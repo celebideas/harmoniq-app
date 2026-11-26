@@ -142,6 +142,8 @@ interface Props {
   onChangeThemeMode?: (mode: ThemeMode) => void;
   onLoadPopularCollection?: () => void;
   onLogout?: () => void;
+  shouldOpenSettings?: boolean;
+  onConsumeOpenSettings?: () => void;
 }
 
 const PlaylistRowItem = React.memo<{
@@ -459,6 +461,8 @@ export const ProfileTab: React.FC<Props> = ({
   onChangeThemeMode,
   onLoadPopularCollection,
   onLogout,
+  shouldOpenSettings = false,
+  onConsumeOpenSettings,
 }) => {
   const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
   const currentTheme = themeMode || localTheme;
@@ -1587,6 +1591,13 @@ export const ProfileTab: React.FC<Props> = ({
     setShowSettingsModal(true);
   };
 
+  React.useEffect(() => {
+    if (shouldOpenSettings) {
+      openSettingsModal('profile');
+      onConsumeOpenSettings?.();
+    }
+  }, [shouldOpenSettings]);
+
   const handleSaveSettingsChanges = () => {
     const formattedHandle = tempHandle.trim()
       ? tempHandle.trim().startsWith('@')
@@ -1636,137 +1647,127 @@ export const ProfileTab: React.FC<Props> = ({
     sanitizedFavoriteArtists.length === 0 &&
     subscribedChannels.length === 0;
 
+  const STUDIO_GENRE_BARS = [
+    { bar: 'bg-[#141416] dark:bg-[#F5F5F7]', dot: 'bg-[#141416] dark:bg-[#F5F5F7]' },
+    { bar: 'bg-[#16A34A] dark:bg-[#22C55E]', dot: 'bg-[#16A34A] dark:bg-[#22C55E]' },
+    { bar: 'bg-[#A16207] dark:bg-[#D97706]', dot: 'bg-[#A16207] dark:bg-[#D97706]' },
+    { bar: 'bg-[#71717A] dark:bg-[#8E8E98]', dot: 'bg-[#71717A] dark:bg-[#8E8E98]' },
+    { bar: 'bg-[#A1A1AA] dark:bg-[#52525B]', dot: 'bg-[#A1A1AA] dark:bg-[#52525B]' },
+  ];
+
   return (
-    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-5 space-y-6 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
+    <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-5 max-w-4xl lg:max-w-6xl mx-auto w-full relative">
       {/* Toast Notice Banner */}
       {toastNotice && (
-        <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-950/95 border border-purple-500/40 text-zinc-900 dark:text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 backdrop-blur-xl">
-          <Sparkles className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+        <div className="fixed bottom-36 lg:bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.12] text-[#141416] dark:text-[#F5F5F7] text-xs font-medium shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
           <span>{toastNotice}</span>
         </div>
       )}
 
       {/* Adaptive Dual-Layout: Single column on mobile (<1024px), 12-col split on desktop (>=1024px) */}
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
         {/* ===================================================================
-            LEFT 5 COLS ON DESKTOP: PROFILE HERO + TRUST SHIELD + MUSICAL AURA
+            LEFT 5 COLS ON DESKTOP: PROFILE CARD + WEEKLY LISTENING SUMMARY
            =================================================================== */}
-        <div className="lg:col-span-5 space-y-6 min-w-0">
-          {/* 1. THEME-AWARE PROFILE HERO CARD */}
-          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/10 p-4 sm:p-5 shadow-sm flex flex-col gap-4">
+        <div className="lg:col-span-5 space-y-5 min-w-0">
+          {/* 1. EDITORIAL STUDIO PROFILE CARD */}
+          <section className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-5 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
             <div className="flex items-start gap-4 min-w-0">
-              <div
-                className="relative group cursor-pointer shrink-0"
+              {/* Left: Uploadable Avatar Circle (Empty dashed state when no photo) */}
+              <button
+                type="button"
                 onClick={() => openSettingsModal('profile')}
+                className="relative group cursor-pointer shrink-0 rounded-full focus:outline-none"
+                title="Profil fotoğrafını güncelle"
+                aria-label="Profil fotoğrafını güncelle"
               >
                 {activeProfileAvatar ? (
                   <img
                     src={activeProfileAvatar}
                     alt={userProfile.name}
-                    className="w-16 h-16 rounded-full object-cover ring-2 ring-purple-500/30 group-hover:ring-purple-500 transition"
+                    className="w-[72px] h-[72px] rounded-full object-cover border border-[#E8E6E1] dark:border-white/[0.12] group-hover:opacity-90 transition"
                   />
                 ) : (
-                  <div className="avatar-circle w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white font-heading font-bold text-xl ring-2 ring-purple-500/20 group-hover:ring-purple-500 transition shadow-md">
-                    {userProfile.avatarSeed}
+                  <div className="w-[72px] h-[72px] rounded-full border-2 border-dashed border-zinc-400/50 dark:border-white/20 bg-[#F1EFEA]/60 dark:bg-[#1C1C22]/60 flex items-center justify-center text-[#63636B] dark:text-[#8E8E98] group-hover:border-[#141416]/50 dark:group-hover:border-white/40 transition">
+                    <UserIcon className="w-6 h-6 opacity-50" strokeWidth={1.5} />
                   </div>
                 )}
-                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-zinc-900 border border-white/20 text-white flex items-center justify-center group-hover:bg-purple-600 transition">
-                  <Camera className="w-3 h-3" />
-                </div>
-              </div>
+                <span className="studio-btn-primary absolute -bottom-0.5 -right-0.5 h-6 px-1.5 rounded-full bg-[#141416] text-white dark:bg-[#F5F5F7] dark:text-[#0B0B0D] border-2 border-white dark:border-[#141418] flex items-center justify-center gap-0.5 shadow-sm">
+                  <Camera className="w-3 h-3" strokeWidth={2} />
+                  <Plus className="w-2.5 h-2.5" strokeWidth={2.5} />
+                </span>
+              </button>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-lg sm:text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
-                    {userProfile.youtubeAccount?.name || userProfile.name}
-                  </h1>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal truncate">
+              {/* Middle: Bold Name, @handle · City, Trust Score Emerald Badge */}
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <h1 className="text-lg font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight truncate leading-snug">
+                  {userProfile.youtubeAccount?.name || userProfile.name}
+                </h1>
+
+                <div className="flex items-center flex-wrap gap-1.5 font-mono text-xs text-[#63636B] dark:text-[#8E8E98]">
+                  <span className="truncate max-w-[140px]">
                     {userProfile.youtubeAccount?.handle || '@muziksever'}
                   </span>
-                </div>
-
-                {/* Interactive Trust Shield & Location Controls */}
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowTrustScoreModal(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold transition cursor-pointer group"
-                    title="Şeffaf Güven Kalkanı Detaylarını İncele"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="tabular-nums">Güven Puanı: {userProfile.trustScore || 98}/100</span>
-                    <ChevronRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-
+                  <span aria-hidden="true">·</span>
                   <button
                     type="button"
                     onClick={() => {
                       setManualCityInput(userProfile.city);
                       setShowLocationModal(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] hover:bg-zinc-200/80 dark:hover:bg-white/[0.09] active:scale-95 border border-zinc-200 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-200 transition cursor-pointer text-xs group"
-                    title="Konumu anlık güncelle veya elle gir"
+                    className="inline-flex items-center gap-1 text-[#141416] dark:text-[#F5F5F7] hover:underline underline-offset-2 cursor-pointer"
+                    title="Şehri güncelle"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
-                    <span className="font-semibold text-zinc-900 dark:text-white">{userProfile.city}</span>
-                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-                      · {isAutoLocation ? 'Canlı GPS' : 'Manuel'}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-zinc-500 ml-0.5" />
+                    <MapPin className="w-3 h-3 text-[#63636B] dark:text-[#8E8E98] shrink-0" strokeWidth={1.75} />
+                    <span className="truncate">{userProfile.city}</span>
                   </button>
                 </div>
 
-                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {connectedEmail && (
-                    <>
-                      <span
-                        className="truncate max-w-[220px] text-xs text-zinc-600 dark:text-zinc-300 font-medium"
-                        title={connectedEmail}
-                      >
-                        {connectedEmail}
-                      </span>
-                      <span aria-hidden="true">·</span>
-                    </>
-                  )}
-                  <span className="tabular-nums">{syncedPlaylists.length} liste</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="tabular-nums">{favoriteSongs.length} favori</span>
+                <div className="pt-1 flex items-center flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTrustScoreModal(true)}
+                    className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
+                    title="Şeffaf Güven Kalkanı Detaylarını İncele"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                    <span>Güven Puanı · {userProfile.trustScore || 99}/100</span>
+                  </button>
                 </div>
 
                 {userProfile.bio && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 line-clamp-2">
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] pt-1 line-clamp-2 leading-relaxed">
                     {userProfile.bio}
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Single Centralized Settings & Account Button (44px touch target) */}
-            <div className="pt-3 border-t border-zinc-200/80 dark:border-white/[0.07]">
+              {/* Top-right: Single Settings Icon Button */}
               <button
                 type="button"
                 onClick={() => openSettingsModal('profile')}
-                className="w-full px-4 py-2.5 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.11] text-zinc-900 dark:text-zinc-100 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2 border border-zinc-200 dark:border-white/[0.08] active:scale-[0.98] group whitespace-nowrap"
-                title="Profil Bilgileri, Tema ve Müzik Servisi Ayarları"
+                className="w-10 h-10 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] text-[#141416] dark:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer shrink-0 active:scale-95"
+                title="Profil, Tema ve Müzik Servisi Ayarları"
+                aria-label="Ayarlar"
               >
-                <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:rotate-45 transition-transform" />
-                <span>Ayarlar & Hesap</span>
+                <Settings className="w-5 h-5" strokeWidth={1.75} />
               </button>
             </div>
           </section>
 
           {/* MOBILE-ONLY SEGMENTED SWITCHER (Hidden on desktop where both columns show together) */}
-          <div className="lg:hidden grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08]">
+          <div className="lg:hidden grid grid-cols-2 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06]">
             <button
               type="button"
               onClick={() => {
                 triggerHaptic(10);
                 setProfileSection('library');
               }}
-              className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
                 profileSection === 'library'
-                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
               }`}
             >
               Kütüphanem
@@ -1777,408 +1778,314 @@ export const ProfileTab: React.FC<Props> = ({
                 triggerHaptic(10);
                 setProfileSection('insights');
               }}
-              className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+              className={`min-h-[42px] py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
                 profileSection === 'insights'
-                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                  : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
               }`}
             >
-              Müzik Özeti & Aura
+              Haftalık Özet
             </button>
           </div>
 
-          {/* 3. UNIFIED MÜZİK ÖZETİ & AURA — LIVE REAL LISTENING ANALYTICS */}
+          {/* 2. HAFTALIK DİNLEME ÖZETİ — REAL LISTENING ANALYTICS */}
           <div className={profileSection === 'insights' ? 'block' : 'hidden lg:block'}>
-          <section className="rounded-3xl bg-white/95 dark:bg-[#14121E]/90 border border-zinc-200 dark:border-white/[0.08] p-4 sm:p-5 space-y-6 relative overflow-hidden backdrop-blur-xl shadow-sm">
-        {!hasRealListeningData ? (
-          <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Headphones className="w-7 h-7" />
-            </div>
-            <div className="space-y-1.5 max-w-md">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                Müzikal Aura · Haftalık Müzik Özeti
-              </div>
-              <h2 className="text-base sm:text-lg font-heading font-extrabold text-zinc-900 dark:text-white">
-                Henüz dinleme verisi yok
-              </h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Henüz dinleme verisi yok — ilk parçanı açtığında haftalık özetin ve auran canlı olarak oluşacak.
-              </p>
-            </div>
-            {onPlaySong && (
-              <button
-                type="button"
-                onClick={() => onPlaySong(SAMPLE_SONGS[0])}
-                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white text-xs font-bold shadow-md hover:opacity-95 transition active:scale-95 flex items-center gap-2 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>İlk Parçayı Başlat</span>
-              </button>
-            )}
-          </div>
-        ) : (
-        <>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Müzikal Aura</span>
-              <span aria-hidden="true">·</span>
-              <span>Haftalık Müzik Özeti</span>
-              <span aria-hidden="true">·</span>
-              <span>{topGenreName}</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight pt-0.5">
-              {weeklyPersona}
-            </h2>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
-              {weeklyPersonaDesc}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center flex-wrap">
-            <button
-              type="button"
-              onClick={() => setShowStoryCardModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.12] text-zinc-800 dark:text-zinc-200 border border-[#E4E2EC] dark:border-white/[0.08] transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95"
-              title="Müzikal Aura Hikaye Kartını Aç & Paylaş"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span>Aura&apos;yı Paylaş</span>
-            </button>
-
-            {/* Filter Toggle */}
-            <div className="p-1 rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-[#E4E2EC] dark:border-white/[0.08] flex items-center gap-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setWeeklyFilter('all')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                  weeklyFilter === 'all'
-                    ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Genel
-              </button>
-              <button
-                type="button"
-                onClick={() => setWeeklyFilter('genres')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                  weeklyFilter === 'genres'
-                    ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Türler
-              </button>
-              <button
-                type="button"
-                onClick={() => setWeeklyFilter('artists')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                  weeklyFilter === 'artists'
-                    ? 'bg-lime-400 text-zinc-950 font-semibold'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Sanatçılar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 3 Real-Time Metric Highlight Pillars */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 relative z-10">
-          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
-              <Headphones className="w-3.5 h-3.5 text-lime-500 dark:text-lime-400" />
-              <span>Haftalık Dinleme Süresi</span>
-            </div>
-            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white tabular-nums">
-              {weeklyHours > 0 ? (
-                <>
-                  {weeklyHours} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">saat</span>{' '}
-                  {weeklyRemainingMinutes} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>
-                </>
-              ) : weeklyRemainingMinutes > 0 ? (
-                <>
-                  {weeklyRemainingMinutes} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>{' '}
-                  {weeklyRemainingSeconds} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">sn</span>
-                </>
-              ) : weeklyTotalSeconds > 0 ? (
-                <>
-                  {weeklyTotalSeconds} <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">sn</span>
-                </>
+            <section className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] p-5 space-y-5 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
+              {!hasRealListeningData ? (
+                <div className="py-7 px-3 text-center flex flex-col items-center justify-center space-y-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7]">
+                    <Headphones className="w-5 h-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="space-y-1 max-w-sm">
+                    <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                      Haftalık Dinleme Özeti
+                    </div>
+                    <h2 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7]">
+                      Henüz dinleme verisi yok
+                    </h2>
+                    <p className="text-xs text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
+                      İlk parçanı açtığında gerçek dinleme süren ve tür dağılımın burada oluşmaya başlayacak.
+                    </p>
+                  </div>
+                  {onPlaySong && (
+                    <button
+                      type="button"
+                      onClick={() => onPlaySong(SAMPLE_SONGS[0])}
+                      className="studio-btn-primary px-4 py-2.5 min-h-[42px] rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] text-xs font-semibold transition active:scale-95 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>İlk Parçayı Başlat</span>
+                    </button>
+                  )}
+                </div>
               ) : (
                 <>
-                  0 <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">dk</span>
-                </>
-              )}
-            </div>
-            <div className="text-[11px] text-zinc-500 flex flex-col gap-0.5 pt-0.5">
-              <span className="text-zinc-700 dark:text-zinc-300 font-medium tabular-nums">
-                {weeklyScrobbleCount > 0
-                  ? `${weeklyScrobbleCount} parça dinlendi`
-                  : 'Canlı oynatma kaydediliyor'}
-              </span>
-              {totalLibraryCount > 0 && (
-                <span className="text-[10px] text-zinc-500 tabular-nums">
-                  Kütüphane Toplamı: {totalLibraryCount} parça
-                </span>
-              )}
-            </div>
-          </div>
+                  {/* Header + Prominent Mono Listening Duration */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                        Haftalık Dinleme Özeti
+                      </div>
+                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#141416] dark:text-[#F5F5F7] tabular-nums">
+                        {weeklyHours > 0
+                          ? `${weeklyHours}s ${weeklyRemainingMinutes}dk`
+                          : weeklyRemainingMinutes > 0
+                          ? `${weeklyRemainingMinutes}dk ${weeklyRemainingSeconds}sn`
+                          : weeklyTotalSeconds > 0
+                          ? `${weeklyTotalSeconds}sn`
+                          : '0dk'}
+                      </div>
+                      <p className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                        {weeklyScrobbleCount > 0
+                          ? `${weeklyScrobbleCount} parça · ${weeklyPersona}`
+                          : weeklyPersona}
+                      </p>
+                    </div>
 
-          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
-              <Trophy className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>Haftanın Zirvesi</span>
-            </div>
-            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
-              {topArtistName}
-            </div>
-            <div className="text-[11px] text-zinc-500 tabular-nums">
-              {sortedWeeklyArtists[0]
-                ? `${sortedWeeklyArtists[0].tracksCount} dinleme/parça skoru`
-                : 'İlk sanatçını dinle'}
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.025] border border-zinc-200/80 dark:border-white/[0.06] space-y-1">
-            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium">
-              <BarChart3 className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
-              <span>Baskın Müzik Türü</span>
-            </div>
-            <div className="text-xl font-heading font-bold text-zinc-900 dark:text-white truncate">
-              {topGenreName}
-            </div>
-            <div className="text-[11px] text-zinc-500 tabular-nums">
-              {sortedWeeklyGenres[0]
-                ? `Haftalık akışın %${sortedWeeklyGenres[0].percentage}'i`
-                : 'Dinledikçe hesaplanır'}
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic Visual Breakdown: Genres */}
-        {(weeklyFilter === 'all' || weeklyFilter === 'genres') && sortedWeeklyGenres.length > 0 && (
-          <div className="space-y-3.5 pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-                <BarChart3 className="w-3.5 h-3.5 text-lime-500 dark:text-lime-400" />
-                <span>En Çok Dinlenen Türler (% Dağılımı)</span>
-              </h3>
-              <span className="text-[11px] text-zinc-500">
-                {sortedWeeklyGenres.length} Aktif Tür
-              </span>
-            </div>
-
-            {/* Proportional Stacked Multi-Color Segmented Bar */}
-            <div className="flex h-3.5 w-full rounded-full overflow-hidden bg-zinc-200/70 dark:bg-white/[0.04] p-0.5 gap-1 shadow-inner">
-              {sortedWeeklyGenres.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{ width: `${item.percentage}%` }}
-                  title={`${item.genre}: %${item.percentage}`}
-                  className={`h-full rounded-full transition-all duration-500 ${item.palette.bar} ${item.palette.glow}`}
-                />
-              ))}
-            </div>
-
-            {/* Clean Genre Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
-              {sortedWeeklyGenres.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="p-2.5 rounded-xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/[0.06] flex flex-col justify-between space-y-1 hover:border-purple-500/30 transition"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${item.palette.dot} shrink-0`} />
-                    <span className="text-xs font-semibold text-zinc-900 dark:text-white truncate" title={item.genre}>
-                      {item.genre}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowStoryCardModal(true)}
+                      className="px-3 py-2 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] text-[#141416] dark:text-[#F5F5F7] transition flex items-center gap-1.5 text-xs font-medium cursor-pointer shrink-0 active:scale-95"
+                      title="Dinleme özetini kart olarak paylaş"
+                    >
+                      <Share2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                      <span>Paylaş</span>
+                    </button>
                   </div>
-                  <div className="flex items-baseline justify-between text-[11px] pt-1 border-t border-zinc-200/60 dark:border-white/[0.04]">
-                    <span className={`font-bold font-mono ${item.palette.text}`}>
-                      %{item.percentage}
-                    </span>
-                    <span className="text-[10px] text-zinc-500 tabular-nums">
-                      {item.count} parça
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Dynamic Visual Breakdown: Top Artists */}
-        {(weeklyFilter === 'all' || weeklyFilter === 'artists') && sortedWeeklyArtists.length > 0 && (
-          <div className="space-y-3 pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                <span>Haftanın Zirvedeki Sanatçıları</span>
-              </h3>
-              <span className="text-[11px] text-zinc-500">
-                Gerçek Dinleme Verisi
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {sortedWeeklyArtists.map((artist) => {
-                const isFirst = artist.rank === 1;
-                const avatarInfo = getArtistAvatarInfo(artist.name);
-                return (
-                  <div
-                    key={artist.name}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition group ${
-                      isFirst
-                        ? 'bg-amber-500/[0.08] border-amber-500/30 hover:border-amber-500/50'
-                        : 'bg-zinc-50 dark:bg-white/[0.02] border-zinc-200/80 dark:border-white/[0.06] hover:border-purple-500/30'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <span
-                        className={`w-7 text-center font-mono font-bold text-xs shrink-0 ${
-                          isFirst ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-500'
+                  {/* Clean Monochrome Filter Segmented Control */}
+                  <div className="grid grid-cols-3 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] text-xs">
+                    {[
+                      { id: 'all' as const, label: 'Genel' },
+                      { id: 'genres' as const, label: 'Türler' },
+                      { id: 'artists' as const, label: 'Sanatçılar' },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setWeeklyFilter(tab.id)}
+                        className={`py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+                          weeklyFilter === tab.id
+                            ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                            : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                         }`}
                       >
-                        {isFirst ? '👑 1' : `#${artist.rank}`}
-                      </span>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
 
-                      {avatarInfo.url ? (
-                        <img
-                          src={avatarInfo.url}
-                          alt={artist.name}
-                          loading="lazy"
-                          decoding="async"
-                          className={`w-11 h-11 rounded-xl object-cover shrink-0 bg-zinc-900 ${
-                            isFirst ? 'ring-2 ring-amber-400/60' : 'ring-1 ring-white/15'
-                          }`}
-                        />
-                      ) : (
-                        <div
-                          className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-xs ring-1 shrink-0 ${
-                            isFirst
-                              ? 'bg-gradient-to-tr from-amber-500/20 to-amber-600/10 text-amber-600 dark:text-amber-300 ring-amber-400/30'
-                              : 'bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 ring-zinc-300 dark:ring-white/10'
-                          }`}
-                        >
-                          {avatarInfo.initials}
-                        </div>
-                      )}
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-purple-500 dark:group-hover:text-purple-300 transition">
-                            {artist.name}
-                          </div>
-                          {isFirst && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold shrink-0">
-                              #1 Zirve
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-2 tabular-nums">
-                          <span>
-                            {artist.playedSeconds > 0
-                              ? `${Math.max(1, Math.round(artist.playedSeconds / 60))} dk dinlendi`
-                              : `${artist.tracksCount} parça`}
-                          </span>
-                          <span className="text-zinc-400 dark:text-zinc-600">·</span>
-                          <span className="text-zinc-500 dark:text-zinc-400">Canlı Frekans</span>
-                        </div>
+                  {/* Compact Secondary Metrics */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border border-[#E8E6E1] dark:border-white/[0.06] space-y-0.5">
+                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                        Zirvedeki Sanatçı
+                      </div>
+                      <div className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
+                        {topArtistName}
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {onStartArtistRadio && (
-                        <button
-                          type="button"
-                          onClick={() => onStartArtistRadio(artist.name)}
-                          className="px-3 py-1.5 rounded-xl bg-zinc-200/70 dark:bg-white/[0.06] hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-zinc-800 dark:text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer min-h-[34px]"
-                          title={`${artist.name} radyosunu başlat`}
-                        >
-                          <Radio className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 group-hover:text-white transition" />
-                          <span className="hidden sm:inline">Radyo</span>
-                        </button>
-                      )}
+                    <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border border-[#E8E6E1] dark:border-white/[0.06] space-y-0.5">
+                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                        Baskın Tür
+                      </div>
+                      <div className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
+                        {topGenreName}
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* Highlight: Haftanın Parçası (Weekly Anthem) */}
-        {weeklyFilter === 'all' && (
-          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-gradient-to-r dark:from-white/[0.03] dark:to-white/[0.01] border border-zinc-200/80 dark:border-white/[0.06]">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-white/15 shrink-0">
-                  {weeklyAnthemSong.coverUrl ? (
-                    <img
-                      src={weeklyAnthemSong.coverUrl}
-                      alt={weeklyAnthemSong.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className={`w-full h-full bg-gradient-to-tr ${weeklyAnthemSong.coverGradient}`} />
+                  {/* Calm Studio Genre Distribution Bar */}
+                  {(weeklyFilter === 'all' || weeklyFilter === 'genres') && sortedWeeklyGenres.length > 0 && (
+                    <div className="space-y-3 pt-3 border-t border-[#E8E6E1] dark:border-white/[0.06]">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7]">
+                          Tür Dağılımı
+                        </h3>
+                        <span className="font-mono text-[11px] text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                          {sortedWeeklyGenres.length} tür
+                        </span>
+                      </div>
+
+                      <div className="flex h-2 w-full rounded-full overflow-hidden bg-[#F1EFEA] dark:bg-white/[0.08] gap-0.5">
+                        {sortedWeeklyGenres.map((item, idx) => {
+                          const tone = STUDIO_GENRE_BARS[idx % STUDIO_GENRE_BARS.length];
+                          return (
+                            <div
+                              key={idx}
+                              style={{ width: `${item.percentage}%` }}
+                              title={`${item.genre}: %${item.percentage}`}
+                              className={`h-full first:rounded-l-full last:rounded-r-full transition-all duration-500 ${tone.bar}`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {sortedWeeklyGenres.map((item, idx) => {
+                          const tone = STUDIO_GENRE_BARS[idx % STUDIO_GENRE_BARS.length];
+                          return (
+                            <div
+                              key={idx}
+                              className="px-2.5 py-2 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/60 border border-[#E8E6E1] dark:border-white/[0.06] flex items-center justify-between gap-2"
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className={`w-2 h-2 rounded-full ${tone.dot} shrink-0`} />
+                                <span className="text-xs font-medium text-[#141416] dark:text-[#F5F5F7] truncate" title={item.genre}>
+                                  {item.genre}
+                                </span>
+                              </div>
+                              <span className="font-mono text-[11px] font-semibold text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
+                                %{item.percentage}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <Flame className="w-4 h-4 text-amber-400" />
-                  </div>
-                </div>
 
-                <div className="min-w-0">
-                  <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                    <span>En Çok Tekrarlanan Şarkı</span>
-                  </div>
-                  <div className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white truncate">
-                    {weeklyAnthemSong.title}
-                  </div>
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                    {weeklyAnthemSong.artist} · {weeklyAnthemSong.album}
-                  </div>
-                </div>
-              </div>
+                  {/* Top Artists List */}
+                  {(weeklyFilter === 'all' || weeklyFilter === 'artists') && sortedWeeklyArtists.length > 0 && (
+                    <div className="space-y-2.5 pt-3 border-t border-[#E8E6E1] dark:border-white/[0.06]">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7]">
+                          Zirvedeki Sanatçılar
+                        </h3>
+                        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                          Gerçek veri
+                        </span>
+                      </div>
 
-              {onPlaySong && (
-                <button
-                  type="button"
-                  onClick={() => onPlaySong(weeklyAnthemSong)}
-                  className="px-4 py-2 rounded-xl bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0 min-h-[36px]"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Şarkıyı Çal</span>
-                </button>
+                      <div className="space-y-2">
+                        {sortedWeeklyArtists.map((artist) => {
+                          const isFirst = artist.rank === 1;
+                          const avatarInfo = getArtistAvatarInfo(artist.name);
+                          return (
+                            <div
+                              key={artist.name}
+                              className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/60 border border-[#E8E6E1] dark:border-white/[0.06] transition group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span
+                                  className={`w-6 text-center font-mono text-xs font-semibold tabular-nums shrink-0 ${
+                                    isFirst
+                                      ? 'text-[#141416] dark:text-[#F5F5F7]'
+                                      : 'text-[#63636B] dark:text-[#8E8E98]'
+                                  }`}
+                                >
+                                  #{artist.rank}
+                                </span>
+
+                                {avatarInfo.url ? (
+                                  <img
+                                    src={avatarInfo.url}
+                                    alt={artist.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-10 h-10 rounded-lg object-cover shrink-0 bg-zinc-900 border border-[#E8E6E1] dark:border-white/[0.08]"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg flex items-center justify-center font-mono font-semibold text-xs shrink-0 bg-[#F1EFEA] dark:bg-white/[0.08] text-[#141416] dark:text-[#F5F5F7]">
+                                    {avatarInfo.initials}
+                                  </div>
+                                )}
+
+                                <div className="min-w-0">
+                                  <div className="text-xs sm:text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
+                                    {artist.name}
+                                  </div>
+                                  <div className="font-mono text-[11px] text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                                    {artist.playedSeconds > 0
+                                      ? `${Math.max(1, Math.round(artist.playedSeconds / 60))} dk dinlendi`
+                                      : `${artist.tracksCount} parça`}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {onStartArtistRadio && (
+                                <button
+                                  type="button"
+                                  onClick={() => onStartArtistRadio(artist.name)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/[0.1] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] text-xs font-medium flex items-center gap-1.5 transition cursor-pointer min-h-[34px] shrink-0"
+                                  title={`${artist.name} radyosunu başlat`}
+                                >
+                                  <Radio className="w-3.5 h-3.5" strokeWidth={1.75} />
+                                  <span className="hidden sm:inline">Radyo</span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Highlight: Weekly Anthem */}
+                  {weeklyFilter === 'all' && (
+                    <div className="pt-3 border-t border-[#E8E6E1] dark:border-white/[0.06]">
+                      <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/60 border border-[#E8E6E1] dark:border-white/[0.06]">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 border border-[#E8E6E1] dark:border-white/[0.08] shrink-0">
+                            {weeklyAnthemSong.coverUrl ? (
+                              <img
+                                src={weeklyAnthemSong.coverUrl}
+                                alt={weeklyAnthemSong.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full bg-gradient-to-tr ${weeklyAnthemSong.coverGradient}`} />
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="font-mono text-[10px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                              Haftanın Parçası
+                            </div>
+                            <div className="text-xs sm:text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
+                              {weeklyAnthemSong.title}
+                            </div>
+                            <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate">
+                              {weeklyAnthemSong.artist}
+                            </div>
+                          </div>
+                        </div>
+
+                        {onPlaySong && (
+                          <button
+                            type="button"
+                            onClick={() => onPlaySong(weeklyAnthemSong)}
+                            className="studio-btn-primary px-3.5 py-2 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 min-h-[36px] active:scale-95"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                            <span>Çal</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
-            </div>
-          </div>
-        )}
-        </>
-        )}
-          </section>
+            </section>
           </div>
         </div>
 
         {/* ===================================================================
-            RIGHT 7 COLS ON DESKTOP: TOP 4 VİTRİN + KÜTÜPHANEM (2-COL GRID)
+            RIGHT 7 COLS ON DESKTOP: İMZA 4 PARÇAM + KÜTÜPHANEM
            =================================================================== */}
         <div className={`lg:col-span-7 space-y-6 min-w-0 ${profileSection === 'library' ? 'block' : 'hidden lg:block'}`}>
-          {/* 2. İMZA PARÇALARIM (TOP 4 VİTRİN) */}
+          {/* 3. İMZA 4 PARÇAM (4-COLUMN VERTICAL SHOWCASE — ZERO MOBILE OVERFLOW) */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm sm:text-base font-heading font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                İmza Parçalarım (Top 4)
+              <h2 className="text-sm sm:text-base font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+                İmza 4 Parçam
               </h2>
-              <span className="text-[11px] text-zinc-500 dark:text-[#9E9AA8] font-medium">
-                Dokun ve anında çal
+              <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                Çalmak için dokun
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {displayedTop4Tracks.map((track, idx) => {
                 const isCurrentlyPlaying = userProfile.currentSong?.id === track.id;
                 const rank = idx + 1;
@@ -2189,29 +2096,13 @@ export const ProfileTab: React.FC<Props> = ({
                       triggerHaptic(15);
                       if (onPlaySong) onPlaySong(track);
                     }}
-                    className={`keep-white-on-media aspect-[3/4] rounded-2xl overflow-hidden relative border shadow-md group cursor-pointer transition-all active:scale-95 ${
+                    className={`keep-white-on-media aspect-[3/4] rounded-xl overflow-hidden relative border group cursor-pointer transition-all active:scale-95 ${
                       isCurrentlyPlaying
-                        ? 'border-purple-500 ring-2 ring-purple-500/40'
-                        : 'border-zinc-200 dark:border-white/10 hover:border-purple-500/50'
+                        ? 'border-[#16A34A] dark:border-[#22C55E] ring-1 ring-[#16A34A]/40 dark:ring-[#22C55E]/40'
+                        : 'border-[#E8E6E1] dark:border-white/[0.08]'
                     }`}
                     title={`${track.title} - ${track.artist} (Çalmak için dokun)`}
                   >
-                    {/* ✎ Edit Slot Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerHaptic(20);
-                        setEditingTop4Slot(idx);
-                        setTop4SearchQuery('');
-                      }}
-                      className="absolute top-2 left-2 w-7 h-7 rounded-lg bg-black/65 hover:bg-purple-600 text-white flex items-center justify-center transition active:scale-95 shadow-md border border-white/20 z-20 cursor-pointer"
-                      title={`#${rank} Vitrin Parçasını Değiştir`}
-                      aria-label={`Vitrin ${rank} parçasını değiştir`}
-                    >
-                      <Pencil className="w-3 h-3 text-white" />
-                    </button>
-
                     {track.coverUrl ? (
                       <img
                         src={track.coverUrl}
@@ -2221,43 +2112,34 @@ export const ProfileTab: React.FC<Props> = ({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${track.coverGradient || 'from-purple-900 via-zinc-900 to-black'} flex items-center justify-center`}>
-                        <Music className="w-6 h-6 text-white/60" />
+                      <div className="w-full h-full bg-[#1C1C22] flex items-center justify-center">
+                        <Music className="w-5 h-5 text-white/50" strokeWidth={1.75} />
                       </div>
                     )}
 
-                    {/* Strong dark bottom gradient legibility veil */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                    {/* Clean bottom dark gradient scrim */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-                    {/* Top-right Rank Badge (#1..#4) */}
-                    <div
-                      className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold shadow-md ${
-                        rank === 1
-                          ? 'bg-amber-500 text-zinc-950'
-                          : 'bg-black/75 backdrop-blur-md text-white border border-white/15'
-                      }`}
+                    {/* Subtle Edit Slot Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHaptic(20);
+                        setEditingTop4Slot(idx);
+                        setTop4SearchQuery('');
+                      }}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition active:scale-95 border border-white/15 z-20 cursor-pointer"
+                      title={`#${rank} İmza Parçasını Değiştir`}
+                      aria-label={`İmza parça ${rank} değiştir`}
                     >
-                      #{rank}
-                    </div>
+                      <Pencil className="w-3 h-3 text-white" strokeWidth={1.75} />
+                    </button>
 
-                    {/* Hover/Active Play Overlay */}
-                    <div
-                      className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                        isCurrentlyPlaying ? 'opacity-100 bg-black/25' : 'opacity-0 group-hover:opacity-100 bg-black/30'
-                      }`}
-                    >
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white flex items-center justify-center shadow-lg">
-                        <Play className="w-4 h-4 fill-current ml-0.5" />
-                      </div>
-                    </div>
-
-                    {/* Bottom Song Title & Artist — ALWAYS WHITE OVER DARK SCRIM */}
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
-                      <div className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">
+                    {/* Single-line white title at bottom */}
+                    <div className="absolute bottom-2 left-2 right-2 z-10">
+                      <div className="text-[11px] font-semibold text-white truncate leading-tight">
                         {track.title}
-                      </div>
-                      <div className="text-[10px] text-white/80 truncate mt-0.5 drop-shadow-sm">
-                        {track.artist}
                       </div>
                     </div>
                   </div>
@@ -2266,61 +2148,59 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
           </section>
 
-          {/* 4. KİŞİSEL MÜZİK KÜTÜPHANEM */}
+          {/* 4. KÜTÜPHANEM */}
           <section className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
                   Kütüphanem
                 </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Çalma listelerin · Favori müziklerin · Beğendiğin sanatçılar
+                <p className="text-xs text-[#63636B] dark:text-[#8E8E98] mt-0.5">
+                  Listelerin · Favori parçaların · Sanatçıların
                 </p>
               </div>
             </div>
 
             {isLibraryCompletelyEmpty ? (
-              /* SINGLE UNIFIED EMPTY-LIBRARY CARD (NO SCATTERED DUPLICATES) */
-              <div className="py-10 px-5 sm:px-8 rounded-3xl bg-gradient-to-b from-white via-[#FAF9FD] to-purple-50/70 dark:from-[#14121E] dark:via-[#14121E]/95 dark:to-purple-950/20 border border-zinc-200 dark:border-white/[0.08] text-center space-y-4 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-52 h-20 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-                <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/20 to-pink-600/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-md">
-                  <Disc3 className="w-7 h-7 animate-[spin_10s_linear_infinite]" />
+              <div className="py-9 px-5 sm:px-8 rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] text-center space-y-4 shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] flex items-center justify-center text-[#141416] dark:text-[#F5F5F7]">
+                  <Library className="w-5 h-5" strokeWidth={1.75} />
                 </div>
-                <div className="space-y-1.5 relative z-10">
-                  <h3 className="text-base sm:text-lg font-heading font-bold text-zinc-900 dark:text-white tracking-tight">
+                <div className="space-y-1.5">
+                  <h3 className="text-base font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
                     Müzik Kütüphaneni Bağla
                   </h3>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-                    YouTube Music veya Spotify çalma listelerini tek kapıdan bağlayıp frekansını eşle ya da örnek koleksiyonla hemen keşfet.
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] max-w-md mx-auto leading-relaxed">
+                    YouTube Music veya Spotify çalma listelerini bağlayıp kütüphaneni eşle ya da örnek koleksiyonla hemen keşfet.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={() => setShowSettingsModal(true)}
-                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-white dark:bg-white/[0.08] hover:bg-zinc-100 dark:hover:bg-white/[0.14] border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                    className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E8E6E1] dark:hover:bg-white/[0.1] border border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                   >
-                    <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <span>Müzik Kütüphaneni Bağla</span>
+                    <Link2 className="w-4 h-4" strokeWidth={1.75} />
+                    <span>Kütüphaneni Bağla</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleLoadPopularCollection}
-                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/25"
+                    className="studio-btn-primary w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-[#141416] hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-[#0B0B0D] font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-200" />
+                    <Music className="w-4 h-4" strokeWidth={1.75} />
                     <span>Örnek Koleksiyonu Yükle</span>
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                {/* Touch-Friendly Library Sub-Tabs */}
-                <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/[0.07] overflow-x-auto no-scrollbar whitespace-nowrap pb-2.5 pr-6 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+                {/* Clean Studio Segmented Control (Listeler | Favoriler | Sanatçılar) */}
+                <div className="grid grid-cols-3 p-1 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.06]">
                   {[
-                    { id: 'playlists' as const, label: `Çalma Listeleri (${syncedPlaylists.length})` },
-                    { id: 'favorites' as const, label: `Favori Parçalar (${favoriteSongs.length})` },
-                    { id: 'artists' as const, label: `Sanatçılar (${sanitizedFavoriteArtists.length})` },
+                    { id: 'playlists' as const, label: 'Listeler', count: syncedPlaylists.length },
+                    { id: 'favorites' as const, label: 'Favoriler', count: favoriteSongs.length },
+                    { id: 'artists' as const, label: 'Sanatçılar', count: sanitizedFavoriteArtists.length },
                   ].map((tab) => {
                     const isActive = activeLibraryTab === tab.id;
                     return (
@@ -2331,13 +2211,16 @@ export const ProfileTab: React.FC<Props> = ({
                           setActiveLibraryTab(tab.id);
                           setLibrarySearchQuery('');
                         }}
-                        className={`px-3.5 py-2 text-xs font-semibold rounded-xl min-h-[40px] whitespace-nowrap shrink-0 transition cursor-pointer ${
+                        className={`px-2.5 py-2 text-xs font-semibold rounded-lg min-h-[38px] whitespace-nowrap transition cursor-pointer flex items-center justify-center gap-1.5 ${
                           isActive
-                            ? 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-sm'
-                            : 'bg-zinc-100 dark:bg-white/[0.05] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/80 dark:hover:bg-white/[0.09]'
+                            ? 'bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] shadow-xs'
+                            : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7]'
                         }`}
                       >
-                        {tab.label}
+                        <span>{tab.label}</span>
+                        <span className="font-mono text-[11px] opacity-65 tabular-nums">
+                          {tab.count}
+                        </span>
                       </button>
                     );
                   })}
@@ -2345,27 +2228,27 @@ export const ProfileTab: React.FC<Props> = ({
 
                 {/* Search Input for the active tab */}
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
                   <input
                     type="text"
                     value={librarySearchQuery}
                     onChange={(e) => setLibrarySearchQuery(e.target.value)}
                     placeholder={
                       activeLibraryTab === 'playlists'
-                        ? 'Çalma listelerinde ara...'
+                        ? 'Listelerde ara...'
                         : activeLibraryTab === 'favorites'
                         ? 'Favori parçalarda ara...'
                         : 'Sanatçılarda ara...'
                     }
-                    className="w-full pl-9 pr-8 py-2.5 min-h-[42px] bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.08] rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-purple-500/50"
+                    className="w-full pl-10 pr-8 py-2.5 min-h-[42px] bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] rounded-xl text-xs text-[#141416] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none focus:border-[#141416]/40 dark:focus:border-white/30 transition"
                   />
                   {librarySearchQuery && (
                     <button
                       type="button"
                       onClick={() => setLibrarySearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#63636B] hover:text-[#141416] dark:text-[#8E8E98] dark:hover:text-[#F5F5F7] cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5" strokeWidth={1.75} />
                     </button>
                   )}
                 </div>

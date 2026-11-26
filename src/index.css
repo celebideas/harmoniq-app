@@ -1,44 +1,50 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
 @layer base {
   :root {
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-    /* 3-Token Semantic Color Architecture ("Velvet Pitch & Electric Resonance")
-       1. Primary Brand & Music Action (Electric Violet): #9333EA -> #EC4899
-       2. Live Signal & Trust (Live Signal Cyan-Mint): #10B981
-       3. Warm Moments & Solo Highlight (Warm Amber): #F59E0B
-    */
-    --theme-accent: #9333EA;
-    --theme-accent-secondary: #EC4899;
-    --theme-accent-rgb: 147, 51, 234;
-    --theme-accent-glow: rgba(147, 51, 234, 0.38);
-    --theme-accent-subtle: rgba(147, 51, 234, 0.14);
-    --theme-accent-text: #ffffff;
+    /* Editorial Studio Minimalism — Obsidian Ink (Dark) */
+    --bg-primary: #0B0B0D;
+    --bg-card: #141418;
+    --bg-elevated: #1C1C22;
+    --text-primary: #F5F5F7;
+    --text-secondary: #8E8E98;
+    --border-subtle: rgba(255, 255, 255, 0.08);
 
-    --semantic-live: #10B981;
-    --semantic-warm: #F59E0B;
+    /* Semantic Live & Trust Accent */
+    --semantic-live: #22C55E;
+    --semantic-warm: #D97706;
 
-    /* Default Dark Theme ("Velvet Pitch") */
-    --bg-primary: #0A090F;
-    --bg-card: rgba(20, 18, 30, 0.90);
-    --bg-elevated: rgba(30, 27, 46, 0.75);
-    --text-primary: #FAFAFA;
-    --text-secondary: #9E9AA8;
-    --border-subtle: rgba(255, 255, 255, 0.07);
+    /* Primary Studio Action Tokens (High Contrast Monochrome) */
+    --theme-accent: #F5F5F7;
+    --theme-accent-secondary: #D4D4D8;
+    --theme-accent-rgb: 245, 245, 247;
+    --theme-accent-glow: rgba(255, 255, 255, 0.14);
+    --theme-accent-subtle: rgba(255, 255, 255, 0.08);
+    --theme-accent-text: #0B0B0D;
   }
 
   html.light {
-    /* Light Theme ("Warm Vinyl Studio") */
-    --bg-primary: #F5F4F8;
-    --bg-card: rgba(255, 255, 255, 0.96);
-    --bg-elevated: rgba(236, 234, 242, 0.85);
-    --text-primary: #12101B;
-    --text-secondary: #5B576A;
-    --border-subtle: #E4E2EC;
+    /* Editorial Studio Minimalism — Warm Paper (Light) */
+    --bg-primary: #FAF9F6;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F1EFEA;
+    --text-primary: #141416;
+    --text-secondary: #63636B;
+    --border-subtle: #E8E6E1;
+    --semantic-live: #16A34A;
+
+    --theme-accent: #141416;
+    --theme-accent-secondary: #27272A;
+    --theme-accent-rgb: 20, 20, 22;
+    --theme-accent-glow: rgba(20, 20, 22, 0.12);
+    --theme-accent-subtle: rgba(20, 20, 22, 0.07);
+    --theme-accent-text: #FFFFFF;
   }
 
   html {
@@ -70,23 +76,26 @@
     font-family: var(--font-heading);
     letter-spacing: -0.025em;
   }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
 }
 
 /* ============================================================================
-   WARM VINYL STUDIO LIGHT MODE ADAPTIVE OVERRIDES (FOR LEGACY DARK-ONLY VIEWS)
-   Note: Components using native Tailwind `dark:` variants now work natively via
-   `@custom-variant dark` above. These rules adapt remaining dark-only cards
-   cleanly without breaking light-mode surfaces or gradients.
+   WARM PAPER LIGHT MODE ADAPTIVE RULES (FOR LEGACY DARK-ONLY MODALS/SUBVIEWS)
+   Native Tailwind `dark:` and `light:` variants handle modernized components.
    ============================================================================ */
 html.light body {
-  background-color: #F5F4F8;
-  color: #12101B;
+  background-color: #FAF9F6;
+  color: #141416;
 }
 
 /* Base App & Page Backgrounds */
 html.light .bg-\[\#0A090F\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0A090F\]\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0A090F\]\/85:not(.keep-dark):not(.keep-dark *),
+html.light .bg-\[\#0B0B0D\]:not(.keep-dark):not(.keep-dark *):not(.studio-btn-primary),
 html.light .bg-\[\#09090B\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#09090B\]\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0C0C0E\]:not(.keep-dark):not(.keep-dark *),
@@ -94,18 +103,18 @@ html.light .bg-\[\#0C0C0E\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0C16\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0C16\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#0E0E12\]:not(.keep-dark):not(.keep-dark *) {
-  background-color: #F5F4F8 !important;
-  color: #12101B !important;
+  background-color: #FAF9F6 !important;
+  color: #141416 !important;
 }
 
 /* Modals & Full Deck Container Surface */
 html.light .bg-\[\#0A0A0C\]:not(.keep-dark):not(.keep-dark *) {
   background-color: #FFFFFF !important;
-  color: #12101B !important;
-  border-color: #E4E2EC !important;
+  color: #141416 !important;
+  border-color: #E8E6E1 !important;
 }
 
-/* Elevated Dark-Only Cards & Legacy Surfaces (scoped away from .keep-dark, .keep-white-on-media and descendants) */
+/* Elevated Dark-Only Cards & Legacy Surfaces */
 html.light .bg-\[\#12101C\]:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#12101C\]\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-\[\#12111A\]:not(.keep-dark):not(.keep-dark *),
@@ -130,7 +139,7 @@ html.light .bg-zinc-950\/85:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/80:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/70:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-950\/40:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
+html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.studio-btn-primary),
 html.light .bg-zinc-900\/95:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-900\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-zinc-900\/80:not(.keep-dark):not(.keep-dark *),
@@ -148,13 +157,13 @@ html.light .bg-neutral-900:not(.keep-dark):not(.keep-dark *),
 html.light .bg-neutral-900\/90:not(.keep-dark):not(.keep-dark *),
 html.light .bg-neutral-900\/80:not(.keep-dark):not(.keep-dark *),
 html.light .bg-neutral-900\/60:not(.keep-dark):not(.keep-dark *) {
-  background-color: rgba(255, 255, 255, 0.96) !important;
-  color: #12101B !important;
-  border-color: #E4E2EC !important;
-  box-shadow: 0 4px 20px rgba(20, 18, 30, 0.05) !important;
+  background-color: #FFFFFF !important;
+  color: #141416 !important;
+  border-color: #E8E6E1 !important;
+  box-shadow: 0 2px 12px rgba(20, 20, 22, 0.04) !important;
 }
 
-/* Secondary Inset Surfaces & Sub-Cards (exclude absolute album-art scrims & .keep-dark/.keep-white-on-media zones) */
+/* Secondary Inset Surfaces */
 html.light .bg-black\/20:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
 html.light .bg-black\/25:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
 html.light .bg-black\/30:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
@@ -171,8 +180,8 @@ html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *):not(.keep-whit
 html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  background-color: rgba(236, 234, 242, 0.88) !important;
-  border-color: #DFDCE8 !important;
+  background-color: #F1EFEA !important;
+  border-color: #E8E6E1 !important;
 }
 
 /* Form inputs & text fields in light mode */
@@ -180,58 +189,38 @@ html.light input:not([type='range']):not(.keep-dark *),
 html.light textarea:not(.keep-dark *),
 html.light select:not(.keep-dark *) {
   background-color: #FFFFFF !important;
-  color: #12101B !important;
-  border-color: #DFDCE8 !important;
+  color: #141416 !important;
+  border-color: #E8E6E1 !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #7D788E !important;
+  color: #8E8E98 !important;
 }
 
-/* Text Colors for legacy dark-only blocks (safely excluding gradient buttons, colored badges/avatars, and media overlays) */
-html.light .text-white:not(.text-force-white):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-purple-"]):not([class*="bg-purple-"] *):not([class*="bg-fuchsia-"]):not([class*="bg-fuchsia-"] *):not([class*="bg-pink-"]):not([class*="bg-pink-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-amber-"]):not([class*="bg-amber-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
-html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not([class*="bg-gradient-"] *) ,
+/* Text Colors for legacy dark-only blocks (never override solid dark studio buttons, avatars, or media overlays) */
+html.light .text-white:not(.text-force-white):not(.studio-btn-primary):not(.studio-btn-primary *):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-[#141416]"]):not([class*="bg-[#141416]"] *):not([class*="bg-zinc-900"]):not([class*="bg-zinc-900"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-amber-"]):not([class*="bg-amber-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
+html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *),
+html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *),
+html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not([class*="bg-gradient-"] *),
 html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #12101B !important;
+  color: #141416 !important;
 }
 
-/* Preserve crisp pure white text on gradient buttons, colored avatars, solid brand badges, and album art overlays */
-html.light .bg-accent-theme,
-html.light .bg-accent-theme *,
+/* Preserve crisp pure white text on primary dark studio buttons, avatars, and media overlays */
+html.light .studio-btn-primary,
+html.light .studio-btn-primary *,
+html.light .bg-\[\#141416\].text-white,
+html.light .bg-\[\#141416\].text-white *,
 html.light .avatar-circle,
 html.light .avatar-circle *,
 html.light .keep-white-on-media,
 html.light .keep-white-on-media *,
-html.light [class*="bg-gradient-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white,
-html.light [class*="bg-gradient-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white *,
-html.light [class*="from-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white,
-html.light [class*="from-"]:not([class*="from-white"]):not([class*="from-zinc-50"]):not([class*="from-zinc-100"]):not([class*="from-emerald-500/"]):not([class*="from-purple-500/"]):not([class*="from-purple-600/"]).text-white *,
-html.light .bg-purple-600,
-html.light .bg-purple-600 *,
-html.light .bg-purple-500.text-white,
-html.light .bg-purple-500.text-white *,
-html.light .bg-fuchsia-600,
-html.light .bg-fuchsia-600 *,
-html.light .bg-fuchsia-500.text-white,
-html.light .bg-fuchsia-500.text-white *,
-html.light .bg-pink-600,
-html.light .bg-pink-600 *,
-html.light .bg-pink-500.text-white,
-html.light .bg-pink-500.text-white *,
 html.light .bg-emerald-600.text-white,
 html.light .bg-emerald-600.text-white *,
 html.light .bg-emerald-500.text-white,
 html.light .bg-emerald-500.text-white *,
-html.light .bg-amber-600.text-white,
-html.light .bg-amber-600.text-white *,
-html.light .bg-blue-600,
-html.light .bg-blue-600 *,
-html.light .bg-blue-500.text-white,
-html.light .bg-blue-500.text-white *,
 html.light .bg-rose-500,
 html.light .bg-rose-500 *,
 html.light .bg-rose-600,
@@ -245,11 +234,11 @@ html.light .text-force-white * {
 
 html.light .keep-white-on-media .text-white\/80,
 html.light .keep-white-on-media .text-zinc-200 {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 html.light .keep-white-on-media .text-zinc-950 {
-  color: #09090B !important;
+  color: #0B0B0D !important;
 }
 
 html.light .text-zinc-300:not(.keep-dark *):not(.keep-white-on-media *),
@@ -257,12 +246,12 @@ html.light .text-zinc-400:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-300:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-400:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-\[\#9E9AA8\]:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #5B576A !important;
+  color: #63636B !important;
 }
 
 html.light .text-zinc-500:not(.keep-dark *):not(.keep-white-on-media *),
 html.light .text-neutral-500:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #6E6A7E !important;
+  color: #63636B !important;
 }
 
 /* Borders */
@@ -281,69 +270,80 @@ html.light .border-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/10:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/15:not(.keep-dark):not(.keep-dark *),
 html.light .border-white\/20:not(.keep-dark):not(.keep-dark *) {
-  border-color: #E4E2EC !important;
+  border-color: #E8E6E1 !important;
 }
 
 html.light .divide-zinc-800:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.05\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.06\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
 html.light .divide-white\/\[0\.08\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]) {
-  border-color: #E4E2EC !important;
+  border-color: #E8E6E1 !important;
 }
 
-/* Dynamic Theme Utility Classes (Electric Violet Primary Action) */
+/* Studio Semantic Theme Utility Classes (High-Contrast Monochrome) */
 .bg-accent-theme {
-  background: linear-gradient(135deg, #9333EA 0%, #DB2777 55%, #EC4899 100%);
-  color: #ffffff !important;
+  background-color: #F5F5F7;
+  color: #0B0B0D !important;
+}
+
+html.light .bg-accent-theme {
+  background-color: #141416;
+  color: #FFFFFF !important;
 }
 
 .text-accent-theme {
-  color: #A855F7;
+  color: #F5F5F7;
 }
 
 html.light .text-accent-theme {
-  color: #7E22CE;
+  color: #141416;
 }
 
 .border-accent-theme {
-  border-color: #9333EA;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+html.light .border-accent-theme {
+  border-color: #141416;
 }
 
 .bg-accent-subtle {
-  background-color: rgba(147, 51, 234, 0.14);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+html.light .bg-accent-subtle {
+  background-color: #F1EFEA;
 }
 
 .glow-accent-theme {
-  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
-/* Surface utility tokens */
+/* Editorial Studio Surface Cards */
 .surface-card {
-  background-color: rgba(20, 18, 30, 0.90);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(24px);
+  background-color: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 html.light .surface-card {
-  background-color: rgba(255, 255, 255, 0.96);
-  border: 1px solid #E4E2EC;
-  box-shadow: 0 8px 24px rgba(20, 18, 30, 0.06);
-  color: #12101B;
+  background-color: #FFFFFF;
+  border: 1px solid #E8E6E1;
+  box-shadow: 0 2px 12px rgba(20, 20, 22, 0.04);
+  color: #141416;
 }
 
 .surface-inner {
-  background-color: rgba(30, 27, 46, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: #1C1C22;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 html.light .surface-inner {
-  background-color: rgba(236, 234, 242, 0.85);
-  border: 1px solid #DFDCE8;
-  color: #1E1B2E;
+  background-color: #F1EFEA;
+  border: 1px solid #E8E6E1;
+  color: #141416;
 }
 
-/* Custom Animations */
+/* Custom Studio Animations */
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);
@@ -355,6 +355,21 @@ html.light .surface-inner {
 
 .animate-spin-slow {
   animation: spin-slow 12s linear infinite;
+}
+
+/* Calm 3-Bar LiveMiniEqualizer Breathing Animation */
+@keyframes eq-breathe {
+  0%, 100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-eq-bar {
+  transform-origin: bottom center;
+  animation: eq-breathe 1.35s ease-in-out infinite;
 }
 
 @keyframes vu-bounce {
@@ -402,34 +417,19 @@ html.light .surface-inner {
   }
 }
 
-/* Android Material You Wavy Seek Bar Flow */
-@keyframes wavy-flow {
+@keyframes pulse-echo-ring {
   0% {
-    transform: translateX(0);
+    transform: scale(0.95);
+    opacity: 0.78;
   }
   100% {
-    transform: translateX(-24px);
+    transform: scale(1.95);
+    opacity: 0;
   }
 }
 
-.animate-wavy-flow {
-  animation: wavy-flow 1.15s linear infinite;
-}
-
-/* AuthScreen Ambient Breathing Soundwave Glow */
-@keyframes auth-breathe {
-  0%, 100% {
-    transform: scale(1) translateY(0);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.12) translateY(-10px);
-    opacity: 0.72;
-  }
-}
-
-.animate-auth-breathe {
-  animation: auth-breathe 6s ease-in-out infinite;
+.animate-pulse-echo {
+  animation: pulse-echo-ring 1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 /* Hide scrollbars cleanly */
@@ -441,9 +441,9 @@ html.light .surface-inner {
   scrollbar-width: none;
 }
 
-/* Harmoniq Interactive Leaflet Map Styles */
+/* ListenHub Interactive Leaflet Map Styles */
 .harmoniq-leaflet-map .leaflet-control-attribution {
-  background: rgba(10, 9, 15, 0.65) !important;
+  background: rgba(11, 11, 13, 0.72) !important;
   color: rgba(212, 212, 216, 0.72) !important;
   font-size: 9px !important;
   padding: 2px 6px !important;
@@ -452,8 +452,8 @@ html.light .surface-inner {
 }
 
 html.light .harmoniq-leaflet-map .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.78) !important;
-  color: rgba(63, 63, 70, 0.78) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(99, 99, 107, 0.82) !important;
 }
 
 .harmoniq-leaflet-map .leaflet-control-attribution a {
@@ -491,6 +491,5 @@ html.dark .leaflet-tile-pane {
 }
 
 html.dark .leaflet-container {
-  background: #0A090F !important;
+  background: #0B0B0D !important;
 }
-

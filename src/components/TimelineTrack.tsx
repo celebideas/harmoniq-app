@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Check,
   Send,
+  MessageCircle,
 } from 'lucide-react';
 import { triggerHaptic } from '../services/themeService';
 import { SAMPLE_SONGS } from '../data/mockData';
@@ -54,7 +55,6 @@ export const TimelineTrack: React.FC<Props> = ({
   const [whisperUserId, setWhisperUserId] = useState<string | null>(null);
   const [whisperedNotice, setWhisperedNotice] = useState<{ userId: string; songTitle: string } | null>(null);
 
-  // Close active balloon/preview when clicking anywhere outside
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -82,21 +82,18 @@ export const TimelineTrack: React.FC<Props> = ({
     return Math.min(100, Math.max(0, (sec / duration) * 100));
   };
 
-  // Filter based on privacy mode
   const visibleUsers = useMemo(() => {
     return privacyMode === 'friends_only'
       ? users.filter((u) => u.friendStatus === 'friends')
       : users;
   }, [privacyMode, users]);
 
-  // Curate 3 candidate tracks for "Sıradaki Şarkıyı Öner (Whisper Next Track)"
   const whisperSuggestions = useMemo(() => {
     const pool = candidateSongs && candidateSongs.length > 0 ? candidateSongs : SAMPLE_SONGS;
     return pool.filter((s) => s.id !== song.id && s.title !== song.title).slice(0, 3);
   }, [candidateSongs, song]);
 
-  // Proximity Clustering Algorithm:
-  // Group listeners that are within 12 seconds of each other into +3, +10 clusters
+  // Proximity Clustering Algorithm (12s window)
   const thresholdSeconds = 12;
 
   const clusters: TimelineCluster[] = useMemo(() => {
@@ -121,6 +118,18 @@ export const TimelineTrack: React.FC<Props> = ({
     return result;
   }, [visibleUsers]);
 
+  // Signature "Live Pulse Echo": detect cluster or listener within ±3 seconds of mySecond
+  const coincidingCluster = useMemo(() => {
+    if (privacyMode === 'private') return null;
+    return (
+      clusters.find(
+        (c) =>
+          Math.abs(mySecond - c.centerSecond) <= 3 ||
+          c.users.some((u) => Math.abs(mySecond - u.currentSecond) <= 3)
+      ) || null
+    );
+  }, [clusters, mySecond, privacyMode]);
+
   const activeCluster = useMemo(() => {
     if (!activeClusterId) return null;
     return clusters.find((c) => c.id === activeClusterId) || null;
@@ -138,9 +147,7 @@ export const TimelineTrack: React.FC<Props> = ({
     if (onSeekSecond) {
       onSeekSecond(user.currentSecond);
     }
-    onShowToast?.(
-      `🔗 ${user.name} ile ${formatTime(user.currentSecond)} saniyesine kilitlendin!`
-    );
+    onShowToast?.(`${user.name} ile ${formatTime(user.currentSecond)} saniyesine kilitlendin`);
   };
 
   const handleBreakSync = () => {
@@ -153,11 +160,14 @@ export const TimelineTrack: React.FC<Props> = ({
     triggerHaptic(20);
     onWhisperTrack?.(user, track, 'Bu şarkı bittiğinde şuna geçmelisin');
     setWhisperedNotice({ userId: user.id, songTitle: track.title });
-    onShowToast?.(`🎧 ${user.name} kullanıcısına "${track.title}" fısıldandı!`);
+    onShowToast?.(`${user.name} kullanıcısına "${track.title}" önerildi`);
     setTimeout(() => {
       setWhisperedNotice(null);
     }, 3500);
   };
+
+  const echoLeadUser = coincidingCluster?.users[0] || null;
+  const echoExtraCount = coincidingCluster ? Math.max(0, coincidingCluster.users.length - 1) : 0;
 
   return (
     <div
@@ -166,16 +176,16 @@ export const TimelineTrack: React.FC<Props> = ({
         setActiveClusterId(null);
         setWhisperUserId(null);
       }}
-      className="surface-card rounded-2xl p-4 sm:p-5 space-y-3.5 select-none relative overflow-hidden"
+      className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] shadow-[0_2px_12px_rgba(20,20,22,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3 select-none relative overflow-hidden"
     >
-      {/* 1. Minimal Header: Şarkı Zaman Rayı + X kişi rayda + 00:00 / 04:12 */}
+      {/* 1. Minimal Studio Header */}
       <div className="flex items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="font-heading font-bold text-zinc-900 dark:text-white text-xs sm:text-sm truncate">
+          <span className="font-semibold text-[#141416] dark:text-[#F5F5F7] text-xs sm:text-sm truncate tracking-tight">
             Şarkı Zaman Rayı
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#16A34A]/10 dark:bg-[#22C55E]/10 border border-[#16A34A]/20 dark:border-[#22C55E]/20 text-[11px] font-mono tabular-nums font-medium text-[#16A34A] dark:text-[#22C55E] shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
             <span>
               {privacyMode === 'private'
                 ? 'Hayalet Mod'
@@ -184,42 +194,40 @@ export const TimelineTrack: React.FC<Props> = ({
           </span>
         </div>
 
-        <div className="text-[11px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400 shrink-0">
-          <span className="text-zinc-900 dark:text-white font-semibold">
+        <div className="text-[11px] font-mono font-medium tabular-nums text-[#63636B] dark:text-[#8E8E98] shrink-0">
+          <span className="text-[#141416] dark:text-[#F5F5F7] font-semibold">
             {formatTime(mySecond)}
           </span>
-          <span className="mx-1 opacity-60">/</span>
+          <span className="mx-1 opacity-50">/</span>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
 
-      {/* Sync Status Banner (Active Lock State) */}
+      {/* Active Sync Lock Banner */}
       {syncedUser && (
-        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-600 dark:text-emerald-300 animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#16A34A]/10 dark:bg-[#22C55E]/10 border border-[#16A34A]/25 dark:border-[#22C55E]/25 text-xs text-[#16A34A] dark:text-[#22C55E]">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
             <span className="font-semibold truncate">
               {syncedUser.name} ile senkronize dinleniyor
             </span>
-            <span className="text-[10px] font-mono opacity-80">
-              [{formatTime(syncedUser.currentSecond)}]
+            <span className="text-[10px] font-mono tabular-nums opacity-80">
+              {formatTime(syncedUser.currentSecond)}
             </span>
           </div>
           <button
             type="button"
             onClick={handleBreakSync}
-            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 transition cursor-pointer shrink-0 border border-emerald-500/30"
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-[#16A34A]/15 dark:bg-[#22C55E]/15 hover:bg-[#16A34A]/25 transition cursor-pointer shrink-0 flex items-center gap-1"
           >
-            Ayır ✕
+            <span>Ayır</span>
+            <X className="w-3 h-3" strokeWidth={1.75} />
           </button>
         </div>
       )}
 
-      {/* 2. Sleek Minimal Timeline Rail (00:00 - Duration) */}
-      <div className="relative pt-10 pb-5 px-2">
+      {/* 2. Ultra-Clean Acoustic Timeline Rail */}
+      <div className="relative pt-9 pb-4 px-2">
         <div
           onClick={(e) => {
             if (!onSeekSecond) return;
@@ -231,32 +239,33 @@ export const TimelineTrack: React.FC<Props> = ({
             setActiveClusterId(null);
             setWhisperUserId(null);
           }}
-          className="relative h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/15 cursor-pointer transition group/rail"
+          className="relative h-1 w-full rounded-full bg-[#E8E6E1] dark:bg-white/15 cursor-pointer transition group/rail"
           title="Şarkıda istediğin saniyeye atlamak için dokun"
         >
-          {/* Played Track Progress */}
+          {/* Monochrome Played Track Progress */}
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-[width] duration-200"
+            className="h-full bg-[#141416] dark:bg-white rounded-full transition-[width] duration-200"
             style={{ width: `${getPercent(mySecond)}%` }}
           />
 
           {/* Senkron Bağ Çizgisi */}
           {syncedUser && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 h-2 pointer-events-none z-15 flex items-center transition-all duration-300"
+              className="absolute top-1/2 -translate-y-1/2 h-1.5 pointer-events-none z-15 flex items-center transition-all duration-300"
               style={{
                 left: `${Math.min(getPercent(mySecond), getPercent(syncedUser.currentSecond))}%`,
                 width: `${Math.max(2, Math.abs(getPercent(mySecond) - getPercent(syncedUser.currentSecond)))}%`,
               }}
             >
-              <div className="w-full h-1 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse" />
+              <div className="w-full h-1 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
             </div>
           )}
 
-          {/* CLUSTERED LISTENER AVATAR PINS (12s Proximity Grouping -> +3, +10) */}
+          {/* Clustered Listener Pins */}
           {clusters.map((cluster) => {
             const leftPct = getPercent(cluster.centerSecond);
             const isClusterActive = activeClusterId === cluster.id;
+            const isCoinciding = coincidingCluster?.id === cluster.id;
             const isMultiUser = cluster.users.length > 1;
             const primaryUser = cluster.users[0];
             const hasSynced = syncedUser && cluster.users.some((u) => u.id === syncedUser.id);
@@ -272,41 +281,48 @@ export const TimelineTrack: React.FC<Props> = ({
                 style={{ left: `${leftPct}%` }}
                 title={`${cluster.users.map((u) => u.name).join(', ')} (${formatTime(cluster.centerSecond)})`}
               >
+                {/* Signature Live Pulse Echo — subtle 1s acoustic ring when within ±3s */}
+                {isCoinciding && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -inset-1 rounded-full border border-[#16A34A] dark:border-[#22C55E] animate-pulse-echo"
+                  />
+                )}
+
                 {isMultiUser ? (
                   <div className="relative group/pin">
                     <div
-                      className={`absolute -top-1 -left-1 w-7 h-7 rounded-full bg-gradient-to-tr ${
-                        cluster.users[1]?.avatarGradient || 'from-purple-700 to-pink-700'
-                      } opacity-60 border-2 border-zinc-950`}
-                    />
-                    <div
-                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} shadow-lg border-2 ${
-                        hasSynced
-                          ? 'border-emerald-400 ring-2 ring-emerald-400/70'
-                          : hasRealUser
-                          ? 'border-emerald-400 ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]'
+                      className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} border-2 ${
+                        isCoinciding || hasSynced || hasRealUser
+                          ? 'border-[#16A34A] dark:border-[#22C55E] ring-2 ring-[#22C55E]/30'
                           : isClusterActive
-                          ? 'border-purple-500 ring-2 ring-purple-500/40'
-                          : 'border-zinc-950'
-                      } flex items-center justify-center text-force-white text-[10px] font-bold relative z-10`}
+                          ? 'border-[#141416] dark:border-white'
+                          : 'border-white dark:border-[#141418]'
+                      } flex items-center justify-center text-force-white text-[10px] font-bold relative z-10 shadow-sm`}
                     >
-                      {primaryUser.avatarSeed}
-                      <span className="absolute -top-2 -right-2.5 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-force-white font-black text-[9px] shadow-md border border-zinc-950 tabular-nums">
+                      {primaryUser.avatarUrl ? (
+                        <img
+                          src={primaryUser.avatarUrl}
+                          alt={primaryUser.name}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        primaryUser.avatarSeed
+                      )}
+                      <span className="absolute -top-2 -right-2.5 px-1.5 py-0.2 rounded-full bg-[#141416] dark:bg-white text-white dark:text-[#0B0B0D] font-mono font-bold text-[9px] border border-white dark:border-[#141418] tabular-nums shadow-xs">
                         +{cluster.users.length - 1}
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div
-                    className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} shadow-md border-2 ${
-                      hasSynced
-                        ? 'border-emerald-400 ring-2 ring-emerald-400/70'
-                        : hasRealUser
-                        ? 'border-emerald-400 ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]'
+                    className={`w-7 h-7 rounded-full bg-gradient-to-tr ${primaryUser.avatarGradient} border-2 ${
+                      isCoinciding || hasSynced || hasRealUser
+                        ? 'border-[#16A34A] dark:border-[#22C55E] ring-2 ring-[#22C55E]/30'
                         : isClusterActive
-                        ? 'border-purple-500 ring-2 ring-purple-500/40'
-                        : 'border-zinc-950'
-                    } flex items-center justify-center text-force-white text-[10px] font-bold overflow-hidden`}
+                        ? 'border-[#141416] dark:border-white'
+                        : 'border-white dark:border-[#141418]'
+                    } flex items-center justify-center text-force-white text-[10px] font-bold overflow-hidden shadow-sm`}
                   >
                     {primaryUser.avatarUrl ? (
                       <img
@@ -323,13 +339,13 @@ export const TimelineTrack: React.FC<Props> = ({
             );
           })}
 
-          {/* KULLANICININ KENDİ CANLI İBRESİ ("Sen") */}
+          {/* KULLANICININ KENDİ CANLI İBRESİ ("Sen") — Single Live Accent (#22C55E) */}
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-30 pointer-events-none"
             style={{ left: `${getPercent(mySecond)}%` }}
           >
             <div className="relative flex flex-col items-center">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-force-white text-[9px] font-extrabold shadow-md ring-2 ring-white dark:ring-[#12111A] flex items-center justify-center relative z-10">
+              <div className="w-7 h-7 rounded-full bg-[#16A34A] dark:bg-[#22C55E] text-white dark:text-[#0B0B0D] text-[9px] font-extrabold shadow-[0_0_12px_rgba(34,197,94,0.45)] ring-2 ring-white dark:ring-[#141418] flex items-center justify-center relative z-10">
                 Sen
               </div>
             </div>
@@ -337,55 +353,80 @@ export const TimelineTrack: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 3. SEÇİLİ KİŞİ / KÜME KARTI (2-Satırlı Ferah Önizleme Balonu - Kenara Taşmaz) */}
+      {/* Signature Live Pulse Echo — Poetic single-line notice directly beneath the rail */}
+      {coincidingCluster && echoLeadUser && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerHaptic(12);
+            setActiveClusterId(coincidingCluster.id);
+          }}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#16A34A]/[0.07] dark:bg-[#22C55E]/[0.08] hover:bg-[#16A34A]/[0.12] dark:hover:bg-[#22C55E]/[0.14] border border-[#16A34A]/20 dark:border-[#22C55E]/20 text-left transition cursor-pointer"
+        >
+          <span className="flex items-center gap-2 text-xs text-[#141416] dark:text-[#F5F5F7] min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
+            <span className="truncate font-medium">
+              {echoExtraCount > 0
+                ? `Şu an ${echoLeadUser.name.split(' ')[0]} ve ${echoExtraCount} kişiyle aynı saniyedesin`
+                : `Şu an ${echoLeadUser.name.split(' ')[0]} ile aynı saniyedesin`}
+            </span>
+          </span>
+          <span className="text-[11px] font-mono tabular-nums text-[#16A34A] dark:text-[#22C55E] shrink-0">
+            {formatTime(mySecond)}
+          </span>
+        </button>
+      )}
+
+      {/* 3. Selected Listener / Cluster Preview Card */}
       {activeCluster && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative surface-inner rounded-2xl p-3.5 sm:p-4 space-y-3 border border-purple-500/40 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 max-w-full"
+          className="relative rounded-2xl p-3.5 sm:p-4 space-y-3 bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.08] max-w-full"
         >
-          {/* Dynamic Clamped Pointer Arrow pointing to the clicked pin */}
           <div
-            className="absolute -top-1.5 w-3 h-3 bg-white dark:bg-[#14121E] border-t border-l border-purple-500/50 rotate-45 -translate-x-1/2 pointer-events-none transition-all duration-200 shadow-sm"
+            className="absolute -top-1.5 w-3 h-3 bg-[#F1EFEA] dark:bg-[#1C1C22] border-t border-l border-[#E8E6E1] dark:border-white/[0.08] rotate-45 -translate-x-1/2 pointer-events-none transition-all duration-200"
             style={{ left: `${Math.min(92, Math.max(8, getPercent(activeCluster.centerSecond)))}%` }}
           />
 
           {activeCluster.users.length > 1 && (
-            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06] text-xs">
-              <div className="flex items-center gap-1.5 font-bold text-zinc-900 dark:text-white">
-                <Users className="w-3.5 h-3.5 text-purple-500" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#E8E6E1] dark:border-white/[0.08] text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-[#141416] dark:text-[#F5F5F7]">
+                <Users className="w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />
                 <span>
-                  {formatTime(activeCluster.centerSecond)} Saniyesinde {activeCluster.users.length} Dinleyici
+                  <span className="font-mono tabular-nums">{formatTime(activeCluster.centerSecond)}</span> saniyesinde{' '}
+                  {activeCluster.users.length} dinleyici
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveClusterId(null)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg cursor-pointer"
+                className="text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] p-1 rounded-lg cursor-pointer"
+                aria-label="Kapat"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" strokeWidth={1.75} />
               </button>
             </div>
           )}
 
-          <div className="space-y-3 max-h-80 overflow-y-auto no-scrollbar">
+          <div className="space-y-2.5 max-h-80 overflow-y-auto no-scrollbar">
             {activeCluster.users.map((user) => {
               const userTimeFormatted = formatTime(user.currentSecond);
               const quoteNote =
-                user.statusBubble ||
-                `${userTimeFormatted} solosunda tüyler diken diken 🎸`;
+                user.statusBubble || `${userTimeFormatted} bölümünde dinliyor`;
 
               return (
                 <div
                   key={user.id}
-                  className="p-3 rounded-xl bg-white/80 dark:bg-[#14121E]/90 border border-zinc-200/80 dark:border-white/[0.07] space-y-2.5 shadow-sm"
+                  className="p-3 rounded-xl bg-white dark:bg-[#141418] border border-[#E8E6E1] dark:border-white/[0.08] space-y-2.5"
                 >
-                  {/* ÜST SATIR: Sol tarafta avatar, yanında tam isim ve yaş, yanında 🛡️ 99 ve ⚡ %94 Uyum rozetleri; sağda yeşil mesafe etiketi */}
+                  {/* Top Row */}
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div
                       onClick={() => onSelectUser(user)}
                       className="flex items-center gap-2.5 min-w-0 cursor-pointer group/u"
                     >
-                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 ring-1 ring-white/15 relative">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#E8E6E1] dark:border-white/[0.08]">
                         {user.avatarUrl ? (
                           <img
                             src={user.avatarUrl}
@@ -402,66 +443,67 @@ export const TimelineTrack: React.FC<Props> = ({
                       </div>
 
                       <div className="flex items-center flex-wrap gap-1.5 min-w-0">
-                        <span className="text-sm font-bold text-zinc-900 dark:text-white group-hover/u:text-purple-500 transition">
+                        <span className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] group-hover/u:opacity-75 transition">
                           {user.name}, {user.age}
                         </span>
 
                         {user.isRealUser && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 text-[10px] font-black flex items-center gap-1 shrink-0 animate-pulse">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            <span>🟢 GERÇEK CANLI</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[10px] font-mono font-semibold flex items-center gap-1 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+                            <span>Canlı</span>
                           </span>
                         )}
 
-                        <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-0.5 shrink-0">
-                          <Shield className="w-2.5 h-2.5" />
-                          <span>🛡️ {user.trustScore || 99}</span>
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[10px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums">
+                          <Shield className="w-2.5 h-2.5" strokeWidth={1.75} />
+                          <span>{user.trustScore || 99}</span>
                         </span>
 
-                        <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-0.5 shrink-0">
-                          <Zap className="w-2.5 h-2.5 fill-current" />
-                          <span>⚡ %{user.compatibilityScore || 94} Uyum</span>
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] text-[10px] font-mono font-semibold flex items-center gap-0.5 shrink-0 tabular-nums">
+                          <Zap className="w-2.5 h-2.5" strokeWidth={1.75} />
+                          <span>%{user.compatibilityScore || 94}</span>
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] text-[11px] font-mono tabular-nums font-medium">
                         {user.distanceKm} km
                       </span>
                       {activeCluster.users.length === 1 && (
                         <button
                           type="button"
                           onClick={() => setActiveClusterId(null)}
-                          className="p-1 text-zinc-400 hover:text-white rounded-lg cursor-pointer"
+                          className="p-1 text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] rounded-lg cursor-pointer"
+                          aria-label="Kapat"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* ORTA SATIR: Konum (📍 Selçuk / Moda) ve kişinin o saniyede bıraktığı tırnak içi not */}
-                  <div className="space-y-1 text-xs">
-                    <div className="flex items-center gap-1.5 text-[#646073] dark:text-[#9E9AA8] font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>📍 {user.city}</span>
+                  {/* Location & Quote */}
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-[#63636B] dark:text-[#8E8E98] font-medium">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      <span>{user.city}</span>
                     </div>
-                    <p className="text-xs italic text-zinc-700 dark:text-zinc-200 bg-black/5 dark:bg-white/[0.03] px-2.5 py-1.5 rounded-lg border border-black/5 dark:border-white/[0.05]">
+                    <p className="text-xs italic text-[#141416] dark:text-[#F5F5F7] bg-[#F1EFEA]/70 dark:bg-[#1C1C22] px-2.5 py-1.5 rounded-lg border border-[#E8E6E1] dark:border-white/[0.06]">
                       "{quoteNote}"
                     </p>
                   </div>
 
-                  {/* ALT SATIR (2 Aksiyon Butonu): 🔗 01:42 Saniyesine Katıl & 👋 Frekans Gönder */}
+                  {/* Actions */}
                   <div className="grid grid-cols-2 gap-2 pt-0.5">
                     <button
                       type="button"
                       onClick={() => handleSyncWithUser(user)}
-                      className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 text-force-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer active:scale-95"
+                      className="studio-btn-primary py-2 px-2.5 rounded-xl bg-[#141416] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
                     >
-                      <Link2 className="w-3.5 h-3.5 shrink-0 text-force-white" />
-                      <span className="truncate text-force-white">
-                        🔗 {userTimeFormatted} Saniyesine Katıl
+                      <Link2 className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      <span className="truncate font-mono tabular-nums">
+                        {userTimeFormatted} Anına Katıl
                       </span>
                     </button>
 
@@ -476,40 +518,42 @@ export const TimelineTrack: React.FC<Props> = ({
                           onSelectUser(user);
                         }
                       }}
-                      className="py-2 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
+                      className="py-2 px-2.5 rounded-xl bg-[#F1EFEA] hover:bg-[#E8E6E1] dark:bg-[#1C1C22] dark:hover:bg-white/10 text-[#141416] dark:text-[#F5F5F7] border border-[#E8E6E1] dark:border-white/[0.08] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
                     >
-                      <span>👋 Frekans Gönder</span>
+                      <MessageCircle className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      <span>Mesaj Gönder</span>
                     </button>
                   </div>
 
-                  {/* Sıradaki Şarkıyı Öner (Whisper Next Track) */}
+                  {/* Whisper Next Track */}
                   {onWhisperTrack && (
-                    <div className="pt-1">
+                    <div className="pt-0.5">
                       <button
                         type="button"
                         onClick={() =>
                           setWhisperUserId(whisperUserId === user.id ? null : user.id)
                         }
-                        className="w-full py-1.5 px-2.5 rounded-xl text-[11px] font-semibold flex items-center justify-between gap-1.5 bg-black/5 dark:bg-white/[0.04] text-[#646073] dark:text-[#9E9AA8] hover:text-zinc-900 dark:hover:text-white transition cursor-pointer"
+                        className="w-full py-1.5 px-2.5 rounded-xl text-[11px] font-medium flex items-center justify-between gap-1.5 bg-[#F1EFEA]/70 dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] hover:text-[#141416] dark:hover:text-[#F5F5F7] transition cursor-pointer"
                       >
                         <div className="flex items-center gap-1.5">
-                          <Headphones className="w-3.5 h-3.5 text-purple-500" />
-                          <span>🎧 Sıradaki Şarkıyı Fısılda</span>
+                          <Headphones className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          <span>Sıradaki Şarkıyı Öner</span>
                         </div>
                         <ChevronDown
                           className={`w-3.5 h-3.5 transition-transform ${
                             whisperUserId === user.id ? 'rotate-180' : ''
                           }`}
+                          strokeWidth={1.75}
                         />
                       </button>
 
                       {whisperUserId === user.id && (
-                        <div className="mt-1.5 p-2 rounded-xl bg-black/20 border border-white/[0.06] space-y-1.5">
+                        <div className="mt-1.5 p-2 rounded-xl bg-[#FAF9F6] dark:bg-[#0B0B0D] border border-[#E8E6E1] dark:border-white/[0.08] space-y-1.5">
                           {whisperedNotice?.userId === user.id && (
-                            <div className="p-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold flex items-center gap-1.5">
-                              <Check className="w-3.5 h-3.5" />
+                            <div className="p-1.5 rounded-lg bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-[11px] font-semibold flex items-center gap-1.5">
+                              <Check className="w-3.5 h-3.5" strokeWidth={1.75} />
                               <span className="truncate">
-                                "{whisperedNotice.songTitle}" fısıldandı!
+                                "{whisperedNotice.songTitle}" önerildi
                               </span>
                             </div>
                           )}
@@ -517,19 +561,19 @@ export const TimelineTrack: React.FC<Props> = ({
                             <div
                               key={cand.id}
                               onClick={() => handleWhisperCandidate(user, cand)}
-                              className="p-1.5 rounded-lg hover:bg-white/[0.06] flex items-center justify-between gap-2 cursor-pointer transition"
+                              className="p-1.5 rounded-lg hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] flex items-center justify-between gap-2 cursor-pointer transition"
                             >
                               <div className="min-w-0">
-                                <div className="text-[11px] font-semibold text-zinc-900 dark:text-white truncate">
+                                <div className="text-[11px] font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
                                   {cand.title}
                                 </div>
-                                <div className="text-[10px] text-[#646073] dark:text-[#9E9AA8] truncate">
+                                <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98] truncate">
                                   {cand.artist}
                                 </div>
                               </div>
-                              <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-400 font-bold text-[10px] shrink-0 flex items-center gap-1">
-                                <span>Fısılda</span>
-                                <Send className="w-2.5 h-2.5" />
+                              <span className="px-2 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#141416] dark:text-[#F5F5F7] font-semibold text-[10px] shrink-0 flex items-center gap-1">
+                                <span>Öner</span>
+                                <Send className="w-2.5 h-2.5" strokeWidth={1.75} />
                               </span>
                             </div>
                           ))}
@@ -543,7 +587,6 @@ export const TimelineTrack: React.FC<Props> = ({
           </div>
         </div>
       )}
-
     </div>
   );
 };

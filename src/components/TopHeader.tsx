@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Disc3,
   Globe,
   Users,
   EyeOff,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Song, PrivacyMode, UserProfile } from '../types';
 import { NavTab } from './BottomNav';
+import { ListenHubLogo } from './ListenHubLogo';
 import { triggerHaptic } from '../services/themeService';
 
 interface Props {
@@ -30,7 +30,6 @@ interface Props {
 }
 
 export const TopHeader: React.FC<Props> = ({
-  isPlaying = false,
   activeTab,
   onSelectTab,
   privacyMode,
@@ -62,24 +61,24 @@ export const TopHeader: React.FC<Props> = ({
   }[] = [
     {
       id: 'public',
-      label: '🌍 Herkese Açık',
-      shortBadge: `Canlı: ${liveListenersCount} Frekans`,
+      label: 'Herkese Açık',
+      shortBadge: `Canlı · ${liveListenersCount}`,
       desc: 'Şarkı odalarında ve zaman rayında herkesle etkileşimdesin.',
-      icon: <Globe className="w-3.5 h-3.5 text-emerald-500" />,
+      icon: <Globe className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E]" strokeWidth={1.75} />,
     },
     {
       id: 'friends_only',
-      label: '👥 Arkadaşlar',
-      shortBadge: `Arkadaşlar (${liveListenersCount})`,
+      label: 'Arkadaşlar',
+      shortBadge: `Arkadaşlar · ${liveListenersCount}`,
       desc: 'Seni yalnızca onaylı arkadaşların canlı odada görebilir.',
-      icon: <Users className="w-3.5 h-3.5 text-emerald-500" />,
+      icon: <Users className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E]" strokeWidth={1.75} />,
     },
     {
       id: 'private',
-      label: '👻 Hayalet Mod',
-      shortBadge: '👻 Hayalet Mod',
+      label: 'Hayalet Mod',
+      shortBadge: 'Hayalet Mod',
       desc: 'Tamamen görünmezsin. Kimse hangi saniyede olduğunu göremez.',
-      icon: <EyeOff className="w-3.5 h-3.5 text-zinc-400" />,
+      icon: <EyeOff className="w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />,
     },
   ];
 
@@ -90,35 +89,36 @@ export const TopHeader: React.FC<Props> = ({
 
   return (
     <header
-      className={`lg:hidden sticky top-0 z-40 border-b backdrop-blur-2xl select-none transition-colors duration-200 ${
+      className={`lg:hidden sticky top-0 z-40 border-b backdrop-blur-xl select-none transition-colors duration-200 ${
         isLight
-          ? 'bg-[#F5F4F8]/90 border-[#E4E2EC] text-[#12101B]'
-          : 'bg-[#0A090F]/85 border-white/[0.07] text-zinc-50'
+          ? 'bg-[#FAF9F6]/90 border-[#E8E6E1] text-[#141416]'
+          : 'bg-[#0B0B0D]/88 border-white/[0.08] text-[#F5F5F7]'
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-        {/* LEFT: ListenHub Brand Icon & Title */}
-        <div
+        {/* LEFT: Minimalist ListenHub SVG Emblem & Title */}
+        <button
+          type="button"
           onClick={() => {
             triggerHaptic(10);
             onSelectTab('lounge');
           }}
-          className="flex items-center gap-2.5 cursor-pointer group shrink-0"
+          className="flex items-center gap-2.5 cursor-pointer group shrink-0 text-left"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-[0_4px_14px_rgba(147,51,234,0.35)]">
-            <Disc3
-              className={`w-4 h-4 text-force-white ${
-                isPlaying ? 'animate-spin' : ''
-              }`}
-              style={{ animationDuration: '5s' }}
-            />
+          <div className="w-8 h-8 rounded-xl bg-[#141416] text-white dark:bg-white dark:text-[#0B0B0D] flex items-center justify-center shrink-0 transition-transform group-active:scale-95">
+            <ListenHubLogo className="w-5 h-5" />
           </div>
-          <span className="text-sm sm:text-base font-heading font-bold tracking-tight">
-            ListenHub
-          </span>
-        </div>
+          <div className="leading-none">
+            <span className="text-sm font-bold tracking-tight block">
+              ListenHub
+            </span>
+            <span className="text-[10px] text-[#63636B] dark:text-[#8E8E98] block mt-0.5">
+              Canlı Müzik Ağı
+            </span>
+          </div>
+        </button>
 
-        {/* CENTER: "Canlı: X Frekans" Capsule (Toggles Privacy Mode Selector) */}
+        {/* CENTER: Live Frequency / Privacy Mode Capsule */}
         <div ref={dropdownRef} className="relative">
           <button
             type="button"
@@ -126,55 +126,36 @@ export const TopHeader: React.FC<Props> = ({
               triggerHaptic(15);
               setShowPrivacyDropdown((prev) => !prev);
             }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition cursor-pointer active:scale-95 border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 transition cursor-pointer active:scale-95 border ${
               privacyMode === 'private'
-                ? isLight
-                  ? 'bg-[#ECEAF2] border-[#DFDCE8] text-[#646073]'
-                  : 'bg-[#1E1B2E]/80 border-white/10 text-zinc-300'
-                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-[0_0_16px_rgba(16,185,129,0.12)]'
+                ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#E8E6E1] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98]'
+                : 'bg-white dark:bg-[#141418] border-[#E8E6E1] dark:border-white/[0.08] text-[#141416] dark:text-[#F5F5F7]'
             }`}
-            title="Gizlilik Modunu Değiştir (Herkese Açık | Arkadaşlar | Hayalet Mod)"
+            title="Gizlilik Modunu Değiştir"
           >
             {privacyMode === 'private' ? (
-              <EyeOff className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <EyeOff className="w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98] shrink-0" strokeWidth={1.75} />
             ) : (
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
+              <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
             )}
-            <span className="truncate max-w-[140px] sm:max-w-[180px]">
+            <span className="font-mono tabular-nums truncate max-w-[130px] sm:max-w-[170px]">
               {currentPrivacy.shortBadge}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 opacity-70 transition-transform ${
+              className={`w-3.5 h-3.5 text-[#63636B] dark:text-[#8E8E98] transition-transform ${
                 showPrivacyDropdown ? 'rotate-180' : ''
               }`}
+              strokeWidth={1.75}
             />
           </button>
 
-          {/* Privacy Mode Selector Popover */}
           {showPrivacyDropdown && (
-            <div
-              className={`absolute left-1/2 -translate-x-1/2 top-full mt-2 w-68 rounded-2xl border p-2 shadow-2xl z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150 ${
-                isLight
-                  ? 'bg-white/95 border-[#E4E2EC] text-[#12101B]'
-                  : 'bg-[#14121E]/95 border-white/10 text-zinc-50'
-              }`}
-            >
-              <div
-                className={`px-2.5 py-1.5 border-b mb-1 ${
-                  isLight ? 'border-[#E4E2EC]' : 'border-white/[0.06]'
-                }`}
-              >
-                <div className="text-[11px] font-bold">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-68 rounded-2xl border border-[#E8E6E1] dark:border-white/[0.08] bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-2.5 py-1.5 border-b border-[#E8E6E1] dark:border-white/[0.08] mb-1">
+                <div className="text-[11px] font-semibold">
                   Frekans Görünürlüğü
                 </div>
-                <div
-                  className={`text-[10px] ${
-                    isLight ? 'text-[#5B576A]' : 'text-[#9E9AA8]'
-                  }`}
-                >
+                <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98]">
                   Seni canlı odalarda kimlerin görebileceğini seç
                 </div>
               </div>
@@ -193,29 +174,23 @@ export const TopHeader: React.FC<Props> = ({
                       }}
                       className={`w-full p-2.5 rounded-xl text-left flex items-start justify-between gap-2.5 transition cursor-pointer ${
                         isSelected
-                          ? 'bg-emerald-500/15 border border-emerald-500/30'
-                          : isLight
-                          ? 'hover:bg-zinc-100 border border-transparent'
-                          : 'hover:bg-white/[0.05] border border-transparent'
+                          ? 'bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E8E6E1] dark:border-white/[0.12]'
+                          : 'hover:bg-[#F1EFEA]/70 dark:hover:bg-white/[0.04] border border-transparent'
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <div className="mt-0.5 shrink-0">{opt.icon}</div>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold leading-none">
+                          <div className="text-xs font-semibold leading-none">
                             {opt.label}
                           </div>
-                          <div
-                            className={`text-[10px] mt-1 leading-snug ${
-                              isLight ? 'text-[#5B576A]' : 'text-[#9E9AA8]'
-                            }`}
-                          >
+                          <div className="text-[10px] mt-1 leading-snug text-[#63636B] dark:text-[#8E8E98]">
                             {opt.desc}
                           </div>
                         </div>
                       </div>
                       {isSelected && (
-                        <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <Check className="w-4 h-4 text-[#16A34A] dark:text-[#22C55E] shrink-0 mt-0.5" strokeWidth={1.75} />
                       )}
                     </button>
                   );
@@ -225,28 +200,20 @@ export const TopHeader: React.FC<Props> = ({
           )}
         </div>
 
-        {/* RIGHT: ONLY Theme Switcher (☀️/🌙) & Current User Profile Avatar */}
+        {/* RIGHT: Theme Switcher & User Avatar */}
         <div className="flex items-center gap-2 shrink-0">
           {onToggleTheme && (
             <button
               type="button"
               onClick={onToggleTheme}
-              className={`w-9 h-9 flex items-center justify-center rounded-xl border transition cursor-pointer active:scale-95 ${
-                isLight
-                  ? 'bg-[#ECEAF2]/90 border-[#DFDCE8] text-[#1E1B2E] hover:bg-[#E4E2EC]'
-                  : 'bg-[#1E1B2E]/75 border-white/[0.07] text-zinc-200 hover:bg-white/[0.08]'
-              }`}
-              title={
-                themeMode === 'dark'
-                  ? 'Warm Vinyl Studio (Aydınlık Tema) Moduna Geç ☀️'
-                  : 'Velvet Pitch (Karanlık Tema) Moduna Geç 🌙'
-              }
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E8E6E1] dark:border-white/[0.08] bg-white dark:bg-[#141418] text-[#141416] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] transition cursor-pointer active:scale-95"
+              title={themeMode === 'dark' ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
               aria-label="Tema değiştir"
             >
               {themeMode === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <Sun className="w-4 h-4" strokeWidth={1.75} />
               ) : (
-                <Moon className="w-4 h-4 text-purple-600" />
+                <Moon className="w-4 h-4" strokeWidth={1.75} />
               )}
             </button>
           )}
@@ -258,14 +225,12 @@ export const TopHeader: React.FC<Props> = ({
                 triggerHaptic(10);
                 onSelectTab('profile');
               }}
-              className={`flex items-center justify-center cursor-pointer p-0.5 rounded-full ring-2 transition active:scale-95 ${
+              className={`flex items-center justify-center cursor-pointer p-0.5 rounded-full ring-1 transition active:scale-95 ${
                 activeTab === 'profile'
-                  ? 'ring-purple-500 shadow-[0_0_12px_rgba(147,51,234,0.4)]'
-                  : isLight
-                  ? 'ring-[#DFDCE8] hover:ring-purple-400'
-                  : 'ring-white/15 hover:ring-purple-400'
+                  ? 'ring-[#141416] dark:ring-white'
+                  : 'ring-[#E8E6E1] dark:ring-white/15 hover:ring-[#141416]/50 dark:hover:ring-white/40'
               }`}
-              title="Profilim ve Kütüphanem"
+              title="Ben"
             >
               <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
                 {userProfile.avatarUrl ? (
@@ -275,7 +240,7 @@ export const TopHeader: React.FC<Props> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="avatar-circle w-full h-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white text-[11px] font-bold">
+                  <div className="avatar-circle w-full h-full bg-[#1C1C22] dark:bg-[#27272A] flex items-center justify-center text-white text-[11px] font-semibold">
                     {userProfile.avatarSeed}
                   </div>
                 )}
