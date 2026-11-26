@@ -9,6 +9,7 @@ import {
   MapPin,
   Headphones,
   ChevronDown,
+  ChevronRight,
   Check,
   Send,
   MessageCircle,
@@ -29,6 +30,7 @@ interface Props {
   candidateSongs?: Song[];
   onWhisperTrack?: (user: LoungeUser, track: Song, note?: string) => void;
   onShowToast?: (msg: string) => void;
+  onOpenRoomListeners?: () => void;
 }
 
 interface TimelineCluster {
@@ -48,6 +50,7 @@ export const TimelineTrack: React.FC<Props> = ({
   candidateSongs,
   onWhisperTrack,
   onShowToast,
+  onOpenRoomListeners,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
@@ -184,6 +187,35 @@ export const TimelineTrack: React.FC<Props> = ({
           <span className="font-semibold text-[#181512] dark:text-[#FAF7F2] text-xs sm:text-sm truncate tracking-tight">
             Şarkı Zaman Rayı
           </span>
+          <div className="text-[11px] font-mono font-medium tabular-nums text-[#6B635B] dark:text-[#A39A91] shrink-0">
+            <span className="text-[#181512] dark:text-[#FAF7F2] font-semibold">
+              {formatTime(mySecond)}
+            </span>
+            <span className="mx-1 opacity-50">/</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {onOpenRoomListeners ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHaptic(12);
+              onOpenRoomListeners();
+            }}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#D96B2C] dark:text-[#F49A5E] hover:opacity-80 active:scale-[0.97] transition cursor-pointer shrink-0"
+            title="Odadaki tüm dinleyicileri gör"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+            <span className="font-mono tabular-nums">
+              {privacyMode === 'private'
+                ? 'Hayalet Mod · Liste'
+                : `${visibleUsers.length + 1} kişi · Liste`}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
+          </button>
+        ) : (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#16A34A]/10 dark:bg-[#22C55E]/10 border border-[#16A34A]/20 dark:border-[#22C55E]/20 text-[11px] font-mono tabular-nums font-medium text-[#16A34A] dark:text-[#22C55E] shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
             <span>
@@ -192,15 +224,7 @@ export const TimelineTrack: React.FC<Props> = ({
                 : `${visibleUsers.length + 1} kişi rayda`}
             </span>
           </span>
-        </div>
-
-        <div className="text-[11px] font-mono font-medium tabular-nums text-[#6B635B] dark:text-[#A39A91] shrink-0">
-          <span className="text-[#181512] dark:text-[#FAF7F2] font-semibold">
-            {formatTime(mySecond)}
-          </span>
-          <span className="mx-1 opacity-50">/</span>
-          <span>{formatTime(duration)}</span>
-        </div>
+        )}
       </div>
 
       {/* Active Sync Lock Banner */}

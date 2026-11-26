@@ -2,11 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
-  Users,
   Search,
   Loader2,
-  MapPin,
-  Clock,
   SkipBack,
   SkipForward,
   Send,
@@ -19,7 +16,6 @@ import {
 } from 'lucide-react';
 import { Song, LoungeUser, PlatformType, PrivacyMode } from '../types';
 import { TimelineTrack } from './TimelineTrack';
-import { ProximityDensityMap, RadiusSlider, ALL_TURKEY_RADIUS } from './ProximityDensityMap';
 import { ytController } from '../services/youtubePlayerController';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
@@ -149,8 +145,6 @@ export const LiveLoungeTab: React.FC<Props> = ({
   }, [currentSong?.id, vibeNotesBySong, users]);
 
   const [customNoteText, setCustomNoteText] = useState('');
-  const [radiusKm, setRadiusKm] = useState<number>(ALL_TURKEY_RADIUS);
-  const [loungeViewMode, setLoungeViewMode] = useState<'timeline' | 'map'>('timeline');
   const [showKlipMode, setShowKlipMode] = useState(false);
 
   // Mobile Touch Swipe to skip track
@@ -162,14 +156,6 @@ export const LiveLoungeTab: React.FC<Props> = ({
     privacyMode === 'friends_only'
       ? users.filter((u) => u.friendStatus === 'friends')
       : users;
-
-  const distanceFilteredUsers = useMemo(
-    () =>
-      displayUsers.filter((u) =>
-        radiusKm >= ALL_TURKEY_RADIUS ? true : u.distanceKm <= radiusKm
-      ),
-    [displayUsers, radiusKm]
-  );
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -325,28 +311,6 @@ export const LiveLoungeTab: React.FC<Props> = ({
               </button>
             )}
           </div>
-        </section>
-
-        {/* Quiet Proximity Map Preview even before first song */}
-        <section aria-label="Yakındaki Dinleyiciler" className="mt-5 space-y-3">
-          <RadiusSlider
-            radiusKm={radiusKm}
-            onChangeRadiusKm={setRadiusKm}
-            listenerCount={distanceFilteredUsers.length}
-            themeMode={themeMode}
-          />
-          <ProximityDensityMap
-            users={displayUsers}
-            radiusKm={radiusKm}
-            onChangeRadiusKm={setRadiusKm}
-            onSelectUser={onSelectUser}
-            onDirectChat={onDirectChat}
-            onSeekSecond={onSeekSecond}
-            currentSong={null}
-            myCity={userCity}
-            onChangeCity={onUpdateCity}
-            themeMode={themeMode}
-          />
         </section>
       </div>
     );
@@ -612,105 +576,27 @@ export const LiveLoungeTab: React.FC<Props> = ({
             </div>
           </section>
 
-          {/* 2. TIMELINE TRACK & COMPACT VIEW/DISTANCE CONTROLS */}
-          <section aria-label="Şarkı Zaman Rayı ve Mesafe" className="space-y-3">
-            {loungeViewMode === 'timeline' ? (
-              <TimelineTrack
-                song={currentSong}
-                mySecond={mySecond}
-                users={distanceFilteredUsers}
-                privacyMode={privacyMode}
-                onSelectUser={onSelectUser}
-                onDirectChat={onDirectChat}
-                onSeekSecond={onSeekSecond}
-                onToggleFriend={onToggleFriend}
-                onChangePrivacyMode={onChangePrivacyMode}
-                candidateSongs={candidateSongs}
-                onWhisperTrack={onWhisperTrack}
-                onShowToast={onShowToast}
-              />
-            ) : (
-              <ProximityDensityMap
-                users={displayUsers}
-                radiusKm={radiusKm}
-                onChangeRadiusKm={setRadiusKm}
-                onSelectUser={onSelectUser}
-                onDirectChat={onDirectChat}
-                onSeekSecond={onSeekSecond}
-                currentSong={currentSong}
-                myCity={userCity}
-                onChangeCity={onUpdateCity}
-                themeMode={themeMode}
-              />
-            )}
-
-            {/* Quiet Studio Control Strip: Timeline | Harita | Liste + Interactive KM RadiusSlider */}
-            <div className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-3 space-y-2.5">
-              <div className="grid grid-cols-3 gap-1 p-1 bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] rounded-xl text-xs">
-                <button
-                  type="button"
-                  onClick={() => setLoungeViewMode('timeline')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 ${
-                    loungeViewMode === 'timeline'
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
-                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
-                  }`}
-                >
-                  <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate">Zaman Rayı</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setLoungeViewMode('map')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 ${
-                    loungeViewMode === 'map'
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
-                      : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate">Harita</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onOpenRoomListeners}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-1.5 border border-transparent"
-                >
-                  <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate font-mono tabular-nums">
-                    Liste ({distanceFilteredUsers.length + 1})
-                  </span>
-                </button>
-              </div>
-
-              <RadiusSlider
-                radiusKm={radiusKm}
-                onChangeRadiusKm={setRadiusKm}
-                listenerCount={distanceFilteredUsers.length}
-                themeMode={themeMode}
-              />
-            </div>
-
-            {distanceFilteredUsers.length === 0 && loungeViewMode === 'timeline' && (
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-center space-y-2">
-                <p className="text-xs text-[#181512] dark:text-[#FAF7F2] font-medium">
-                  Seçili yarıçapta şu anda başka dinleyici yok.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setRadiusKm(ALL_TURKEY_RADIUS)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
-                >
-                  Tüm Dinleyicileri Göster
-                </button>
-              </div>
-            )}
+          {/* 2. SINGLE-FOCUSED TIMELINE TRACK */}
+          <section aria-label="Şarkı Zaman Rayı">
+            <TimelineTrack
+              song={currentSong}
+              mySecond={mySecond}
+              users={displayUsers}
+              privacyMode={privacyMode}
+              onSelectUser={onSelectUser}
+              onDirectChat={onDirectChat}
+              onSeekSecond={onSeekSecond}
+              onToggleFriend={onToggleFriend}
+              onChangePrivacyMode={onChangePrivacyMode}
+              candidateSongs={candidateSongs}
+              onWhisperTrack={onWhisperTrack}
+              onShowToast={onShowToast}
+              onOpenRoomListeners={onOpenRoomListeners}
+            />
           </section>
         </div>
 
-        {/* RIGHT 5 COLUMNS (Desktop): Calm "Saniye Anıları" Card + Quiet Listener Summary */}
+        {/* RIGHT 5 COLUMNS (Desktop): Unified "Saniye Anıları" Card */}
         <aside className="lg:col-span-5 flex flex-col gap-4 min-w-0 lg:sticky lg:top-6">
           {/* 3. SAKİN "SANİYE ANILARI" BÖLÜMÜ (Dinamik, yalnızca çalan parçaya özel) */}
           <section
@@ -799,51 +685,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <Send className="w-4 h-4" strokeWidth={1.75} />
               </button>
             </form>
-          </section>
-
-          {/* Quiet Room Listeners & Continuous Radio Card */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none space-y-3">
-            <div className="flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex -space-x-1.5 shrink-0">
-                  {distanceFilteredUsers.slice(0, 4).map((u) => (
-                    <div
-                      key={u.id}
-                      onClick={() => onSelectUser(u)}
-                      title={`${u.name} (${u.distanceKm} km)`}
-                      className={`avatar-circle w-8 h-8 rounded-full bg-gradient-to-tr ${u.avatarGradient} flex items-center justify-center text-white font-bold text-[10px] cursor-pointer hover:scale-110 active:scale-[0.96] transition-transform duration-100 ease-out overflow-hidden ${
-                        u.isRealUser
-                          ? 'ring-2 ring-[#16A34A] dark:ring-[#22C55E] z-10'
-                          : 'ring-2 ring-white dark:ring-[#171412]'
-                      }`}
-                    >
-                      {u.avatarUrl ? (
-                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
-                      ) : (
-                        u.avatarSeed
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
-                    Odadaki Dinleyiciler
-                  </div>
-                  <div className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91] truncate">
-                    {distanceFilteredUsers.length + 1} kişi aynı şarkıda
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={onOpenRoomListeners}
-                className="px-3 py-1.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0"
-              >
-                Tümü
-              </button>
-            </div>
-
+            {/* Quiet Single-Line Continuous Radio Footer */}
             <div className="pt-2.5 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] flex items-center justify-between gap-2 text-xs">
               <span className="text-[#6B635B] dark:text-[#A39A91] truncate">
                 {nextRadioSong ? `Sıradaki: ${nextRadioSong.title}` : 'Sürekli Akış'}
@@ -851,7 +693,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => onToggleAutoRadio?.(!autoRadioEnabled)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0 border ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0 border ${
                   autoRadioEnabled
                     ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
                     : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
@@ -860,7 +702,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 {autoRadioEnabled ? 'Radyo Açık' : 'Radyo Kapalı'}
               </button>
             </div>
-          </div>
+          </section>
         </aside>
       </div>
     </div>

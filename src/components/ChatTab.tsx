@@ -21,10 +21,17 @@ import {
   LogIn,
   Loader2,
   Cloud,
+  MoreVertical,
+  Ban,
+  Flag,
+  ShieldAlert,
 } from 'lucide-react';
 import { LoungeConversation, LoungeUser, Song, FriendRequest } from '../types';
 import { searchTracks } from '../services/musicResolver';
 import { LiveMiniEqualizer } from './LiveMiniEqualizer';
+
+const BLOCKED_USERS_STORAGE_KEY = 'listenhub_blocked_users';
+const REPORT_CATEGORIES = ['Spam / Bot', 'Rahatsız Edici Dil', 'Sahte Profil'] as const;
 
 type SocialPaneTab = 'chats' | 'friends' | 'requests';
 
@@ -60,6 +67,8 @@ interface Props {
   onAcceptFriendRequest?: (requestId: string) => void;
   onDeclineFriendRequest?: (requestId: string) => void;
   onCancelSentRequest?: (userId: string) => void;
+  onBlockUser?: (user: LoungeUser) => void;
+  onShowToast?: (msg: string) => void;
 }
 
 export const ChatTab: React.FC<Props> = ({
@@ -88,6 +97,8 @@ export const ChatTab: React.FC<Props> = ({
   onAcceptFriendRequest,
   onDeclineFriendRequest,
   onCancelSentRequest,
+  onBlockUser,
+  onShowToast,
 }) => {
   const [socialTab, setSocialTab] = useState<SocialPaneTab>('chats');
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,7 +111,66 @@ export const ChatTab: React.FC<Props> = ({
   const [songComment, setSongComment] = useState('');
   const [shareTimestampSecond, setShareTimestampSecond] = useState<number>(0);
   const [isCoListeningActive, setIsCoListeningActive] = useState<boolean>(false);
+  const [showSafetyMenu, setShowSafetyMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [localBlockedIds, setLocalBlockedIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(BLOCKED_USERS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const safetyMenuRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setShowSafetyMenu(false);
+    setShowReportModal(false);
+  }, [activeChatUser?.id]);
+
+  useEffect(() => {
+    if (!showSafetyMenu) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (safetyMenuRef.current && !safetyMenuRef.current.contains(e.target as Node)) {
+        setShowSafetyMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [showSafetyMenu]);
+
+  const handleBlockActiveUser = (targetUser: LoungeUser) => {
+    setShowSafetyMenu(false);
+    setShowReportModal(false);
+    setLocalBlockedIds((prev) => {
+      const next = prev.includes(targetUser.id) ? prev : [...prev, targetUser.id];
+      try {
+        localStorage.setItem(BLOCKED_USERS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+    if (onBlockUser) {
+      onBlockUser(targetUser);
+    } else {
+      onShowToast?.('Bu kullanıcının frekansı kapatıldı');
+    }
+    onBackToList();
+  };
+
+  const handleSubmitReport = (_category: string) => {
+    setShowReportModal(false);
+    setShowSafetyMenu(false);
+    onShowToast?.('Bildirimin Şeffaf Güven Kalkanı ekibine iletildi');
+  };
 
   // Live 350ms debounced catalog search for "An Ekle / Ses Kartı Paylaş"
   useEffect(() => {
@@ -190,17 +260,18 @@ export const ChatTab: React.FC<Props> = ({
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Filter conversations & discoverable cloud users by search query
+  // Filter conversations & discoverable cloud users by search query and blocked users
   const filteredConversations = useMemo(() => {
-    if (!normalizedQuery) return conversations;
-    return conversations.filter(
+    const visible = conversations.filter((c) => !localBlockedIds.includes(c.user.id));
+    if (!normalizedQuery) return visible;
+    return visible.filter(
       (c) =>
         c.user.name.toLowerCase().includes(normalizedQuery) ||
         (c.user.handle || '').toLowerCase().includes(normalizedQuery) ||
         c.user.city.toLowerCase().includes(normalizedQuery) ||
         c.matchedTrack.title.toLowerCase().includes(normalizedQuery)
     );
-  }, [conversations, normalizedQuery]);
+  }, [conversations, normalizedQuery, localBlockedIds]);
 
   const filteredCloudDirectory = useMemo(() => {
     if (!normalizedQuery) return discoverableCloudUsers;
@@ -972,7 +1043,7 @@ export const ChatTab: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {onToggleFriend && renderFriendActionButton(activeChatUser)}
                   {onOpenUserProfile && (
                     <button
@@ -983,8 +1054,97 @@ export const ChatTab: React.FC<Props> = ({
                       Profil
                     </button>
                   )}
+
+                  {/* Zero-Clutter Safety Menu Trigger (⋮) */}
+                  <div ref={safetyMenuRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowSafetyMenu((prev) => !prev)}
+                      className="w-9 h-9 rounded-xl bg-[#F2EDE6] hover:bg-[#E8E0D5] dark:bg-[#211D1A] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.06] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] flex items-center justify-center transition cursor-pointer"
+                      title="Sohbet güvenlik seçenekleri"
+                      aria-label="Sohbet güvenlik seçenekleri"
+                      aria-expanded={showSafetyMenu}
+                    >
+                      <MoreVertical className="w-4 h-4" strokeWidth={1.85} />
+                    </button>
+
+                    {showSafetyMenu && (
+                      <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] shadow-xl p-1.5 z-50 space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => handleBlockActiveUser(activeChatUser)}
+                          className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer flex items-center gap-2.5"
+                        >
+                          <Ban className="w-3.5 h-3.5 shrink-0" strokeWidth={1.85} />
+                          <span>Frekansı Kapat (Engelle)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSafetyMenu(false);
+                            setShowReportModal(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 transition cursor-pointer flex items-center gap-2.5"
+                        >
+                          <Flag className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" strokeWidth={1.85} />
+                          <span>Şeffaf Bildir</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Compact Transparent Report Dialog (3 Clear Categories) */}
+              {showReportModal && (
+                <div
+                  className="fixed inset-0 z-[100] bg-black/55 backdrop-blur-xs flex items-center justify-center p-4"
+                  onClick={() => setShowReportModal(false)}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.1] shadow-2xl p-5 space-y-4 animate-modal-enter"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-[#E87A3E]/15 text-[#E87A3E] flex items-center justify-center shrink-0">
+                          <ShieldAlert className="w-4 h-4" strokeWidth={1.85} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-[#181512] dark:text-[#FAF7F2]">
+                            Şeffaf Bildir
+                          </h4>
+                          <p className="text-[11px] text-[#6B635B] dark:text-[#A39A91]">
+                            {activeChatUser.name} için bildirim nedenini seç
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowReportModal(false)}
+                        className="w-8 h-8 rounded-lg bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] flex items-center justify-center cursor-pointer"
+                        aria-label="Kapat"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {REPORT_CATEGORIES.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => handleSubmitReport(category)}
+                          className="w-full px-3.5 py-3 rounded-xl bg-[#FAF8F4] dark:bg-[#211D1A] hover:bg-[#E87A3E]/12 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/35 text-left text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer flex items-center justify-between"
+                        >
+                          <span>{category}</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-[#6B635B] dark:text-[#A39A91]" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Single-Strip Shared Track Encounter Banner ("Tanışma Anı") */}
               {(() => {

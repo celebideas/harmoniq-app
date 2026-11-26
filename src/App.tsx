@@ -50,6 +50,7 @@ import {
   fetchYouTubeVideoIdForSong,
   resolveMusicLinkOrQuery,
   searchITunesAudio,
+  searchTracks,
   syncYouTubeLibraryByInput,
   TURKISH_ROCK_RADIO_POOL,
 } from './services/musicResolver';
@@ -291,6 +292,20 @@ export default function App() {
   }, [currentSong?.id, currentSong?.coverUrl, currentSong?.artist, currentSong?.title]);
 
   const [mySecond, setMySecond] = useState<number>(initialPlaybackRef.current.second);
+  const [deepLinkInvite, setDeepLinkInvite] = useState<{
+    song: Song;
+    second: number;
+  } | null>(null);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('listenhub_blocked_users');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
   const [activePlatform, setActivePlatform] = useState<PlatformType>('youtube_music');
   const [privacyMode, setPrivacyMode] = useState<PrivacyMode>('public');
 
@@ -947,6 +962,77 @@ export default function App() {
       unsubLoading();
     };
   }, []);
+
+  // Deep Link Invite: auto-resolve shared /?track=...&artist=...&t=... link on initial mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const trackParam = (params.get('track') || '').trim();
+    const artistParam = (params.get('artist') || '').trim();
+    const tParam = params.get('t');
+    if (!trackParam || tParam === null) return;
+
+    const targetSecond = Math.max(0, Math.floor(Number(tParam) || 0));
+    const query = `${artistParam} ${trackParam}`.trim();
+    if (!query) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const results = await searchTracks(query, 1);
+        let resolvedSong = results[0] || null;
+        if (!resolvedSong) {
+          resolvedSong = await resolveMusicLinkOrQuery(query);
+        }
+        if (cancelled || !resolvedSong) return;
+
+        setCurrentSong(resolvedSong);
+        setMySecond(targetSecond);
+        soundEngine.primeSong(resolvedSong);
+        setDeepLinkInvite({ song: resolvedSong, second: targetSecond });
+      } catch {
+        // Ignore transient search errors on deep link boot
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleAcceptDeepLinkInvite = () => {
+    if (!deepLinkInvite) return;
+    const { song, second } = deepLinkInvite;
+    setDeepLinkInvite(null);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    setActiveTab('lounge');
+    void handleSelectSong(song, true, second);
+  };
+
+  const handleDismissDeepLinkInvite = () => {
+    setDeepLinkInvite(null);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  };
+
+  const handleBlockUser = (targetUser: LoungeUser) => {
+    setBlockedUserIds((prev) => {
+      const next = prev.includes(targetUser.id) ? prev : [...prev, targetUser.id];
+      try {
+        localStorage.setItem('listenhub_blocked_users', JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+    setActiveChatUser((prev) => (prev?.id === targetUser.id ? null : prev));
+    setSelectedDrawerUser((prev) => (prev?.id === targetUser.id ? null : prev));
+    setToastMessage('Bu kullanıcının frekansı kapatıldı');
+    setTimeout(() => setToastMessage(null), 3200);
+  };
 
   // Persist currentSong & playback second to localStorage and keep soundEngine primed
   const lastPersistedSecRef = useRef<number>(-1);
@@ -3024,7 +3110,10 @@ export default function App() {
   }, [cloudOutgoingRequests, cloudProfileMap, loungeUsers]);
 
   const mergedConversations = useMemo<LoungeConversation[]>(() => {
-    if (!firebaseUser) return conversations;
+    const blockedSet = new Set(blockedUserIds);
+    if (!firebaseUser) {
+      return conversations.filter((c) => !blockedSet.has(c.user.id));
+    }
     const mappedCloud: LoungeConversation[] = cloudConversations.map((conv) => {
       const otherUid = conv.uidA === firebaseUser.uid ? conv.uidB : conv.uidA;
       const isSelected = activeChatUser?.id === otherUid;
@@ -3037,7 +3126,10 @@ export default function App() {
       );
     });
     const cloudUserIds = new Set(mappedCloud.map((c) => c.user.id));
-    return [...mappedCloud, ...conversations.filter((c) => !cloudUserIds.has(c.user.id))];
+    return [
+      ...mappedCloud,
+      ...conversations.filter((c) => !cloudUserIds.has(c.user.id)),
+    ].filter((c) => !blockedSet.has(c.user.id));
   }, [
     firebaseUser,
     cloudConversations,
@@ -3046,12 +3138,14 @@ export default function App() {
     activeChatUser?.id,
     activeCloudMessages,
     conversations,
+    blockedUserIds,
   ]);
 
   const combinedLoungeUsers = useMemo(() => {
-    const onlineCloud = discoverableCloudUsers.filter((u) => u.isOnline);
-    const mergedReal = [...onlineCloud, ...realLiveListeners];
-    if (mergedReal.length === 0) return loungeUsers;
+    const blockedSet = new Set(blockedUserIds);
+    const onlineCloud = discoverableCloudUsers.filter((u) => u.isOnline && !blockedSet.has(u.id));
+    const mergedReal = [...onlineCloud, ...realLiveListeners.filter((u) => !blockedSet.has(u.id))];
+    if (mergedReal.length === 0) return loungeUsers.filter((u) => !blockedSet.has(u.id));
     const seen = new Set<string>();
     const dedupedReal: LoungeUser[] = [];
     for (const u of mergedReal) {
@@ -3060,9 +3154,9 @@ export default function App() {
         dedupedReal.push(u);
       }
     }
-    const filteredSimulated = loungeUsers.filter((u) => !seen.has(u.id));
+    const filteredSimulated = loungeUsers.filter((u) => !seen.has(u.id) && !blockedSet.has(u.id));
     return [...dedupedReal, ...filteredSimulated];
-  }, [discoverableCloudUsers, realLiveListeners, loungeUsers]);
+  }, [discoverableCloudUsers, realLiveListeners, loungeUsers, blockedUserIds]);
 
   // Keep open MiniProfileDrawer friendStatus in sync with real-time Firestore state
   const resolvedDrawerUser = useMemo(() => {
@@ -3155,6 +3249,50 @@ export default function App() {
         />
 
         <main className="flex-1 flex flex-col transition-all duration-300 pb-36 lg:pb-28">
+          {/* Single-Line Warm Copper Deep Link Moment Invite Strip */}
+          {deepLinkInvite && (() => {
+            const mins = Math.floor(deepLinkInvite.second / 60);
+            const secs = Math.floor(deepLinkInvite.second % 60);
+            const formattedSec = `${mins.toString().padStart(2, '0')}:${secs
+              .toString()
+              .padStart(2, '0')}`;
+            return (
+              <div className="px-4 sm:px-6 lg:px-8 pt-3 max-w-xl lg:max-w-6xl mx-auto w-full">
+                <div className="px-3.5 py-2.5 rounded-2xl bg-[#E87A3E]/12 dark:bg-[#E87A3E]/15 border border-[#E87A3E]/35 flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2 min-w-0 text-xs text-[#181512] dark:text-[#FAF7F2]">
+                    <span className="w-2 h-2 rounded-full bg-[#E87A3E] shrink-0" />
+                    <span className="truncate font-medium">
+                      Paylaşılan{' '}
+                      <span className="font-mono font-bold text-[#D96B2C] dark:text-[#F49A5E]">
+                        {formattedSec}
+                      </span>{' '}
+                      anına davet edildin
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleAcceptDeepLinkInvite}
+                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 active:scale-[0.97] transition cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" strokeWidth={1.85} />
+                      <span className="font-mono tabular-nums">{formattedSec}'den Dinle</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDismissDeepLinkInvite}
+                      className="w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-[#6B635B] dark:text-[#A39A91] flex items-center justify-center transition cursor-pointer"
+                      aria-label="Daveti kapat"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className={activeTab === 'lounge' ? 'flex-1 flex flex-col' : 'hidden'}>
             <LiveLoungeTab
               currentSong={currentSong}
@@ -3298,6 +3436,11 @@ export default function App() {
               onAcceptFriendRequest={handleAcceptFriendRequest}
               onDeclineFriendRequest={handleDeclineFriendRequest}
               onCancelSentRequest={handleCancelSentRequest}
+              onBlockUser={handleBlockUser}
+              onShowToast={(msg) => {
+                setToastMessage(msg);
+                setTimeout(() => setToastMessage(null), 3200);
+              }}
               isCloudAuthenticated={Boolean(firebaseUser)}
               isAuthLoading={isGoogleLoading}
               onGoogleSignIn={handleSocialGoogleSignIn}
