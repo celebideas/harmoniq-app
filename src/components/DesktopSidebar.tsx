@@ -130,7 +130,7 @@ export const DesktopSidebar: React.FC<Props> = ({
       desc: 'Tamamen görünmezsin. Kimse hangi saniyede olduğunu göremez.',
       icon: (
         <EyeOff
-          className={`w-3.5 h-3.5 ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}
+          className={`w-3.5 h-3.5 ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}
           strokeWidth={1.75}
         />
       ),
@@ -145,11 +145,11 @@ export const DesktopSidebar: React.FC<Props> = ({
       aria-label="Masaüstü Navigasyon"
       className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-[84px] w-72 z-30 border-r p-5 select-none justify-between transition-colors duration-150 ${
         isLight
-          ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
-          : 'bg-[#0E0C0B] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+          ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#111113]'
+          : 'bg-[#0B0B0D] border-white/[0.08] text-[#F5F5F7]'
       }`}
     >
-      {/* TOP: Warm Copper ListenHub Logo + Privacy Capsule */}
+      {/* TOP: Pure Studio Monochrome ListenHub Logo + Privacy Capsule */}
       <div className="space-y-4">
         <button
           type="button"
@@ -158,23 +158,29 @@ export const DesktopSidebar: React.FC<Props> = ({
             onSelectTab('lounge');
           }}
           className={`w-full flex items-center gap-3.5 p-2.5 rounded-2xl cursor-pointer group active:scale-[0.96] transition-transform duration-100 ease-out text-left ${
-            isLight ? 'hover:bg-[#F2EDE6]' : 'hover:bg-[#171412]'
+            isLight ? 'hover:bg-[#F1EFEA]' : 'hover:bg-[#141418]'
           }`}
         >
-          <div className="w-10 h-10 rounded-xl studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 flex items-center justify-center shrink-0">
+          <div
+            className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center shrink-0 ${
+              isLight
+                ? 'studio-btn-primary bg-[#111113] text-white'
+                : 'bg-white text-[#0B0B0D]'
+            }`}
+          >
             <ListenHubLogo className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <span
               className={`text-lg font-bold tracking-tight block leading-none ${
-                isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
               ListenHub
             </span>
             <span
               className={`text-xs block mt-1 ${
-                isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
               }`}
             >
               Canlı Müzik Ağı
@@ -192,8 +198,8 @@ export const DesktopSidebar: React.FC<Props> = ({
             }}
             className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer border ${
               isLight
-                ? 'bg-white border-[#EAE4DC] text-[#181512] hover:bg-[#F2EDE6]'
-                : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2] hover:bg-[#211D1A]'
+                ? 'bg-white border-[#E6E4DF] text-[#111113] hover:bg-[#F1EFEA]'
+                : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7] hover:bg-[#1C1C22]'
             }`}
             title="Gizlilik Modunu Değiştir"
           >
@@ -201,7 +207,7 @@ export const DesktopSidebar: React.FC<Props> = ({
               {privacyMode === 'private' ? (
                 <EyeOff
                   className={`w-3.5 h-3.5 shrink-0 ${
-                    isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                    isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                   strokeWidth={1.75}
                 />
@@ -216,7 +222,7 @@ export const DesktopSidebar: React.FC<Props> = ({
             </span>
             <ChevronDown
               className={`w-3.5 h-3.5 shrink-0 transition-transform ${
-                isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
               } ${showPrivacyDropdown ? 'rotate-180' : ''}`}
               strokeWidth={1.75}
             />
@@ -226,8 +232,8 @@ export const DesktopSidebar: React.FC<Props> = ({
             <div
               className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border p-2 shadow-xl z-50 space-y-1 animate-in fade-in zoom-in-95 duration-150 ${
                 isLight
-                  ? 'border-[#EAE4DC] bg-white text-[#181512]'
-                  : 'border-[#FFF0E1]/[0.08] bg-[#171412] text-[#FAF7F2]'
+                  ? 'border-[#E6E4DF] bg-white text-[#111113]'
+                  : 'border-white/[0.08] bg-[#141418] text-[#F5F5F7]'
               }`}
             >
               {privacyOptions.map((opt) => {
@@ -243,10 +249,12 @@ export const DesktopSidebar: React.FC<Props> = ({
                     }}
                     className={`w-full p-2.5 rounded-xl text-left flex items-start justify-between gap-2 transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#E87A3E]/15 border border-[#E87A3E]/25'
+                        ? isLight
+                          ? 'bg-[#111113]/[0.08] border border-[#111113]/15'
+                          : 'bg-white/[0.10] border border-white/15'
                         : isLight
-                        ? 'hover:bg-[#F2EDE6]/80 border border-transparent'
-                        : 'hover:bg-[#211D1A] border border-transparent'
+                        ? 'hover:bg-[#F1EFEA]/80 border border-transparent'
+                        : 'hover:bg-[#1C1C22] border border-transparent'
                     }`}
                   >
                     <div className="flex items-start gap-2 min-w-0">
@@ -254,14 +262,14 @@ export const DesktopSidebar: React.FC<Props> = ({
                       <div className="min-w-0">
                         <div
                           className={`text-xs font-semibold leading-none ${
-                            isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                            isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                           }`}
                         >
                           {opt.label}
                         </div>
                         <div
                           className={`text-[10px] mt-1 leading-snug ${
-                            isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                           }`}
                         >
                           {opt.desc}
@@ -299,11 +307,11 @@ export const DesktopSidebar: React.FC<Props> = ({
                 className={`w-full px-4 py-3.5 rounded-xl text-[15px] flex items-center justify-between gap-3.5 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                   isActive
                     ? isLight
-                      ? 'bg-[#E87A3E]/15 text-[#D96B2C] font-semibold border border-[#E87A3E]/25'
-                      : 'bg-[#E87A3E]/15 text-[#F49A5E] font-semibold border border-[#E87A3E]/25'
+                      ? 'bg-[#111113]/[0.08] text-[#111113] font-semibold border border-[#111113]/12'
+                      : 'bg-white/[0.10] text-white font-semibold border border-white/[0.12]'
                     : isLight
-                    ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6] font-medium border border-transparent'
-                    : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#171412] font-medium border border-transparent'
+                    ? 'text-[#63636B] hover:text-[#111113] hover:bg-[#F1EFEA] font-medium border border-transparent'
+                    : 'text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#141418] font-medium border border-transparent'
                 }`}
               >
                 <span className="flex items-center gap-3.5 min-w-0">
@@ -318,7 +326,9 @@ export const DesktopSidebar: React.FC<Props> = ({
                         ? isLight
                           ? 'bg-[#16A34A]/12 text-[#16A34A]'
                           : 'bg-[#22C55E]/15 text-[#22C55E]'
-                        : 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white'
+                        : isLight
+                        ? 'studio-btn-primary bg-[#111113] text-white'
+                        : 'bg-white text-[#0B0B0D]'
                     }`}
                   >
                     {item.badge}
@@ -333,7 +343,7 @@ export const DesktopSidebar: React.FC<Props> = ({
       {/* BOTTOM: Theme Switcher & User Settings Card */}
       <div
         className={`space-y-2.5 pt-4 border-t ${
-          isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.08]'
+          isLight ? 'border-[#E6E4DF]' : 'border-white/[0.08]'
         }`}
       >
         <button
@@ -341,14 +351,14 @@ export const DesktopSidebar: React.FC<Props> = ({
           onClick={onToggleTheme}
           className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
             isLight
-              ? 'bg-white hover:bg-[#F2EDE6] border-[#EAE4DC] text-[#181512]'
-              : 'bg-[#171412] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+              ? 'bg-white hover:bg-[#F1EFEA] border-[#E6E4DF] text-[#111113]'
+              : 'bg-[#141418] hover:bg-[#1C1C22] border-white/[0.08] text-[#F5F5F7]'
           }`}
         >
           {themeMode === 'dark' ? (
-            <Sun className="w-4 h-4 shrink-0 text-[#F49A5E]" strokeWidth={1.75} />
+            <Sun className="w-4 h-4 shrink-0 text-[#F5F5F7]" strokeWidth={1.75} />
           ) : (
-            <Moon className="w-4 h-4 shrink-0 text-[#6B635B]" strokeWidth={1.75} />
+            <Moon className="w-4 h-4 shrink-0 text-[#63636B]" strokeWidth={1.75} />
           )}
           <span className="truncate">
             {themeMode === 'dark' ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
@@ -368,13 +378,13 @@ export const DesktopSidebar: React.FC<Props> = ({
           title="Ayarlar & Hesap"
           className={`w-full p-3 rounded-2xl border flex items-center gap-3 text-left active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer group ${
             isLight
-              ? 'bg-white hover:bg-[#F2EDE6] border-[#EAE4DC] shadow-[0_4px_20px_rgba(24,21,18,0.04)]'
-              : 'bg-[#171412] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08] shadow-none'
+              ? 'bg-white hover:bg-[#F1EFEA] border-[#E6E4DF] shadow-[0_2px_12px_rgba(17,17,19,0.04)]'
+              : 'bg-[#141418] hover:bg-[#1C1C22] border-white/[0.08] shadow-none'
           }`}
         >
           <div
             className={`w-10 h-10 rounded-full overflow-hidden shrink-0 ring-1 ${
-              isLight ? 'ring-[#EAE4DC]' : 'ring-[#FFF0E1]/15'
+              isLight ? 'ring-[#E6E4DF]' : 'ring-white/15'
             }`}
           >
             {userProfile.avatarUrl ? (
@@ -384,7 +394,7 @@ export const DesktopSidebar: React.FC<Props> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="avatar-circle w-full h-full bg-[#211D1A] flex items-center justify-center text-white text-xs font-semibold">
+              <div className="avatar-circle w-full h-full bg-[#1C1C22] flex items-center justify-center text-white text-xs font-semibold">
                 {userProfile.avatarSeed}
               </div>
             )}
@@ -392,7 +402,7 @@ export const DesktopSidebar: React.FC<Props> = ({
           <div className="min-w-0 flex-1">
             <div
               className={`text-xs font-semibold truncate ${
-                isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
               {userProfile.youtubeAccount?.name || userProfile.name}
@@ -409,8 +419,8 @@ export const DesktopSidebar: React.FC<Props> = ({
           <Settings
             className={`w-4 h-4 transition-colors shrink-0 ${
               isLight
-                ? 'text-[#6B635B] group-hover:text-[#181512]'
-                : 'text-[#A39A91] group-hover:text-[#FAF7F2]'
+                ? 'text-[#63636B] group-hover:text-[#111113]'
+                : 'text-[#8E8E98] group-hover:text-[#F5F5F7]'
             }`}
             strokeWidth={1.75}
           />

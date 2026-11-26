@@ -717,7 +717,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                 <div className="text-[10px] text-neutral-400">Aktarılan Sanatçı</div>
               </div>
               <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800/80">
-                <div className="text-xs font-bold text-amber-400">{syncedPlaylists.length > 0 ? '%94 Uyum' : '%90 Uyum'}</div>
+                <div className="text-xs font-bold text-[#111113] dark:text-white">{syncedPlaylists.length > 0 ? '%94 Uyum' : '%90 Uyum'}</div>
                 <div className="text-[10px] text-neutral-400">Oda Ortalaması</div>
               </div>
             </div>

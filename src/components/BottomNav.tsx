@@ -89,8 +89,8 @@ export const BottomNav: React.FC<Props> = ({
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
       className={`lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl backdrop-blur-xl border overflow-hidden select-none transition-colors duration-150 ${
         isLight
-          ? 'bg-white/95 border-[#EAE4DC] shadow-[0_8px_30px_rgba(24,21,18,0.10)] text-[#181512]'
-          : 'bg-[#171412]/95 border-[#FFF0E1]/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#FAF7F2]'
+          ? 'bg-white/95 border-[#E6E4DF] shadow-[0_8px_30px_rgba(17,17,19,0.08)] text-[#111113]'
+          : 'bg-[#141418]/95 border-white/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#F5F5F7]'
       }`}
     >
       {/* UPPER TIER: MINI PLAYER STRIP */}
@@ -106,8 +106,8 @@ export const BottomNav: React.FC<Props> = ({
               title="Tam Ekran Oynatıcıyı Aç"
             >
               <div
-                className={`relative w-10 h-10 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 ring-1 ${
-                  isLight ? 'ring-black/5' : 'ring-[#FFF0E1]/10'
+                className={`relative w-10 h-10 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 ${
+                  isLight ? 'ring-black/5' : 'ring-white/10'
                 }`}
               >
                 {currentSong.coverUrl ? (
@@ -126,14 +126,14 @@ export const BottomNav: React.FC<Props> = ({
               <div className="min-w-0 flex-1">
                 <div
                   className={`text-xs font-semibold truncate ${
-                    isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
                   {currentSong.title}
                 </div>
                 <div
                   className={`text-[11px] truncate mt-0.5 ${
-                    isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                    isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
                   {currentSong.artist}
@@ -149,7 +149,11 @@ export const BottomNav: React.FC<Props> = ({
                   triggerHaptic(20);
                   onTogglePlay?.();
                 }}
-                className="w-9 h-9 rounded-full studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-lg shadow-amber-950/20 hover:brightness-105 flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
+                className={`w-9 h-9 rounded-full shadow-sm flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
+                  isLight
+                    ? 'studio-btn-primary bg-[#111113] hover:bg-zinc-800 text-white'
+                    : 'bg-white hover:bg-zinc-200 text-[#0B0B0D]'
+                }`}
                 aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
                 title={isPlaying ? 'Duraklat' : 'Oynat'}
               >
@@ -172,8 +176,8 @@ export const BottomNav: React.FC<Props> = ({
                   }}
                   className={`w-9 h-9 rounded-xl flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                     isLight
-                      ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
-                      : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
+                      ? 'text-[#63636B] hover:text-[#111113] hover:bg-[#F1EFEA]'
+                      : 'text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]'
                   }`}
                   aria-label="Sonraki Şarkı"
                   title="Sonraki Şarkı"
@@ -184,7 +188,7 @@ export const BottomNav: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* 2px Copper-Amber Progress Line */}
+          {/* 2px Monochrome Progress Line */}
           <div
             onClick={(e) => {
               if (!onSeekSecond || !currentSong) return;
@@ -193,12 +197,14 @@ export const BottomNav: React.FC<Props> = ({
               onSeekSecond(Math.round(ratio * (currentSong.durationSeconds || 1)));
             }}
             className={`h-[2px] w-full cursor-pointer overflow-hidden ${
-              isLight ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+              isLight ? 'bg-[#E6E4DF]' : 'bg-white/10'
             }`}
             title="Şarkıda sar"
           >
             <div
-              className="h-full bg-gradient-to-r from-[#E87A3E] to-[#D97706] transition-all duration-150"
+              className={`h-full transition-all duration-150 ${
+                isLight ? 'bg-[#111113]' : 'bg-white'
+              }`}
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -222,11 +228,11 @@ export const BottomNav: React.FC<Props> = ({
               className={`relative flex flex-col items-center justify-center min-h-[56px] py-2 px-2 rounded-xl transition-transform duration-100 ease-out cursor-pointer active:scale-[0.96] ${
                 isActive
                   ? isLight
-                    ? 'bg-[#E87A3E]/15 text-[#D96B2C] font-semibold'
-                    : 'bg-[#E87A3E]/15 text-[#F49A5E] font-semibold'
+                    ? 'bg-[#111113]/[0.08] text-[#111113] font-semibold'
+                    : 'bg-white/[0.10] text-white font-semibold'
                   : isLight
-                  ? 'text-[#6B635B] hover:text-[#181512] font-medium'
-                  : 'text-[#A39A91] hover:text-[#FAF7F2] font-medium'
+                  ? 'text-[#63636B] hover:text-[#111113] font-medium'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7] font-medium'
               }`}
             >
               <div className="relative flex items-center justify-center">
@@ -239,7 +245,9 @@ export const BottomNav: React.FC<Props> = ({
                         ? isLight
                           ? 'bg-[#16A34A]/15 text-[#16A34A]'
                           : 'bg-[#22C55E]/20 text-[#22C55E]'
-                        : 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white'
+                        : isLight
+                        ? 'studio-btn-primary bg-[#111113] text-white'
+                        : 'bg-white text-[#0B0B0D]'
                     }`}
                   >
                     {item.badge}

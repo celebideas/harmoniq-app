@@ -80,7 +80,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
       case 'apple_music':
         return { name: 'Apple Music', color: isLight ? 'text-pink-600' : 'text-pink-400' };
       default:
-        return { name: 'ListenHub', color: isLight ? 'text-[#6B635B]' : 'text-[#A39A91]' };
+        return { name: 'ListenHub', color: isLight ? 'text-[#63636B]' : 'text-[#8E8E98]' };
     }
   };
 
@@ -113,13 +113,13 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         onClick={(e) => e.stopPropagation()}
         className={`relative w-full max-w-lg rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[86vh] overflow-y-auto no-scrollbar pb-[max(1.5rem,env(safe-area-inset-bottom))] border animate-modal-enter ${
           isLight
-            ? 'bg-white border-[#EAE4DC] text-[#181512]'
-            : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+            ? 'bg-white border-[#E6E4DF] text-[#111113]'
+            : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
         }`}
       >
         <div
           className={`sm:hidden w-10 h-1 rounded-full mx-auto -mt-1 mb-3 ${
-            isLight ? 'bg-[#181512]/15' : 'bg-[#FFF0E1]/20'
+            isLight ? 'bg-[#111113]/15' : 'bg-white/20'
           }`}
         />
 
@@ -129,7 +129,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
             <div className="relative shrink-0">
               <div
                 className={`avatar-circle w-14 h-14 rounded-2xl bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white font-bold text-lg ring-1 shadow-md overflow-hidden ${
-                  isLight ? 'ring-black/10' : 'ring-[#FFF0E1]/10'
+                  isLight ? 'ring-black/10' : 'ring-white/10'
                 }`}
               >
                 {user.avatarUrl ? (
@@ -141,7 +141,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               {user.isOnline && (
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ${
-                    isLight ? 'bg-[#16A34A] ring-white' : 'bg-[#22C55E] ring-[#171412]'
+                    isLight ? 'bg-[#16A34A] ring-white' : 'bg-[#22C55E] ring-[#141418]'
                   }`}
                 />
               )}
@@ -151,7 +151,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               <div className="flex items-center gap-2 flex-wrap">
                 <h3
                   className={`text-lg font-heading font-bold tracking-tight truncate ${
-                    isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                    isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
                   {user.name}
@@ -170,7 +170,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
               <div
                 className={`text-xs mt-0.5 flex items-center gap-1.5 flex-wrap ${
-                  isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                 }`}
               >
                 {user.handle && <span className="font-mono text-[11px]">{user.handle}</span>}
@@ -194,17 +194,17 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
               <div
                 className={`text-xs mt-1 flex items-center gap-1.5 ${
-                  isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                  isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-[#E87A3E]" />
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-[#111113] dark:text-[#F5F5F7]" />
                 <span className="truncate">{displayCity}</span>
                 {!user.isRealUser && (
                   <>
                     <span>·</span>
                     <span
                       className={`font-semibold shrink-0 tabular-nums ${
-                        isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
+                        isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                       }`}
                     >
                       {user.distanceKm} km yakında
@@ -225,14 +225,14 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                     ? 'bg-emerald-500/12 border-emerald-500/30 text-emerald-700'
                     : 'bg-emerald-500/12 border-emerald-500/30 text-emerald-400'
                   : isPendingReceived
-                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white border-[#E87A3E] font-semibold'
+                  ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] border-[#111113]/35 dark:border-white/35 font-semibold'
                   : isPendingSent
                   ? isLight
-                    ? 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#D96B2C]'
-                    : 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#F49A5E]'
+                    ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] border-[#111113]/25 dark:border-white/25 text-[#111113]'
+                    : 'bg-[#111113]/[0.08] dark:bg-white/[0.10] border-[#111113]/25 dark:border-white/25 text-[#F5F5F7]'
                   : isLight
-                  ? 'bg-[#F2EDE6] hover:bg-[#EAE4DC] border-[#E2D9CE] text-[#181512]'
-                  : 'bg-[#211D1A] hover:bg-[#2B2521] border-[#FFF0E1]/10 text-[#FAF7F2]'
+                  ? 'bg-[#F1EFEA] hover:bg-[#E6E4DF] border-[#E2DFD9] text-[#111113]'
+                  : 'bg-[#1C1C22] hover:bg-[#24242C] border-white/10 text-[#F5F5F7]'
               }`}
               title={
                 isFriends
@@ -256,12 +256,12 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                 </>
               ) : isPendingSent ? (
                 <>
-                  <Clock className="w-3.5 h-3.5 text-[#E87A3E]" />
+                  <Clock className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
                   <span>İstek Yollandı</span>
                 </>
               ) : (
                 <>
-                  <UserPlus className="w-3.5 h-3.5 text-[#E87A3E]" />
+                  <UserPlus className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
                   <span>Arkadaş Ekle</span>
                 </>
               )}
@@ -272,8 +272,8 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               onClick={onClose}
               className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer ${
                 isLight
-                  ? 'text-[#6B635B] hover:text-[#181512] hover:bg-[#F2EDE6]'
-                  : 'text-[#A39A91] hover:text-[#FAF7F2] hover:bg-[#211D1A]'
+                  ? 'text-[#63636B] hover:text-[#111113] hover:bg-[#F1EFEA]'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]'
               }`}
               aria-label="Kapat"
             >
@@ -286,14 +286,14 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         <div
           className={`p-4 rounded-2xl border space-y-3 ${
             isLight
-              ? 'bg-[#FAF8F4] border-[#EAE4DC]'
-              : 'bg-[#211D1A] border-[#FFF0E1]/[0.07]'
+              ? 'bg-[#FAF9F6] border-[#E6E4DF]'
+              : 'bg-[#1C1C22] border-white/[0.07]'
           }`}
         >
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-xl overflow-hidden border shrink-0 shadow-sm ${
-                isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/10'
+                isLight ? 'border-[#E6E4DF]' : 'border-white/10'
               }`}
             >
               {displaySong?.coverUrl && !coverError ? (
@@ -306,7 +306,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               ) : (
                 <div
                   className={`w-full h-full bg-gradient-to-br ${
-                    displaySong?.coverGradient || 'from-[#E87A3E] to-[#D97706]'
+                    displaySong?.coverGradient || 'from-zinc-700 to-zinc-900'
                   } flex items-center justify-center text-white`}
                 >
                   <Music className="w-5 h-5" />
@@ -316,12 +316,12 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between text-xs">
-                <span className={`font-medium ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+                <span className={`font-medium ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
                   Şarkıdaki Konumu
                 </span>
                 <span
                   className={`font-mono font-bold text-sm tabular-nums ${
-                    isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
+                    isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
                   {formatTime(user.currentSecond)} / {formatTime(displaySong?.durationSeconds || 220)}
@@ -329,12 +329,12 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               </div>
               <div
                 className={`text-xs font-semibold truncate mt-0.5 ${
-                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                 }`}
               >
                 {displaySong?.title || 'Canlı Dinleme'}
               </div>
-              <div className={`text-[11px] truncate ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+              <div className={`text-[11px] truncate ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
                 {displaySong ? `${displaySong.artist} · ${displaySong.genre}` : 'ListenHub Ağı'}
               </div>
             </div>
@@ -344,25 +344,25 @@ export const MiniProfileDrawer: React.FC<Props> = ({
             <div
               className={`p-3 rounded-2xl border space-y-2 ${
                 isLight
-                  ? 'bg-white border-[#EAE4DC]'
-                  : 'bg-[#171412] border-[#FFF0E1]/[0.07]'
+                  ? 'bg-white border-[#E6E4DF]'
+                  : 'bg-[#141418] border-white/[0.07]'
               }`}
             >
               <p
                 className={`text-xs font-medium leading-relaxed ${
-                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                 }`}
               >
                 &ldquo;{cleanedStatusBubble}&rdquo;
               </p>
               <div
                 className={`flex items-center justify-between pt-2 border-t ${
-                  isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.06]'
+                  isLight ? 'border-[#E6E4DF]' : 'border-white/[0.06]'
                 }`}
               >
                 <span
                   className={`text-[11px] tabular-nums ${
-                    isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                    isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
                   {statusLikesCount} dinleyici katıldı
@@ -380,10 +380,10 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                   }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform duration-100 ease-out active:scale-[0.96] cursor-pointer ${
                     hasLikedStatus
-                      ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+                      ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
                       : isLight
-                      ? 'bg-[#F2EDE6] hover:bg-[#EAE4DC] text-[#181512]'
-                      : 'bg-[#211D1A] hover:bg-[#2B2521] text-[#FAF7F2]'
+                      ? 'bg-[#F1EFEA] hover:bg-[#E6E4DF] text-[#111113]'
+                      : 'bg-[#1C1C22] hover:bg-[#24242C] text-[#F5F5F7]'
                   }`}
                 >
                   <span>{hasLikedStatus ? 'Katıldın' : '+1 Katılıyorum'}</span>
@@ -395,7 +395,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
           <div
             className={`flex items-center justify-between text-[11px] pt-0.5 ${
-              isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+              isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
             <span className="truncate">{displaySong?.album || 'ListenHub'}</span>
@@ -414,26 +414,26 @@ export const MiniProfileDrawer: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Personalized Taste Compatibility Bar (Warm Copper / Amber) */}
+        {/* Personalized Taste Compatibility Bar (Pure Studio Monochrome) */}
         <div
           className={`p-3.5 rounded-2xl border space-y-2 ${
             isLight
-              ? 'bg-[#E87A3E]/[0.08] border-[#E87A3E]/25'
-              : 'bg-[#E87A3E]/[0.1] border-[#E87A3E]/25'
+              ? 'bg-[#F1EFEA] border-[#E2DFD9]'
+              : 'bg-[#1C1C22] border-white/[0.08]'
           }`}
         >
           <div className="flex items-center justify-between text-xs">
             <span
               className={`font-bold flex items-center gap-1.5 ${
-                isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#E87A3E]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
               <span>Müzik Frekansı Uyumu</span>
             </span>
             <span
               className={`font-extrabold tabular-nums text-xs ${
-                isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
               %{user.compatibilityScore || 94} Eşleşme
@@ -442,24 +442,26 @@ export const MiniProfileDrawer: React.FC<Props> = ({
 
           <div
             className={`w-full h-1.5 rounded-full overflow-hidden ${
-              isLight ? 'bg-[#EAE4DC]' : 'bg-[#FFF0E1]/10'
+              isLight ? 'bg-[#E6E4DF]' : 'bg-white/10'
             }`}
           >
             <div
-              className="h-full bg-gradient-to-r from-[#E87A3E] to-[#F59E0B] rounded-full transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${
+                isLight ? 'bg-[#111113]' : 'bg-white'
+              }`}
               style={{ width: `${user.compatibilityScore || 94}%` }}
             />
           </div>
 
           <div
             className={`text-[11px] flex items-center gap-1 ${
-              isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+              isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
-            <span className={`font-semibold shrink-0 ${isLight ? 'text-[#D96B2C]' : 'text-[#F49A5E]'}`}>
+            <span className={`font-semibold shrink-0 ${isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'}`}>
               Ortak Frekans:
             </span>
-            <span className={`font-medium truncate ${isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'}`}>
+            <span className={`font-medium truncate ${isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'}`}>
               {user.sharedWithUserArtists && user.sharedWithUserArtists.length > 0
                 ? user.sharedWithUserArtists.join(', ')
                 : user.topGenres && user.topGenres.length > 0
@@ -477,7 +479,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         {/* Shared Artists / Genres */}
         {(user.topGenres?.length || user.topArtists.length) > 0 && (
           <div className="space-y-1.5 text-xs">
-            <span className={`text-xs font-semibold ${isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}`}>
+            <span className={`text-xs font-semibold ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
               {user.topGenres && user.topGenres.length > 0
                 ? 'Favori Türler & Sanatçılar'
                 : 'Favori Sanatçılar'}
@@ -489,8 +491,8 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                     key={idx}
                     className={`px-2.5 py-1 rounded-lg border text-xs font-medium ${
                       isLight
-                        ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
-                        : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                        ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#111113]'
+                        : 'bg-[#1C1C22] border-white/[0.08] text-[#F5F5F7]'
                     }`}
                   >
                     {item}
@@ -504,12 +506,12 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         {/* Müzikal Buzkırıcılar */}
         <div
           className={`space-y-2 pt-3 border-t ${
-            isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.08]'
+            isLight ? 'border-[#E6E4DF]' : 'border-white/[0.08]'
           }`}
         >
           <span
             className={`text-xs font-semibold block ${
-              isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+              isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
             Hızlı Müzikal Buzkırıcı
@@ -525,8 +527,8 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               }
               className={`p-3 rounded-xl border text-left transition-transform duration-100 ease-out active:scale-[0.96] font-medium min-h-[44px] cursor-pointer ${
                 isLight
-                  ? 'bg-[#FAF8F4] hover:bg-[#F2EDE6] border-[#EAE4DC] hover:border-[#E87A3E]/45 text-[#181512]'
-                  : 'bg-[#211D1A] hover:bg-[#2B2521] border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/45 text-[#FAF7F2]'
+                  ? 'bg-[#FAF9F6] hover:bg-[#F1EFEA] border-[#E6E4DF] hover:border-[#111113]/30 dark:hover:border-white/30 text-[#111113]'
+                  : 'bg-[#1C1C22] hover:bg-[#24242C] border-white/[0.08] hover:border-[#111113]/30 dark:hover:border-white/30 text-[#F5F5F7]'
               }`}
             >
               &ldquo;Bu saniyede ben de varım!&rdquo;
@@ -538,8 +540,8 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               }
               className={`p-3 rounded-xl border text-left transition-transform duration-100 ease-out active:scale-[0.96] font-medium min-h-[44px] cursor-pointer ${
                 isLight
-                  ? 'bg-[#FAF8F4] hover:bg-[#F2EDE6] border-[#EAE4DC] hover:border-[#E87A3E]/45 text-[#181512]'
-                  : 'bg-[#211D1A] hover:bg-[#2B2521] border-[#FFF0E1]/[0.08] hover:border-[#E87A3E]/45 text-[#FAF7F2]'
+                  ? 'bg-[#FAF9F6] hover:bg-[#F1EFEA] border-[#E6E4DF] hover:border-[#111113]/30 dark:hover:border-white/30 text-[#111113]'
+                  : 'bg-[#1C1C22] hover:bg-[#24242C] border-white/[0.08] hover:border-[#111113]/30 dark:hover:border-white/30 text-[#F5F5F7]'
               }`}
             >
               &ldquo;Sıradaki şarkıyı sen öner&rdquo;
@@ -551,7 +553,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => onSendFrequency(user)}
-          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white font-semibold text-xs uppercase tracking-wider transition-transform duration-100 ease-out flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 active:scale-[0.96] min-h-[48px] cursor-pointer"
+          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs uppercase tracking-wider transition-transform duration-100 ease-out flex items-center justify-center gap-2 shadow-sm active:scale-[0.96] min-h-[48px] cursor-pointer"
         >
           <Radio className="w-4 h-4 stroke-[2.25]" />
           <span>Frekans Gönder ve Sohbeti Aç</span>

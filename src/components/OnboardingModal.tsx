@@ -34,7 +34,7 @@ const PRESET_AVATARS = [
   {
     id: 'av_3',
     name: 'Sunset Velvet',
-    gradient: 'from-amber-500 via-orange-600 to-rose-600',
+    gradient: 'from-zinc-700 via-zinc-800 to-zinc-900',
     seed: 'SV',
     url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
   },

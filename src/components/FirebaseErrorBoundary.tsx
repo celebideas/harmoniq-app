@@ -45,7 +45,7 @@ export class FirebaseErrorBoundary extends React.Component<
         <div className="min-h-screen bg-[#0A090F] text-[#F4F3F8] flex items-center justify-center p-6">
           <div className="max-w-md w-full rounded-2xl bg-[#14121E] border border-white/10 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0">
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>

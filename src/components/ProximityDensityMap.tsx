@@ -53,34 +53,40 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({
     <div
       className={`rounded-xl px-3 py-2.5 border space-y-2 transition-colors ${
         isLight
-          ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
-          : 'bg-[#211D1A] border-[#FFF0E1]/[0.06] text-[#FAF7F2]'
+          ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#111113]'
+          : 'bg-[#1C1C22] border-white/[0.06] text-[#F5F5F7]'
       }`}
     >
-      {/* Top Row: Left label · Center copper mono badge · Right listener counter */}
+      {/* Top Row: Left label · Center monochrome mono badge · Right listener counter */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
         <span
           className={`font-medium truncate ${
-            isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
           }`}
         >
           Mesafe Yarıçapı
         </span>
 
-        <span className="px-2.5 py-0.5 rounded-lg bg-[#E87A3E]/15 border border-[#E87A3E]/30 text-[#D96B2C] dark:text-[#F49A5E] font-mono tabular-nums text-[11px] font-bold whitespace-nowrap">
+        <span
+          className={`px-2.5 py-0.5 rounded-lg border font-mono tabular-nums text-[11px] font-bold whitespace-nowrap ${
+            isLight
+              ? 'bg-[#111113]/[0.08] border-[#111113]/15 text-[#111113]'
+              : 'bg-white/[0.10] border-white/15 text-white'
+          }`}
+        >
           {activeLabel}
         </span>
 
         <span
           className={`text-right font-mono tabular-nums text-[11px] font-medium truncate ${
-            isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
           }`}
         >
           {listenerCount} dinleyici
         </span>
       </div>
 
-      {/* Thin Copper Range Slider */}
+      {/* Thin Monochrome Range Slider */}
       <div className="space-y-1">
         <div className="relative flex items-center">
           <input
@@ -96,19 +102,21 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({
             aria-label="Mesafe Yarıçapı"
             aria-valuetext={activeLabel}
             style={{
-              background: `linear-gradient(to right, #E87A3E 0%, #D97706 ${fillPct}%, ${
-                isLight ? '#E2D9CE' : 'rgba(255,240,225,0.12)'
+              background: `linear-gradient(to right, ${
+                isLight ? '#111113' : '#FFFFFF'
+              } 0%, ${isLight ? '#111113' : '#FFFFFF'} ${fillPct}%, ${
+                isLight ? '#E2DFD9' : 'rgba(255,255,255,0.14)'
               } ${fillPct}%, ${
-                isLight ? '#E2D9CE' : 'rgba(255,240,225,0.12)'
+                isLight ? '#E2DFD9' : 'rgba(255,255,255,0.14)'
               } 100%)`,
             }}
-            className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#E87A3E] focus:outline-none"
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#111113] dark:accent-white focus:outline-none"
           />
         </div>
 
         <div
           className={`flex items-center justify-between text-[10px] font-mono tabular-nums ${
-            isLight ? 'text-[#8E847A]' : 'text-[#A39A91]'
+            isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
           }`}
         >
           <span>1 km</span>
@@ -711,9 +719,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
       }
 
       if (cfg.radiusMeters !== null) {
-        const strokeColor = radiusKm <= 2 ? '#22C55E' : '#E87A3E';
-        const fillColor = radiusKm <= 2 ? '#22C55E' : '#E87A3E';
-        const fillOpacity = effectiveTheme === 'light' ? 0.1 : 0.14;
+        const strokeColor =
+          radiusKm <= 2 ? '#22C55E' : effectiveTheme === 'light' ? '#111113' : '#F5F5F7';
+        const fillColor =
+          radiusKm <= 2 ? '#22C55E' : effectiveTheme === 'light' ? '#111113' : '#F5F5F7';
+        const fillOpacity = effectiveTheme === 'light' ? 0.08 : 0.1;
         if (circleRef.current) {
           circleRef.current
             .setLatLng(cityCenter)
@@ -879,14 +889,14 @@ export const ProximityDensityMap: React.FC<Props> = ({
       <div
         className={`relative rounded-2xl border p-4 sm:p-5 overflow-hidden select-none space-y-3.5 transition-colors duration-150 ${
           isLight
-            ? 'bg-white border-[#EAE4DC] shadow-[0_4px_20px_rgba(24,21,18,0.04)] text-[#181512]'
-            : 'bg-[#171412] border-[#FFF0E1]/[0.08] shadow-none text-[#FAF7F2]'
+            ? 'bg-white border-[#E6E4DF] shadow-[0_2px_12px_rgba(17,17,19,0.04)] text-[#111113]'
+            : 'bg-[#141418] border-white/[0.08] shadow-none text-[#F5F5F7]'
         }`}
       >
-        {/* Clean Header inside Map Card (No city chip clutter or duplicate GPS button) */}
+        {/* Clean Header inside Map Card */}
         <div
           className={`relative z-10 flex flex-col gap-2 pb-3 border-b text-xs ${
-            isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.06]'
+            isLight ? 'border-[#E6E4DF]' : 'border-white/[0.06]'
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -898,7 +908,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               />
               <span
                 className={`font-bold text-sm tracking-tight ${
-                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                 }`}
               >
                 Canlı Frekans & Yoğunluk Haritası
@@ -908,11 +918,16 @@ export const ProximityDensityMap: React.FC<Props> = ({
             <div
               className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-xl border ${
                 isLight
-                  ? 'text-[#6B635B] bg-[#F2EDE6] border-[#E2D9CE]'
-                  : 'text-[#A39A91] bg-[#211D1A] border-[#FFF0E1]/[0.06]'
+                  ? 'text-[#63636B] bg-[#F1EFEA] border-[#E2DFD9]'
+                  : 'text-[#8E8E98] bg-[#1C1C22] border-white/[0.06]'
               }`}
             >
-              <Compass className="w-3.5 h-3.5 shrink-0 text-[#E87A3E]" strokeWidth={1.75} />
+              <Compass
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
+                }`}
+                strokeWidth={1.75}
+              />
               <span className="truncate max-w-[170px] font-medium">{myCity}</span>
             </div>
           </div>
@@ -921,12 +936,12 @@ export const ProximityDensityMap: React.FC<Props> = ({
             <div
               className={`px-3 py-1.5 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${
                 isLight
-                  ? 'bg-[#F2EDE6] border-[#E2D9CE] text-[#181512]'
-                  : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                  ? 'bg-[#F1EFEA] border-[#E2DFD9] text-[#111113]'
+                  : 'bg-[#1C1C22] border-white/[0.08] text-[#F5F5F7]'
               }`}
             >
               <span className="flex items-center gap-1.5 min-w-0">
-                <MapPin className="w-3.5 h-3.5 text-[#E87A3E] shrink-0" strokeWidth={1.75} />
+                <MapPin className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
                 <span className="truncate">{gpsStatusNote}</span>
               </span>
               <button
@@ -934,8 +949,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 onClick={() => setGpsStatusNote(null)}
                 className={`cursor-pointer shrink-0 transition ${
                   isLight
-                    ? 'text-[#6B635B] hover:text-[#181512]'
-                    : 'text-[#A39A91] hover:text-[#FAF7F2]'
+                    ? 'text-[#63636B] hover:text-[#111113]'
+                    : 'text-[#8E8E98] hover:text-[#F5F5F7]'
                 }`}
                 aria-label="Kapat"
               >
@@ -951,8 +966,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
             mapStyle === 'satellite' ? 'map-satellite-mode' : ''
           } h-[340px] sm:h-[380px] rounded-xl overflow-hidden border relative z-10 ${
             isLight
-              ? 'border-[#EAE4DC] bg-[#F2EDE6]'
-              : 'border-[#FFF0E1]/[0.08] bg-[#0E0C0B]'
+              ? 'border-[#E6E4DF] bg-[#F1EFEA]'
+              : 'border-white/[0.08] bg-[#0B0B0D]'
           }`}
         >
           <div ref={mapContainerRef} className="w-full h-full z-0" />
@@ -963,10 +978,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
             aria-label="Harita katman seçici"
             className={`absolute top-3 left-3 z-[450] p-0.5 rounded-xl border backdrop-blur-md shadow-md flex items-center gap-0.5 ${
               mapStyle === 'satellite'
-                ? 'keep-dark bg-[#171412]/88 border-white/15'
+                ? 'keep-dark bg-[#141418]/88 border-white/15'
                 : isLight
-                ? 'bg-white/95 border-[#EAE4DC]'
-                : 'bg-[#171412]/92 border-[#FFF0E1]/[0.1]'
+                ? 'bg-white/95 border-[#E6E4DF]'
+                : 'bg-[#141418]/92 border-white/[0.1]'
             }`}
           >
             <button
@@ -977,12 +992,14 @@ export const ProximityDensityMap: React.FC<Props> = ({
               }}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
                 mapStyle === 'roadmap'
-                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+                  ? isLight
+                    ? 'studio-btn-primary bg-[#111113] text-white shadow-sm'
+                    : 'bg-white text-[#0B0B0D] shadow-sm'
                   : mapStyle === 'satellite'
                   ? 'text-white/80 hover:text-white'
                   : isLight
-                  ? 'text-[#6B635B] hover:text-[#181512]'
-                  : 'text-[#A39A91] hover:text-[#FAF7F2]'
+                  ? 'text-[#63636B] hover:text-[#111113]'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7]'
               }`}
             >
               Harita
@@ -995,10 +1012,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
               }}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
                 mapStyle === 'satellite'
-                  ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
+                  ? 'bg-white text-[#0B0B0D] shadow-sm'
                   : isLight
-                  ? 'text-[#6B635B] hover:text-[#181512]'
-                  : 'text-[#A39A91] hover:text-[#FAF7F2]'
+                  ? 'text-[#63636B] hover:text-[#111113]'
+                  : 'text-[#8E8E98] hover:text-[#F5F5F7]'
               }`}
             >
               Uydu
@@ -1009,10 +1026,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
           <div
             className={`pointer-events-none absolute top-3 right-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-[11px] font-mono tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
               mapStyle === 'satellite'
-                ? 'keep-dark bg-[#171412]/88 border-white/15 text-white'
+                ? 'keep-dark bg-[#141418]/88 border-white/15 text-white'
                 : isLight
-                ? 'bg-white/92 border-[#EAE4DC] text-[#181512]'
-                : 'bg-[#171412]/92 border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                ? 'bg-white/92 border-[#E6E4DF] text-[#111113]'
+                : 'bg-[#141418]/92 border-white/[0.08] text-[#F5F5F7]'
             }`}
           >
             <span
@@ -1030,8 +1047,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
             <div
               className={`flex flex-col rounded-xl overflow-hidden border backdrop-blur-xl shadow-md ${
                 isLight
-                  ? 'bg-white/95 border-[#EAE4DC]'
-                  : 'bg-[#171412]/95 border-[#FFF0E1]/[0.1]'
+                  ? 'bg-white/95 border-[#E6E4DF]'
+                  : 'bg-[#141418]/95 border-white/[0.1]'
               }`}
             >
               <button
@@ -1039,8 +1056,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 onClick={handleZoomIn}
                 className={`w-9 h-9 flex items-center justify-center transition active:scale-95 cursor-pointer border-b ${
                   isLight
-                    ? 'text-[#181512] hover:bg-[#F2EDE6] border-[#EAE4DC]'
-                    : 'text-[#FAF7F2] hover:bg-[#211D1A] border-[#FFF0E1]/[0.08]'
+                    ? 'text-[#111113] hover:bg-[#F1EFEA] border-[#E6E4DF]'
+                    : 'text-[#F5F5F7] hover:bg-[#1C1C22] border-white/[0.08]'
                 }`}
                 title="Yakınlaştır"
                 aria-label="Haritayı yakınlaştır"
@@ -1052,8 +1069,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 onClick={handleZoomOut}
                 className={`w-9 h-9 flex items-center justify-center transition active:scale-95 cursor-pointer ${
                   isLight
-                    ? 'text-[#181512] hover:bg-[#F2EDE6]'
-                    : 'text-[#FAF7F2] hover:bg-[#211D1A]'
+                    ? 'text-[#111113] hover:bg-[#F1EFEA]'
+                    : 'text-[#F5F5F7] hover:bg-[#1C1C22]'
                 }`}
                 title="Uzaklaştır"
                 aria-label="Haritayı uzaklaştır"
@@ -1066,10 +1083,10 @@ export const ProximityDensityMap: React.FC<Props> = ({
               type="button"
               disabled={isRequestingGps}
               onClick={handleRecenterWithGps}
-              className={`w-9 h-9 rounded-xl border backdrop-blur-xl shadow-md flex items-center justify-center text-[#E87A3E] transition active:scale-95 cursor-pointer disabled:opacity-60 ${
+              className={`w-9 h-9 rounded-xl border backdrop-blur-xl shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer disabled:opacity-60 ${
                 isLight
-                  ? 'bg-white/95 border-[#EAE4DC] hover:bg-[#F2EDE6]'
-                  : 'bg-[#171412]/95 border-[#FFF0E1]/[0.1] hover:bg-[#211D1A]'
+                  ? 'bg-white/95 border-[#E6E4DF] text-[#111113] hover:bg-[#F1EFEA]'
+                  : 'bg-[#141418]/95 border-white/[0.1] text-[#F5F5F7] hover:bg-[#1C1C22]'
               }`}
               title="GPS Konumumu Bul ve Odaklan"
               aria-label="GPS konumumu bul ve odaklan"
@@ -1088,8 +1105,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
           <div
             className={`relative z-30 p-4 rounded-2xl border space-y-3 transition-colors duration-150 ${
               isLight
-                ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512]'
-                : 'bg-[#211D1A] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#111113]'
+                : 'bg-[#1C1C22] border-white/[0.08] text-[#F5F5F7]'
             }`}
           >
             {/* Top Row */}
@@ -1101,7 +1118,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     alt={selectedUser.name}
                     referrerPolicy="no-referrer"
                     className={`w-11 h-11 rounded-full object-cover shrink-0 border ${
-                      isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/10'
+                      isLight ? 'border-[#E6E4DF]' : 'border-white/10'
                     }`}
                   />
                 ) : (
@@ -1115,14 +1132,14 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 <div className="min-w-0 flex-1">
                   <h4
                     className={`font-bold text-sm sm:text-base leading-tight truncate ${
-                      isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                     }`}
                   >
                     {selectedUser.name}, {selectedUser.age}
                   </h4>
                   <p
                     className={`text-xs font-medium mt-0.5 flex items-center gap-1 ${
-                      isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                      isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                     }`}
                   >
                     <MapPin className="w-3 h-3 shrink-0" strokeWidth={1.75} />
@@ -1135,8 +1152,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 <span
                   className={`px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold tabular-nums ${
                     isLight
-                      ? 'bg-white text-[#181512] border-[#EAE4DC]'
-                      : 'bg-[#171412] text-[#FAF7F2] border-[#FFF0E1]/[0.08]'
+                      ? 'bg-white text-[#111113] border-[#E6E4DF]'
+                      : 'bg-[#141418] text-[#F5F5F7] border-white/[0.08]'
                   }`}
                 >
                   {selectedUser.distanceKm} km
@@ -1146,8 +1163,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   onClick={() => setSelectedUserId(null)}
                   className={`w-8 h-8 rounded-full border flex items-center justify-center transition cursor-pointer ${
                     isLight
-                      ? 'bg-white border-[#EAE4DC] text-[#6B635B] hover:text-[#181512]'
-                      : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#A39A91] hover:text-[#FAF7F2]'
+                      ? 'bg-white border-[#E6E4DF] text-[#63636B] hover:text-[#111113]'
+                      : 'bg-[#141418] border-white/[0.08] text-[#8E8E98] hover:text-[#F5F5F7]'
                   }`}
                   title="Kapat"
                   aria-label="Kullanıcı kartını kapat"
@@ -1190,22 +1207,22 @@ export const ProximityDensityMap: React.FC<Props> = ({
               <span
                 className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
                   isLight
-                    ? 'bg-white border-[#EAE4DC] text-[#181512]'
-                    : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                    ? 'bg-white border-[#E6E4DF] text-[#111113]'
+                    : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
                 }`}
               >
-                <Zap className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
+                <Zap className="w-3 h-3 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />
                 <span>%{selectedUser.compatibilityScore || 94} Uyum</span>
               </span>
 
               <span
                 className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
                   isLight
-                    ? 'bg-white border-[#EAE4DC] text-[#181512]'
-                    : 'bg-[#171412] border-[#FFF0E1]/[0.08] text-[#FAF7F2]'
+                    ? 'bg-white border-[#E6E4DF] text-[#111113]'
+                    : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
                 }`}
               >
-                <Music className="w-3 h-3 text-[#E87A3E]" strokeWidth={1.75} />
+                <Music className="w-3 h-3 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />
                 <span>{formatTime(selectedUser.currentSecond)}</span>
               </span>
             </div>
@@ -1214,13 +1231,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
             <div
               className={`p-2.5 rounded-xl border ${
                 isLight
-                  ? 'bg-white border-[#EAE4DC]'
-                  : 'bg-[#171412] border-[#FFF0E1]/[0.08]'
+                  ? 'bg-white border-[#E6E4DF]'
+                  : 'bg-[#141418] border-white/[0.08]'
               }`}
             >
               <p
                 className={`text-xs italic leading-relaxed ${
-                  isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                  isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                 }`}
               >
                 "{selectedUser.statusBubble || `${formatTime(selectedUser.currentSecond)} anında aynı frekansta dinliyor.`}"
@@ -1237,7 +1254,11 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     onSeekSecond(selectedUser.currentSecond);
                   }
                 }}
-                className="min-h-[42px] py-2 px-3 rounded-xl studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                className={`min-h-[42px] py-2 px-3 rounded-xl font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm ${
+                  isLight
+                    ? 'studio-btn-primary bg-[#111113] hover:bg-zinc-800 text-white'
+                    : 'bg-white hover:bg-zinc-200 text-[#0B0B0D]'
+                }`}
               >
                 <span className="font-mono tabular-nums">
                   {formatTime(selectedUser.currentSecond)} Anına Katıl
@@ -1256,8 +1277,8 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 }}
                 className={`min-h-[42px] py-2 px-3 rounded-xl border font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
                   isLight
-                    ? 'bg-white hover:bg-[#F2EDE6] text-[#181512] border-[#EAE4DC]'
-                    : 'bg-[#171412] hover:bg-[#FFF0E1]/10 text-[#FAF7F2] border-[#FFF0E1]/[0.08]'
+                    ? 'bg-white hover:bg-[#F1EFEA] text-[#111113] border-[#E6E4DF]'
+                    : 'bg-[#141418] hover:bg-white/10 text-[#F5F5F7] border-white/[0.08]'
                 }`}
               >
                 <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -1270,17 +1291,17 @@ export const ProximityDensityMap: React.FC<Props> = ({
         {/* District Density Clusters (Real Districts + Diğer Şehirler) */}
         <div
           className={`relative z-10 pt-3.5 border-t space-y-2.5 ${
-            isLight ? 'border-[#EAE4DC]' : 'border-[#FFF0E1]/[0.06]'
+            isLight ? 'border-[#E6E4DF]' : 'border-white/[0.06]'
           }`}
         >
           <div
             className={`flex items-center justify-between text-[11px] gap-2 ${
-              isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+              isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
             <span
               className={`font-semibold ${
-                isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
               Bölge Yoğunluğu ({myCity.split(',')[0].trim()})
@@ -1305,16 +1326,16 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   className={`p-3 rounded-xl border text-left transition cursor-pointer active:scale-95 flex flex-col justify-between gap-2 ${
                     isActive
                       ? isLight
-                        ? 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#181512]'
-                        : 'bg-[#E87A3E]/15 border-[#E87A3E]/35 text-[#FAF7F2]'
+                        ? 'bg-[#111113]/[0.08] border-[#111113]/25 text-[#111113]'
+                        : 'bg-white/[0.10] border-white/25 text-white'
                       : isLight
-                      ? 'bg-[#FAF8F4] border-[#EAE4DC] text-[#181512] hover:bg-[#F2EDE6]'
-                      : 'bg-[#211D1A] border-[#FFF0E1]/[0.06] text-[#FAF7F2] hover:bg-[#2A2420]'
+                      ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#111113] hover:bg-[#F1EFEA]'
+                      : 'bg-[#1C1C22] border-white/[0.06] text-[#F5F5F7] hover:bg-white/[0.08]'
                   }`}
                 >
                   <div
                     className={`font-semibold text-xs leading-snug ${
-                      isLight ? 'text-[#181512]' : 'text-[#FAF7F2]'
+                      isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                     }`}
                   >
                     {displayLabel}
@@ -1329,13 +1350,13 @@ export const ProximityDensityMap: React.FC<Props> = ({
                       >
                         {cluster.count} kişi
                       </span>
-                      <span className={isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'}>
+                      <span className={isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}>
                         {cluster.avgDistance} km
                       </span>
                     </div>
                     <div
                       className={`text-[10px] font-medium ${
-                        isLight ? 'text-[#6B635B]' : 'text-[#A39A91]'
+                        isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                       }`}
                     >
                       {isRemoteCluster

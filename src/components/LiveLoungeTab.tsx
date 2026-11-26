@@ -269,17 +269,17 @@ export const LiveLoungeTab: React.FC<Props> = ({
       <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 pb-8 max-w-xl lg:max-w-4xl mx-auto w-full relative select-none">
         <section
           aria-label="Sahnen Hazır"
-          className="rounded-3xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_8px_32px_rgba(24,21,18,0.06)] dark:shadow-none p-7 sm:p-10 text-center flex flex-col items-center justify-center space-y-5"
+          className="rounded-3xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_8px_32px_rgba(24,21,18,0.06)] dark:shadow-none p-7 sm:p-10 text-center flex flex-col items-center justify-center space-y-5"
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#E87A3E]/15 border border-[#E87A3E]/25 flex items-center justify-center text-[#E87A3E]">
+          <div className="w-16 h-16 rounded-2xl bg-[#111113]/[0.08] dark:bg-white/[0.10] border border-[#111113]/15 dark:border-white/15 flex items-center justify-center text-[#111113] dark:text-[#F5F5F7]">
             <Disc3 className="w-8 h-8" strokeWidth={1.6} />
           </div>
 
           <div className="space-y-2 max-w-md">
-            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-[#181512] dark:text-[#FAF7F2] tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-[#111113] dark:text-[#F5F5F7] tracking-tight">
               Sahnen Hazır — İlk Parçanı Başlat
             </h2>
-            <p className="text-xs sm:text-sm text-[#6B635B] dark:text-[#A39A91] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
               Kendi kütüphanenden bir parça aç veya dilediğin şarkıyı arayıp canlı zaman rayında aynı saniyedeki dinleyicilerle buluş.
             </p>
           </div>
@@ -291,7 +291,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 triggerHaptic(15);
                 onOpenSongPicker();
               }}
-              className="studio-btn-primary w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-lg shadow-amber-950/20 font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
+              className="studio-btn-primary w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] shadow-sm font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
             >
               <Search className="w-4 h-4" strokeWidth={1.85} />
               <span>Şarkı Ara ve Başlat</span>
@@ -304,9 +304,9 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   triggerHaptic(15);
                   onOpenYouTubeConnect();
                 }}
-                className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#EAE4DC] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E6E4DF] dark:hover:bg-white/10 border border-[#E2DFD9] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] font-semibold text-xs sm:text-sm active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex items-center justify-center gap-2"
               >
-                <Link2 className="w-4 h-4 text-[#E87A3E]" strokeWidth={1.85} />
+                <Link2 className="w-4 h-4 text-[#111113] dark:text-[#F5F5F7]" strokeWidth={1.85} />
                 <span>YouTube Music Kütüphaneni Bağla</span>
               </button>
             )}
@@ -326,11 +326,11 @@ export const LiveLoungeTab: React.FC<Props> = ({
             aria-label="Şu Anda Çalan"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="relative rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-4 overflow-hidden"
+            className="relative rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none p-4 overflow-hidden"
           >
             {/* Swipe Visual Feedback */}
             {swipeHint && (
-              <div className="absolute inset-0 z-30 bg-[#0E0C0B]/75 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 z-30 bg-[#0B0B0D]/75 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                 <div className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white font-semibold text-xs flex items-center gap-2">
                   {swipeHint === 'next' ? (
                     <>
@@ -353,7 +353,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 <div
                   className={
                     showKlipMode
-                      ? 'mb-2.5 rounded-xl overflow-hidden border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] aspect-video w-full bg-black relative block'
+                      ? 'mb-2.5 rounded-xl overflow-hidden border border-[#E6E4DF] dark:border-white/[0.08] aspect-video w-full bg-black relative block'
                       : 'fixed -bottom-48 -right-48 w-56 h-36 opacity-0 pointer-events-none z-[-10]'
                   }
                 >
@@ -383,7 +383,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     <div
                       onTouchStart={(e) => e.stopPropagation()}
                       onTouchEnd={(e) => e.stopPropagation()}
-                      className="mb-3.5 rounded-xl p-2.5 sm:p-3 bg-[#FAF8F4] dark:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] space-y-2.5"
+                      className="mb-3.5 rounded-xl p-2.5 sm:p-3 bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.08] space-y-2.5"
                     >
                       {/* Draggable Progress Bar + Live Monospace Timestamp */}
                       <div className="flex items-center gap-2.5">
@@ -396,15 +396,19 @@ export const LiveLoungeTab: React.FC<Props> = ({
                           onChange={(e) => handleVideoSeek(Number(e.target.value))}
                           aria-label="Video ilerleme çubuğu"
                           style={{
-                            background: `linear-gradient(to right, #E87A3E 0%, #D97706 ${progressPct}%, ${
-                              themeMode === 'light' ? '#E2D9CE' : 'rgba(255,240,225,0.14)'
+                            background: `linear-gradient(to right, ${
+                              themeMode === 'light' ? '#111113' : '#FFFFFF'
+                            } 0%, ${
+                              themeMode === 'light' ? '#111113' : '#FFFFFF'
                             } ${progressPct}%, ${
-                              themeMode === 'light' ? '#E2D9CE' : 'rgba(255,240,225,0.14)'
+                              themeMode === 'light' ? '#E2DFD9' : 'rgba(255,255,255,0.16)'
+                            } ${progressPct}%, ${
+                              themeMode === 'light' ? '#E2DFD9' : 'rgba(255,255,255,0.16)'
                             } 100%)`,
                           }}
-                          className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-[#E87A3E] focus:outline-none"
+                          className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-[#111113] dark:accent-white focus:outline-none"
                         />
-                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#6B635B] dark:text-[#A39A91] shrink-0">
+                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#63636B] dark:text-[#8E8E98] shrink-0">
                           {formatTime(clampedSec)} / {formatTime(totalDur)}
                         </span>
                       </div>
@@ -418,7 +422,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                               triggerHaptic(12);
                               handleVideoSeek(clampedSec - 10);
                             }}
-                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
+                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/10 border border-[#E6E4DF] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
                             title="10 saniye geri sar"
                             aria-label="10 saniye geri sar"
                           >
@@ -432,7 +436,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                               triggerHaptic(18);
                               onTogglePlay();
                             }}
-                            className="studio-btn-primary h-9 px-3.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white shadow-md shadow-amber-950/20 text-xs font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5"
+                            className="studio-btn-primary h-9 px-3.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] shadow-sm text-xs font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5"
                             title={isPlaying ? 'Videoyu duraklat' : 'Videoyu oynat'}
                             aria-label={isPlaying ? 'Videoyu duraklat' : 'Videoyu oynat'}
                           >
@@ -452,7 +456,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                               triggerHaptic(12);
                               handleVideoSeek(clampedSec + 10);
                             }}
-                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
+                            className="h-9 px-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/10 border border-[#E6E4DF] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1"
                             title="10 saniye ileri sar"
                             aria-label="10 saniye ileri sar"
                           >
@@ -467,11 +471,11 @@ export const LiveLoungeTab: React.FC<Props> = ({
                             triggerHaptic(12);
                             setShowKlipMode(false);
                           }}
-                          className="h-9 px-3 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#FFF0E1]/10 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                          className="h-9 px-3 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-white/10 border border-[#E6E4DF] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7] text-[11px] font-semibold active:scale-[0.96] transition cursor-pointer flex items-center gap-1.5 shrink-0"
                           title="Sadece ses moduna dön"
                           aria-label="Sadece ses moduna dön"
                         >
-                          <Headphones className="w-3.5 h-3.5 text-[#E87A3E]" strokeWidth={1.85} />
+                          <Headphones className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" strokeWidth={1.85} />
                           <span>Sese Dön</span>
                         </button>
                       </div>
@@ -490,7 +494,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                   triggerHaptic(12);
                   onOpenNowPlaying();
                 }}
-                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]"
+                className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.08]"
                 title="Tam ekran oynatıcıyı aç"
                 aria-label={`${currentSong.title} tam ekran oynatıcıyı aç`}
               >
@@ -512,10 +516,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 onClick={onOpenNowPlaying}
                 className="min-w-0 flex-1 cursor-pointer group/title active:scale-[0.98] transition-transform duration-100 ease-out"
               >
-                <h2 className="text-base font-bold text-[#181512] dark:text-[#FAF7F2] truncate leading-snug tracking-tight group-hover/title:opacity-75 transition-opacity">
+                <h2 className="text-base font-bold text-[#111113] dark:text-[#F5F5F7] truncate leading-snug tracking-tight group-hover/title:opacity-75 transition-opacity">
                   {currentSong.title}
                 </h2>
-                <p className="text-sm text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
+                <p className="text-sm text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                   {currentSong.artist}
                 </p>
               </div>
@@ -531,8 +535,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     }}
                     className={`w-9 h-9 rounded-full border flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                       showKlipMode
-                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/30'
-                        : 'bg-[#F2EDE6] dark:bg-[#211D1A] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
+                        ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] border-[#111113]/20 dark:border-white/20'
+                        : 'bg-[#F1EFEA] dark:bg-[#1C1C22] border-[#E2DFD9] dark:border-white/[0.08] text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
                     }`}
                     title={showKlipMode ? 'Klip görünümünü kapat' : 'Video klip görünümü'}
                     aria-label={showKlipMode ? 'Klip görünümünü kapat' : 'Video klip görünümü'}
@@ -547,7 +551,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(12);
                     onOpenSongPicker();
                   }}
-                  className="w-10 h-10 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] text-[#181512] dark:text-[#FAF7F2] flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E5E2DC] dark:hover:bg-white/10 border border-[#E2DFD9] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer"
                   title="Şarkı ara veya değiştir"
                   aria-label="Şarkı ara veya değiştir"
                 >
@@ -560,7 +564,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                     triggerHaptic(20);
                     onTogglePlay();
                   }}
-                  className="studio-btn-primary w-12 h-12 rounded-full bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-lg shadow-amber-950/20"
+                  className="studio-btn-primary w-12 h-12 rounded-full bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] flex items-center justify-center active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-sm"
                   title={isPlaying ? 'Duraklat' : 'Oynat'}
                   aria-label={isPlaying ? 'Şarkıyı duraklat' : 'Şarkıyı oynat'}
                 >
@@ -601,26 +605,26 @@ export const LiveLoungeTab: React.FC<Props> = ({
           {/* 3. SAKİN "SANİYE ANILARI" BÖLÜMÜ (Dinamik, yalnızca çalan parçaya özel) */}
           <section
             aria-label="Saniye Anıları"
-            className="rounded-2xl bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3.5"
+            className="rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none p-4 sm:p-5 space-y-3.5"
           >
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-[#181512] dark:text-[#FAF7F2] tracking-tight">
+              <h3 className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7] tracking-tight">
                 Saniye Anıları
               </h3>
-              <span className="text-[11px] font-mono tabular-nums text-[#6B635B] dark:text-[#A39A91]">
+              <span className="text-[11px] font-mono tabular-nums text-[#63636B] dark:text-[#8E8E98]">
                 {activeSongNotes.length} anı
               </span>
             </div>
 
             {activeSongNotes.length === 0 ? (
-              <div className="py-4 px-3 rounded-xl bg-[#FAF8F4] dark:bg-[#211D1A]/70 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] text-center">
-                <p className="text-xs text-[#6B635B] dark:text-[#A39A91]">
+              <div className="py-4 px-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border border-[#E6E4DF] dark:border-white/[0.06] text-center">
+                <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                   Bu parçada ilk saniye anısını sen bırak
                 </p>
               </div>
             ) : (
               /* Clean Editorial Quote Rows (Comment left, clickable mono timestamp right) */
-              <div className="divide-y divide-[#EAE4DC] dark:divide-[#FFF0E1]/[0.06]">
+              <div className="divide-y divide-[#E6E4DF] dark:divide-white/[0.06]">
                 {activeSongNotes.slice(0, 5).map((vibe) => {
                   const isNearCurrent = Math.abs(mySecond - vibe.second) <= 5;
                   return (
@@ -636,10 +640,10 @@ export const LiveLoungeTab: React.FC<Props> = ({
                           vibe.isMine ? '' : 'cursor-pointer group/vibe'
                         }`}
                       >
-                        <p className="text-xs sm:text-[13px] text-[#181512] dark:text-[#FAF7F2] leading-relaxed">
+                        <p className="text-xs sm:text-[13px] text-[#111113] dark:text-[#F5F5F7] leading-relaxed">
                           "{vibe.note}"
                         </p>
-                        <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] group-hover/vibe:text-[#181512] dark:group-hover/vibe:text-[#FAF7F2] transition-colors block truncate">
+                        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] group-hover/vibe:text-[#111113] dark:group-hover/vibe:text-[#F5F5F7] transition-colors block truncate">
                           {vibe.userName}
                         </span>
                       </div>
@@ -650,7 +654,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                         className={`px-2.5 py-1 rounded-lg font-mono tabular-nums text-[11px] font-semibold shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                           isNearCurrent
                             ? 'bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/30 dark:border-[#22C55E]/30'
-                            : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#181512] dark:text-[#FAF7F2] hover:bg-[#E8E0D5] dark:hover:bg-[#FFF0E1]/10 border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
+                            : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] hover:bg-[#E5E2DC] dark:hover:bg-white/10 border border-[#E2DFD9] dark:border-white/[0.08]'
                         }`}
                         title={`${formatTime(vibe.second)} anına sar`}
                       >
@@ -665,7 +669,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
             {/* Single-line Calm Note Input */}
             <form
               onSubmit={handleSendCustomNote}
-              className="pt-2 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] flex items-center gap-2"
+              className="pt-2 border-t border-[#E6E4DF] dark:border-white/[0.06] flex items-center gap-2"
             >
               <input
                 type="text"
@@ -673,12 +677,12 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 onChange={(e) => setCustomNoteText(e.target.value)}
                 placeholder={`${formatTime(mySecond)} anına kısa bir not bırak...`}
                 maxLength={100}
-                className="flex-1 min-w-0 h-10 px-3 rounded-xl bg-[#F2EDE6] dark:bg-[#211D1A] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] focus:border-[#E87A3E]/60 text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none transition"
+                className="flex-1 min-w-0 h-10 px-3 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.08] focus:border-[#111113]/40 dark:focus:border-white/30 text-xs text-[#111113] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none transition"
               />
               <button
                 type="submit"
                 disabled={!customNoteText.trim()}
-                className="studio-btn-primary w-10 h-10 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white flex items-center justify-center shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-lg shadow-amber-950/20 disabled:opacity-35 disabled:cursor-not-allowed"
+                className="studio-btn-primary w-10 h-10 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] flex items-center justify-center shrink-0 active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shadow-sm disabled:opacity-35 disabled:cursor-not-allowed"
                 title="Not bırak"
                 aria-label="Not bırak"
               >
@@ -686,8 +690,8 @@ export const LiveLoungeTab: React.FC<Props> = ({
               </button>
             </form>
             {/* Quiet Single-Line Continuous Radio Footer */}
-            <div className="pt-2.5 border-t border-[#EAE4DC] dark:border-[#FFF0E1]/[0.06] flex items-center justify-between gap-2 text-xs">
-              <span className="text-[#6B635B] dark:text-[#A39A91] truncate">
+            <div className="pt-2.5 border-t border-[#E6E4DF] dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
+              <span className="text-[#63636B] dark:text-[#8E8E98] truncate">
                 {nextRadioSong ? `Sıradaki: ${nextRadioSong.title}` : 'Sürekli Akış'}
               </span>
               <button
@@ -696,7 +700,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer shrink-0 border ${
                   autoRadioEnabled
                     ? 'bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border-[#16A34A]/25 dark:border-[#22C55E]/25'
-                    : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08]'
+                    : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] border-[#E2DFD9] dark:border-white/[0.08]'
                 }`}
               >
                 {autoRadioEnabled ? 'Radyo Açık' : 'Radyo Kapalı'}

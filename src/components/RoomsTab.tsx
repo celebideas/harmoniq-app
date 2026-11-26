@@ -145,8 +145,8 @@ const ArtistCardCompact: React.FC<{
       onClick={onEnter}
       className={`min-w-[144px] max-w-[154px] p-3.5 rounded-2xl border active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer flex flex-col items-center text-center shrink-0 group ${
         isCurrentArtist
-          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
-          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
+          ? 'bg-[#111113]/[0.06] dark:bg-white/[0.08] border-[#111113]/25 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none'
       }`}
     >
       <div className="relative mb-2.5">
@@ -156,7 +156,7 @@ const ArtistCardCompact: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-[#211D1A] group-hover:scale-105 transition-transform"
+            className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#E6E4DF] dark:border-white/[0.08] bg-[#1C1C22] group-hover:scale-105 transition-transform"
           />
         ) : (
           <div
@@ -167,10 +167,10 @@ const ArtistCardCompact: React.FC<{
         )}
       </div>
 
-      <span className="text-xs font-bold text-[#181512] dark:text-[#FAF7F2] truncate w-full">
+      <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate w-full">
         {room.artist}
       </span>
-      <span className="text-[11px] text-[#6B635B] dark:text-[#A39A91] truncate w-full mt-0.5">
+      <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
         {room.topSongTitle}
       </span>
 
@@ -195,8 +195,8 @@ const ArtistRoomRow: React.FC<{
       onClick={onEnter}
       className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out min-h-[68px] ${
         isCurrentArtist
-          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
-          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
+          ? 'bg-[#111113]/[0.06] dark:bg-white/[0.08] border-[#111113]/25 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -206,7 +206,7 @@ const ArtistRoomRow: React.FC<{
             alt={room.artist}
             loading="lazy"
             decoding="async"
-            className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] bg-[#211D1A]"
+            className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#E6E4DF] dark:border-white/[0.08] bg-[#1C1C22]"
           />
         ) : (
           <div
@@ -217,10 +217,10 @@ const ArtistRoomRow: React.FC<{
         )}
 
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
+          <div className="text-sm font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
             {room.artist}
           </div>
-          <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
+          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
             {room.topSongTitle} · {room.genre}
           </div>
         </div>
@@ -234,8 +234,8 @@ const ArtistRoomRow: React.FC<{
         <div
           className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
             isCurrentArtist
-              ? 'studio-btn-primary bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white shadow-sm'
-              : 'bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] group-hover:bg-[#E87A3E] group-hover:text-white'
+              ? 'studio-btn-primary bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] shadow-sm'
+              : 'bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#111113] dark:hover:bg-white dark:hover:text-[#0B0B0D] group-hover:text-white'
           }`}
           title={`${room.artist} Odasına Gir`}
         >
@@ -261,12 +261,12 @@ const SongRoomRow: React.FC<{
       onClick={onSelect}
       className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 group cursor-pointer active:scale-[0.96] transition-transform duration-100 ease-out min-h-[68px] ${
         isCurrent
-          ? 'bg-[#E87A3E]/10 dark:bg-[#E87A3E]/15 border-[#E87A3E]/35'
-          : 'bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] shadow-[0_4px_20px_rgba(24,21,18,0.04)] dark:shadow-none'
+          ? 'bg-[#111113]/[0.06] dark:bg-white/[0.08] border-[#111113]/25 dark:border-white/25'
+          : 'bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(17,17,19,0.04)] dark:shadow-none'
       }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#211D1A] shrink-0 border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08]">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 border border-[#E6E4DF] dark:border-white/[0.08]">
           {song.coverUrl ? (
             <img
               src={song.coverUrl}
@@ -283,10 +283,10 @@ const SongRoomRow: React.FC<{
         </div>
 
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#181512] dark:text-[#FAF7F2] truncate">
+          <div className="text-sm font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
             {song.title}
           </div>
-          <div className="text-xs text-[#6B635B] dark:text-[#A39A91] truncate mt-0.5">
+          <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
             {song.artist} · <span className="font-mono tabular-nums">{formatDuration(song.durationSeconds)}</span>
           </div>
         </div>
@@ -297,7 +297,7 @@ const SongRoomRow: React.FC<{
           <LiveMiniEqualizer />
           <span>{listenerCount}</span>
         </span>
-        <div className="w-8 h-8 rounded-full bg-[#F2EDE6] dark:bg-[#211D1A] text-[#6B635B] dark:text-[#A39A91] group-hover:bg-[#E87A3E] group-hover:text-white flex items-center justify-center transition">
+        <div className="w-8 h-8 rounded-full bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#63636B] dark:text-[#8E8E98] group-hover:bg-[#111113] dark:hover:bg-white dark:hover:text-[#0B0B0D] group-hover:text-white flex items-center justify-center transition">
           <ChevronRight className="w-4 h-4" strokeWidth={1.75} />
         </div>
       </div>
@@ -569,7 +569,7 @@ export const RoomsTab: React.FC<Props> = ({
         <div
           role="tablist"
           aria-label="Keşfet görünümü"
-          className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#F2EDE6] dark:bg-[#171412] border border-[#E2D9CE] dark:border-[#FFF0E1]/[0.08] w-full sm:w-auto sm:min-w-[290px]"
+          className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-[#F1EFEA] dark:bg-[#141418] border border-[#E2DFD9] dark:border-white/[0.08] w-full sm:w-auto sm:min-w-[290px]"
         >
           <button
             type="button"
@@ -581,8 +581,8 @@ export const RoomsTab: React.FC<Props> = ({
             }}
             className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
               exploreLens === 'rooms'
-                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
-                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
+                ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] border border-[#111113]/15 dark:border-white/15'
+                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7] border border-transparent'
             }`}
           >
             <Disc3 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
@@ -599,8 +599,8 @@ export const RoomsTab: React.FC<Props> = ({
             }}
             className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
               exploreLens === 'map'
-                ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border border-[#E87A3E]/25'
-                : 'text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] border border-transparent'
+                ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] border border-[#111113]/15 dark:border-white/15'
+                : 'text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7] border border-transparent'
             }`}
           >
             <MapPin className="w-4 h-4 shrink-0" strokeWidth={1.75} />
@@ -652,7 +652,7 @@ export const RoomsTab: React.FC<Props> = ({
           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
             <div className="relative flex-1 min-w-0">
               <Search
-                className="w-4 h-4 text-[#6B635B] dark:text-[#A39A91] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
                 strokeWidth={1.75}
               />
               <input
@@ -660,13 +660,13 @@ export const RoomsTab: React.FC<Props> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Sanatçı veya şarkı odası ara..."
-                className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#171412] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] focus:border-[#E87A3E]/50 rounded-xl text-xs text-[#181512] dark:text-[#FAF7F2] placeholder:text-[#6B635B] dark:placeholder:text-[#A39A91] focus:outline-none transition"
+                className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.08] focus:border-[#111113]/30 dark:border-white/30 rounded-xl text-xs text-[#111113] dark:text-[#F5F5F7] placeholder:text-[#63636B] dark:placeholder:text-[#8E8E98] focus:outline-none transition"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B635B] dark:text-[#A39A91] hover:text-[#181512] dark:hover:text-[#FAF7F2] cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7] cursor-pointer"
                   aria-label="Temizle"
                 >
                   <X className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -688,8 +688,8 @@ export const RoomsTab: React.FC<Props> = ({
                     title={mood.desc}
                     className={`px-3 py-2 text-xs font-semibold rounded-xl transition whitespace-nowrap shrink-0 cursor-pointer border active:scale-95 ${
                       isSelected
-                        ? 'bg-[#E87A3E]/15 text-[#D96B2C] dark:text-[#F49A5E] border-[#E87A3E]/25'
-                        : 'bg-white dark:bg-[#171412] text-[#6B635B] dark:text-[#A39A91] border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] hover:text-[#181512] dark:hover:text-[#FAF7F2]'
+                        ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] border-[#111113]/15 dark:border-white/15'
+                        : 'bg-white dark:bg-[#141418] text-[#63636B] dark:text-[#8E8E98] border-[#E6E4DF] dark:border-white/[0.08] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
                     }`}
                   >
                     {mood.label}
@@ -707,16 +707,16 @@ export const RoomsTab: React.FC<Props> = ({
                 triggerHaptic(18);
                 onStartPersonalRadio();
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#FAF8F4] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] flex items-center justify-between gap-3 transition active:scale-[0.99] cursor-pointer group"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#FAF9F6] dark:hover:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.08] flex items-center justify-between gap-3 transition active:scale-[0.99] cursor-pointer group"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="studio-btn-primary w-7 h-7 rounded-lg bg-gradient-to-br from-[#E87A3E] to-[#D97706] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <span className="studio-btn-primary w-7 h-7 rounded-lg bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] flex items-center justify-center shrink-0 shadow-sm">
                   <Play className="w-3.5 h-3.5 fill-current ml-0.5" strokeWidth={1.85} />
                 </span>
-                <span className="text-xs font-bold text-[#181512] dark:text-[#FAF7F2] truncate">
+                <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                   Kişisel Frekansına Gir
                 </span>
-                <span className="hidden sm:inline text-xs text-[#6B635B] dark:text-[#A39A91] truncate">
+                <span className="hidden sm:inline text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
                   ·{' '}
                   {favoriteArtists.length > 0
                     ? favoriteArtists
@@ -726,14 +726,14 @@ export const RoomsTab: React.FC<Props> = ({
                     : 'Zevkine özel canlı akış'}
                 </span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#6B635B] dark:text-[#A39A91] group-hover:text-[#E87A3E] transition shrink-0" />
+              <ChevronRight className="w-4 h-4 text-[#63636B] dark:text-[#8E8E98] group-hover:text-[#111113] dark:text-[#F5F5F7] transition shrink-0" />
             </button>
           )}
 
           {/* Direct Section 1: Aktif Şarkı Odaları */}
           <section className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-[#6B635B] dark:text-[#A39A91]">
-              <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
+            <div className="flex items-center justify-between text-xs text-[#63636B] dark:text-[#8E8E98]">
+              <span className="font-bold text-[#111113] dark:text-[#F5F5F7]">
                 Aktif Şarkı Odaları
               </span>
               <span className="font-mono tabular-nums text-[11px]">
@@ -742,7 +742,7 @@ export const RoomsTab: React.FC<Props> = ({
             </div>
 
             {filteredSongRooms.length === 0 ? (
-              <div className="py-6 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
+              <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
                 Aramanıza uygun şarkı odası bulunamadı.
               </div>
             ) : (
@@ -775,7 +775,7 @@ export const RoomsTab: React.FC<Props> = ({
                     triggerHaptic(10);
                     setAllModeSongLimit((prev) => prev + 6);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white dark:bg-[#171412] hover:bg-[#F2EDE6] dark:hover:bg-[#211D1A] border border-[#EAE4DC] dark:border-[#FFF0E1]/[0.08] text-xs font-semibold text-[#181512] dark:text-[#FAF7F2] transition cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-white dark:bg-[#141418] hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.08] text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] transition cursor-pointer"
                 >
                   Daha Fazla Oda Göster (+{filteredSongRooms.length - allModeSongLimit})
                 </button>
@@ -787,10 +787,10 @@ export const RoomsTab: React.FC<Props> = ({
           <section className="space-y-3 pt-1">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[#181512] dark:text-[#FAF7F2]">
+                <span className="font-bold text-[#111113] dark:text-[#F5F5F7]">
                   Sanatçı Frekansları
                 </span>
-                <span className="text-[#6B635B] dark:text-[#A39A91] font-mono tabular-nums">
+                <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
                   ({filteredArtistRooms.length})
                 </span>
               </div>
@@ -801,7 +801,7 @@ export const RoomsTab: React.FC<Props> = ({
                     triggerHaptic(10);
                     setVisibleArtistsCount((prev) => prev + 12);
                   }}
-                  className="text-[#D96B2C] dark:text-[#F49A5E] hover:underline font-semibold text-xs transition cursor-pointer"
+                  className="text-[#111113] dark:text-[#F5F5F7] hover:underline font-semibold text-xs transition cursor-pointer"
                 >
                   Daha Fazla (+{filteredArtistRooms.length - visibleArtistsCount})
                 </button>
@@ -809,7 +809,7 @@ export const RoomsTab: React.FC<Props> = ({
             </div>
 
             {filteredArtistRooms.length === 0 ? (
-              <div className="py-6 text-center text-xs text-[#6B635B] dark:text-[#A39A91]">
+              <div className="py-6 text-center text-xs text-[#63636B] dark:text-[#8E8E98]">
                 Aramanıza uygun müzik sanatçısı bulunamadı.
               </div>
             ) : (

@@ -2525,7 +2525,7 @@ export default function App() {
         album: 'ListenHub',
         genre: 'Müzik',
         rawMediaTitle: 'ListenHub',
-        coverGradient: 'from-[#E87A3E] to-[#D97706]',
+        coverGradient: 'from-zinc-700 to-zinc-900',
         durationSeconds: 180,
         bpm: 110,
         keyNote: 'Am',
@@ -3188,18 +3188,20 @@ export default function App() {
   return (
     <div
       className={`min-h-screen ${
-        isLight ? 'bg-[#FAF8F4] text-[#181512]' : 'bg-[#0E0C0B] text-[#FAF7F2]'
-      } flex flex-col font-sans selection:bg-[#E87A3E]/25 selection:text-[#181512] dark:selection:text-[#FAF7F2] relative overflow-x-clip`}
+        isLight ? 'bg-[#FAF9F6] text-[#111113]' : 'bg-[#0B0B0D] text-[#F5F5F7]'
+      } flex flex-col font-sans selection:bg-[#111113]/15 dark:selection:bg-white/20 selection:text-[#111113] dark:selection:text-[#F5F5F7] relative overflow-x-clip`}
     >
-      {/* Warm Analog Studio Ceiling Glow — blends album cover tone with subtle copper amber */}
-      <div
-        className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
-        style={{
-          background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, ${
-            isLight ? 0.06 : 0.16
-          }), rgba(232, 122, 62, ${isLight ? 0.06 : 0.14}) 38%, transparent 72%)`,
-        }}
-      />
+      {/* Organic Album Color Ceiling Glow — derived strictly from active song cover palette; neutral when idle */}
+      {currentSong && (
+        <div
+          className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
+          style={{
+            background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, ${
+              isLight ? 0.07 : 0.18
+            }), transparent 72%)`,
+          }}
+        />
+      )}
 
       {/* Desktop Left Sidebar (>= 1024px) */}
       <DesktopSidebar
@@ -3227,7 +3229,7 @@ export default function App() {
 
       <div
         className={`w-full flex-1 flex flex-col lg:pl-72 ${
-          isLight ? 'bg-[#FAF8F4]/85' : 'bg-[#0E0C0B]/82'
+          isLight ? 'bg-[#FAF9F6]/85' : 'bg-[#0B0B0D]/82'
         } relative z-10 transition-colors duration-300`}
       >
         <TopHeader
@@ -3249,7 +3251,7 @@ export default function App() {
         />
 
         <main className="flex-1 flex flex-col transition-all duration-300 pb-36 lg:pb-28">
-          {/* Single-Line Warm Copper Deep Link Moment Invite Strip */}
+          {/* Single-Line Monochrome Deep Link Moment Invite Strip */}
           {deepLinkInvite && (() => {
             const mins = Math.floor(deepLinkInvite.second / 60);
             const secs = Math.floor(deepLinkInvite.second % 60);
@@ -3258,12 +3260,12 @@ export default function App() {
               .padStart(2, '0')}`;
             return (
               <div className="px-4 sm:px-6 lg:px-8 pt-3 max-w-xl lg:max-w-6xl mx-auto w-full">
-                <div className="px-3.5 py-2.5 rounded-2xl bg-[#E87A3E]/12 dark:bg-[#E87A3E]/15 border border-[#E87A3E]/35 flex flex-wrap items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2 min-w-0 text-xs text-[#181512] dark:text-[#FAF7F2]">
-                    <span className="w-2 h-2 rounded-full bg-[#E87A3E] shrink-0" />
+                <div className="px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#141418] border border-[#E6E4DF] dark:border-white/[0.12] shadow-[0_2px_12px_rgba(17,17,19,0.04)] dark:shadow-none flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2 min-w-0 text-xs text-[#111113] dark:text-[#F5F5F7]">
+                    <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
                     <span className="truncate font-medium">
                       Paylaşılan{' '}
-                      <span className="font-mono font-bold text-[#D96B2C] dark:text-[#F49A5E]">
+                      <span className="font-mono font-bold text-[#111113] dark:text-white">
                         {formattedSec}
                       </span>{' '}
                       anına davet edildin
@@ -3274,7 +3276,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={handleAcceptDeepLinkInvite}
-                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#E87A3E] to-[#D97706] hover:brightness-105 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 active:scale-[0.97] transition cursor-pointer"
+                      className="studio-btn-primary px-3 py-1.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] text-xs font-semibold shadow-sm flex items-center gap-1.5 active:scale-[0.97] transition cursor-pointer"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" strokeWidth={1.85} />
                       <span className="font-mono tabular-nums">{formattedSec}'den Dinle</span>
@@ -3282,7 +3284,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={handleDismissDeepLinkInvite}
-                      className="w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-[#6B635B] dark:text-[#A39A91] flex items-center justify-center transition cursor-pointer"
+                      className="w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-[#63636B] dark:text-[#8E8E98] flex items-center justify-center transition cursor-pointer"
                       aria-label="Daveti kapat"
                     >
                       <X className="w-3.5 h-3.5" />

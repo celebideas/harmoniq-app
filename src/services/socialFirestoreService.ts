@@ -394,7 +394,7 @@ async function runSerializedProfileSync(params: {
     4,
     'MK'
   );
-  const avatarGradient = clampStr(params.avatarGradient, 120, 'from-[#E87A3E] to-[#D97706]');
+  const avatarGradient = clampStr(params.avatarGradient, 120, 'from-zinc-700 to-zinc-900');
   const city = clampStr(params.city, 80, 'İstanbul, Kadıköy');
   const bio = clampStr(params.bio, 240, 'Müzik ruhun gerçek frekansıdır.');
   const topGenres = (params.topGenres || [])
