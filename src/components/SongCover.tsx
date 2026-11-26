@@ -42,7 +42,7 @@ export const SongCover: React.FC<SongCoverProps> = ({
           className={`w-full h-full bg-gradient-to-tr ${song.coverGradient || 'from-neutral-800 to-neutral-950'} flex flex-col items-center justify-center p-1 text-white`}
         >
           <Music className="w-5 h-5 text-white/80" />
-          <span className="text-[9px] font-bold tracking-tight text-white/90 truncate max-w-full px-1 mt-0.5">
+          <span className="text-xs font-bold tracking-tight text-white/90 truncate max-w-full px-1 mt-0.5">
             {song.artist}
           </span>
         </div>

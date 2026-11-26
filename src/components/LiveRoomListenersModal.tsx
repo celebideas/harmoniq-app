@@ -144,14 +144,14 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                   }`}
                 />
                 <span
-                  className={`text-[11px] font-bold uppercase tracking-wider ${
+                  className={`text-xs font-bold uppercase tracking-wider ${
                     isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
                   Canlı Dinleyici Odası
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+                  className={`px-2 py-0.5 rounded-full text-xs tabular-nums border ${
                     isLight
                       ? 'bg-[#F1EFEA] text-[#111113] border-[#E2DFD9]'
                       : 'bg-[#1C1C22] text-[#F5F5F7] border-white/[0.08]'
@@ -221,7 +221,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
         </div>
 
         {/* Quick Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 text-[11px] [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 text-xs [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
           <button
             type="button"
             onClick={() => setFilterMode('all')}
@@ -297,7 +297,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
               {filteredListeners.length} kişi şu an bu parçada
             </span>
           </div>
-          <span className="text-[11px] font-medium shrink-0">Sırala: Saniye</span>
+          <span className="text-xs font-medium shrink-0">Sırala: Saniye</span>
         </div>
 
         {/* Scrollable Symmetric Studio List of Active Listeners */}
@@ -309,7 +309,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
               return (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 light:bg-[#F1EFEA]/70 border border-white/[0.05] light:border-[#E6E4DF] transition hover:bg-[#1C1C22] light:hover:bg-[#EAE7E0]"
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 border border-white/[0.05] transition hover:bg-[#1C1C22]"
                 >
                   {/* Left: Thin Emerald Live Ring Avatar + Name + City, District */}
                   <button
@@ -348,7 +348,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
                       >
                         {user.name}
                       </div>
-                      <div className="text-xs text-zinc-400 light:text-[#63636B] truncate">
+                      <div className="text-xs text-zinc-400 truncate">
                         {displayCity}
                       </div>
                     </div>
@@ -356,7 +356,7 @@ export const LiveRoomListenersModal: React.FC<Props> = ({
 
                   {/* Middle/Right: Monospace Second Badge + Compact Equal Katıl & Chat Buttons */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] light:bg-black/[0.05] text-[#F5F5F7] light:text-[#111113]">
+                    <span className="text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] text-[#F5F5F7]">
                       {formatTime(user.currentSecond)}
                     </span>
 

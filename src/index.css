@@ -1,14 +1,13 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
-@custom-variant light (&:where(.light, .light *));
 
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-mono: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
-    /* Pure Studio Monochrome — Obsidian Ink (Dark) */
+    /* Pure Studio Monochrome — Obsidian Ink (Permanent Dark Mode) */
     --bg-primary: #0B0B0D;
     --bg-card: #141418;
     --bg-elevated: #1C1C22;
@@ -30,28 +29,11 @@
     --dynamic-track-color: #FFFFFF;
   }
 
-  html.light {
-    /* Pure Studio Monochrome — Warm Paper (Light) */
-    --bg-primary: #FAF9F6;
-    --bg-card: #FFFFFF;
-    --bg-elevated: #F1EFEA;
-    --text-primary: #111113;
-    --text-secondary: #63636B;
-    --border-subtle: #E6E4DF;
-    --semantic-live: #16A34A;
-
-    --theme-accent: #111113;
-    --theme-accent-secondary: #27272A;
-    --theme-accent-rgb: 17, 17, 19;
-    --theme-accent-glow: rgba(17, 17, 19, 0.12);
-    --theme-accent-subtle: rgba(17, 17, 19, 0.08);
-    --theme-accent-text: #FFFFFF;
-    --dynamic-track-color: #111113;
-  }
-
   html {
     height: auto;
     overflow-y: auto;
+    color-scheme: dark;
+    background-color: #0B0B0D;
   }
 
   body {
@@ -64,14 +46,27 @@
   }
 
   html,
+  body,
+  button,
+  input,
+  textarea,
+  select,
+  span,
+  p,
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-sans);
+  }
+
+  html,
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
-    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, .font-heading {
@@ -79,250 +74,29 @@
     letter-spacing: -0.025em;
   }
 
+  /* Safety fallback: keep numeric alignment in Plus Jakarta Sans */
   .font-mono {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* ============================================================================
-   WARM PAPER LIGHT MODE ADAPTIVE RULES (FOR LEGACY DARK-ONLY SUBVIEWS)
-   Native Tailwind `dark:` and `light:` variants handle modernized components.
-   ============================================================================ */
-html.light body {
-  background-color: #FAF9F6;
-  color: #111113;
-}
-
-/* Base App & Page Backgrounds */
-html.light .bg-\[\#0A090F\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0A090F\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0A090F\]\/85:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0B0B0D\]:not(.keep-dark):not(.keep-dark *):not(.studio-btn-primary),
-html.light .bg-\[\#0E0C0B\]:not(.keep-dark):not(.keep-dark *):not(.studio-btn-primary),
-html.light .bg-\[\#09090B\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#09090B\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0C0C0E\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0C0C0E\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0E0C16\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0E0C16\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#0E0E12\]:not(.keep-dark):not(.keep-dark *) {
-  background-color: #FAF9F6 !important;
-  color: #111113 !important;
-}
-
-/* Modals & Full Deck Container Surface */
-html.light .bg-\[\#0A0A0C\]:not(.keep-dark):not(.keep-dark *) {
-  background-color: #FFFFFF !important;
-  color: #111113 !important;
-  border-color: #E6E4DF !important;
-}
-
-/* Elevated Dark-Only Cards & Legacy Surfaces */
-html.light .bg-\[\#12101C\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#12101C\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#12111A\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#12111A\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#13111C\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#13111C\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#13111C\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#14121E\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#14121E\]\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#14121E\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#14121E\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#181622\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#1E1B2E\]:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#1E1B2E\]\/75:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#1E1B2E\]\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#1E1B2E\]\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-\[\#1E1B2E\]\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/85:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/70:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-950\/40:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.studio-btn-primary),
-html.light .bg-zinc-900\/95:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/60:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/50:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/40:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-900\/30:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-800:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-800\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-800\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-800\/60:not(.keep-dark):not(.keep-dark *),
-html.light .bg-zinc-800\/50:not(.keep-dark):not(.keep-dark *),
-html.light .bg-neutral-950:not(.keep-dark):not(.keep-dark *),
-html.light .bg-neutral-900:not(.keep-dark):not(.keep-dark *),
-html.light .bg-neutral-900\/90:not(.keep-dark):not(.keep-dark *),
-html.light .bg-neutral-900\/80:not(.keep-dark):not(.keep-dark *),
-html.light .bg-neutral-900\/60:not(.keep-dark):not(.keep-dark *) {
-  background-color: #FFFFFF !important;
-  color: #111113 !important;
-  border-color: #E6E4DF !important;
-  box-shadow: 0 2px 12px rgba(17, 17, 19, 0.04) !important;
-}
-
-/* Secondary Inset Surfaces */
-html.light .bg-black\/20:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/25:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/30:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/35:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/40:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/50:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-black\/60:not(.absolute):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.02\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.025\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.03\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .bg-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  background-color: #F1EFEA !important;
-  border-color: #E2DFD9 !important;
-}
-
-/* Form inputs & text fields in light mode */
-html.light input:not([type='range']):not(.keep-dark *),
-html.light textarea:not(.keep-dark *),
-html.light select:not(.keep-dark *) {
-  background-color: #FFFFFF !important;
-  color: #111113 !important;
-  border-color: #E6E4DF !important;
-}
-
-html.light input::placeholder,
-html.light textarea::placeholder {
-  color: #8E8E98 !important;
-}
-
-/* Text Colors for legacy dark-only blocks (never override solid monochrome studio buttons, avatars, or media overlays) */
-html.light .text-white:not(.text-force-white):not(.studio-btn-primary):not(.studio-btn-primary *):not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media):not(.keep-white-on-media *):not(.avatar-circle):not(.avatar-circle *):not([class*="bg-[#111113]"]):not([class*="bg-[#111113]"] *):not([class*="bg-[#141416]"]):not([class*="bg-[#141416]"] *):not([class*="bg-[#181512]"]):not([class*="bg-[#181512]"] *):not([class*="bg-[#16A34A]"]):not([class*="bg-[#16A34A]"] *):not([class*="bg-zinc-900"]):not([class*="bg-zinc-900"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="from-"]):not([class*="from-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-blue-"]):not([class*="bg-blue-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *),
-html.light .text-zinc-50:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *):not([class*="bg-[#111113]"] *),
-html.light .text-zinc-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not(.studio-btn-primary *):not([class*="bg-[#111113]"] *),
-html.light .text-zinc-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *):not([class*="bg-gradient-"] *),
-html.light .text-neutral-100:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-neutral-200:not(.keep-dark):not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #111113 !important;
-}
-
-/* Light Mode Contrast Guarantee: Pure White Text & Icons on Solid Studio Buttons, Avatars, and Media Overlays */
-html.light .studio-btn-primary,
-html.light .studio-btn-primary *,
-html.light .bg-\[\#111113\].text-white,
-html.light .bg-\[\#111113\].text-white *,
-html.light .bg-\[\#141416\].text-white,
-html.light .bg-\[\#141416\].text-white *,
-html.light .bg-\[\#181512\].text-white,
-html.light .bg-\[\#181512\].text-white *,
-html.light .bg-\[\#16A34A\].text-white,
-html.light .bg-\[\#16A34A\].text-white *,
-html.light .avatar-circle,
-html.light .avatar-circle *,
-html.light .keep-white-on-media,
-html.light .keep-white-on-media *,
-html.light .bg-emerald-600.text-white,
-html.light .bg-emerald-600.text-white *,
-html.light .bg-emerald-500.text-white,
-html.light .bg-emerald-500.text-white *,
-html.light .bg-rose-500,
-html.light .bg-rose-500 *,
-html.light .bg-rose-600,
-html.light .bg-rose-600 *,
-html.light .keep-dark,
-html.light .keep-dark .text-white,
-html.light .text-force-white,
-html.light .text-force-white * {
-  color: #FFFFFF !important;
-}
-
-html.light .keep-white-on-media .text-white\/80,
-html.light .keep-white-on-media .text-zinc-200 {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-html.light .keep-white-on-media .text-zinc-950,
-html.light .keep-dark .text-\[\#0B0B0D\] {
-  color: #0B0B0D !important;
-}
-
-html.light .text-zinc-300:not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-zinc-400:not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-neutral-300:not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-neutral-400:not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-\[\#9E9AA8\]:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #63636B !important;
-}
-
-html.light .text-zinc-500:not(.keep-dark *):not(.keep-white-on-media *),
-html.light .text-neutral-500:not(.keep-dark *):not(.keep-white-on-media *) {
-  color: #63636B !important;
-}
-
-/* Borders */
-html.light .border-zinc-800:not(.keep-dark):not(.keep-dark *),
-html.light .border-zinc-800\/80:not(.keep-dark):not(.keep-dark *),
-html.light .border-zinc-700:not(.keep-dark):not(.keep-dark *),
-html.light .border-zinc-700\/80:not(.keep-dark):not(.keep-dark *),
-html.light .border-neutral-800:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.04\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.05\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.06\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.07\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.08\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.09\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/\[0\.1\]:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/10:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/15:not(.keep-dark):not(.keep-dark *),
-html.light .border-white\/20:not(.keep-dark):not(.keep-dark *) {
-  border-color: #E6E4DF !important;
-}
-
-html.light .divide-zinc-800:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.05\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.06\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]),
-html.light .divide-white\/\[0\.08\]:not(.keep-dark) > :not([hidden]) ~ :not([hidden]) {
-  border-color: #E6E4DF !important;
-}
-
-/* Pure Studio Monochrome Semantic Theme Utility Classes */
+/* Pure Studio Monochrome Semantic Utility Classes (Obsidian Ink) */
 .bg-accent-theme {
   background-color: #FFFFFF;
   color: #0B0B0D !important;
-}
-
-html.light .bg-accent-theme {
-  background-color: #111113;
-  color: #FFFFFF !important;
 }
 
 .text-accent-theme {
   color: #F5F5F7;
 }
 
-html.light .text-accent-theme {
-  color: #111113;
-}
-
 .border-accent-theme {
   border-color: rgba(255, 255, 255, 0.22);
 }
 
-html.light .border-accent-theme {
-  border-color: rgba(17, 17, 19, 0.2);
-}
-
 .bg-accent-subtle {
   background-color: rgba(255, 255, 255, 0.1);
-}
-
-html.light .bg-accent-subtle {
-  background-color: rgba(17, 17, 19, 0.08);
 }
 
 .glow-accent-theme {
@@ -335,22 +109,9 @@ html.light .bg-accent-subtle {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-html.light .surface-card {
-  background-color: #FFFFFF;
-  border: 1px solid #E6E4DF;
-  box-shadow: 0 2px 12px rgba(17, 17, 19, 0.04);
-  color: #111113;
-}
-
 .surface-inner {
   background-color: #1C1C22;
   border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-html.light .surface-inner {
-  background-color: #F1EFEA;
-  border: 1px solid #E2DFD9;
-  color: #111113;
 }
 
 /* Custom Studio Animations */
@@ -510,15 +271,10 @@ html.light .surface-inner {
 .harmoniq-leaflet-map .leaflet-control-attribution {
   background: rgba(11, 11, 13, 0.78) !important;
   color: rgba(142, 142, 152, 0.85) !important;
-  font-size: 9px !important;
+  font-size: 10px !important;
   padding: 2px 6px !important;
   border-top-right-radius: 8px;
   backdrop-filter: blur(8px);
-}
-
-html.light .harmoniq-leaflet-map .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.88) !important;
-  color: rgba(99, 99, 107, 0.85) !important;
 }
 
 .harmoniq-leaflet-map .leaflet-control-attribution a {
@@ -551,20 +307,15 @@ html.light .harmoniq-leaflet-map .leaflet-control-attribution {
 }
 
 /* Dark Mode Roadmap Tile Filter (Applied ONLY in roadmap mode; satellite preserves natural colors) */
-html.dark .harmoniq-leaflet-map:not(.map-satellite-mode) .leaflet-tile-pane {
+.harmoniq-leaflet-map:not(.map-satellite-mode) .leaflet-tile-pane {
   filter: invert(93%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
-html.light .leaflet-tile-pane,
 .map-satellite-mode .leaflet-tile-pane {
   filter: none !important;
   opacity: 1 !important;
 }
 
-html.light .leaflet-container {
-  background: #F1EFEA !important;
-}
-
-html.dark .leaflet-container {
+.leaflet-container {
   background: #0B0B0D !important;
 }

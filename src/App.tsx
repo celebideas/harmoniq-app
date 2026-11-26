@@ -124,53 +124,18 @@ import {
 import { getSavedLocation, detectLiveLocation, localizeUsersForCity, setManualLocation } from './services/locationService';
 import { testFirestoreConnection } from './firebase';
 import {
-  ThemeMode,
-  getSavedTheme,
   applyTheme,
-  toggleThemeMode,
-  resolveEffectiveTheme,
-  subscribeSystemThemeChange,
   triggerHaptic,
 } from './services/themeService';
 
 export default function App() {
   const pwa = usePwaUpdate();
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => getSavedTheme());
-  const [effectiveTheme, setEffectiveTheme] = useState<'dark' | 'light'>(() =>
-    resolveEffectiveTheme(getSavedTheme())
-  );
+  const effectiveTheme = 'dark' as const;
 
-  // Initialize theme mode on mount & react live to OS theme changes when in 'system' mode
+  // Permanently lock Obsidian Ink Dark Mode on mount
   useEffect(() => {
-    setEffectiveTheme(applyTheme(themeMode));
-    if (themeMode === 'system') {
-      return subscribeSystemThemeChange(() => {
-        setEffectiveTheme(applyTheme('system'));
-      });
-    }
-  }, [themeMode]);
-
-  const handleToggleTheme = () => {
-    triggerHaptic(20);
-    const next = toggleThemeMode(themeMode);
-    setThemeMode(next);
-    setEffectiveTheme(resolveEffectiveTheme(next));
-    setToastMessage(next === 'dark' ? 'Sıcak Gece Stüdyosu Aktif' : 'Sıcak Gündüz Kağıdı Aktif');
-    setTimeout(() => setToastMessage(null), 2500);
-  };
-
-  const handleThemeModeChange = (mode: ThemeMode) => {
-    setThemeMode(mode);
-    setEffectiveTheme(applyTheme(mode));
-    setToastMessage(
-      mode === 'dark'
-        ? 'Sıcak Gece Stüdyosu Aktif'
-        : mode === 'light'
-        ? 'Sıcak Gündüz Kağıdı Aktif'
-        : 'Otomatik Sistem Teması Aktif'
-    );
-    setTimeout(() => setToastMessage(null), 2500);
-  };
+    applyTheme('dark');
+  }, []);
   const [activeTab, setActiveTab] = useState<NavTab>(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -3388,7 +3353,6 @@ export default function App() {
   const totalUnread =
     mergedConversations.reduce((acc, curr) => acc + curr.unreadCount, 0) +
     cloudIncomingRequests.length;
-  const isLight = effectiveTheme === 'light';
 
   if (!authSession) {
     return (
@@ -3402,19 +3366,13 @@ export default function App() {
 
   return (
     <>
-    <div
-      className={`min-h-screen ${
-        isLight ? 'bg-[#FAF9F6] text-[#111113]' : 'bg-[#0B0B0D] text-[#F5F5F7]'
-      } flex flex-col font-sans selection:bg-[#111113]/15 dark:selection:bg-white/20 selection:text-[#111113] dark:selection:text-[#F5F5F7] relative overflow-x-clip`}
-    >
+    <div className="min-h-screen bg-[#0B0B0D] text-[#F5F5F7] flex flex-col font-sans selection:bg-white/20 selection:text-[#F5F5F7] relative overflow-x-clip">
       {/* Organic Album Color Ceiling Glow — derived strictly from active song cover palette; neutral when idle */}
       {currentSong && (
         <div
           className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
           style={{
-            background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, ${
-              isLight ? 0.07 : 0.18
-            }), transparent 72%)`,
+            background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, 0.18), transparent 72%)`,
           }}
         />
       )}
@@ -3440,14 +3398,9 @@ export default function App() {
         }}
         userProfile={currentUserProfile}
         themeMode={effectiveTheme}
-        onToggleTheme={handleToggleTheme}
       />
 
-      <div
-        className={`w-full flex-1 flex flex-col lg:pl-72 ${
-          isLight ? 'bg-[#FAF9F6]/85' : 'bg-[#0B0B0D]/82'
-        } relative z-10 transition-colors duration-300`}
-      >
+      <div className="w-full flex-1 flex flex-col lg:pl-72 bg-[#0B0B0D]/82 relative z-10 transition-colors duration-300">
         <TopHeader
           currentSong={currentSong}
           onOpenSongPicker={() => setShowSongPickerModal(true)}
@@ -3462,7 +3415,6 @@ export default function App() {
           onOpenInstallModal={() => setShowInstallModal(true)}
           userProfile={currentUserProfile}
           themeMode={effectiveTheme}
-          onToggleTheme={handleToggleTheme}
           liveListenersCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
         />
 
@@ -3481,7 +3433,7 @@ export default function App() {
                     <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E] shrink-0" />
                     <span className="truncate font-medium">
                       Paylaşılan{' '}
-                      <span className="font-mono font-bold text-[#111113] dark:text-white">
+                      <span className="tabular-nums font-bold text-[#111113] dark:text-white">
                         {formattedSec}
                       </span>{' '}
                       anına davet edildin
@@ -3495,7 +3447,7 @@ export default function App() {
                       className="studio-btn-primary px-3 py-1.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] text-xs font-semibold shadow-sm flex items-center gap-1.5 active:scale-[0.97] transition cursor-pointer"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" strokeWidth={1.85} />
-                      <span className="font-mono tabular-nums">{formattedSec}'den Dinle</span>
+                      <span className="tabular-nums">{formattedSec}'den Dinle</span>
                     </button>
                     <button
                       type="button"
@@ -3734,8 +3686,7 @@ export default function App() {
               }}
               syncDiagnosticError={syncDiagnosticError}
               onClearSyncError={() => setSyncDiagnosticError(null)}
-              themeMode={themeMode}
-              onChangeThemeMode={handleThemeModeChange}
+              themeMode={effectiveTheme}
               onLoadPopularCollection={handleLoadPopularCollection}
               onLogout={handleFullLogout}
               shouldOpenSettings={shouldOpenProfileSettings}
@@ -3828,12 +3779,12 @@ export default function App() {
                     <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                       {highCompatibilityToast.user.name}
                     </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#16A34A]/12 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/25 dark:border-[#22C55E]/30 flex items-center gap-1 shrink-0">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#16A34A]/12 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] border border-[#16A34A]/25 dark:border-[#22C55E]/30 flex items-center gap-1 shrink-0">
                       <Zap className="w-2.5 h-2.5 fill-current" />
                       <span>%{highCompatibilityToast.score} Uyum</span>
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                     {highCompatibilityToast.reason}
                   </p>
                 </div>

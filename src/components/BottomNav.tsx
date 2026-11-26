@@ -132,7 +132,7 @@ export const BottomNav: React.FC<Props> = ({
                   {currentSong.title}
                 </div>
                 <div
-                  className={`text-[11px] truncate mt-0.5 ${
+                  className={`text-xs truncate mt-0.5 ${
                     isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
@@ -241,7 +241,7 @@ export const BottomNav: React.FC<Props> = ({
 
                 {item.badge !== undefined && (
                   <span
-                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-semibold leading-none tabular-nums ${
+                    className={`absolute -top-1.5 -right-3.5 px-1.5 py-0.5 rounded-full text-xs font-semibold leading-none tabular-nums ${
                       item.isLiveBadge
                         ? isLight
                           ? 'bg-[#16A34A]/15 text-[#16A34A]'
@@ -256,7 +256,7 @@ export const BottomNav: React.FC<Props> = ({
                 )}
               </div>
 
-              <span className="text-[11px] mt-1 tracking-normal leading-none">
+              <span className="text-xs mt-1 tracking-normal leading-none">
                 {item.label}
               </span>
             </button>

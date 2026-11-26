@@ -171,12 +171,12 @@ const ArtistCardCompact: React.FC<{
         <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate w-full">
           {room.artist}
         </span>
-        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
+        <span className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate w-full mt-0.5">
           {room.topSongTitle}
         </span>
       </div>
 
-      <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-[#16A34A] dark:text-[#22C55E] font-mono tabular-nums">
+      <div className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums">
         <LiveMiniEqualizer />
         <span>{room.totalLiveListeners}</span>
       </div>
@@ -229,7 +229,7 @@ const ArtistRoomRow: React.FC<{
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-mono font-medium">
+        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-medium">
           <LiveMiniEqualizer />
           <span>{room.totalLiveListeners}</span>
         </span>
@@ -289,13 +289,13 @@ const SongRoomRow: React.FC<{
             {song.title}
           </div>
           <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
-            {song.artist} · <span className="font-mono tabular-nums">{formatDuration(song.durationSeconds)}</span>
+            {song.artist} · <span className="tabular-nums">{formatDuration(song.durationSeconds)}</span>
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-mono font-medium">
+        <span className="text-xs text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-medium">
           <LiveMiniEqualizer />
           <span>{listenerCount}</span>
         </span>
@@ -611,7 +611,7 @@ export const RoomsTab: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-3 text-xs">
-          <span className="text-[#16A34A] dark:text-[#22C55E] font-mono tabular-nums flex items-center gap-1.5 font-medium">
+          <span className="text-[#16A34A] dark:text-[#22C55E] tabular-nums flex items-center gap-1.5 font-medium">
             <LiveMiniEqualizer />
             <span>{140 + artistRooms.length * 4} canlı dinleyici</span>
           </span>
@@ -738,7 +738,7 @@ export const RoomsTab: React.FC<Props> = ({
               <span className="font-bold text-[#111113] dark:text-[#F5F5F7]">
                 Aktif Şarkı Odaları
               </span>
-              <span className="font-mono tabular-nums text-[11px]">
+              <span className="tabular-nums text-xs">
                 {Math.min(allModeSongLimit, filteredSongRooms.length)} / {filteredSongRooms.length}
               </span>
             </div>
@@ -792,7 +792,7 @@ export const RoomsTab: React.FC<Props> = ({
                 <span className="font-bold text-[#111113] dark:text-[#F5F5F7]">
                   Sanatçı Frekansları
                 </span>
-                <span className="text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums">
+                <span className="text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                   ({filteredArtistRooms.length})
                 </span>
               </div>

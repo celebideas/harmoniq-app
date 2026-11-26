@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr" class="dark">
+<html lang="tr" class="dark" data-theme="dark" style="background-color:#0B0B0D;color-scheme:dark;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -13,12 +13,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="format-detection" content="telephone=no" />
-    <meta name="msapplication-TileColor" content="#0E0C0B" />
-    <meta name="msapplication-navbutton-color" content="#0E0C0B" />
+    <meta name="msapplication-TileColor" content="#0B0B0D" />
+    <meta name="msapplication-navbutton-color" content="#0B0B0D" />
     <meta name="msapplication-tap-highlight" content="no" />
-    <meta name="theme-color" content="#0E0C0B" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#FAF8F4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0E0C0B" />
+    <meta name="theme-color" content="#0B0B0D" />
 
     <!-- Web App Manifest & App Icons -->
     <link rel="manifest" href="/manifest.json" />
@@ -37,33 +35,25 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <!-- Google Fonts: Plus Jakarta Sans (Single Unified Typeface) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <!-- Pre-paint Theme Sync (Prevents Dark/Light FOUC) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Permanent Obsidian Ink Dark Mode Lock (Zero FOUC) -->
     <script>
       (function () {
         try {
-          var saved = localStorage.getItem('harmoniq_theme_mode') || 'dark';
-          var effective =
-            saved === 'system'
-              ? window.matchMedia('(prefers-color-scheme: light)').matches
-                ? 'light'
-                : 'dark'
-              : saved === 'light'
-              ? 'light'
-              : 'dark';
           var root = document.documentElement;
-          root.classList.remove('dark', 'light');
-          root.classList.add(effective);
-          root.setAttribute('data-theme', effective);
-          root.style.colorScheme = effective;
+          root.classList.remove('light');
+          root.classList.add('dark');
+          root.setAttribute('data-theme', 'dark');
+          root.style.colorScheme = 'dark';
+          root.style.backgroundColor = '#0B0B0D';
         } catch (e) {}
       })();
     </script>
   </head>
-  <body class="selection:bg-[#E87A3E]/25 antialiased">
+  <body class="bg-[#0B0B0D] text-[#F5F5F7] selection:bg-white/20 selection:text-[#F5F5F7] antialiased">
     <div id="root"></div>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module" src="/src/main.tsx"></script>

@@ -44,9 +44,6 @@ import {
   MapPin,
   Navigation,
   Compass,
-  Sun,
-  Moon,
-  Monitor,
   Shield,
   ShieldCheck,
   Settings,
@@ -69,8 +66,6 @@ import {
 } from '../services/locationService';
 import {
   ThemeMode,
-  getSavedTheme,
-  applyTheme,
   triggerHaptic,
 } from '../services/themeService';
 import {
@@ -182,7 +177,7 @@ const PlaylistRowItem = React.memo<{
         <h4 className="font-semibold text-sm text-[#111113] dark:text-[#F5F5F7] line-clamp-1 leading-snug">
           {playlist.title}
         </h4>
-        <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 font-mono tabular-nums">
+        <p className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 tabular-nums">
           {playlist.tracks?.length || playlist.trackCount} parça · {playlist.duration}
         </p>
       </div>
@@ -273,7 +268,7 @@ const FavoriteSongRowItem = React.memo<{
     </div>
 
     <div className="flex items-center gap-2 shrink-0">
-      <span className="font-mono text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+      <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
         {formattedDuration}
       </span>
       {onToggleFavorite && (
@@ -469,22 +464,7 @@ export const ProfileTab: React.FC<Props> = ({
   onPickSongForSignatureSlot,
   signatureVitrinVersion = 0,
 }) => {
-  const [localTheme, setLocalTheme] = useState<ThemeMode>(() => themeMode || getSavedTheme());
-  const currentTheme = themeMode || localTheme;
-  const isLightTheme =
-    currentTheme === 'light' ||
-    (currentTheme === 'system' &&
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  const handleThemeChange = (mode: ThemeMode) => {
-    triggerHaptic(20);
-    setLocalTheme(mode);
-    applyTheme(mode);
-    if (onChangeThemeMode) {
-      onChangeThemeMode(mode);
-    }
-  };
+  const isLightTheme = false;
   const [profileSection, setProfileSection] = useState<'library' | 'insights'>('library');
   const [showTrustScoreModal, setShowTrustScoreModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -1785,11 +1765,11 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Middle: Bold Name, @handle · City, Trust Score Emerald Badge */}
               <div className="min-w-0 flex-1 space-y-1.5">
-                <h1 className="text-lg font-bold text-[#111113] dark:text-[#F5F5F7] tracking-tight truncate leading-snug">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5F7] tracking-tight truncate leading-snug">
                   {userProfile.youtubeAccount?.name || userProfile.name}
                 </h1>
 
-                <div className="flex items-center flex-wrap gap-1.5 font-mono text-xs text-[#63636B] dark:text-[#8E8E98]">
+                <div className="flex items-center flex-wrap gap-1.5 tabular-nums text-xs text-[#63636B] dark:text-[#8E8E98]">
                   <span className="truncate max-w-[140px]">
                     {userProfile.youtubeAccount?.handle || '@muziksever'}
                   </span>
@@ -1812,7 +1792,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowTrustScoreModal(true)}
-                    className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] font-mono text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
+                    className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
                     title="Şeffaf Güven Kalkanı Detaylarını İncele"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
@@ -1881,7 +1861,7 @@ export const ProfileTab: React.FC<Props> = ({
                     <Headphones className="w-5 h-5" strokeWidth={1.75} />
                   </div>
                   <div className="space-y-1 max-w-sm">
-                    <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                    <div className="tabular-nums text-xs uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
                       Haftalık Dinleme Özeti
                     </div>
                     <h2 className="text-base font-bold text-[#111113] dark:text-[#F5F5F7]">
@@ -1907,10 +1887,10 @@ export const ProfileTab: React.FC<Props> = ({
                   {/* Header + Prominent Mono Listening Duration */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="font-mono text-[11px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                      <div className="tabular-nums text-xs uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
                         Haftalık Dinleme Özeti
                       </div>
-                      <div className="font-mono text-3xl font-semibold tracking-tight text-[#111113] dark:text-[#F5F5F7] tabular-nums inline-flex items-baseline gap-1.5">
+                      <div className="text-3xl font-semibold tracking-tight text-[#111113] dark:text-[#F5F5F7] tabular-nums inline-flex items-baseline gap-1.5">
                         {weeklyHours > 0 ? (
                           <>
                             <span>{weeklyHours}s</span>
@@ -1970,7 +1950,7 @@ export const ProfileTab: React.FC<Props> = ({
                   {/* Compact Secondary Metrics */}
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border border-[#E8E6E1] dark:border-white/[0.06] space-y-0.5">
-                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                      <div className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                         Zirvedeki Sanatçı
                       </div>
                       <div className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
@@ -1978,7 +1958,7 @@ export const ProfileTab: React.FC<Props> = ({
                       </div>
                     </div>
                     <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22]/70 border border-[#E8E6E1] dark:border-white/[0.06] space-y-0.5">
-                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                      <div className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                         Baskın Tür
                       </div>
                       <div className="text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
@@ -1994,7 +1974,7 @@ export const ProfileTab: React.FC<Props> = ({
                         <h3 className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7]">
                           Tür Dağılımı
                         </h3>
-                        <span className="font-mono text-[11px] text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                        <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                           {sortedWeeklyGenres.length} tür
                         </span>
                       </div>
@@ -2027,7 +2007,7 @@ export const ProfileTab: React.FC<Props> = ({
                                   {item.genre}
                                 </span>
                               </div>
-                              <span className="font-mono text-[11px] font-semibold text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
+                              <span className="text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
                                 %{item.percentage}
                               </span>
                             </div>
@@ -2044,7 +2024,7 @@ export const ProfileTab: React.FC<Props> = ({
                         <h3 className="text-xs font-semibold text-[#141416] dark:text-[#F5F5F7]">
                           Zirvedeki Sanatçılar
                         </h3>
-                        <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                        <span className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                           Gerçek veri
                         </span>
                       </div>
@@ -2060,7 +2040,7 @@ export const ProfileTab: React.FC<Props> = ({
                             >
                               <div className="flex items-center gap-3 min-w-0">
                                 <span
-                                  className={`w-6 text-center font-mono text-xs font-semibold tabular-nums shrink-0 ${
+                                  className={`w-6 text-center text-xs font-semibold tabular-nums shrink-0 ${
                                     isFirst
                                       ? 'text-[#141416] dark:text-[#F5F5F7]'
                                       : 'text-[#63636B] dark:text-[#8E8E98]'
@@ -2078,7 +2058,7 @@ export const ProfileTab: React.FC<Props> = ({
                                     className="w-10 h-10 rounded-lg object-cover shrink-0 bg-zinc-900 border border-[#E8E6E1] dark:border-white/[0.08]"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 rounded-lg flex items-center justify-center font-mono font-semibold text-xs shrink-0 bg-[#F1EFEA] dark:bg-white/[0.08] text-[#141416] dark:text-[#F5F5F7]">
+                                  <div className="w-10 h-10 rounded-lg flex items-center justify-center tabular-nums font-semibold text-xs shrink-0 bg-[#F1EFEA] dark:bg-white/[0.08] text-[#141416] dark:text-[#F5F5F7]">
                                     {avatarInfo.initials}
                                   </div>
                                 )}
@@ -2087,7 +2067,7 @@ export const ProfileTab: React.FC<Props> = ({
                                   <div className="text-xs sm:text-sm font-semibold text-[#141416] dark:text-[#F5F5F7] truncate">
                                     {artist.name}
                                   </div>
-                                  <div className="font-mono text-[11px] text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                                  <div className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                                     {artist.playedSeconds > 0
                                       ? `${Math.max(1, Math.round(artist.playedSeconds / 60))} dk dinlendi`
                                       : `${artist.tracksCount} parça`}
@@ -2131,13 +2111,13 @@ export const ProfileTab: React.FC<Props> = ({
                           </div>
 
                           <div className="min-w-0">
-                            <div className="font-mono text-[10px] uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
+                            <div className="tabular-nums text-xs uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98]">
                               Haftanın Parçası
                             </div>
                             <div className="text-xs sm:text-sm font-bold text-[#141416] dark:text-[#F5F5F7] truncate">
                               {weeklyAnthemSong.title}
                             </div>
-                            <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate">
+                            <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
                               {weeklyAnthemSong.artist}
                             </div>
                           </div>
@@ -2169,10 +2149,10 @@ export const ProfileTab: React.FC<Props> = ({
           {/* 3. İMZA 4 PARÇAM (4-COLUMN VERTICAL SHOWCASE — ZERO MOBILE OVERFLOW) */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm sm:text-base font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+              <h2 className="text-sm sm:text-base font-semibold text-[#F5F5F7] tracking-tight">
                 İmza 4 Parçam
               </h2>
-              <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+              <span className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                 Çalmak için dokun
               </span>
             </div>
@@ -2201,7 +2181,7 @@ export const ProfileTab: React.FC<Props> = ({
                       <div className="w-8 h-8 rounded-full bg-[#111113]/[0.08] dark:bg-white/[0.10] border border-[#111113]/15 dark:border-white/15 flex items-center justify-center text-[#111113] dark:text-[#F5F5F7] group-hover:scale-105 transition-transform">
                         <Plus className="w-4 h-4" strokeWidth={2} />
                       </div>
-                      <span className="text-[10.5px] font-semibold text-[#63636B] dark:text-[#8E8E98] group-hover:text-[#111113] dark:group-hover:text-[#F5F5F7] leading-tight">
+                      <span className="text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] group-hover:text-[#111113] dark:group-hover:text-[#F5F5F7] leading-tight">
                         Parça Ekle
                       </span>
                     </button>
@@ -2262,7 +2242,7 @@ export const ProfileTab: React.FC<Props> = ({
 
                     {/* Single-line white title at bottom */}
                     <div className="absolute bottom-2 left-2 right-2 z-10">
-                      <div className="text-[11px] font-semibold text-white truncate leading-tight">
+                      <div className="text-xs font-semibold text-white truncate leading-tight">
                         {track.title}
                       </div>
                     </div>
@@ -2276,7 +2256,7 @@ export const ProfileTab: React.FC<Props> = ({
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-[#141416] dark:text-[#F5F5F7] tracking-tight">
+                <h2 className="text-sm sm:text-base font-semibold text-[#F5F5F7] tracking-tight">
                   Kütüphanem
                 </h2>
                 <p className="text-xs text-[#63636B] dark:text-[#8E8E98] mt-0.5">
@@ -2342,7 +2322,7 @@ export const ProfileTab: React.FC<Props> = ({
                         }`}
                       >
                         <span>{tab.label}</span>
-                        <span className="font-mono text-[11px] opacity-75 tabular-nums">
+                        <span className="text-xs opacity-75 tabular-nums">
                           {tab.count}
                         </span>
                       </button>
@@ -2551,7 +2531,7 @@ export const ProfileTab: React.FC<Props> = ({
                           }`}
                         >
                           <span>Müzik Sanatçıları</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
+                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
                             {sanitizedFavoriteArtists.length}
                           </span>
                         </button>
@@ -2566,7 +2546,7 @@ export const ProfileTab: React.FC<Props> = ({
                           }`}
                         >
                           <span>Tüm YouTube Kanalları</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
+                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-black/15 font-bold tabular-nums">
                             {subscribedChannels.length}
                           </span>
                         </button>
@@ -2875,7 +2855,7 @@ export const ProfileTab: React.FC<Props> = ({
                 </div>
                 <div>
                   <h3 className="font-heading font-semibold text-[#111113] dark:text-[#F5F5F7] text-sm">Konum Ayarları</h3>
-                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">Canlı GPS algılama veya elle giriş</p>
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">Canlı GPS algılama veya elle giriş</p>
                 </div>
               </div>
               <button
@@ -2891,14 +2871,14 @@ export const ProfileTab: React.FC<Props> = ({
             {/* Current Status Box */}
             <div className="p-3.5 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.07] flex items-center justify-between">
               <div>
-                <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">Mevcut Seçili Konum</div>
+                <div className="text-xs text-[#63636B] dark:text-[#8E8E98]">Mevcut Seçili Konum</div>
                 <div className="text-sm font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-2 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
                   <span>{userProfile.city || 'Belirtilmedi'}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                   geoPermissionState === 'granted'
                     ? 'bg-emerald-500/15 text-[#16A34A] dark:text-[#22C55E] border border-emerald-500/30'
                     : geoPermissionState === 'denied'
@@ -2911,7 +2891,7 @@ export const ProfileTab: React.FC<Props> = ({
                     ? 'Site İzni: Kapalı (IP Aktif)'
                     : 'Site İzni: Sorulmaya Hazır'}
                 </span>
-                <span className="text-[10px] text-[#63636B] dark:text-[#8E8E98]">
+                <span className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                   {isAutoLocation ? 'Otomatik Konum' : 'Elle Ayarlandı'}
                 </span>
               </div>
@@ -2949,18 +2929,18 @@ export const ProfileTab: React.FC<Props> = ({
                 <span>Şebeke / IP ile Otomatik Bul (İzin İstemez)</span>
               </button>
 
-              <p className="text-[10px] text-[#63636B] dark:text-[#8E8E98] text-center">
+              <p className="text-xs text-[#63636B] dark:text-[#8E8E98] text-center">
                 Üstteki butona dokunduğunuzda telefon ve web tarayıcınız "Konum İzni" penceresini açar ve site izinlerine Konum seçeneğini ekler.
               </p>
             </div>
 
             {/* Permission Troubleshooting Helper Box */}
             <div className="p-3 rounded-xl bg-[#111113]/[0.05] dark:bg-white/[0.06] border border-[#111113]/15 dark:border-white/15 text-[#63636B] dark:text-[#8E8E98] space-y-1">
-              <div className="text-[11px] font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-1.5">
+              <div className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>Tarayıcı 'Konum İzni Reddedildi' Uyarısı Verirse:</span>
               </div>
-              <ul className="text-[10px] text-[#63636B] dark:text-[#8E8E98] list-disc list-inside space-y-0.5 leading-relaxed">
+              <ul className="text-xs text-[#63636B] dark:text-[#8E8E98] list-disc list-inside space-y-0.5 leading-relaxed">
                 <li>
                   <strong className="text-[#111113] dark:text-[#F5F5F7]">Chrome:</strong> Adres çubuğundaki sol kilit simgesine dokunun → <strong className="text-[#111113] dark:text-[#F5F5F7]">İzinler</strong> → <strong className="text-[#111113] dark:text-[#F5F5F7]">Konum</strong> → <strong className="text-[#111113] dark:text-[#F5F5F7]">İzin Ver</strong>.
                 </li>
@@ -2976,7 +2956,7 @@ export const ProfileTab: React.FC<Props> = ({
             {/* Divider */}
             <div className="flex items-center gap-3 py-0.5">
               <div className="flex-1 h-px bg-[#E6E4DF] dark:bg-white/10" />
-              <span className="text-[10px] text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider font-semibold">veya Elle Yazın</span>
+              <span className="text-xs text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider font-semibold">veya Elle Yazın</span>
               <div className="flex-1 h-px bg-[#E6E4DF] dark:bg-white/10" />
             </div>
 
@@ -3007,7 +2987,7 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Quick suggestions */}
               <div className="space-y-1">
-                <span className="text-[10px] text-[#63636B] dark:text-[#8E8E98] font-medium">Hızlı Şehir Seçenekleri:</span>
+                <span className="text-xs text-[#63636B] dark:text-[#8E8E98] font-medium">Hızlı Şehir Seçenekleri:</span>
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {[
                     'Selçuk, İzmir',
@@ -3023,7 +3003,7 @@ export const ProfileTab: React.FC<Props> = ({
                       key={cityOption}
                       type="button"
                       onClick={() => handleSaveManualLocation(cityOption)}
-                      className="px-2.5 py-1 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] hover:text-[#111113] dark:hover:text-white border border-[#E2DFD9] dark:border-white/[0.06] text-[11px] cursor-pointer transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] hover:text-[#111113] dark:hover:text-white border border-[#E2DFD9] dark:border-white/[0.06] text-xs cursor-pointer transition"
                     >
                       {cityOption}
                     </button>
@@ -3034,7 +3014,7 @@ export const ProfileTab: React.FC<Props> = ({
 
             {/* Status Feedback Message */}
             {locationStatusMessage && (
-              <div className="p-2.5 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.06] text-[11px] text-[#111113] dark:text-[#F5F5F7] flex items-center gap-2">
+              <div className="p-2.5 rounded-xl bg-[#FAF9F6] dark:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.06] text-xs text-[#111113] dark:text-[#F5F5F7] flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7] shrink-0" />
                 <span>{locationStatusMessage}</span>
               </div>
@@ -3081,7 +3061,7 @@ export const ProfileTab: React.FC<Props> = ({
                   >
                     <span>Şeffaf Güven Kalkanı</span>
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                      className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${
                         isLightTheme
                           ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
                           : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
@@ -3120,7 +3100,7 @@ export const ProfileTab: React.FC<Props> = ({
             >
               <div className="space-y-1">
                 <span
-                  className={`text-[11px] font-bold uppercase tracking-wider ${
+                  className={`text-xs font-bold uppercase tracking-wider ${
                     isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
@@ -3165,7 +3145,7 @@ export const ProfileTab: React.FC<Props> = ({
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Doğrulanmış Hesap</span>
                 </div>
-                <div className={`text-[11px] ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
+                <div className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
                   Canlı oda açma ve sohbet ayrıcalıklı
                 </div>
               </div>
@@ -3205,7 +3185,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-mono font-bold shrink-0 ${
+                    className={`text-xs tabular-nums font-bold shrink-0 ${
                       isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
                     }`}
                   >
@@ -3213,7 +3193,7 @@ export const ProfileTab: React.FC<Props> = ({
                   </span>
                 </div>
                 <p
-                  className={`text-[11px] leading-relaxed ${
+                  className={`text-xs leading-relaxed ${
                     isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
@@ -3254,7 +3234,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-mono font-bold shrink-0 ${
+                    className={`text-xs tabular-nums font-bold shrink-0 ${
                       isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
                     }`}
                   >
@@ -3262,7 +3242,7 @@ export const ProfileTab: React.FC<Props> = ({
                   </span>
                 </div>
                 <p
-                  className={`text-[11px] leading-relaxed ${
+                  className={`text-xs leading-relaxed ${
                     isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
@@ -3305,7 +3285,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-mono font-bold shrink-0 ${
+                    className={`text-xs tabular-nums font-bold shrink-0 ${
                       isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
                     }`}
                   >
@@ -3313,7 +3293,7 @@ export const ProfileTab: React.FC<Props> = ({
                   </span>
                 </div>
                 <p
-                  className={`text-[11px] leading-relaxed ${
+                  className={`text-xs leading-relaxed ${
                     isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
@@ -3352,12 +3332,12 @@ export const ProfileTab: React.FC<Props> = ({
                   <AlertCircle className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
                   <span>Şeffaflık &amp; İtiraz Hakkı</span>
                 </span>
-                <span className={`text-[10px] ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
+                <span className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
                   Sıfır Gizli Algoritma
                 </span>
               </div>
               <p
-                className={`text-[11px] leading-relaxed ${
+                className={`text-xs leading-relaxed ${
                   isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
                 }`}
               >
@@ -3622,7 +3602,7 @@ export const ProfileTab: React.FC<Props> = ({
                             setTempCity(loc.fullLocation);
                           }
                         }}
-                        className="text-[11px] text-[#111113] dark:text-[#F5F5F7] hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        className="text-xs text-[#111113] dark:text-[#F5F5F7] hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <Navigation className={`w-3 h-3 ${isDetectingLocation ? 'animate-spin' : ''}`} />
                         <span>{isDetectingLocation ? 'Bulunuyor...' : 'Canlı GPS Al'}</span>
@@ -3647,14 +3627,14 @@ export const ProfileTab: React.FC<Props> = ({
                           key={opt.label}
                           type="button"
                           onClick={() => setTempCity(opt.value)}
-                          className="px-2.5 py-1 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] border border-[#E2DFD9] dark:border-white/[0.08] text-[11px] text-[#111113] dark:text-[#F5F5F7] transition cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] border border-[#E2DFD9] dark:border-white/[0.08] text-xs text-[#111113] dark:text-[#F5F5F7] transition cursor-pointer"
                         >
                           {opt.label}
                         </button>
                       ))}
                     </div>
                     {locationStatusMessage && (
-                      <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] pt-0.5">
+                      <p className="text-xs text-[#63636B] dark:text-[#8E8E98] pt-0.5">
                         {locationStatusMessage}
                       </p>
                     )}
@@ -3662,68 +3642,18 @@ export const ProfileTab: React.FC<Props> = ({
                 </>
               ) : (
                 <>
-                  {/* Section 1: Görünüm ve Tema */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <h4 className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] flex items-center gap-2">
-                          <Sun className="w-4 h-4 text-[#111113] dark:text-[#F5F5F7]" />
-                          <span>Görünüm ve Tema</span>
-                        </h4>
-                        <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
-                          Obsidian Ink Gece veya Warm Paper Gündüz
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-semibold text-[#111113] dark:text-[#F5F5F7] px-2 py-0.5 rounded-full bg-[#111113]/[0.08] dark:bg-white/[0.10]">
-                        {currentTheme === 'dark' ? 'Karanlık' : currentTheme === 'light' ? 'Aydınlık' : 'Sistem'}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: 'dark' as ThemeMode, label: 'Karanlık', desc: 'Obsidian Ink', icon: <Moon className="w-4 h-4 text-[#111113] dark:text-[#F5F5F7]" /> },
-                        { id: 'light' as ThemeMode, label: 'Aydınlık', desc: 'Warm Paper', icon: <Sun className="w-4 h-4 text-[#111113] dark:text-[#F5F5F7]" /> },
-                        { id: 'system' as ThemeMode, label: 'Sistem', desc: 'Cihaza Duyarlı', icon: <Monitor className="w-4 h-4 text-[#8E8E98]" /> },
-                      ].map((themeOpt) => {
-                        const isSelected = currentTheme === themeOpt.id;
-                        return (
-                          <button
-                            key={themeOpt.id}
-                            type="button"
-                            onClick={() => handleThemeChange(themeOpt.id)}
-                            className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1.5 active:scale-95 ${
-                              isSelected
-                                ? 'bg-[#111113]/[0.08] dark:bg-white/[0.10] border-[#111113]/35 dark:border-white/35 text-[#111113] dark:text-[#F5F5F7] shadow-sm ring-1 ring-[#111113]/20 dark:ring-white/25'
-                                : 'bg-[#FAF9F6] dark:bg-[#1C1C22] border-[#E6E4DF] dark:border-white/[0.06] text-[#63636B] dark:text-[#8E8E98] hover:text-[#111113] dark:hover:text-[#F5F5F7]'
-                            }`}
-                          >
-                            {themeOpt.icon}
-                            <div className="min-w-0">
-                              <div className={`text-xs font-semibold ${isSelected ? 'text-[#111113] dark:text-[#F5F5F7]' : 'text-[#63636B] dark:text-[#8E8E98]'}`}>
-                                {themeOpt.label}
-                              </div>
-                              <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98] hidden sm:block mt-0.5">
-                                {themeOpt.desc}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Section 1.5: Görünürlük & Gizlilik Modu (Herkese Açık | Sadece Arkadaşlar | Hayalet Mod) */}
-                  <div className="space-y-2.5 pt-4 border-t border-[#E6E4DF] dark:border-white/[0.08]">
+                  {/* Section 1: Görünürlük & Gizlilik Modu (Herkese Açık | Sadece Arkadaşlar | Hayalet Mod) */}
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <h4 className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7]">
+                        <h4 className="text-sm font-semibold text-[#F5F5F7]">
                           Frekans Görünürlüğü
                         </h4>
-                        <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                        <p className="text-xs font-normal text-[#8E8E98]">
                           Seni canlı şarkı odalarında ve zaman rayında kimlerin görebileceğini seç
                         </p>
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#F1EFEA] dark:bg-[#1C1C22] border border-[#E2DFD9] dark:border-white/[0.08] text-[#111113] dark:text-[#F5F5F7] shrink-0">
+                      <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-[#1C1C22] border border-white/[0.08] text-[#F5F5F7] shrink-0">
                         {userProfile.privacyMode === 'private'
                           ? 'Hayalet Mod'
                           : userProfile.privacyMode === 'friends_only'
@@ -3781,7 +3711,7 @@ export const ProfileTab: React.FC<Props> = ({
                               >
                                 {modeOpt.label}
                               </div>
-                              <div className="text-[10px] text-[#63636B] dark:text-[#8E8E98] hidden sm:block mt-0.5">
+                              <div className="text-xs text-[#63636B] dark:text-[#8E8E98] hidden sm:block mt-0.5">
                                 {modeOpt.desc}
                               </div>
                             </div>
@@ -3799,11 +3729,11 @@ export const ProfileTab: React.FC<Props> = ({
                           <Youtube className="w-4 h-4 text-rose-500" />
                           <span>Müzik Servisleri & Google Hesabı</span>
                         </h4>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           YouTube Music, Spotify ve Apple Music bağlantıları
                         </p>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         isGoogleAuthenticated
                           ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                           : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
@@ -3816,22 +3746,22 @@ export const ProfileTab: React.FC<Props> = ({
                       <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center gap-2">
                         <Youtube className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />
                         <div className="min-w-0">
-                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">YouTube Music</div>
-                          <div className="text-[9px] text-rose-600 dark:text-rose-300 truncate">Canlı Senkron</div>
+                          <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">YouTube Music</div>
+                          <div className="text-xs text-rose-600 dark:text-rose-300 truncate">Canlı Senkron</div>
                         </div>
                       </div>
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2">
                         <Disc3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                         <div className="min-w-0">
-                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">Spotify</div>
-                          <div className="text-[9px] text-emerald-700 dark:text-emerald-300 truncate">Oda & Link</div>
+                          <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">Spotify</div>
+                          <div className="text-xs text-emerald-700 dark:text-emerald-300 truncate">Oda & Link</div>
                         </div>
                       </div>
                       <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/25 flex items-center gap-2">
                         <Music className="w-4 h-4 text-pink-600 dark:text-pink-400 shrink-0" />
                         <div className="min-w-0">
-                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">Apple Music</div>
-                          <div className="text-[9px] text-pink-700 dark:text-pink-300 truncate">Katalog</div>
+                          <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">Apple Music</div>
+                          <div className="text-xs text-pink-700 dark:text-pink-300 truncate">Katalog</div>
                         </div>
                       </div>
                     </div>
@@ -3855,7 +3785,7 @@ export const ProfileTab: React.FC<Props> = ({
                               ? googleUser.name
                               : userProfile.youtubeAccount?.name || userProfile.name}
                           </div>
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                             {isGoogleAuthenticated && googleUser?.email
                               ? googleUser.email
                               : userProfile.youtubeAccount?.email || userProfile.email || 'Google hesabı bağlanmadı'}
@@ -3920,7 +3850,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </div>
 
                     {syncDiagnosticError && (
-                      <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-500 dark:text-rose-300 flex items-center justify-between gap-2">
+                      <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 dark:text-rose-300 flex items-center justify-between gap-2">
                         <span>{syncDiagnosticError}</span>
                         {onClearSyncError && (
                           <button
@@ -4003,7 +3933,7 @@ export const ProfileTab: React.FC<Props> = ({
               {/* Card Header */}
               <div className="relative z-10 space-y-3">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[10px] font-black tracking-wider text-emerald-400 flex items-center gap-1 truncate">
+                  <span className="text-xs font-black tracking-wider text-emerald-400 flex items-center gap-1 truncate">
                     <Headphones className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">LISTENHUB • FREKANS KİMLİK KARTI</span>
                   </span>
@@ -4023,10 +3953,10 @@ export const ProfileTab: React.FC<Props> = ({
                     <div className="text-xs font-bold text-white truncate">
                       {userProfile.youtubeAccount?.name || userProfile.name}
                     </div>
-                    <div className="text-[10px] text-zinc-400 truncate">
+                    <div className="text-xs text-zinc-400 truncate">
                       {userProfile.youtubeAccount?.handle || '@muziksever'}
                     </div>
-                    <div className="inline-flex items-center gap-1 mt-0.5 text-[9px] font-semibold text-emerald-400">
+                    <div className="inline-flex items-center gap-1 mt-0.5 text-xs font-semibold text-emerald-400">
                       <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
                       <span>{userProfile.trustScore || 98}/100 Doğrulanmış</span>
                     </div>
@@ -4036,14 +3966,14 @@ export const ProfileTab: React.FC<Props> = ({
 
               {/* Card Center: Aura Banner */}
               <div className="relative z-10 py-1 space-y-1.5">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
                   <Sparkles className="w-2.5 h-2.5" />
                   <span>Müzikal Aura</span>
                 </span>
                 <h3 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight leading-snug">
                   {weeklyPersona}
                 </h3>
-                <p className="text-[10px] text-zinc-300/80 leading-relaxed line-clamp-2">
+                <p className="text-xs text-zinc-300/80 leading-relaxed line-clamp-2">
                   {weeklyPersonaDesc}
                 </p>
               </div>
@@ -4051,19 +3981,19 @@ export const ProfileTab: React.FC<Props> = ({
               {/* Card Bottom: Core Wrapped Metrics & Waveform */}
               <div className="relative z-10 space-y-2">
                 <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-400">Dinleme Süresi</span>
-                    <span className="text-lime-400 font-bold font-mono">
+                    <span className="text-lime-400 font-bold tabular-nums">
                       {weeklyHours}s {weeklyRemainingMinutes}d
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-400">#1 Sanatçı</span>
                     <span className="text-[#F5F5F7] font-bold truncate max-w-[130px]">
                       {topArtistName}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-400">Baskın Tür</span>
                     <span className="text-cyan-300 font-bold truncate max-w-[130px]">
                       {topGenreName}
@@ -4084,7 +4014,7 @@ export const ProfileTab: React.FC<Props> = ({
                   ))}
                 </div>
 
-                <div className="text-center text-[9px] text-zinc-400 font-mono">
+                <div className="text-center text-xs text-zinc-400 tabular-nums">
                   listenhub.app • Dinleme Frekansı
                 </div>
               </div>
@@ -4157,7 +4087,7 @@ export const ProfileTab: React.FC<Props> = ({
               </div>
 
               {/* Verified Listener Note */}
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-500">
+              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-500">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{userProfile.trustScore || 98}/100 Güven Puanı Mühürlü</span>
@@ -4248,17 +4178,17 @@ export const ProfileTab: React.FC<Props> = ({
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-bold truncate">{song.title}</div>
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</div>
                         </div>
                       </div>
 
                       <div className="shrink-0 flex items-center gap-1.5">
                         {isSelected ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500 text-white">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-purple-500 text-white">
                             Seçili
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold text-purple-500 dark:text-purple-400 hover:underline">
+                          <span className="text-xs font-semibold text-purple-500 dark:text-purple-400 hover:underline">
                             Ata +
                           </span>
                         )}

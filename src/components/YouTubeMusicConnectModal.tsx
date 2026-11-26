@@ -286,7 +286,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
           <div>
             <h3 className="text-lg font-heading font-extrabold text-white tracking-tight flex items-center gap-2">
               <span>YouTube Music Canlı Bağlantısı</span>
-              <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold">
                 CANLI YAYIN
               </span>
             </h3>
@@ -304,7 +304,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <span>Oturum Durumu:</span>
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-full border font-bold text-[10px] ${
+              className={`px-2.5 py-0.5 rounded-full border font-bold text-xs ${
                 isConnected
                   ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
                   : 'bg-neutral-800 border-neutral-700 text-neutral-400'
@@ -326,7 +326,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                       <span>{account.name || 'Müzik Kaşifi'}</span>
                       <span className="text-neutral-400 font-normal">({ytHandle})</span>
                     </div>
-                    <div className="text-[11px] text-neutral-400 truncate mt-0.5">
+                    <div className="text-xs text-neutral-400 truncate mt-0.5">
                       {googleAccount || 'Kalıcı Kanal & Liste Bağlantısı Aktif'}
                     </div>
                   </div>
@@ -419,7 +419,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               </svg>
               <span>Google Hesabı ile Kimlik Doğrulama</span>
             </span>
-            <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${
+            <span className={`px-2 py-0.5 rounded-full border text-xs font-bold ${
               isGoogleAuthenticated
                 ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
                 : 'bg-neutral-800 border-neutral-700 text-neutral-400'
@@ -443,14 +443,14 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                     <div className="text-xs font-bold text-white truncate">
                       {googleUser.name}
                     </div>
-                    <div className="text-[11px] text-neutral-400 truncate">
+                    <div className="text-xs text-neutral-400 truncate">
                       {googleUser.email}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="text-xs text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                     ✓ Profil Aktif
                   </span>
                 </div>
@@ -461,11 +461,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     <div>
-                      <span className="text-white font-bold block text-[11px]">Otomatik Senkronize Ediliyor</span>
-                      <span className="text-[10px] text-neutral-400">Arka planda belirli aralıklarla otomatik güncellenir</span>
+                      <span className="text-white font-bold block text-xs">Otomatik Senkronize Ediliyor</span>
+                      <span className="text-xs text-neutral-400">Arka planda belirli aralıklarla otomatik güncellenir</span>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-bold shrink-0">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs tabular-nums font-bold shrink-0">
                     Canlı · 60 sn
                   </span>
                 </div>
@@ -501,7 +501,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>Kalıcı YouTube / YT Music Kanal & Liste Bağlantısı</span>
                 </div>
-                <p className="text-[11px] text-neutral-300 leading-relaxed">
+                <p className="text-xs text-neutral-300 leading-relaxed">
                   {channelLinkReason ||
                     'Bir kez kanal adını veya çalma listesi linkini yapıştır; hesabın cihazına kalıcı olarak bağlansın ve sonraki her girişinde otomatik güncel kalsın.'}
                 </p>
@@ -509,7 +509,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
 
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-neutral-400 mb-1">
+                  <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
                     YouTube / YT Music Kullanıcı Adı (@handle)
                   </label>
                   <input
@@ -521,7 +521,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-neutral-400 mb-1">
+                  <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
                     YouTube Music Çalma Listesi Linki (Otomatik Güncellenir)
                   </label>
                   <input
@@ -529,7 +529,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                     value={channelPlaylistInput}
                     onChange={(e) => setChannelPlaylistInput(e.target.value)}
                     placeholder="https://music.youtube.com/playlist?list=PL..."
-                    className="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 tabular-nums text-xs"
                   />
                 </div>
               </div>
@@ -563,7 +563,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             </form>
           ) : (
             <div className="space-y-2.5">
-              <p className="text-[11px] text-neutral-300 leading-relaxed">
+              <p className="text-xs text-neutral-300 leading-relaxed">
                 YouTube Music hesabını bir kez bağla; sonraki her girişinde tekrar izin istemeden kütüphanen sessizce güncel kalsın.
               </p>
 
@@ -608,12 +608,12 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <ListMusic className="w-4 h-4 text-red-500" />
               <span>YouTube Music Çalma Listesi Linki İçe Aktar</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 font-bold text-xs">
               DİREKT AKTARIM
             </span>
           </div>
 
-          <p className="text-[11px] text-neutral-300 leading-relaxed">
+          <p className="text-xs text-neutral-300 leading-relaxed">
             Kendi YouTube Music veya YouTube çalma listesi linkini yapıştır (veya hazır listelerden seç). Tüm şarkılar, sanatçılar ve süreler doğrudan profilinize aktarılır ve odada çalınabilir hale gelir.
           </p>
 
@@ -644,7 +644,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                 }}
                 disabled={isImportingPlaylist}
                 placeholder="https://music.youtube.com/playlist?list=PL... veya PL..."
-                className="w-full pl-3 pr-28 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 font-mono text-[11px] disabled:opacity-50"
+                className="w-full pl-3 pr-28 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 tabular-nums text-xs disabled:opacity-50"
               />
               <button
                 type="submit"
@@ -681,12 +681,12 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <Library className="w-4 h-4 text-lime-400" />
               <span>Müzik Zevkimi & Listelerimi İçe Aktar</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-lime-400/15 border border-lime-400/30 text-lime-300 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded-full bg-lime-400/15 border border-lime-400/30 text-lime-300 font-bold text-xs">
               KİŞİSELLEŞTİRME AKTİF
             </span>
           </div>
 
-          <p className="text-[11px] text-neutral-300 leading-relaxed">
+          <p className="text-xs text-neutral-300 leading-relaxed">
             YouTube Music dinleme geçmişin, favori sanatçıların ve çalma listelerin taranarak uygulamaya aktarılır. Bu sayede odadaki dinleyicilerle derin zevk uyumu hesaplanır ve radyo önerileri seni besleyecek şekilde akar.
           </p>
 
@@ -697,7 +697,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                 <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
                 <span>İçe Aktarılan Müzik Verileri:</span>
               </span>
-              <span className="text-lime-300 font-mono text-[11px] font-bold">
+              <span className="text-lime-300 tabular-nums text-xs font-bold">
                 {syncedPlaylists.length} Liste · {syncedPlaylists.reduce((acc, p) => acc + (p.tracks?.length || p.trackCount || 0), 0)} Parça
               </span>
             </div>
@@ -706,7 +706,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800/80">
                 <div className="text-xs font-bold text-white">{syncedPlaylists.length} Liste</div>
-                <div className="text-[10px] text-neutral-400">Çalma Listesi</div>
+                <div className="text-xs text-neutral-400">Çalma Listesi</div>
               </div>
               <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800/80">
                 <div className="text-xs font-bold text-lime-400">
@@ -714,25 +714,25 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                     ? `${new Set(syncedPlaylists.flatMap((p) => p.tracks.map((t) => t.artist))).size} Sanatçı`
                     : '0 Sanatçı'}
                 </div>
-                <div className="text-[10px] text-neutral-400">Aktarılan Sanatçı</div>
+                <div className="text-xs text-neutral-400">Aktarılan Sanatçı</div>
               </div>
               <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800/80">
                 <div className="text-xs font-bold text-[#111113] dark:text-white">{syncedPlaylists.length > 0 ? '%94 Uyum' : '%90 Uyum'}</div>
-                <div className="text-[10px] text-neutral-400">Oda Ortalaması</div>
+                <div className="text-xs text-neutral-400">Oda Ortalaması</div>
               </div>
             </div>
 
             {/* Imported Playlists Preview */}
             {syncedPlaylists.length > 0 ? (
               <div className="space-y-1 pt-1">
-                <span className="text-[10px] font-semibold text-neutral-400 block">
+                <span className="text-xs font-semibold text-neutral-400 block">
                   📂 Aktarılan YouTube Music Listeleri:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {syncedPlaylists.map((pl) => (
                     <span
                       key={pl.id}
-                      className="px-2 py-0.5 rounded-lg bg-neutral-950 border border-neutral-800 text-[10px] text-neutral-300 font-medium flex items-center gap-1"
+                      className="px-2 py-0.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-300 font-medium flex items-center gap-1"
                     >
                       <ListMusic className="w-3 h-3 text-red-500" />
                       <span className="truncate max-w-[160px]">{pl.title}</span>
@@ -743,7 +743,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             ) : (
               <div className="p-3 rounded-xl bg-neutral-950/80 border border-dashed border-neutral-800 text-center space-y-1">
                 <div className="text-xs font-semibold text-neutral-300">Henüz eklenmiş liste yok</div>
-                <p className="text-[11px] text-neutral-400">
+                <p className="text-xs text-neutral-400">
                   Yukarıdaki kutudan YouTube Music çalma listesi linkinizi yapıştırarak ekleyebilirsiniz.
                 </p>
               </div>
@@ -753,7 +753,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
           {/* Sync & Personalize Toggles */}
           <div className="space-y-2 pt-1 border-t border-neutral-800/80 text-xs">
             <label className="flex items-center justify-between text-neutral-300 cursor-pointer">
-              <span className="text-[11px]">⚡ Odadaki dinleyicilerle zevk uyumu hesapla</span>
+              <span className="text-xs">⚡ Odadaki dinleyicilerle zevk uyumu hesapla</span>
               <input
                 type="checkbox"
                 checked={useTasteForMatching}
@@ -762,7 +762,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               />
             </label>
             <label className="flex items-center justify-between text-neutral-300 cursor-pointer">
-              <span className="text-[11px]">📻 Radyo akışlarını dinleme geçmişime göre besle</span>
+              <span className="text-xs">📻 Radyo akışlarını dinleme geçmişime göre besle</span>
               <input
                 type="checkbox"
                 checked={feedRadioWithTaste}
@@ -771,7 +771,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               />
             </label>
             <label className="flex items-center justify-between text-neutral-300 cursor-pointer">
-              <span className="text-[11px]">📂 Çalma listelerimi profilimde listele & çalınabilir yap</span>
+              <span className="text-xs">📂 Çalma listelerimi profilimde listele & çalınabilir yap</span>
               <input
                 type="checkbox"
                 checked={showPlaylistsOnProfile}
@@ -787,11 +787,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse shrink-0" />
                 <div>
-                  <span className="text-white font-bold block text-[11px]">Otomatik Senkronize</span>
-                  <span className="text-[10px] text-neutral-400">Her 60 sn'de bir arka planda taranır</span>
+                  <span className="text-white font-bold block text-xs">Otomatik Senkronize</span>
+                  <span className="text-xs text-neutral-400">Her 60 sn'de bir arka planda taranır</span>
                 </div>
               </div>
-              <span className="text-[10px] text-lime-400 font-mono font-bold px-2 py-0.5 rounded-full bg-lime-400/10 border border-lime-400/20 shrink-0">
+              <span className="text-xs text-lime-400 tabular-nums font-bold px-2 py-0.5 rounded-full bg-lime-400/10 border border-lime-400/20 shrink-0">
                 Canlı
               </span>
             </div>
@@ -819,12 +819,12 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <ShieldCheck className="w-4 h-4 text-red-500" />
               <span>YouTube Premium & Reklamsız Mod</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 font-bold text-xs">
               0 REKLAM DESTEĞİ
             </span>
           </div>
 
-          <p className="text-[11px] text-neutral-300 leading-relaxed">
+          <p className="text-xs text-neutral-300 leading-relaxed">
             YouTube Premium üyesiysen, gömülü oynatıcı tarayıcındaki Google/YouTube oturum çerezlerini tanıyarak reklamları otomatik kaldırır. İstersen odadaki aynı saniyede doğrudan resmi YouTube Music uygulamasına da geçebilirsin.
           </p>
 
@@ -852,7 +852,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
             </a>
           </div>
 
-          <div className="flex items-center gap-2 pt-1 text-[10px] text-neutral-400">
+          <div className="flex items-center gap-2 pt-1 text-xs text-neutral-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>Premium Çerez İzni: Aktif (Oturum açık olan tarayıcılarda reklamsız dinleme sağlanır)</span>
           </div>
@@ -865,7 +865,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <Music2 className="w-4 h-4 text-red-500" />
               <span>Gerçek Zamanlı Çalan Şarkı:</span>
             </span>
-            <span className="text-[10px] text-red-400 font-semibold flex items-center gap-1">
+            <span className="text-xs text-red-400 font-semibold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
               <span>YouTube Music Canlı Akışı</span>
             </span>
@@ -892,11 +892,11 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <div className="min-w-0">
                 <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
                   <span className="truncate">{currentSong.title}</span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-400 text-[9px] font-bold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-400 text-xs font-bold">
                     HQ Audio
                   </span>
                 </div>
-                <div className="text-[11px] text-neutral-400 truncate">
+                <div className="text-xs text-neutral-400 truncate">
                   {currentSong.artist} · {currentSong.album}
                 </div>
               </div>
@@ -954,10 +954,10 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
               <Link2 className="w-4 h-4 text-lime-400" />
               <span>YouTube Music Parça / Link Eşleme</span>
             </span>
-            <span className="text-[10px] text-lime-400 font-mono">Otomatik Çözümleyici Aktif</span>
+            <span className="text-xs text-lime-400 tabular-nums">Otomatik Çözümleyici Aktif</span>
           </div>
 
-          <p className="text-[11px] text-neutral-400">
+          <p className="text-xs text-neutral-400">
             YouTube Music linkini yapıştır (veya şarkı/sanatçı adı yaz), parça anında odaya bağlanır ve canlı çalmaya başlar:
           </p>
 
@@ -972,7 +972,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                 }}
                 disabled={isResolving}
                 placeholder="Örn: https://music.youtube.com/watch?v=... veya 'Mor ve Ötesi - Cambaz'"
-                className="w-full pl-3 pr-24 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 font-mono text-[11px] disabled:opacity-50"
+                className="w-full pl-3 pr-24 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 tabular-nums text-xs disabled:opacity-50"
               />
               <button
                 type="submit"
@@ -1011,12 +1011,12 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
                   <div className="text-white font-bold truncate">
                     {lastMatchedSong.title}
                   </div>
-                  <div className="text-lime-300 text-[11px] truncate">
+                  <div className="text-lime-300 text-xs truncate">
                     {lastMatchedSong.artist} · Canlı Akışa Başarıyla Bağlandı!
                   </div>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-lime-400 text-neutral-950 text-[10px] font-extrabold shrink-0">
+              <span className="px-2 py-0.5 rounded-full bg-lime-400 text-neutral-950 text-xs font-extrabold shrink-0">
                 Yayında
               </span>
             </div>
@@ -1024,7 +1024,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
         </div>
 
         {/* 4. MOBİL & TARAYICI GÜVENLİK MODELİ AÇIKLAMASI */}
-        <div className="p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-2 text-[11px] text-neutral-400">
+        <div className="p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-2 text-xs text-neutral-400">
           <div className="flex items-center gap-1.5 text-neutral-300 font-semibold">
             <span>ℹ️</span>
             <span>Gerçek Müzik Dinleme & Link Eşleme Nasıl Çalışır?</span>

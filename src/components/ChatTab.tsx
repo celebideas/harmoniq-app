@@ -373,7 +373,7 @@ export const ChatTab: React.FC<Props> = ({
             e.stopPropagation();
             onToggleFriend && onToggleFriend(user);
           }}
-          className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition cursor-pointer min-h-[36px] flex items-center gap-1"
+          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition cursor-pointer min-h-[36px] flex items-center gap-1"
           title="Arkadaşlıktan çıkar"
         >
           <UserCheck className="w-3.5 h-3.5" />
@@ -389,7 +389,7 @@ export const ChatTab: React.FC<Props> = ({
             e.stopPropagation();
             onCancelSentRequest && onCancelSentRequest(user.id);
           }}
-          className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-[#111113]/[0.07] dark:bg-white/[0.09] text-[#63636B] dark:text-[#8E8E98] border border-[#E6E4DF] dark:border-white/15 hover:bg-[#111113]/[0.12] dark:hover:bg-white/15 transition cursor-pointer min-h-[36px] flex items-center gap-1"
+          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#111113]/[0.07] dark:bg-white/[0.09] text-[#63636B] dark:text-[#8E8E98] border border-[#E6E4DF] dark:border-white/15 hover:bg-[#111113]/[0.12] dark:hover:bg-white/15 transition cursor-pointer min-h-[36px] flex items-center gap-1"
           title="İsteği geri çek"
         >
           <Clock className="w-3.5 h-3.5" />
@@ -408,7 +408,7 @@ export const ChatTab: React.FC<Props> = ({
               onAcceptFriendRequest(matchingReq.id);
             }
           }}
-          className="studio-btn-primary px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] transition cursor-pointer min-h-[36px] flex items-center gap-1 shadow-sm"
+          className="studio-btn-primary px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] transition cursor-pointer min-h-[36px] flex items-center gap-1 shadow-sm"
         >
           <Check className="w-3.5 h-3.5" />
           <span>Kabul Et</span>
@@ -422,7 +422,7 @@ export const ChatTab: React.FC<Props> = ({
           e.stopPropagation();
           onToggleFriend && onToggleFriend(user);
         }}
-        className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-[#F1EFEA] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] hover:text-[#111113] dark:bg-[#1C1C22] dark:hover:bg-[#111113]/[0.10] dark:bg-white/[0.12] dark:hover:text-[#F5F5F7] text-[#111113] dark:text-[#F5F5F7] border border-[#E2DFD9] dark:border-white/[0.08] transition cursor-pointer min-h-[36px] flex items-center gap-1"
+        className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#F1EFEA] hover:bg-[#111113]/[0.08] dark:bg-white/[0.10] hover:text-[#111113] dark:bg-[#1C1C22] dark:hover:bg-[#111113]/[0.10] dark:bg-white/[0.12] dark:hover:text-[#F5F5F7] text-[#111113] dark:text-[#F5F5F7] border border-[#E2DFD9] dark:border-white/[0.08] transition cursor-pointer min-h-[36px] flex items-center gap-1"
       >
         <UserPlus className="w-3.5 h-3.5" />
         <span>Ekle</span>
@@ -480,16 +480,16 @@ export const ChatTab: React.FC<Props> = ({
           <div className="p-4 sm:p-5 border-b border-[#E6E4DF] dark:border-white/[0.06] space-y-3.5 shrink-0">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-lg font-bold text-[#111113] dark:text-[#F5F5F7] tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5F7] tracking-tight">
                   Sohbet
                 </h1>
-                <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                   {isCloudAuthenticated
                     ? 'Bulut senkronizasyonu aktif · Gerçek zamanlı'
                     : 'Aynı şarkıdan başlayan sohbetler'}
                 </p>
               </div>
-              <div className="text-right font-mono tabular-nums">
+              <div className="text-right tabular-nums">
                 <span className="text-xs font-medium text-[#16A34A] dark:text-[#22C55E] inline-flex items-center gap-1.5">
                   <LiveMiniEqualizer />
                   <span>{conversations.length}</span>
@@ -505,7 +505,7 @@ export const ChatTab: React.FC<Props> = ({
                     <Cloud className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
                     <span className="truncate">Bulut Sohbeti Aç</span>
                   </div>
-                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] mt-0.5 truncate">
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] mt-0.5 truncate">
                     Cihazlar arası anlık mesajlaşma
                   </p>
                 </div>
@@ -572,7 +572,7 @@ export const ChatTab: React.FC<Props> = ({
               >
                 <span>Arkadaşlar</span>
                 {friendsList.length > 0 && (
-                  <span className="text-[10px] font-mono font-semibold text-[#16A34A] dark:text-[#22C55E] tabular-nums shrink-0">
+                  <span className="text-xs font-semibold text-[#16A34A] dark:text-[#22C55E] tabular-nums shrink-0">
                     {friendsList.length}
                   </span>
                 )}
@@ -589,7 +589,7 @@ export const ChatTab: React.FC<Props> = ({
               >
                 <span>İstekler</span>
                 {incomingRequests.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] text-[10px] font-mono font-bold tabular-nums shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] text-xs font-bold tabular-nums shrink-0">
                     {incomingRequests.length}
                   </span>
                 )}
@@ -602,7 +602,7 @@ export const ChatTab: React.FC<Props> = ({
             {/* Search matches in Real Cloud Users Directory (shown across tabs when searching) */}
             {normalizedQuery && isCloudAuthenticated && (
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-1 flex items-center justify-between">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-1 flex items-center justify-between">
                   <span>ListenHub Üye Dizini</span>
                   <span className="tabular-nums">{filteredCloudDirectory.length} sonuç</span>
                 </div>
@@ -624,7 +624,7 @@ export const ChatTab: React.FC<Props> = ({
                             <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">
                               {user.name}
                             </div>
-                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                               {user.handle || user.city} · {user.city}
                             </div>
                           </div>
@@ -659,11 +659,11 @@ export const ChatTab: React.FC<Props> = ({
                 {!normalizedQuery && activeFrequencyUsers.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] flex items-center gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] flex items-center gap-1.5">
                         <Zap className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" strokeWidth={1.75} />
                         <span>Şu An Frekansta</span>
                       </span>
-                      <span className="text-[11px] font-mono font-semibold text-[#16A34A] dark:text-[#22C55E] tabular-nums">
+                      <span className="text-xs font-semibold text-[#16A34A] dark:text-[#22C55E] tabular-nums">
                         {activeFrequencyUsers.length} aktif
                       </span>
                     </div>
@@ -700,7 +700,7 @@ export const ChatTab: React.FC<Props> = ({
                                 user.avatarSeed
                               )}
                             </div>
-                            <span className="text-[11px] font-medium text-[#111113] dark:text-[#F5F5F7] max-w-[64px] truncate">
+                            <span className="text-xs font-medium text-[#111113] dark:text-[#F5F5F7] max-w-[64px] truncate">
                               {user.name.split(' ')[0]}
                             </span>
                           </button>
@@ -713,7 +713,7 @@ export const ChatTab: React.FC<Props> = ({
 
                 {/* Conversation List */}
                 <div className="space-y-1.5">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] px-1">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] px-1">
                     Gelen Kutusu
                   </div>
 
@@ -723,7 +723,7 @@ export const ChatTab: React.FC<Props> = ({
                       <p className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7]">
                         Henüz eşleşen sohbet yok
                       </p>
-                      <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                      <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                         Arkadaşlar sekmesinden gerçek üyeleri keşfet veya Canlı odadan bir dinleyiciye dokun.
                       </p>
                     </div>
@@ -751,20 +751,20 @@ export const ChatTab: React.FC<Props> = ({
                                     {conv.user.name}
                                   </span>
                                   {conv.isCloudConversation && (
-                                    <span className="text-[10px] font-bold text-[#16A34A] dark:text-[#22C55E] shrink-0">
+                                    <span className="text-xs font-bold text-[#16A34A] dark:text-[#22C55E] shrink-0">
                                       · Canlı
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-[11px] font-mono text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
+                                <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
                                   {conv.lastMessageTime}
                                 </span>
                               </div>
 
-                              <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 flex items-center gap-1">
+                              <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5 flex items-center gap-1">
                                 <Music className="w-3 h-3 text-[#111113] dark:text-[#F5F5F7] shrink-0" />
                                 <span className="truncate">
-                                  {conv.matchedTrack.title} · <span className="font-mono tabular-nums">{formatTime(conv.matchedSecond)}</span>
+                                  {conv.matchedTrack.title} · <span className="tabular-nums">{formatTime(conv.matchedSecond)}</span>
                                 </span>
                               </div>
 
@@ -776,7 +776,7 @@ export const ChatTab: React.FC<Props> = ({
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             {conv.unreadCount > 0 && (
-                              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] text-[10px] font-mono font-extrabold flex items-center justify-center tabular-nums">
+                              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] text-xs font-extrabold flex items-center justify-center tabular-nums">
                                 {conv.unreadCount}
                               </span>
                             )}
@@ -794,7 +794,7 @@ export const ChatTab: React.FC<Props> = ({
             {socialTab === 'friends' && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-1 flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-1 flex items-center justify-between">
                     <span>Arkadaşların</span>
                     <span className="tabular-nums">{filteredFriends.length} kişi</span>
                   </div>
@@ -805,7 +805,7 @@ export const ChatTab: React.FC<Props> = ({
                       <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                         Henüz arkadaş eklemedin
                       </p>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
                         Aşağıdaki ListenHub üyelerinden veya Canlı odadan arkadaşlık isteği gönderebilirsin.
                       </p>
                     </div>
@@ -823,12 +823,12 @@ export const ChatTab: React.FC<Props> = ({
                               <div className="text-xs font-bold text-zinc-900 dark:text-white truncate flex items-center gap-1.5">
                                 <span className="truncate">{friend.name}</span>
                                 {friend.isRealUser && (
-                                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                                     · Bulut
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                              <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                                 {friend.currentSong?.title
                                   ? `${friend.currentSong.title} · ${friend.city}`
                                   : friend.city}
@@ -844,7 +844,7 @@ export const ChatTab: React.FC<Props> = ({
                                   e.stopPropagation();
                                   onStartChatWithUser(friend);
                                 }}
-                                className="studio-btn-primary px-2.5 py-1.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-bold text-[11px] transition cursor-pointer min-h-[36px] flex items-center gap-1 shadow-sm"
+                                className="studio-btn-primary px-2.5 py-1.5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-bold text-xs transition cursor-pointer min-h-[36px] flex items-center gap-1 shadow-sm"
                               >
                                 <Send className="w-3 h-3" />
                                 <span>Mesaj</span>
@@ -873,9 +873,9 @@ export const ChatTab: React.FC<Props> = ({
                 {/* Discover Real Cloud Users */}
                 {isCloudAuthenticated && (
                   <div className="space-y-2 pt-2 border-t border-[#E6E4DF] dark:border-white/[0.06]">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#16A34A] dark:text-[#22C55E] px-1 flex items-center justify-between">
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#16A34A] dark:text-[#22C55E] px-1 flex items-center justify-between">
                       <span>Aktif ListenHub Üyeleri</span>
-                      <span className="font-mono tabular-nums">{filteredCloudDirectory.length} üye</span>
+                      <span className="tabular-nums">{filteredCloudDirectory.length} üye</span>
                     </div>
 
                     {filteredCloudDirectory.length === 0 ? (
@@ -896,7 +896,7 @@ export const ChatTab: React.FC<Props> = ({
                                 <div className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                                   {user.name}
                                 </div>
-                                <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate">
+                                <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
                                   {user.handle} · {user.city}
                                 </div>
                               </div>
@@ -931,9 +931,9 @@ export const ChatTab: React.FC<Props> = ({
               <div className="space-y-4">
                 {/* Incoming Requests */}
                 <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] px-1 flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] px-1 flex items-center justify-between">
                     <span>Gelen İstekler</span>
-                    <span className="font-mono tabular-nums">{incomingRequests.length}</span>
+                    <span className="tabular-nums">{incomingRequests.length}</span>
                   </div>
 
                   {incomingRequests.length === 0 ? (
@@ -954,11 +954,11 @@ export const ChatTab: React.FC<Props> = ({
                                 <span className="text-xs font-bold text-[#111113] dark:text-[#F5F5F7] truncate">
                                   {req.fromUser.name}
                                 </span>
-                                <span className="text-[10px] font-mono text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
+                                <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0">
                                   {req.timestamp}
                                 </span>
                               </div>
-                              <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate">
+                              <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
                                 {req.fromUser.city}
                                 {req.songContext ? ` · ${req.songContext}` : ''}
                               </div>
@@ -990,7 +990,7 @@ export const ChatTab: React.FC<Props> = ({
 
                 {/* Outgoing Requests */}
                 <div className="space-y-2 pt-2 border-t border-[#E4E2EC] dark:border-white/[0.06]">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-1 flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-1 flex items-center justify-between">
                     <span>Gönderilen İstekler</span>
                     <span className="tabular-nums">{outgoingRequests.length}</span>
                   </div>
@@ -1016,7 +1016,7 @@ export const ChatTab: React.FC<Props> = ({
                                 <div className="text-xs font-bold text-zinc-900 dark:text-white truncate">
                                   {target.name}
                                 </div>
-                                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                                <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                                   Onay bekleniyor · {req.timestamp}
                                 </div>
                               </div>
@@ -1024,7 +1024,7 @@ export const ChatTab: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => onCancelSentRequest && onCancelSentRequest(target.id)}
-                              className="px-2.5 py-1.5 rounded-xl bg-zinc-200/80 hover:bg-red-500/15 hover:text-red-500 dark:bg-white/[0.07] dark:text-zinc-300 text-zinc-700 text-[11px] font-semibold transition cursor-pointer min-h-[36px]"
+                              className="px-2.5 py-1.5 rounded-xl bg-zinc-200/80 hover:bg-red-500/15 hover:text-red-500 dark:bg-white/[0.07] dark:text-zinc-300 text-zinc-700 text-xs font-semibold transition cursor-pointer min-h-[36px]"
                             >
                               Geri Çek
                             </button>
@@ -1151,7 +1151,7 @@ export const ChatTab: React.FC<Props> = ({
                           <h4 className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7]">
                             Şeffaf Bildir
                           </h4>
-                          <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                          <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                             {activeChatUser.name} için bildirim nedenini seç
                           </p>
                         </div>
@@ -1215,12 +1215,12 @@ export const ChatTab: React.FC<Props> = ({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-[#16A34A] dark:text-[#22C55E]">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-[#16A34A] dark:text-[#22C55E]">
                           Tanışma Anı
                         </div>
                         <div className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
                           {activeConv.matchedTrack.title} ·{' '}
-                          <span className="font-mono tabular-nums">{formattedEncounterTime}</span>
+                          <span className="tabular-nums">{formattedEncounterTime}</span>
                         </div>
                         <div className="mt-1 w-full h-1 bg-[#E2DFD9] dark:bg-white/12 rounded-full overflow-hidden">
                           <div
@@ -1325,18 +1325,18 @@ export const ChatTab: React.FC<Props> = ({
                                       {msg.sharedSong.title}
                                     </span>
                                     {msg.sharedTimestampSecond !== undefined && (
-                                      <span className="text-[10px] font-mono font-semibold text-[#22C55E] shrink-0 tabular-nums">
+                                      <span className="text-xs font-semibold text-[#22C55E] shrink-0 tabular-nums">
                                         {formatTime(msg.sharedTimestampSecond)}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[11px] text-[#8E8E98] truncate">
+                                  <div className="text-xs text-[#8E8E98] truncate">
                                     {msg.sharedSong.artist}
                                   </div>
                                 </div>
                               </div>
 
-                              <span className="px-2.5 py-1 rounded-lg bg-white/15 border border-white/20 text-white font-semibold text-[11px] shrink-0">
+                              <span className="px-2.5 py-1 rounded-lg bg-white/15 border border-white/20 text-white font-semibold text-xs shrink-0">
                                 Dinle
                               </span>
                             </div>
@@ -1345,7 +1345,7 @@ export const ChatTab: React.FC<Props> = ({
                           <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                         </div>
 
-                        <span className="text-[10px] font-mono text-[#63636B] dark:text-[#8E8E98] mt-1 px-1 flex items-center gap-1 tabular-nums">
+                        <span className="text-xs text-[#63636B] dark:text-[#8E8E98] mt-1 px-1 flex items-center gap-1 tabular-nums">
                           <span>{msg.timestamp}</span>
                         </span>
                       </div>
@@ -1357,7 +1357,7 @@ export const ChatTab: React.FC<Props> = ({
 
               {/* Musical Icebreakers Bar */}
               <div className="px-3 py-2 border-t border-[#E6E4DF] dark:border-white/[0.06] bg-[#FAF9F6] dark:bg-[#0B0B0D]/40 flex items-center gap-2 shrink-0">
-                <span className="text-[10px] font-semibold text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider shrink-0 pl-1">
+                <span className="text-xs font-semibold text-[#63636B] dark:text-[#8E8E98] uppercase tracking-wider shrink-0 pl-1">
                   Hızlı Başlangıç
                 </span>
                 <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto no-scrollbar pr-6 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent_100%)]">
@@ -1472,7 +1472,7 @@ export const ChatTab: React.FC<Props> = ({
                   <h3 className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7]">
                     Şarkı Anı & Ses Kartı Gönder
                   </h3>
-                  <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98]">
+                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
                     {activeChatUser?.name} ile oynatılabilir zaman damgalı şarkı paylaş
                   </p>
                 </div>
@@ -1499,7 +1499,7 @@ export const ChatTab: React.FC<Props> = ({
                         {selectedSongToShare.artist}
                       </div>
                     </div>
-                    <div className="px-2.5 py-1 rounded-xl bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] font-mono font-bold text-xs tabular-nums flex items-center gap-1 shrink-0">
+                    <div className="px-2.5 py-1 rounded-xl bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] font-bold text-xs tabular-nums flex items-center gap-1 shrink-0">
                       <Clock className="w-3.5 h-3.5" />
                       <span>{formatTime(shareTimestampSecond)}</span>
                     </div>
@@ -1518,7 +1518,7 @@ export const ChatTab: React.FC<Props> = ({
                       }}
                       className="w-full accent-[#111113] dark:accent-white cursor-pointer"
                     />
-                    <div className="flex justify-between text-[10px] font-mono text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                    <div className="flex justify-between text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                       <span>00:00</span>
                       <span>{formatTime(selectedSongToShare.durationSeconds || 240)}</span>
                     </div>
@@ -1628,12 +1628,12 @@ export const ChatTab: React.FC<Props> = ({
                           <div className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
                             {song.title}
                           </div>
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                             {song.artist}
                           </div>
                         </div>
                       </div>
-                      <span className="text-[11px] text-zinc-500 tabular-nums shrink-0">
+                      <span className="text-xs text-zinc-500 tabular-nums shrink-0">
                         {formatTime(song.durationSeconds || 210)}
                       </span>
                     </button>

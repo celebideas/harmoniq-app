@@ -170,7 +170,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <Headphones className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               1. Rumuzun ve Avatarın
             </span>
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">Adım 1/3</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">Adım 1/3</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">
+              <label className="text-xs uppercase font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">
                 Görünecek Adın / Rumuzun
               </label>
               <input
@@ -198,7 +198,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
           {/* 5 Hazır Avatar Seçici */}
           <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">Hazır Avatarlardan Seç:</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Hazır Avatarlardan Seç:</span>
             <div className="grid grid-cols-5 gap-2">
               {PRESET_AVATARS.map((av) => {
                 const isSelected = selectedAvatarId === av.id;
@@ -233,7 +233,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <Music className="w-3.5 h-3.5 text-pink-600 dark:text-pink-400" />
               2. En Çok Dinlediğin Türler ({selectedGenres.length}/3)
             </span>
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">Adım 2/3</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">Adım 2/3</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -269,7 +269,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               type="button"
               onClick={handleGpsDetect}
               disabled={isDetectingGps}
-              className="text-[11px] text-emerald-700 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+              className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
             >
               <Compass className={`w-3 h-3 ${isDetectingGps ? 'animate-spin' : ''}`} />
               <span>{isDetectingGps ? 'Bulunuyor...' : '📍 GPS ile Bul'}</span>
@@ -290,7 +290,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 key={c}
                 type="button"
                 onClick={() => setCity(`${c}, Merkez`)}
-                className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                className={`text-xs px-2.5 py-1 rounded-lg border transition cursor-pointer ${
                   city.includes(c)
                     ? 'bg-emerald-500/15 dark:bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-semibold'
                     : 'bg-white dark:bg-white/5 border-[#E4E2EC] dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'

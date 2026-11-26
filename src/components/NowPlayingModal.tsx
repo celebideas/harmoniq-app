@@ -821,7 +821,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           <span className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7]">
             Şarkı sözleri getiriliyor...
           </span>
-          <span className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate max-w-full">
+          <span className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate max-w-full">
             {song.artist} — {song.title}
           </span>
         </div>
@@ -877,7 +877,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             compact ? 'py-5 px-4 text-center space-y-2.5' : 'py-6 px-6 text-left space-y-3'
           }`}
         >
-          <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] pb-1">
+          <div className="tabular-nums text-xs font-semibold uppercase tracking-wider text-[#63636B] dark:text-[#8E8E98] pb-1">
             Şarkı Sözleri
           </div>
           {lyricsData.plainLines.map((line, idx) => (
@@ -922,7 +922,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         <span className="font-semibold text-[#111113] dark:text-[#F5F5F7]">
           Sırada ({queueSongs.length} parça)
         </span>
-        <span className="text-[11px]">Dokunup anında çal</span>
+        <span className="text-xs">Dokunup anında çal</span>
       </div>
 
       {queueSongs.length === 0 ? (
@@ -950,7 +950,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               className="w-full p-2.5 rounded-xl bg-white dark:bg-[#1C1C22]/75 hover:bg-[#F1EFEA] dark:hover:bg-[#1C1C22] border border-[#E6E4DF] dark:border-white/[0.06] active:scale-[0.98] transition-all flex items-center justify-between text-left group cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="font-mono text-xs text-[#63636B] dark:text-[#8E8E98] w-5 text-center tabular-nums shrink-0">
+                <span className="text-xs text-[#63636B] dark:text-[#8E8E98] w-5 text-center tabular-nums shrink-0">
                   {idx + 1}
                 </span>
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-[#E6E4DF] dark:border-white/[0.08] shrink-0">
@@ -972,7 +972,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   <div className="text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] truncate">
                     {nextSong.title}
                   </div>
-                  <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate">
+                  <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate">
                     {nextSong.artist}
                     {nextSong.genre ? ` · ${nextSong.genre}` : ''}
                   </div>
@@ -980,10 +980,10 @@ export const NowPlayingModal: React.FC<Props> = ({
               </div>
 
               <div className="flex items-center gap-2 shrink-0 ml-2">
-                <span className="font-mono text-[11px] text-[#63636B] dark:text-[#8E8E98] tabular-nums">
+                <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums">
                   {formatTime(nextSong.durationSeconds)}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-white/[0.08] text-[10px] text-[#111113] dark:text-[#F5F5F7] font-semibold">
+                <span className="px-2 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-white/[0.08] text-xs text-[#111113] dark:text-[#F5F5F7] font-semibold">
                   Çal
                 </span>
               </div>
@@ -1012,7 +1012,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                 <Radio className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={1.75} />
                 <span className="truncate">{radioStation.stationName}</span>
               </div>
-              <p className="text-[11px] text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
+              <p className="text-xs text-[#63636B] dark:text-[#8E8E98] leading-relaxed">
                 {radioStation.description}
               </p>
             </div>
@@ -1068,12 +1068,12 @@ export const NowPlayingModal: React.FC<Props> = ({
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
+                      <div className="text-xs text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                         {rTrack.artist} {rTrack.album ? `· ${rTrack.album}` : ''}
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs text-[#63636B] dark:text-[#8E8E98] font-mono tabular-nums shrink-0 ml-2">
+                  <span className="text-xs text-[#63636B] dark:text-[#8E8E98] tabular-nums shrink-0 ml-2">
                     {formatTime(rTrack.durationSeconds)}
                   </span>
                 </button>
@@ -1157,7 +1157,7 @@ export const NowPlayingModal: React.FC<Props> = ({
             {filteredListeners.length} kişi şu an bu parçada
           </span>
         </div>
-        <span className="text-[11px] font-medium text-[#63636B] dark:text-[#8E8E98] shrink-0">
+        <span className="text-xs font-medium text-[#63636B] dark:text-[#8E8E98] shrink-0">
           Sırala: Saniye
         </span>
       </div>
@@ -1172,7 +1172,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           filteredListeners.map((user) => (
             <div
               key={user.id}
-              className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 light:bg-[#F1EFEA]/70 border border-white/[0.05] light:border-[#E6E4DF] transition hover:bg-[#1C1C22] light:hover:bg-[#EAE7E0]"
+              className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1C1C22]/60 border border-white/[0.05] transition hover:bg-[#1C1C22]"
             >
               {/* Left: Thin Emerald Live Ring Avatar + Name + City, District */}
               <button
@@ -1185,11 +1185,11 @@ export const NowPlayingModal: React.FC<Props> = ({
                     <img
                       src={user.avatarUrl}
                       alt={user.name}
-                      className="w-9 h-9 rounded-full object-cover ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]"
+                      className="w-9 h-9 rounded-full object-cover ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22]"
                     />
                   ) : (
                     <div
-                      className={`avatar-circle w-9 h-9 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22] light:ring-offset-[#F1EFEA]`}
+                      className={`avatar-circle w-9 h-9 rounded-full bg-gradient-to-tr ${user.avatarGradient} flex items-center justify-center text-white text-xs font-bold ring-[1.5px] ring-emerald-500/80 ring-offset-2 ring-offset-[#1C1C22]`}
                     >
                       {user.avatarSeed || user.name.slice(0, 2).toUpperCase()}
                     </div>
@@ -1197,10 +1197,10 @@ export const NowPlayingModal: React.FC<Props> = ({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-[#F5F5F7] light:text-[#111113] truncate">
+                  <div className="text-sm font-semibold text-[#F5F5F7] truncate">
                     {user.name}
                   </div>
-                  <div className="text-xs text-zinc-400 light:text-[#63636B] truncate">
+                  <div className="text-xs text-zinc-400 truncate">
                     {user.city}
                   </div>
                 </div>
@@ -1208,7 +1208,7 @@ export const NowPlayingModal: React.FC<Props> = ({
 
               {/* Middle/Right: Monospace Second Badge + Compact Equal Katıl & MessageCircle */}
               <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] light:bg-black/[0.05] text-[#F5F5F7] light:text-[#111113]">
+                <span className="text-xs tabular-nums px-2 py-1 rounded-lg bg-white/[0.06] text-[#F5F5F7]">
                   {formatTime(user.currentSecond)}
                 </span>
 
@@ -1225,7 +1225,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                       );
                     }
                   }}
-                  className="studio-btn-primary h-8 px-3 rounded-lg bg-white light:bg-[#111113] hover:bg-zinc-200 light:hover:bg-zinc-800 text-[#0B0B0D] light:text-white text-xs font-semibold transition active:scale-95 cursor-pointer"
+                  className="studio-btn-primary h-8 px-3 rounded-lg bg-white hover:bg-zinc-200 text-[#0B0B0D] text-xs font-semibold transition active:scale-95 cursor-pointer"
                   title={`${user.name} ile birlikte dinle`}
                 >
                   Katıl
@@ -1235,7 +1235,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => onStartChatWithUser(user)}
-                    className="w-8 h-8 rounded-lg bg-[#141418] light:bg-white hover:bg-white/10 light:hover:bg-[#E6E4DF] border border-white/[0.08] light:border-[#E2DFD9] text-[#F5F5F7] light:text-[#111113] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                    className="w-8 h-8 rounded-lg bg-[#141418] hover:bg-white/10 border border-white/[0.08] text-[#F5F5F7] flex items-center justify-center transition active:scale-95 cursor-pointer"
                     title={`${user.name} ile sohbet et`}
                     aria-label={`${user.name} ile sohbet et`}
                   >
@@ -1270,7 +1270,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           {song.releaseYear && (
             <>
               <span>·</span>
-              <span className="font-mono tabular-nums">{song.releaseYear}</span>
+              <span className="tabular-nums">{song.releaseYear}</span>
             </>
           )}
         </div>
@@ -1294,7 +1294,7 @@ export const NowPlayingModal: React.FC<Props> = ({
           } ${effectiveIsLiked ? 'fill-current text-rose-500' : ''}`}
           strokeWidth={1.75}
         />
-        <span className="font-mono text-[10px] font-semibold tabular-nums">{likeCount}</span>
+        <span className="text-xs font-semibold tabular-nums">{likeCount}</span>
       </button>
     </div>
   );
@@ -1307,7 +1307,7 @@ export const NowPlayingModal: React.FC<Props> = ({
         durationSeconds={song.durationSeconds || 1}
         onSeek={onSeek}
       />
-      <div className="flex items-center justify-between font-mono text-[11px] tabular-nums text-[#63636B] dark:text-[#8E8E98] -mt-1.5">
+      <div className="flex items-center justify-between text-xs tabular-nums text-[#63636B] dark:text-[#8E8E98] -mt-1.5">
         <span>{formatTime(progressSeconds)}</span>
         <span>{formatTime(song.durationSeconds)}</span>
       </div>
@@ -1405,7 +1405,7 @@ export const NowPlayingModal: React.FC<Props> = ({
       role="dialog"
       aria-modal="true"
       aria-label="Tam Ekran Müzik Oynatıcı"
-      className="fixed inset-0 z-[120] h-[100dvh] w-full flex flex-col bg-[#0B0B0D] light:bg-[#FAF9F6] text-[#F5F5F7] light:text-[#111113] overflow-hidden"
+      className="fixed inset-0 z-[120] h-[100dvh] w-full flex flex-col bg-[#0B0B0D] text-[#F5F5F7] overflow-hidden"
     >
       {/* Full-Screen Organic Album Cover Ambient Glow (Radial Gradient + Soft Blurred Artwork Wash) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
@@ -1468,7 +1468,7 @@ export const NowPlayingModal: React.FC<Props> = ({
                 <div
                   role="status"
                   aria-live="polite"
-                  className="absolute right-full mr-2 top-1/2 -translate-y-1/2 z-[130] whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] border border-[#16A34A]/35 dark:border-[#22C55E]/35 shadow-lg flex items-center gap-1.5 pointer-events-none"
+                  className="absolute right-full mr-2 top-1/2 -translate-y-1/2 z-[130] whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold bg-white dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] border border-[#16A34A]/35 dark:border-[#22C55E]/35 shadow-lg flex items-center gap-1.5 pointer-events-none"
                 >
                   <Check className="w-3 h-3 text-[#16A34A] dark:text-[#22C55E] shrink-0" strokeWidth={2.5} />
                   <span>ListenHub an bağlantısı kopyalandı</span>
@@ -1551,7 +1551,7 @@ export const NowPlayingModal: React.FC<Props> = ({
               className="text-xs font-medium text-[#16A34A] dark:text-[#22C55E] hover:underline underline-offset-2 flex items-center gap-1.5 transition cursor-pointer"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
-              <span className="font-mono tabular-nums">{activeRoomListeners.length}</span>
+              <span className="tabular-nums">{activeRoomListeners.length}</span>
               <span>kişi şu an bu odada</span>
             </button>
 

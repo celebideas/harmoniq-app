@@ -136,7 +136,7 @@ export const InstallAppModal: React.FC<Props> = ({
           <div>
             <h3 className="text-lg font-heading font-extrabold text-white tracking-tight flex items-center gap-2">
               <span>Telefona Yükle</span>
-              <span className="px-2 py-0.5 rounded-full bg-lime-400/20 text-lime-400 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-lime-400/20 text-lime-400 text-xs font-bold">
                 Mobil Uygulama
               </span>
             </h3>
@@ -179,7 +179,7 @@ export const InstallAppModal: React.FC<Props> = ({
               <QrCode className="w-4 h-4 text-lime-400" />
               <span>Telefon Kamerasıyla Tara & Başlat:</span>
             </span>
-            <span className="text-[11px] text-lime-400 font-medium">Canlı QR Kod</span>
+            <span className="text-xs text-lime-400 font-medium">Canlı QR Kod</span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 bg-neutral-900/80 p-3 rounded-2xl border border-neutral-800/80">
@@ -221,7 +221,7 @@ export const InstallAppModal: React.FC<Props> = ({
                   )}
                 </button>
 
-                <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800 text-[11px] font-mono text-neutral-400 truncate max-w-full text-left">
+                <div className="p-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs tabular-nums text-neutral-400 truncate max-w-full text-left">
                   {activeUrl}
                 </div>
 
@@ -229,7 +229,7 @@ export const InstallAppModal: React.FC<Props> = ({
                 <div className="pt-1">
                   <button
                     onClick={() => setUseCustomUrl(!useCustomUrl)}
-                    className="text-[11px] text-neutral-400 hover:text-lime-400 underline transition"
+                    className="text-xs text-neutral-400 hover:text-lime-400 underline transition"
                   >
                     {useCustomUrl ? 'Geliştirme Linkine Dön' : 'Farklı Bir Paylaşım Linki mi Kullanıyorsunuz? (QR Değiştir)'}
                   </button>
@@ -243,7 +243,7 @@ export const InstallAppModal: React.FC<Props> = ({
                         onChange={(e) => setCustomUrl(e.target.value)}
                         className="w-full px-3 py-1.5 rounded-xl bg-neutral-950 border border-neutral-700 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-lime-400"
                       />
-                      <span className="text-[10px] text-neutral-400 block text-left">
+                      <span className="text-xs text-neutral-400 block text-left">
                         Yapıştırdığınız linke göre QR kod anında yeniden üretilecektir.
                       </span>
                     </div>
@@ -287,7 +287,7 @@ export const InstallAppModal: React.FC<Props> = ({
               </span>
               <ol className="space-y-2.5 text-neutral-400">
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-xs">
                     1
                   </span>
                   <span>
@@ -296,7 +296,7 @@ export const InstallAppModal: React.FC<Props> = ({
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-xs">
                     2
                   </span>
                   <span>
@@ -317,7 +317,7 @@ export const InstallAppModal: React.FC<Props> = ({
               </span>
               <ol className="space-y-2.5 text-neutral-400">
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-xs">
                     1
                   </span>
                   <span className="flex items-center gap-1.5 flex-wrap">
@@ -330,7 +330,7 @@ export const InstallAppModal: React.FC<Props> = ({
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-lime-400 text-neutral-950 font-bold flex items-center justify-center shrink-0 text-xs">
                     2
                   </span>
                   <span className="flex items-center gap-1.5 flex-wrap">

@@ -138,7 +138,7 @@ export const SongPickerModal: React.FC<Props> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative z-[131] w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] bg-[#141418] light:bg-white border ${
+        className={`relative z-[131] w-full max-w-md rounded-3xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] bg-[#141418] border ${
           isLight
             ? 'border-[#E6E4DF] text-[#111113]'
             : 'border-white/[0.08] text-[#F5F5F7]'
@@ -211,7 +211,7 @@ export const SongPickerModal: React.FC<Props> = ({
                 }
               }}
               placeholder="YouTube Music linki veya şarkı/sanatçı ara..."
-              className={`w-full pl-10 pr-20 py-2.5 rounded-xl border focus:outline-none focus:border-[#111113]/40 dark:focus:border-white/30 transition font-mono text-[11px] ${
+              className={`w-full pl-10 pr-20 py-2.5 rounded-xl border focus:outline-none focus:border-[#111113]/40 dark:focus:border-white/30 transition tabular-nums text-xs ${
                 isLight
                   ? 'bg-[#FAF9F6] border-[#E2DFD9] text-[#111113] placeholder-[#8E847A]'
                   : 'bg-[#1C1C22] border-white/10 text-[#F5F5F7] placeholder-[#8E8E98]'
@@ -237,7 +237,7 @@ export const SongPickerModal: React.FC<Props> = ({
           </div>
 
           {errorMsg && (
-            <div className="text-[11px] text-rose-500 dark:text-rose-400 px-1 flex items-center gap-1.5">
+            <div className="text-xs text-rose-500 dark:text-rose-400 px-1 flex items-center gap-1.5">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -260,7 +260,7 @@ export const SongPickerModal: React.FC<Props> = ({
                     &ldquo;{searchTerm}&rdquo; parçasını/linkini doğrudan odaya bağla
                   </span>
                 </span>
-                <span className="studio-btn-primary font-semibold text-[10px] bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] px-2.5 py-1 rounded-md shrink-0">
+                <span className="studio-btn-primary font-semibold text-xs bg-[#111113] dark:bg-white text-white dark:text-[#0B0B0D] px-2.5 py-1 rounded-md shrink-0">
                   {isResolving ? 'Bağlanıyor...' : 'Bağla & Çal'}
                 </span>
               </button>
@@ -273,7 +273,7 @@ export const SongPickerModal: React.FC<Props> = ({
           {/* Quick taste recommendations */}
           <div className="space-y-1.5 mb-1">
             <div
-              className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+              className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
                 isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
               }`}
             >
@@ -292,7 +292,7 @@ export const SongPickerModal: React.FC<Props> = ({
                   key={query}
                   type="button"
                   onClick={() => handleResolveAndPlay(query)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-medium active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium active:scale-[0.96] transition-transform duration-100 ease-out cursor-pointer ${
                     isLight
                       ? 'bg-[#FAF9F6] border-[#E6E4DF] hover:border-[#111113]/30 dark:border-white/30 hover:bg-[#F1EFEA] text-[#111113]'
                       : 'bg-[#1C1C22] border-white/[0.08] hover:border-[#111113]/30 dark:border-white/30 hover:bg-[#24242C] text-[#F5F5F7]'
@@ -306,7 +306,7 @@ export const SongPickerModal: React.FC<Props> = ({
 
           <div className="flex items-center justify-between px-0.5 pt-1">
             <span
-              className={`text-[11px] font-semibold ${
+              className={`text-xs font-semibold ${
                 isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
               }`}
             >
@@ -314,7 +314,7 @@ export const SongPickerModal: React.FC<Props> = ({
             </span>
             {isSearchingCatalog && (
               <span
-                className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${
+                className={`inline-flex items-center gap-1.5 text-xs font-medium ${
                   isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                 }`}
               >
@@ -389,7 +389,7 @@ export const SongPickerModal: React.FC<Props> = ({
                       {song.title}
                     </div>
                     <div
-                      className={`text-[11px] truncate mt-0.5 ${
+                      className={`text-xs truncate mt-0.5 ${
                         isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                       }`}
                     >
@@ -404,7 +404,7 @@ export const SongPickerModal: React.FC<Props> = ({
                   </div>
                 ) : (
                   <span
-                    className={`text-[10px] font-semibold shrink-0 px-2.5 py-1 rounded-lg border ${
+                    className={`text-xs font-semibold shrink-0 px-2.5 py-1 rounded-lg border ${
                       isLight
                         ? 'bg-white text-[#111113] border-[#E2DFD9]'
                         : 'bg-[#141418] text-[#8E8E98] border-white/[0.08]'
@@ -420,7 +420,7 @@ export const SongPickerModal: React.FC<Props> = ({
 
         {/* Footer */}
         <div
-          className={`px-5 py-3 border-t text-[11px] text-center flex items-center justify-center gap-2 ${
+          className={`px-5 py-3 border-t text-xs text-center flex items-center justify-center gap-2 ${
             isLight
               ? 'bg-[#FAF9F6] border-[#E6E4DF] text-[#63636B]'
               : 'bg-[#141418] border-white/[0.08] text-[#8E8E98]'

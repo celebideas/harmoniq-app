@@ -258,7 +258,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
         {/* Minimal Monochrome Progress Scrubber */}
         <div className="w-full flex items-center gap-3">
           <span
-            className={`text-[11px] font-mono tabular-nums w-10 text-right shrink-0 ${
+            className={`text-xs tabular-nums w-10 text-right shrink-0 ${
               isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
@@ -303,7 +303,7 @@ export const DesktopPlayerBar: React.FC<Props> = ({
           </div>
 
           <span
-            className={`text-[11px] font-mono tabular-nums w-10 shrink-0 ${
+            className={`text-xs tabular-nums w-10 shrink-0 ${
               isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >

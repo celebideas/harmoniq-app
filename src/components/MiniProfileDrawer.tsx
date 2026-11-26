@@ -159,7 +159,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                 </h3>
                 {user.isRealUser && (
                   <span
-                    className={`text-[11px] font-bold tracking-wide ${
+                    className={`text-xs font-bold tracking-wide ${
                       isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'
                     }`}
                   >
@@ -173,7 +173,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                   isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                 }`}
               >
-                {user.handle && <span className="font-mono text-[11px]">{user.handle}</span>}
+                {user.handle && <span className="tabular-nums text-xs">{user.handle}</span>}
                 {user.handle && <span>·</span>}
                 <span className={`font-medium ${platformInfo.color}`}>{platformInfo.name}</span>
                 <span>·</span>
@@ -320,7 +320,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                   Şarkıdaki Konumu
                 </span>
                 <span
-                  className={`font-mono font-bold text-sm tabular-nums ${
+                  className={` font-bold text-sm tabular-nums ${
                     isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
                   }`}
                 >
@@ -334,7 +334,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               >
                 {displaySong?.title || 'Canlı Dinleme'}
               </div>
-              <div className={`text-[11px] truncate ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
+              <div className={`text-xs truncate ${isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
                 {displaySong ? `${displaySong.artist} · ${displaySong.genre}` : 'ListenHub Ağı'}
               </div>
             </div>
@@ -361,7 +361,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
                 }`}
               >
                 <span
-                  className={`text-[11px] tabular-nums ${
+                  className={`text-xs tabular-nums ${
                     isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                   }`}
                 >
@@ -394,7 +394,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
           )}
 
           <div
-            className={`flex items-center justify-between text-[11px] pt-0.5 ${
+            className={`flex items-center justify-between text-xs pt-0.5 ${
               isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
@@ -454,7 +454,7 @@ export const MiniProfileDrawer: React.FC<Props> = ({
           </div>
 
           <div
-            className={`text-[11px] flex items-center gap-1 ${
+            className={`text-xs flex items-center gap-1 ${
               isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >

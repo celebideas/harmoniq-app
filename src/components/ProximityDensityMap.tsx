@@ -68,7 +68,7 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({
         </span>
 
         <span
-          className={`px-2.5 py-0.5 rounded-lg border font-mono tabular-nums text-[11px] font-bold whitespace-nowrap ${
+          className={`px-2.5 py-0.5 rounded-lg border tabular-nums text-xs font-bold whitespace-nowrap ${
             isLight
               ? 'bg-[#111113]/[0.08] border-[#111113]/15 text-[#111113]'
               : 'bg-white/[0.10] border-white/15 text-white'
@@ -78,7 +78,7 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({
         </span>
 
         <span
-          className={`text-right font-mono tabular-nums text-[11px] font-medium truncate ${
+          className={`text-right tabular-nums text-xs font-medium truncate ${
             isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
           }`}
         >
@@ -115,7 +115,7 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({
         </div>
 
         <div
-          className={`flex items-center justify-between text-[10px] font-mono tabular-nums ${
+          className={`flex items-center justify-between text-xs tabular-nums ${
             isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
           }`}
         >
@@ -918,7 +918,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
             </div>
 
             <div
-              className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-xl border ${
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border ${
                 isLight
                   ? 'text-[#63636B] bg-[#F1EFEA] border-[#E2DFD9]'
                   : 'text-[#8E8E98] bg-[#1C1C22] border-white/[0.06]'
@@ -936,7 +936,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
           {gpsStatusNote && (
             <div
-              className={`px-3 py-1.5 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${
+              className={`px-3 py-1.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
                 isLight
                   ? 'bg-[#F1EFEA] border-[#E2DFD9] text-[#111113]'
                   : 'bg-[#1C1C22] border-white/[0.08] text-[#F5F5F7]'
@@ -992,7 +992,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 triggerHaptic(10);
                 setMapStyle('roadmap');
               }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 mapStyle === 'roadmap'
                   ? isLight
                     ? 'studio-btn-primary bg-[#111113] text-white shadow-sm'
@@ -1012,7 +1012,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                 triggerHaptic(10);
                 setMapStyle('satellite');
               }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 mapStyle === 'satellite'
                   ? 'bg-white text-[#0B0B0D] shadow-sm'
                   : isLight
@@ -1026,7 +1026,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
           {/* Active Radius Overlay Label (Top-Right) */}
           <div
-            className={`pointer-events-none absolute top-3 right-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-[11px] font-mono tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
+            className={`pointer-events-none absolute top-3 right-3 z-[420] px-2.5 py-1 rounded-xl border backdrop-blur-md text-xs tabular-nums font-medium shadow-sm flex items-center gap-1.5 ${
               mapStyle === 'satellite'
                 ? 'keep-dark bg-[#141418]/88 border-white/15 text-white'
                 : isLight
@@ -1164,7 +1164,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
 
               <div className="flex items-center gap-2 shrink-0">
                 <span
-                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold tabular-nums ${
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-semibold tabular-nums ${
                     isLight
                       ? 'bg-white text-[#111113] border-[#E6E4DF]'
                       : 'bg-[#141418] text-[#F5F5F7] border-white/[0.08]'
@@ -1192,7 +1192,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
             <div className="flex items-center gap-1.5 flex-wrap">
               {selectedUser.isRealUser && (
                 <span
-                  className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-semibold flex items-center gap-1.5 shrink-0 ${
+                  className={`px-2 py-0.5 rounded-lg text-xs tabular-nums font-semibold flex items-center gap-1.5 shrink-0 ${
                     isLight
                       ? 'bg-[#16A34A]/15 text-[#16A34A]'
                       : 'bg-[#22C55E]/15 text-[#22C55E]'
@@ -1208,7 +1208,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               )}
 
               <span
-                className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                className={`px-2 py-0.5 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
                   isLight
                     ? 'bg-[#16A34A]/10 text-[#16A34A]'
                     : 'bg-[#22C55E]/15 text-[#22C55E]'
@@ -1219,7 +1219,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               </span>
 
               <span
-                className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                className={`px-2 py-0.5 rounded-lg border text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
                   isLight
                     ? 'bg-white border-[#E6E4DF] text-[#111113]'
                     : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
@@ -1230,7 +1230,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
               </span>
 
               <span
-                className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
+                className={`px-2 py-0.5 rounded-lg border text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
                   isLight
                     ? 'bg-white border-[#E6E4DF] text-[#111113]'
                     : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
@@ -1274,7 +1274,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                     : 'bg-white hover:bg-zinc-200 text-[#0B0B0D]'
                 }`}
               >
-                <span className="font-mono tabular-nums">
+                <span className="tabular-nums">
                   {formatTime(selectedUser.currentSecond)} Anına Katıl
                 </span>
               </button>
@@ -1309,7 +1309,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
           }`}
         >
           <div
-            className={`flex items-center justify-between text-[11px] gap-2 ${
+            className={`flex items-center justify-between text-xs gap-2 ${
               isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
             }`}
           >
@@ -1356,7 +1356,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-1 text-[10.5px] font-mono tabular-nums">
+                    <div className="flex items-center justify-between gap-1 text-xs tabular-nums">
                       <span
                         className={`font-semibold ${
                           isLight ? 'text-[#16A34A]' : 'text-[#22C55E]'
@@ -1369,7 +1369,7 @@ export const ProximityDensityMap: React.FC<Props> = ({
                       </span>
                     </div>
                     <div
-                      className={`text-[10px] font-medium ${
+                      className={`text-xs font-medium ${
                         isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
                       }`}
                     >
