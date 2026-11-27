@@ -48,9 +48,8 @@ import { usePwaUpdate } from './hooks/usePwaUpdate';
 import {
   fetchArtistRadio,
   fetchMoreRadioRecommendations,
-  fetchYouTubeVideoIdForSong,
   resolveMusicLinkOrQuery,
-  searchITunesAudio,
+  resolvePlayableAudioParallel,
   searchTracks,
   syncYouTubeLibraryByInput,
   TURKISH_ROCK_RADIO_POOL,
@@ -146,6 +145,16 @@ export default function App() {
     }
     return 'lounge';
   });
+  const [visitedTabs, setVisitedTabs] = useState<Set<NavTab>>(() => new Set<NavTab>(['lounge', activeTab]));
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
   const LAST_PLAYED_SONG_KEY = 'listenhub_last_played_song';
   const LAST_PLAYED_SECOND_KEY = 'listenhub_last_played_second';
 
@@ -2319,8 +2328,47 @@ export default function App() {
   };
 
   const handleSelectTab = useCallback((tab: NavTab) => {
+    setVisitedTabs((prev) => {
+      if (prev.has(tab)) return prev;
+      const next = new Set(prev);
+      next.add(tab);
+      return next;
+    });
     setActiveTab(tab);
   }, []);
+
+  // Background Queue Prefetch: 1.5s after currentSong starts/changes, silently warm next 2 tracks
+  useEffect(() => {
+    if (!currentSong) return;
+    const timer = window.setTimeout(() => {
+      const queue = activeQueue && activeQueue.length > 0 ? activeQueue : [];
+      const currentIdx = queue.findIndex(
+        (s) => s.id === currentSong.id || s.title.toLowerCase() === currentSong.title.toLowerCase()
+      );
+      const nextIdx = currentIdx !== -1 ? currentIdx + 1 : 0;
+      const targets: Song[] = [];
+
+      if (nextIdx < queue.length && queue[nextIdx] && queue[nextIdx].id !== currentSong.id) {
+        targets.push(queue[nextIdx]);
+      }
+      if (nextIdx + 1 < queue.length && queue[nextIdx + 1] && queue[nextIdx + 1].id !== currentSong.id) {
+        targets.push(queue[nextIdx + 1]);
+      }
+      if (
+        nextRadioSong &&
+        nextRadioSong.id !== currentSong.id &&
+        !targets.some((t) => t.id === nextRadioSong.id)
+      ) {
+        targets.push(nextRadioSong);
+      }
+
+      for (const track of targets.slice(0, 2)) {
+        soundEngine.prefetchSong(track);
+      }
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [currentSong?.id, activeQueue, nextRadioSong?.id]);
 
   const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
     const safeStart = Math.max(0, Math.floor(startSecond || 0));
@@ -2330,19 +2378,7 @@ export default function App() {
     let playableSong = song;
     if (!song.youtubeVideoId && song.artist && song.title) {
       try {
-        const ytId = await fetchYouTubeVideoIdForSong(song.artist, song.title);
-        if (ytId) {
-          playableSong = { ...song, youtubeVideoId: ytId };
-        } else if (!playableSong.audioUrl) {
-          const appleFallback = await searchITunesAudio(`${song.artist} ${song.title}`, true);
-          if (appleFallback && appleFallback.audioUrl) {
-            playableSong = {
-              ...playableSong,
-              audioUrl: appleFallback.audioUrl,
-              coverUrl: playableSong.coverUrl || appleFallback.coverUrl,
-            };
-          }
-        }
+        playableSong = await resolvePlayableAudioParallel(song);
       } catch {
         // fallback
       }
@@ -4027,25 +4063,27 @@ export default function App() {
             />
           </div>
 
-          {activeTab === 'rooms' && (
-            <RoomsTab
-              currentSong={currentSong}
-              onSelectRoom={stableHandleSelectRoom}
-              syncedPlaylists={syncedPlaylists}
-              onPlayPlaylist={stableHandlePlayPlaylistAndLounge}
-              onStartPersonalRadio={stableHandleStartPersonalRadioAndLounge}
-              favoriteArtists={favoriteArtists}
-              favoriteSongs={favoriteSongs}
-              personalTaste={personalTaste}
-              onStartArtistRadio={stableHandleStartArtistRadioAndLounge}
-              users={combinedLoungeUsers}
-              onSelectUser={stableHandleSelectDrawerUser}
-              onDirectChat={stableHandleDirectChat}
-              onSeekSecond={stableHandleSeekAndLounge}
-              userCity={userCity}
-              onUpdateCity={stableHandleUpdateCityWithMapToast}
-              themeMode={effectiveTheme}
-            />
+          {visitedTabs.has('rooms') && (
+            <div className={activeTab === 'rooms' ? 'flex-1 flex flex-col' : 'hidden'}>
+              <RoomsTab
+                currentSong={currentSong}
+                onSelectRoom={stableHandleSelectRoom}
+                syncedPlaylists={syncedPlaylists}
+                onPlayPlaylist={stableHandlePlayPlaylistAndLounge}
+                onStartPersonalRadio={stableHandleStartPersonalRadioAndLounge}
+                favoriteArtists={favoriteArtists}
+                favoriteSongs={favoriteSongs}
+                personalTaste={personalTaste}
+                onStartArtistRadio={stableHandleStartArtistRadioAndLounge}
+                users={combinedLoungeUsers}
+                onSelectUser={stableHandleSelectDrawerUser}
+                onDirectChat={stableHandleDirectChat}
+                onSeekSecond={stableHandleSeekAndLounge}
+                userCity={userCity}
+                onUpdateCity={stableHandleUpdateCityWithMapToast}
+                themeMode={effectiveTheme}
+              />
+            </div>
           )}
 
           <div className={activeTab === 'chat' ? 'flex-1 flex flex-col' : 'hidden'}>
@@ -4084,59 +4122,61 @@ export default function App() {
             />
           </div>
 
-          {activeTab === 'profile' && (
-            <ProfileTab
-              userProfile={profileTabUserProfile}
-              friendsList={mergedFriendsList}
-              friendRequests={mergedIncomingRequests}
-              pendingSentUsers={mergedOutgoingRequestUsers}
-              onAcceptFriendRequest={stableHandleAcceptFriendRequest}
-              onDeclineFriendRequest={stableHandleDeclineFriendRequest}
-              onCancelSentRequest={stableHandleCancelSentRequest}
-              onUpdateIntent={stableHandleNoopIntent}
-              onUpdatePrivacyMode={setPrivacyMode}
-              onOpenSongPicker={stableHandleOpenSongPicker}
-              onToggleFriend={stableHandleToggleFriend}
-              onStartChatWithFriend={stableHandleStartChatWithFriend}
-              appVersion={pwa.appVersion}
-              isCheckingUpdates={pwa.isChecking}
-              onCheckForUpdates={pwa.checkForUpdates}
-              onOpenYouTubeConnect={stableHandleOpenYouTubeConnectModal}
-              onUpdateAvatar={stableHandleUpdateAvatar}
-              syncedPlaylists={syncedPlaylists}
-              onPlayPlaylist={stableHandlePlayPlaylist}
-              onStartPersonalRadio={stableHandleStartPersonalRadio}
-              onSyncTaste={stableHandleSyncTaste}
-              onImportPlaylist={stableHandleImportPlaylistUrl}
-              onDeletePlaylist={stableHandleDeletePlaylist}
-              favoriteSongs={favoriteSongs}
-              onToggleFavoriteSong={stableHandleToggleFavoriteSong}
-              favoriteArtists={favoriteArtists}
-              subscribedChannels={subscribedChannels}
-              onToggleFavoriteArtist={stableHandleToggleFavoriteArtist}
-              onAddFavoriteArtist={stableHandleAddFavoriteArtist}
-              onPlaySong={stableHandlePlaySongAuto}
-              onPlaySongsList={stableHandlePlaySongsList}
-              onStartArtistRadio={stableHandleStartArtistRadioByName}
-              isGoogleAuthenticated={isGoogleAuthenticated}
-              hasActiveYouTubeToken={hasActiveYouTubeToken}
-              isGoogleLoading={isGoogleLoading}
-              onGoogleSignIn={stableHandleGoogleSignIn}
-              onGoogleSignOut={stableHandleGoogleSignOut}
-              googleUser={googleUser}
-              onUpdateAccount={stableHandleUpdateAccount}
-              onUpdateBio={stableHandleUpdateProfileBio}
-              onUpdateCity={stableHandleUpdateProfileCity}
-              syncDiagnosticError={syncDiagnosticError}
-              onClearSyncError={stableHandleClearSyncError}
-              themeMode={effectiveTheme}
-              onLoadPopularCollection={stableHandleLoadPopularCollection}
-              onLogout={stableHandleFullLogout}
-              shouldOpenSettings={shouldOpenProfileSettings}
-              onConsumeOpenSettings={stableHandleConsumeOpenSettings}
-              onPickSongForSignatureSlot={stableHandlePickSongForSignatureSlot}
-              signatureVitrinVersion={signatureVitrinVersion}
-            />
+          {visitedTabs.has('profile') && (
+            <div className={activeTab === 'profile' ? 'flex-1 flex flex-col' : 'hidden'}>
+              <ProfileTab
+                userProfile={profileTabUserProfile}
+                friendsList={mergedFriendsList}
+                friendRequests={mergedIncomingRequests}
+                pendingSentUsers={mergedOutgoingRequestUsers}
+                onAcceptFriendRequest={stableHandleAcceptFriendRequest}
+                onDeclineFriendRequest={stableHandleDeclineFriendRequest}
+                onCancelSentRequest={stableHandleCancelSentRequest}
+                onUpdateIntent={stableHandleNoopIntent}
+                onUpdatePrivacyMode={setPrivacyMode}
+                onOpenSongPicker={stableHandleOpenSongPicker}
+                onToggleFriend={stableHandleToggleFriend}
+                onStartChatWithFriend={stableHandleStartChatWithFriend}
+                appVersion={pwa.appVersion}
+                isCheckingUpdates={pwa.isChecking}
+                onCheckForUpdates={pwa.checkForUpdates}
+                onOpenYouTubeConnect={stableHandleOpenYouTubeConnectModal}
+                onUpdateAvatar={stableHandleUpdateAvatar}
+                syncedPlaylists={syncedPlaylists}
+                onPlayPlaylist={stableHandlePlayPlaylist}
+                onStartPersonalRadio={stableHandleStartPersonalRadio}
+                onSyncTaste={stableHandleSyncTaste}
+                onImportPlaylist={stableHandleImportPlaylistUrl}
+                onDeletePlaylist={stableHandleDeletePlaylist}
+                favoriteSongs={favoriteSongs}
+                onToggleFavoriteSong={stableHandleToggleFavoriteSong}
+                favoriteArtists={favoriteArtists}
+                subscribedChannels={subscribedChannels}
+                onToggleFavoriteArtist={stableHandleToggleFavoriteArtist}
+                onAddFavoriteArtist={stableHandleAddFavoriteArtist}
+                onPlaySong={stableHandlePlaySongAuto}
+                onPlaySongsList={stableHandlePlaySongsList}
+                onStartArtistRadio={stableHandleStartArtistRadioByName}
+                isGoogleAuthenticated={isGoogleAuthenticated}
+                hasActiveYouTubeToken={hasActiveYouTubeToken}
+                isGoogleLoading={isGoogleLoading}
+                onGoogleSignIn={stableHandleGoogleSignIn}
+                onGoogleSignOut={stableHandleGoogleSignOut}
+                googleUser={googleUser}
+                onUpdateAccount={stableHandleUpdateAccount}
+                onUpdateBio={stableHandleUpdateProfileBio}
+                onUpdateCity={stableHandleUpdateProfileCity}
+                syncDiagnosticError={syncDiagnosticError}
+                onClearSyncError={stableHandleClearSyncError}
+                themeMode={effectiveTheme}
+                onLoadPopularCollection={stableHandleLoadPopularCollection}
+                onLogout={stableHandleFullLogout}
+                shouldOpenSettings={shouldOpenProfileSettings}
+                onConsumeOpenSettings={stableHandleConsumeOpenSettings}
+                onPickSongForSignatureSlot={stableHandlePickSongForSignatureSlot}
+                signatureVitrinVersion={signatureVitrinVersion}
+              />
+            </div>
           )}
         </main>
 

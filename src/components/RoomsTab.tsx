@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react';
 import {
   Music,
   Play,
@@ -19,7 +19,58 @@ import {
 } from '../services/artistFilterService';
 import { triggerHaptic } from '../services/themeService';
 import { LiveMiniEqualizer } from './LiveMiniEqualizer';
-import { ProximityDensityMap, RadiusSlider, ALL_TURKEY_RADIUS } from './ProximityDensityMap';
+
+const ALL_TURKEY_RADIUS = 51;
+
+const LazyProximityDensityMap = React.lazy(() =>
+  import('./ProximityDensityMap').then((m) => ({ default: m.ProximityDensityMap }))
+);
+const LazyRadiusSlider = React.lazy(() =>
+  import('./ProximityDensityMap').then((m) => ({ default: m.RadiusSlider }))
+);
+
+const ARTIST_ARTWORK_CACHE_KEY = 'listenhub_artist_artwork_cache_v1';
+const moduleArtistArtworkCache = new Map<string, string>();
+let hasHydratedArtworkCache = false;
+let hasPurgedRoomsSession = false;
+
+function hydrateArtistArtworkCache(): Record<string, string> {
+  if (!hasHydratedArtworkCache && typeof window !== 'undefined') {
+    hasHydratedArtworkCache = true;
+    try {
+      const raw = localStorage.getItem(ARTIST_ARTWORK_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          for (const [k, v] of Object.entries(parsed)) {
+            if (typeof v === 'string' && v) {
+              moduleArtistArtworkCache.set(k.toLowerCase(), v);
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  const obj: Record<string, string> = {};
+  moduleArtistArtworkCache.forEach((v, k) => {
+    obj[k] = v;
+  });
+  return obj;
+}
+
+function persistArtistArtworkCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const entries = Array.from(moduleArtistArtworkCache.entries()).slice(-120);
+    const obj: Record<string, string> = {};
+    for (const [k, v] of entries) obj[k] = v;
+    localStorage.setItem(ARTIST_ARTWORK_CACHE_KEY, JSON.stringify(obj));
+  } catch {
+    // ignore quota errors
+  }
+}
 
 interface Props {
   currentSong: Song | null;
@@ -329,7 +380,10 @@ export const RoomsTab: React.FC<Props> = React.memo(({
   const [mapRadiusKm, setMapRadiusKm] = useState<number>(ALL_TURKEY_RADIUS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMood, setSelectedMood] = useState<MoodTunerId>('all');
-  const [artistArtworkMap, setArtistArtworkMap] = useState<Record<string, string>>({});
+  const [artistArtworkMap, setArtistArtworkMap] = useState<Record<string, string>>(
+    () => hydrateArtistArtworkCache()
+  );
+  const hasPurgedSessionRef = useRef<boolean>(hasPurgedRoomsSession);
 
   // Progressive load state for performance
   const [visibleArtistsCount, setVisibleArtistsCount] = useState<number>(8);
@@ -346,8 +400,11 @@ export const RoomsTab: React.FC<Props> = React.memo(({
     return list;
   }, [favoriteSongs, syncedPlaylists]);
 
-  // Purge corporate/magazine channels from localStorage on mount
+  // Purge corporate/magazine channels from localStorage at most ONCE per app session
   useEffect(() => {
+    if (hasPurgedSessionRef.current || hasPurgedRoomsSession) return;
+    hasPurgedSessionRef.current = true;
+    hasPurgedRoomsSession = true;
     purgeNonMusicFromLocalStorage(allUserTracks);
   }, [allUserTracks]);
 
@@ -474,26 +531,38 @@ export const RoomsTab: React.FC<Props> = React.memo(({
     });
   }, [baseArtistRooms, artistArtworkMap]);
 
-  // Fetch real high-res portraits for visible artists in a single batched state update
+  // Fetch real high-res portraits for visible artists in parallel batches of 4 (cached across sessions)
   useEffect(() => {
     let cancelled = false;
     const missing = baseArtistRooms
       .slice(0, 18)
-      .filter((r) => !r.imageUrl);
+      .filter((r) => !r.imageUrl && !moduleArtistArtworkCache.has(r.artist.toLowerCase()));
 
     if (missing.length === 0) return;
 
     (async () => {
-      const updates: Record<string, string> = {};
-      for (const room of missing) {
+      const BATCH_SIZE = 4;
+      for (let i = 0; i < missing.length; i += BATCH_SIZE) {
         if (cancelled) break;
-        const art = await getArtistArtwork(room.artist);
-        if (art && !cancelled) {
-          updates[room.artist.toLowerCase()] = art;
+        const batch = missing.slice(i, i + BATCH_SIZE);
+        const settled = await Promise.allSettled(
+          batch.map(async (room) => {
+            const art = await getArtistArtwork(room.artist);
+            return { key: room.artist.toLowerCase(), art };
+          })
+        );
+        if (cancelled) break;
+        const batchUpdates: Record<string, string> = {};
+        for (const item of settled) {
+          if (item.status === 'fulfilled' && item.value.art) {
+            moduleArtistArtworkCache.set(item.value.key, item.value.art);
+            batchUpdates[item.value.key] = item.value.art;
+          }
         }
-      }
-      if (!cancelled && Object.keys(updates).length > 0) {
-        setArtistArtworkMap((prev) => ({ ...prev, ...updates }));
+        if (Object.keys(batchUpdates).length > 0) {
+          persistArtistArtworkCache();
+          setArtistArtworkMap((prev) => ({ ...prev, ...batchUpdates }));
+        }
       }
     })();
 
@@ -643,29 +712,38 @@ export const RoomsTab: React.FC<Props> = React.memo(({
         </div>
       </div>
 
-      {/* LENS 2: HARİTA (Real Interactive OpenStreetMap + Leaflet ProximityDensityMap) */}
+      {/* LENS 2: HARİTA (Lazy-Loaded Leaflet ProximityDensityMap — zero Leaflet cost until clicked) */}
       {exploreLens === 'map' && (
-        <div className="space-y-4">
-          <RadiusSlider
-            radiusKm={mapRadiusKm}
-            onChangeRadiusKm={setMapRadiusKm}
-            listenerCount={mapListenerCount}
-            themeMode={themeMode}
-          />
+        <Suspense
+          fallback={
+            <div className="rounded-2xl bg-[#141418] border border-white/[0.08] p-8 flex flex-col items-center justify-center gap-3 min-h-[380px]">
+              <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+              <span className="text-xs text-[#8E8E98]">Harita katmanı yükleniyor...</span>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <LazyRadiusSlider
+              radiusKm={mapRadiusKm}
+              onChangeRadiusKm={setMapRadiusKm}
+              listenerCount={mapListenerCount}
+              themeMode={themeMode}
+            />
 
-          <ProximityDensityMap
-            users={users}
-            radiusKm={mapRadiusKm}
-            onChangeRadiusKm={setMapRadiusKm}
-            onSelectUser={onSelectUser || (() => {})}
-            onDirectChat={onDirectChat}
-            onSeekSecond={onSeekSecond}
-            currentSong={currentSong}
-            myCity={userCity}
-            onChangeCity={onUpdateCity}
-            themeMode={themeMode}
-          />
-        </div>
+            <LazyProximityDensityMap
+              users={users}
+              radiusKm={mapRadiusKm}
+              onChangeRadiusKm={setMapRadiusKm}
+              onSelectUser={onSelectUser || (() => {})}
+              onDirectChat={onDirectChat}
+              onSeekSecond={onSeekSecond}
+              currentSong={currentSong}
+              myCity={userCity}
+              onChangeCity={onUpdateCity}
+              themeMode={themeMode}
+            />
+          </div>
+        </Suspense>
       )}
 
       {/* LENS 1: CANLI ODALAR (Subtraction-First: 2 Clean Control Rows -> Immediate Rooms) */}

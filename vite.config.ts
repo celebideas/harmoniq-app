@@ -18,6 +18,31 @@ export default defineConfig(() => {
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'leaflet'],
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
+              return 'vendor-react';
+            }
+            if (id.includes('/node_modules/firebase/') || id.includes('/node_modules/@firebase/')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('/node_modules/leaflet/')) {
+              return 'vendor-leaflet';
+            }
+            if (id.includes('/node_modules/lucide-react/')) {
+              return 'vendor-icons';
+            }
+          },
+        },
+      },
+    },
     server: {
       port: 3000,
       host: '0.0.0.0',

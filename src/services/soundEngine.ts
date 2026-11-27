@@ -8,6 +8,10 @@
 import { Song } from '../types';
 import { SAMPLE_SONGS } from '../data/mockData';
 import { ytController } from './youtubePlayerController';
+import {
+  resolvePlayableAudioParallel,
+  prefetchTrackAudioSources,
+} from './musicResolver';
 
 class RealMusicEngine {
   private audio: HTMLAudioElement | null = null;
@@ -615,8 +619,32 @@ class RealMusicEngine {
       this.notifyTimeUpdate(safeStart);
     }
 
+    // Parallel resolution when BOTH youtubeVideoId and audioUrl are missing
+    let resolvedSong = song;
+    if (!resolvedSong.youtubeVideoId && !resolvedSong.audioUrl && resolvedSong.artist && resolvedSong.title) {
+      const sampleFallback = SAMPLE_SONGS.find((s) => s.id === resolvedSong.id);
+      if (sampleFallback?.youtubeVideoId || sampleFallback?.audioUrl) {
+        resolvedSong = {
+          ...resolvedSong,
+          youtubeVideoId: resolvedSong.youtubeVideoId || sampleFallback.youtubeVideoId,
+          audioUrl: resolvedSong.audioUrl || sampleFallback.audioUrl,
+        };
+      } else {
+        try {
+          resolvedSong = await resolvePlayableAudioParallel(resolvedSong);
+        } catch {
+          // keep original song for graceful fallback
+        }
+        if (this.activePlaybackId !== playbackId) {
+          return false;
+        }
+        this.currentSong = resolvedSong;
+        this.isPendingMetadataSeek = safeStart > 0 && !resolvedSong.youtubeVideoId;
+      }
+    }
+
     // CASE 1: YouTube Track
-    if (song.youtubeVideoId) {
+    if (resolvedSong.youtubeVideoId) {
       if (this.activePlaybackId !== playbackId) {
         return false;
       }
@@ -641,16 +669,16 @@ class RealMusicEngine {
       this.isPlaying = true;
       this.notifyStateChange(true);
       this.syncMediaSessionPlaybackState(true);
-      ytController.play(song.youtubeVideoId, safeStart);
+      ytController.play(resolvedSong.youtubeVideoId, safeStart);
       this.setIsLoading(false);
       return true;
     }
 
     // CASE 2: Native Audio Track (MP3/AAC/M4A/iTunes preview)
     this.isUsingSilentAudio = false;
-    let url = song.audioUrl;
+    let url = resolvedSong.audioUrl;
     if (!url) {
-      const found = SAMPLE_SONGS.find((s) => s.id === song.id);
+      const found = SAMPLE_SONGS.find((s) => s.id === resolvedSong.id);
       url = found?.audioUrl;
     }
 
@@ -763,6 +791,10 @@ class RealMusicEngine {
       this.setIsLoading(false);
       return true;
     }
+  }
+
+  public prefetchSong(song: Song | null): void {
+    prefetchTrackAudioSources(song);
   }
 
   public playSongSnippet(songId: string, _soundType?: string, optionalSong?: Song): void {

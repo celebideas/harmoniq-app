@@ -63,34 +63,7 @@ function cleanSongTitle(rawTitle: string): { artist: string; title: string } {
   return { artist: 'Bilinmeyen Sanatçı', title: cleaned || rawTitle };
 }
 
-/**
- * Fetch YouTube Video ID via backend search endpoint
- * This ensures songs stream their FULL complete version (NOT a 30s preview demo!)
- */
-export async function fetchYouTubeVideoIdForSong(artist: string, title: string): Promise<string | null> {
-  const query = `${artist} ${title}`.trim();
-  if (!query) return null;
-
-  try {
-    const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`);
-    if (res.ok) {
-      const data = await res.json();
-      return data.videoId || null;
-    }
-  } catch (err: any) {
-    // Graceful fallback notice - no throw or crash
-    console.info('[Harmoniq] YouTube search service unavailable, falling back to Apple Music stream:', err?.message);
-  }
-  return null;
-}
-
-/**
- * Search iTunes Store for authentic song metadata, album artwork and explicit status
- */
-export async function searchITunesAudio(
-  query: string,
-  allowExplicit: boolean = true
-): Promise<{
+export interface ITunesAudioResult {
   audioUrl?: string;
   coverUrl?: string;
   artist?: string;
@@ -99,54 +72,269 @@ export async function searchITunesAudio(
   durationSeconds?: number;
   genre?: string;
   isExplicit?: boolean;
-} | null> {
-  try {
-    // 1. Try global or Turkish store
-    let url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`;
-    let res = await fetch(url);
-    if (!res.ok) {
-      url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=TR&entity=song&limit=6`;
-      res = await fetch(url);
-    }
+}
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data.results && data.results.length > 0) {
-      // Prioritize explicit (original studio) track if allowed; otherwise prefer non-explicit
-      let item = data.results[0];
-      if (allowExplicit) {
-        const explicitMatch = data.results.find((r: any) => r.trackExplicitness === 'explicit');
-        if (explicitMatch) item = explicitMatch;
-      } else {
-        const cleanMatch = data.results.find((r: any) => r.trackExplicitness !== 'explicit');
-        if (cleanMatch) item = cleanMatch;
+// Module-level in-memory audio resolution caches for 0ms repeat & prefetched playback
+const ytIdCache = new Map<string, string | null>();
+const appleAudioCache = new Map<string, ITunesAudioResult | null>();
+const ytInFlight = new Map<string, Promise<string | null>>();
+const appleInFlight = new Map<string, Promise<ITunesAudioResult | null>>();
+
+function buildTrackCacheKey(artist: string, title: string): string {
+  return `${(artist || '').trim().toLowerCase()}::${(title || '').trim().toLowerCase()}`;
+}
+
+export function getCachedYouTubeVideoId(artist: string, title: string): string | null | undefined {
+  const key = buildTrackCacheKey(artist, title);
+  return ytIdCache.has(key) ? ytIdCache.get(key) : undefined;
+}
+
+export function getCachedAppleAudio(artist: string, title: string): ITunesAudioResult | null | undefined {
+  const key = buildTrackCacheKey(artist, title);
+  if (appleAudioCache.has(key)) return appleAudioCache.get(key);
+  const queryKey = `${artist} ${title}`.trim().toLowerCase();
+  return appleAudioCache.has(queryKey) ? appleAudioCache.get(queryKey) : undefined;
+}
+
+/**
+ * Fetch YouTube Video ID via backend search endpoint with 0ms in-memory cache and 2.5s timeout.
+ * Ensures songs stream their FULL complete version without hanging track switches.
+ */
+export async function fetchYouTubeVideoIdForSong(artist: string, title: string): Promise<string | null> {
+  const query = `${artist} ${title}`.trim();
+  if (!query) return null;
+
+  const cacheKey = buildTrackCacheKey(artist, title);
+  if (ytIdCache.has(cacheKey)) {
+    return ytIdCache.get(cacheKey) ?? null;
+  }
+
+  const existingPromise = ytInFlight.get(cacheKey);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const task = (async (): Promise<string | null> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    try {
+      const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const videoId: string | null = data.videoId || null;
+        ytIdCache.set(cacheKey, videoId);
+        return videoId;
+      }
+      ytIdCache.set(cacheKey, null);
+    } catch (err: any) {
+      // Only cache non-abort failures; allow retry later if timed out or transiently aborted
+      if (err?.name !== 'AbortError') {
+        ytIdCache.set(cacheKey, null);
+      }
+      console.info(
+        '[Harmoniq] YouTube search fallback triggered:',
+        err?.name === 'AbortError' ? 'timeout (2.5s)' : err?.message
+      );
+    } finally {
+      clearTimeout(timeoutId);
+      ytInFlight.delete(cacheKey);
+    }
+    return null;
+  })();
+
+  ytInFlight.set(cacheKey, task);
+  return task;
+}
+
+/**
+ * Search iTunes Store for authentic song metadata, album artwork and explicit status
+ * Uses in-memory cache keyed by normalized query / track key for 0ms repeat lookups.
+ */
+export async function searchITunesAudio(
+  query: string,
+  allowExplicit: boolean = true,
+  cacheKeyOverride?: string
+): Promise<ITunesAudioResult | null> {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return null;
+
+  const primaryKey = cacheKeyOverride ? cacheKeyOverride.toLowerCase() : normalizedQuery;
+  if (appleAudioCache.has(primaryKey)) {
+    return appleAudioCache.get(primaryKey) ?? null;
+  }
+  if (appleAudioCache.has(normalizedQuery)) {
+    const cached = appleAudioCache.get(normalizedQuery) ?? null;
+    if (cacheKeyOverride) appleAudioCache.set(primaryKey, cached);
+    return cached;
+  }
+
+  const inFlightKey = `${primaryKey}::${allowExplicit ? '1' : '0'}`;
+  const existingPromise = appleInFlight.get(inFlightKey);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const task = (async (): Promise<ITunesAudioResult | null> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    try {
+      // 1. Try global or Turkish store
+      let url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`;
+      let res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) {
+        url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=TR&entity=song&limit=6`;
+        res = await fetch(url, { signal: controller.signal });
       }
 
-      const isExplicit = item.trackExplicitness === 'explicit';
-      const resolvedTitle = allowExplicit || !item.trackCensoredName ? item.trackName : item.trackCensoredName;
+      if (!res.ok) {
+        appleAudioCache.set(primaryKey, null);
+        return null;
+      }
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        // Prioritize explicit (original studio) track if allowed; otherwise prefer non-explicit
+        let item = data.results[0];
+        if (allowExplicit) {
+          const explicitMatch = data.results.find((r: any) => r.trackExplicitness === 'explicit');
+          if (explicitMatch) item = explicitMatch;
+        } else {
+          const cleanMatch = data.results.find((r: any) => r.trackExplicitness !== 'explicit');
+          if (cleanMatch) item = cleanMatch;
+        }
 
-      const artwork = item.artworkUrl100
-        ? item.artworkUrl100.replace('100x100bb', '600x600bb')
-        : undefined;
+        const isExplicit = item.trackExplicitness === 'explicit';
+        const resolvedTitle = allowExplicit || !item.trackCensoredName ? item.trackName : item.trackCensoredName;
 
-      return {
-        audioUrl: item.previewUrl,
-        coverUrl: artwork,
-        artist: item.artistName,
-        title: resolvedTitle,
-        album: item.collectionName || 'Single',
-        durationSeconds: Math.round((item.trackTimeMillis || 240000) / 1000),
-        genre: item.primaryGenreName || 'Hip-Hop / Rock / Pop',
-        isExplicit,
-      };
+        const artwork = item.artworkUrl100
+          ? item.artworkUrl100.replace('100x100bb', '600x600bb')
+          : undefined;
+
+        const result: ITunesAudioResult = {
+          audioUrl: item.previewUrl,
+          coverUrl: artwork,
+          artist: item.artistName,
+          title: resolvedTitle,
+          album: item.collectionName || 'Single',
+          durationSeconds: Math.round((item.trackTimeMillis || 240000) / 1000),
+          genre: item.primaryGenreName || 'Hip-Hop / Rock / Pop',
+          isExplicit,
+        };
+        appleAudioCache.set(primaryKey, result);
+        appleAudioCache.set(normalizedQuery, result);
+        return result;
+      }
+      appleAudioCache.set(primaryKey, null);
+    } catch (err: any) {
+      console.info('[Harmoniq Sync Diagnostic] searchITunesAudio exception:', {
+        query,
+        message: err?.message,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+      appleInFlight.delete(inFlightKey);
     }
-  } catch (err: any) {
-    console.info('[Harmoniq Sync Diagnostic] searchITunesAudio exception:', {
-      query,
-      message: err?.message,
-    });
+    return null;
+  })();
+
+  appleInFlight.set(inFlightKey, task);
+  return task;
+}
+
+/**
+ * Resolve a song's playable audio source with 0ms memory cache hit and parallel YouTube + Apple Music race.
+ * Whichever returns a valid playable source first wins immediately, while both populate caches.
+ */
+export async function resolvePlayableAudioParallel(song: Song): Promise<Song> {
+  if (!song) return song;
+  if (song.youtubeVideoId) return song;
+
+  const artist = (song.artist || '').trim();
+  const title = (song.title || '').trim();
+  if (!artist || !title) return song;
+
+  const trackKey = buildTrackCacheKey(artist, title);
+
+  // 1. Instant 0ms memory cache check
+  const cachedYt = ytIdCache.get(trackKey);
+  if (cachedYt) {
+    return { ...song, youtubeVideoId: cachedYt };
   }
-  return null;
+  const cachedApple = getCachedAppleAudio(artist, title);
+  if (song.audioUrl || cachedApple?.audioUrl) {
+    // Kick off YouTube lookup silently in background if not yet cached, without blocking playback
+    if (!ytIdCache.has(trackKey)) {
+      void fetchYouTubeVideoIdForSong(artist, title);
+    }
+    return {
+      ...song,
+      audioUrl: song.audioUrl || cachedApple?.audioUrl,
+      coverUrl: song.coverUrl || cachedApple?.coverUrl,
+    };
+  }
+
+  // 2. Both youtubeVideoId and audioUrl missing: launch YouTube & Apple Music in PARALLEL!
+  const ytPromise = fetchYouTubeVideoIdForSong(artist, title).then((ytId) =>
+    ytId ? ({ kind: 'yt' as const, ytId }) : null
+  );
+  const applePromise = searchITunesAudio(`${artist} ${title}`, true, trackKey).then((apple) =>
+    apple?.audioUrl ? ({ kind: 'apple' as const, apple }) : null
+  );
+
+  // Race for the FIRST valid non-null playable source
+  const winner = await new Promise<
+    { kind: 'yt'; ytId: string } | { kind: 'apple'; apple: ITunesAudioResult } | null
+  >((resolve) => {
+    let settled = false;
+    let remaining = 2;
+
+    const handleResult = (
+      res: { kind: 'yt'; ytId: string } | { kind: 'apple'; apple: ITunesAudioResult } | null
+    ) => {
+      if (settled) return;
+      if (res) {
+        settled = true;
+        resolve(res);
+        return;
+      }
+      remaining -= 1;
+      if (remaining === 0) {
+        settled = true;
+        resolve(null);
+      }
+    };
+
+    ytPromise.then(handleResult).catch(() => handleResult(null));
+    applePromise.then(handleResult).catch(() => handleResult(null));
+  });
+
+  if (winner?.kind === 'yt') {
+    return { ...song, youtubeVideoId: winner.ytId };
+  }
+  if (winner?.kind === 'apple') {
+    return {
+      ...song,
+      audioUrl: winner.apple.audioUrl,
+      coverUrl: song.coverUrl || winner.apple.coverUrl,
+    };
+  }
+  return song;
+}
+
+/**
+ * Silently warms ytIdCache and appleAudioCache for upcoming queue tracks.
+ */
+export function prefetchTrackAudioSources(song: Song | null): void {
+  if (!song || !song.artist || !song.title) return;
+  const trackKey = buildTrackCacheKey(song.artist, song.title);
+
+  if (!song.youtubeVideoId && !ytIdCache.has(trackKey)) {
+    void fetchYouTubeVideoIdForSong(song.artist, song.title);
+  }
+  if (!song.audioUrl && !appleAudioCache.has(trackKey)) {
+    void searchITunesAudio(`${song.artist} ${song.title}`, true, trackKey);
+  }
 }
 
 /**
