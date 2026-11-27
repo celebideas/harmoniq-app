@@ -5,7 +5,6 @@ import {
   Users,
   Zap,
   Link2,
-  Shield,
   MapPin,
   Headphones,
   ChevronDown,
@@ -275,13 +274,13 @@ export const TimelineTrack: React.FC<Props> = ({
           title="Şarkıda istediğin saniyeye atlamak için dokun"
         >
           {/* Thin Unobstructed Monochrome Progress Rail */}
-          <div className="relative h-1 w-full rounded-full bg-[#E6E4DF] dark:bg-white/15">
-            {/* Played Progress Fill (Dynamic Album Color) */}
+          <div className="relative h-1 w-full rounded-full bg-white/15">
+            {/* Played Progress Fill (Dynamic Album Color with Monochrome Fallback) */}
             <div
-              className="h-full rounded-full transition-[width,background-color] duration-500"
+              className="h-full rounded-full transition-[width,background-color] duration-700 ease-in-out"
               style={{
                 width: `${getPercent(mySecond)}%`,
-                backgroundColor: 'var(--dynamic-track-color)',
+                backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
               }}
             />
 
@@ -524,18 +523,13 @@ export const TimelineTrack: React.FC<Props> = ({
                         </span>
 
                         {user.isRealUser && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-[#16A34A]/15 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-xs tabular-nums font-semibold flex items-center gap-1 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E]" />
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#22C55E]/15 text-[#22C55E] text-xs tabular-nums font-semibold flex items-center gap-1 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
                             <span>Canlı</span>
                           </span>
                         )}
 
-                        <span className="px-1.5 py-0.5 rounded-md bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E] text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums">
-                          <Shield className="w-2.5 h-2.5" strokeWidth={1.75} />
-                          <span>{user.trustScore || 99}</span>
-                        </span>
-
-                        <span className="px-1.5 py-0.5 rounded-md bg-[#F1EFEA] dark:bg-[#1C1C22] text-[#111113] dark:text-[#F5F5F7] text-xs font-semibold flex items-center gap-0.5 shrink-0 tabular-nums">
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#1C1C22] text-[#F5F5F7] text-xs font-semibold flex items-center gap-0.5 shrink-0 tabular-nums">
                           <Zap className="w-2.5 h-2.5 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.75} />
                           <span>%{user.compatibilityScore || 94}</span>
                         </span>

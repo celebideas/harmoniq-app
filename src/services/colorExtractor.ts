@@ -7,18 +7,20 @@ export interface ExtractedPalette {
   glow: string;
   border: string;
   subtleBg: string;
+  isExtracted?: boolean;
 }
 
-// Fallback palette defaults to warm harmonic gold/amber rather than generic neon
+// Pure Studio Monochrome fallback (#F5F5F7) — NEVER falls back to orange/amber on CORS or loading
 export const DEFAULT_PALETTE: ExtractedPalette = {
-  hex: '#f59e0b',
-  rgb: [245, 158, 11],
-  rgbString: '245, 158, 11',
+  hex: '#F5F5F7',
+  rgb: [245, 245, 247],
+  rgbString: '245, 245, 247',
   onAccent: '#09090b',
-  muted: 'rgba(245, 158, 11, 0.15)',
-  glow: 'rgba(245, 158, 11, 0.25)',
-  border: 'rgba(245, 158, 11, 0.3)',
-  subtleBg: 'rgba(245, 158, 11, 0.05)',
+  muted: 'rgba(245, 245, 247, 0.14)',
+  glow: 'rgba(245, 245, 247, 0.22)',
+  border: 'rgba(245, 245, 247, 0.28)',
+  subtleBg: 'rgba(245, 245, 247, 0.06)',
+  isExtracted: false,
 };
 
 // In-Memory LRU Cache for dynamic canvas color extraction (capped at 60 items)
@@ -38,69 +40,74 @@ function setCachedPalette(key: string, palette: ExtractedPalette) {
 function getCachedPalette(key: string): ExtractedPalette | undefined {
   if (!paletteCache.has(key)) return undefined;
   const val = paletteCache.get(key)!;
-  // Refresh recency
   paletteCache.delete(key);
   paletteCache.set(key, val);
   return val;
 }
 
-// Color harmonic hashing from string (seed)
-export function getHarmonicPaletteFromSeed(seed: string): ExtractedPalette {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  // Pre-curated harmonic audio spectrum hues (avoid muddy grays or blinding neon yellows)
-  const curatedHues = [
-    { r: 244, g: 63, b: 94 },   // Rose
-    { r: 236, g: 72, b: 153 },  // Pink
-    { r: 168, g: 85, b: 247 },  // Purple
-    { r: 99, g: 102, b: 241 },  // Indigo
-    { r: 59, g: 130, b: 246 },  // Blue
-    { r: 14, g: 165, b: 233 },  // Sky
-    { r: 20, g: 184, b: 166 },  // Teal
-    { r: 16, g: 185, b: 129 },  // Emerald
-    { r: 234, g: 179, b: 8 },   // Amber
-    { r: 249, g: 115, b: 22 },  // Orange
-    { r: 239, g: 68, b: 68 },   // Red
-    { r: 139, g: 92, b: 246 },  // Violet
-  ];
-
-  const index = Math.abs(hash) % curatedHues.length;
-  const { r, g, b } = curatedHues[index];
-  return buildPalette(r, g, b);
+/**
+ * Legacy helper kept exported for compatibility — returns clean studio monochrome (#F5F5F7)
+ * instead of inventing random orange/amber fallback hues.
+ */
+export function getHarmonicPaletteFromSeed(_seed: string): ExtractedPalette {
+  return DEFAULT_PALETTE;
 }
 
-function buildPalette(r: number, g: number, b: number): ExtractedPalette {
-  const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  const rgbString = `${r}, ${g}, ${b}`;
-  // Standard ITU-R BT.709 perceived luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `#${((1 << 24) + (clamp(r) << 16) + (clamp(g) << 8) + clamp(b))
+    .toString(16)
+    .slice(1)}`;
+}
+
+/**
+ * Softens raw extracted RGB into a refined, low-glare studio tone (never harsh neon).
+ */
+function softenToStudioTone(r: number, g: number, b: number): [number, number, number] {
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  // Blend 24% toward neutral gray of matching luminance to tame excessive saturation
+  const blend = 0.24;
+  const sr = Math.round(r * (1 - blend) + lum * blend);
+  const sg = Math.round(g * (1 - blend) + lum * blend);
+  const sb = Math.round(b * (1 - blend) + lum * blend);
+  return [
+    Math.max(0, Math.min(255, sr)),
+    Math.max(0, Math.min(255, sg)),
+    Math.max(0, Math.min(255, sb)),
+  ];
+}
+
+function buildPalette(r: number, g: number, b: number, isExtracted = true): ExtractedPalette {
+  const [sr, sg, sb] = isExtracted ? softenToStudioTone(r, g, b) : [r, g, b];
+  const hex = rgbToHex(sr, sg, sb);
+  const rgbString = `${sr}, ${sg}, ${sb}`;
+  const luminance = 0.299 * sr + 0.587 * sg + 0.114 * sb;
   const onAccent = luminance > 155 ? '#09090b' : '#ffffff';
 
   return {
     hex,
-    rgb: [r, g, b],
+    rgb: [sr, sg, sb],
     rgbString,
     onAccent,
-    muted: `rgba(${rgbString}, 0.16)`,
-    glow: `rgba(${rgbString}, 0.28)`,
-    border: `rgba(${rgbString}, 0.35)`,
+    muted: `rgba(${rgbString}, 0.15)`,
+    glow: `rgba(${rgbString}, 0.24)`,
+    border: `rgba(${rgbString}, 0.32)`,
     subtleBg: `rgba(${rgbString}, 0.06)`,
+    isExtracted,
   };
 }
 
 /**
- * Extracts the dominant vibrant musical color from an image URL using in-memory Canvas.
- * Handles CORS issues gracefully with timeout and fallback seeds.
+ * Extracts a calm, studio-toned dominant color from an album cover image URL.
+ * If extraction fails (missing cover, timeout, CORS taint, monochrome cover),
+ * cleanly falls back to pure studio monochrome #F5F5F7 — never orange/amber.
  */
 export async function extractPaletteFromImage(
   imageUrl?: string | null,
-  fallbackSeed: string = 'Harmoniq'
+  _fallbackSeed: string = 'ListenHub'
 ): Promise<ExtractedPalette> {
   if (!imageUrl) {
-    return getHarmonicPaletteFromSeed(fallbackSeed);
+    return DEFAULT_PALETTE;
   }
 
   const cached = getCachedPalette(imageUrl);
@@ -109,11 +116,9 @@ export async function extractPaletteFromImage(
   }
 
   return new Promise<ExtractedPalette>((resolve) => {
-    // Timeout to guarantee UI never blocks or hangs on broken image networks
     const timer = setTimeout(() => {
-      const fallback = getHarmonicPaletteFromSeed(fallbackSeed);
-      setCachedPalette(imageUrl, fallback);
-      resolve(fallback);
+      setCachedPalette(imageUrl, DEFAULT_PALETTE);
+      resolve(DEFAULT_PALETTE);
     }, 1200);
 
     const img = new Image();
@@ -125,13 +130,11 @@ export async function extractPaletteFromImage(
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          const fallback = getHarmonicPaletteFromSeed(fallbackSeed);
-          setCachedPalette(imageUrl, fallback);
-          resolve(fallback);
+          setCachedPalette(imageUrl, DEFAULT_PALETTE);
+          resolve(DEFAULT_PALETTE);
           return;
         }
 
-        // Downsample to 48x48 for near-instant 60fps extraction
         const width = 48;
         const height = 48;
         canvas.width = width;
@@ -142,10 +145,9 @@ export async function extractPaletteFromImage(
 
         let bestScore = -1;
         let bestR = 245;
-        let bestG = 158;
-        let bestB = 11;
+        let bestG = 245;
+        let bestB = 247;
 
-        // Sample pixels with a step of 4
         for (let i = 0; i < imageData.length; i += 16) {
           const r = imageData[i];
           const g = imageData[i + 1];
@@ -154,20 +156,19 @@ export async function extractPaletteFromImage(
 
           if (a < 128) continue;
 
-          // Skip near-black and near-white
           const max = Math.max(r, g, b);
           const min = Math.min(r, g, b);
           const delta = max - min;
           const lightness = (max + min) / 2;
 
-          if (lightness < 30 || lightness > 235) continue;
+          if (lightness < 32 || lightness > 232) continue;
 
-          // Saturation measurement
           const saturation = delta === 0 ? 0 : delta / (255 - Math.abs(2 * lightness - 255));
-          if (saturation < 0.25) continue;
+          if (saturation < 0.22) continue;
 
-          // Score colors by vibrance and saturation (prefer colorful album artwork hues)
-          const score = saturation * 1.5 + (lightness > 60 && lightness < 190 ? 1 : 0.4);
+          // Prefer balanced, natural mid-tone album hues over harsh neons
+          const score =
+            Math.min(saturation, 0.78) * 1.4 + (lightness > 64 && lightness < 192 ? 1 : 0.45);
 
           if (score > bestScore) {
             bestScore = score;
@@ -177,43 +178,39 @@ export async function extractPaletteFromImage(
           }
         }
 
-        const palette = buildPalette(bestR, bestG, bestB);
+        if (bestScore < 0) {
+          setCachedPalette(imageUrl, DEFAULT_PALETTE);
+          resolve(DEFAULT_PALETTE);
+          return;
+        }
+
+        const palette = buildPalette(bestR, bestG, bestB, true);
         setCachedPalette(imageUrl, palette);
         resolve(palette);
       } catch {
-        // In case of canvas security taint or CORS errors
-        const fallback = getHarmonicPaletteFromSeed(fallbackSeed);
-        setCachedPalette(imageUrl, fallback);
-        resolve(fallback);
+        // CORS taint or canvas read failure -> clean monochrome #F5F5F7
+        setCachedPalette(imageUrl, DEFAULT_PALETTE);
+        resolve(DEFAULT_PALETTE);
       }
     };
 
     img.onerror = () => {
       clearTimeout(timer);
-      const fallback = getHarmonicPaletteFromSeed(fallbackSeed);
-      setCachedPalette(imageUrl, fallback);
-      resolve(fallback);
+      setCachedPalette(imageUrl, DEFAULT_PALETTE);
+      resolve(DEFAULT_PALETTE);
     };
 
     img.src = imageUrl;
   });
 }
 
-function rgbToHex(r: number, g: number, b: number): string {
-  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
-  return `#${((1 << 24) + (clamp(r) << 16) + (clamp(g) << 8) + clamp(b))
-    .toString(16)
-    .slice(1)}`;
-}
-
 /**
- * Ensures the album-art progress color always meets legibility contrast:
- * - Dark mode: if relative luminance < 0.35, lighten smoothly until >= 0.48
- * - Light mode: if relative luminance > 0.72, darken smoothly until <= 0.55
+ * Ensures the album-art progress color always meets legibility contrast on Obsidian Ink (#0B0B0D):
+ * If relative luminance < 0.42, gently lift brightness until >= 0.52.
  */
 export function getContrastSafeTrackColor(
   rgb: [number, number, number],
-  themeMode: 'dark' | 'light'
+  _themeMode?: 'dark' | 'light'
 ): string {
   let [r, g, b] = rgb.map((v) => Math.max(0, Math.min(255, Math.round(v)))) as [
     number,
@@ -225,27 +222,14 @@ export function getContrastSafeTrackColor(
 
   let lum = calcLuminance(r, g, b);
 
-  if (themeMode === 'dark') {
-    if (lum < 0.35) {
-      let guard = 0;
-      while (lum < 0.48 && guard < 24) {
-        r = Math.round(r + (255 - r) * 0.22);
-        g = Math.round(g + (255 - g) * 0.22);
-        b = Math.round(b + (255 - b) * 0.22);
-        lum = calcLuminance(r, g, b);
-        guard += 1;
-      }
-    }
-  } else {
-    if (lum > 0.72) {
-      let guard = 0;
-      while (lum > 0.55 && guard < 24) {
-        r = Math.round(r * 0.8);
-        g = Math.round(g * 0.8);
-        b = Math.round(b * 0.8);
-        lum = calcLuminance(r, g, b);
-        guard += 1;
-      }
+  if (lum < 0.42) {
+    let guard = 0;
+    while (lum < 0.52 && guard < 24) {
+      r = Math.round(r + (245 - r) * 0.2);
+      g = Math.round(g + (245 - g) * 0.2);
+      b = Math.round(b + (247 - b) * 0.2);
+      lum = calcLuminance(r, g, b);
+      guard += 1;
     }
   }
 
@@ -253,18 +237,17 @@ export function getContrastSafeTrackColor(
 }
 
 /**
- * Injects dynamic color theme CSS variables directly into document root
- * for instantaneous app-wide reactive theming.
+ * Injects dynamic color theme CSS variables directly into document root.
  */
 export function applyThemeToDocument(
   palette: ExtractedPalette,
-  themeMode?: 'dark' | 'light'
+  _themeMode?: 'dark' | 'light'
 ) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  const resolvedMode: 'dark' | 'light' =
-    themeMode || (root.classList.contains('light') ? 'light' : 'dark');
-  const dynamicTrackColor = getContrastSafeTrackColor(palette.rgb, resolvedMode);
+  const dynamicTrackColor = palette.isExtracted === false
+    ? '#F5F5F7'
+    : getContrastSafeTrackColor(palette.rgb, 'dark');
 
   root.style.setProperty('--theme-accent', palette.hex);
   root.style.setProperty('--theme-accent-rgb', palette.rgbString);
@@ -275,4 +258,3 @@ export function applyThemeToDocument(
   root.style.setProperty('--theme-accent-subtle', palette.subtleBg);
   root.style.setProperty('--dynamic-track-color', dynamicTrackColor);
 }
-

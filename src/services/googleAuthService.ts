@@ -1268,38 +1268,39 @@ export async function fetchUserSubscribedArtists(
       'official audio', 'official music', 'album', 'single', 'şarkı', 'yapım'
     ];
 
+    const knownLibraryArtistArray = Array.from(knownLibraryArtists);
+
     for (const ch of rawChannels) {
       const lowerRaw = ch.rawTitle.toLowerCase();
       const lowerClean = ch.cleanTitle.toLowerCase();
       const topics = channelTopicMap.get(ch.channelId) || [];
 
-      // Multi-layer validation via isMusicArtistOrChannel
-      const customCheck = isMusicArtistOrChannel(ch, []);
+      // Strict Whitelist-First validation via isMusicArtistOrChannel
+      const customCheck = isMusicArtistOrChannel(ch, '', knownLibraryArtistArray);
 
       let isMusic = false;
       let reason = customCheck.reason;
 
-      // Negative check takes ultimate precedence: if blacklisted or negative keywords found, reject immediately
-      if (!customCheck.isMusic) {
+      // 1. Hard blacklist rejection takes ultimate precedence
+      if (reason.includes('Kara liste') || reason.includes('anahtar kelime')) {
         isMusic = false;
-        reason = customCheck.reason;
       }
-      // 1. Matches songs in user's library
+      // 2. Matches songs in user's library
       else if (knownLibraryArtists.has(lowerClean)) {
         isMusic = true;
         reason = 'Kütüphanenizdeki Parçalarla Eşleşti';
       }
-      // 2. YouTube Music Topic Channel (Official YouTube Music discography)
-      else if (lowerRaw.endsWith(' - topic') || lowerRaw.endsWith(' (topic)')) {
+      // 3. YouTube Music Topic Channel or VEVO
+      else if (
+        lowerRaw.endsWith(' - topic') ||
+        lowerRaw.endsWith(' (topic)') ||
+        lowerRaw.endsWith('vevo') ||
+        lowerRaw.endsWith(' vevo')
+      ) {
         isMusic = true;
         reason = 'YouTube Music Resmi Sanatçı Kanalı';
       }
-      // 3. VEVO Channel
-      else if (lowerRaw.endsWith('vevo') || lowerRaw.endsWith(' vevo')) {
-        isMusic = true;
-        reason = 'VEVO Resmi Sanatçı';
-      }
-      // 4. Topic details from Google Knowledge Graph
+      // 4. Google Knowledge Graph music topic confirmation (only if not blacklisted)
       else if (topics.length > 0) {
         if (topics.some(isMusicTopicCategory)) {
           isMusic = true;
@@ -1309,7 +1310,7 @@ export async function fetchUserSubscribedArtists(
           reason = 'Genel YouTube İçerik Kanalı (Müzik Dışı)';
         }
       }
-      // 5. Fallback on isMusicArtistOrChannel result
+      // 5. Whitelist-First result (requires explicit music signature or verified artist pool)
       else {
         isMusic = customCheck.isMusic;
         reason = customCheck.reason;

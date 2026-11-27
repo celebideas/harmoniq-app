@@ -44,8 +44,6 @@ import {
   MapPin,
   Navigation,
   Compass,
-  Shield,
-  ShieldCheck,
   Settings,
   Zap,
   CheckCircle2,
@@ -466,14 +464,12 @@ export const ProfileTab: React.FC<Props> = ({
 }) => {
   const isLightTheme = false;
   const [profileSection, setProfileSection] = useState<'library' | 'insights'>('library');
-  const [showTrustScoreModal, setShowTrustScoreModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'profile' | 'account'>('profile');
   const [showStoryCardModal, setShowStoryCardModal] = useState(false);
   const [isGeneratingStoryImage, setIsGeneratingStoryImage] = useState(false);
   const [storyActionSuccess, setStoryActionSuccess] = useState<string | null>(null);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
-  const [appealSent, setAppealSent] = useState(false);
   const [viewingPlaylist, setViewingPlaylist] = useState<UserPlaylist | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
   const [tempName, setTempName] = useState(userProfile.youtubeAccount?.name || userProfile.name);
@@ -731,11 +727,16 @@ export const ProfileTab: React.FC<Props> = ({
   const [activePlayingPlaylistId, setActivePlayingPlaylistId] = useState<string | null>(null);
   const [artistPortraitMap, setArtistPortraitMap] = useState<Record<string, string>>({});
 
-  // Sanitize favorite artists to strictly filter out non-music YouTube channels (e.g. Marques Brownlee, tech reviewers)
+  // Sanitize favorite artists via strict Whitelist-First filter against ALL user library tracks
+  const allUserLibraryTracks = useMemo(
+    () => [...favoriteSongs, ...syncedPlaylists.flatMap((p) => p.tracks || [])],
+    [favoriteSongs, syncedPlaylists]
+  );
+
   const sanitizedFavoriteArtists = useMemo(() => {
-    purgeNonMusicFromLocalStorage(favoriteSongs);
-    return cleanNonMusicArtists(favoriteArtists, favoriteSongs);
-  }, [favoriteArtists, favoriteSongs]);
+    purgeNonMusicFromLocalStorage(favoriteSongs, syncedPlaylists);
+    return cleanNonMusicArtists(favoriteArtists, allUserLibraryTracks);
+  }, [favoriteArtists, favoriteSongs, syncedPlaylists, allUserLibraryTracks]);
 
   const getArtistAvatarInfo = (artistName: string) => {
     const lower = artistName.trim().toLowerCase();
@@ -913,7 +914,7 @@ export const ProfileTab: React.FC<Props> = ({
   allWeeklyTracks.forEach((track) => {
     const a = track.artist?.trim();
     if (a && a !== 'YouTube Music' && a !== 'Bilinmeyen Sanatçı') {
-      const isClean = cleanNonMusicArtists([a], []).length > 0;
+      const isClean = cleanNonMusicArtists([a], allWeeklyTracks).length > 0;
       if (!isClean) return;
       const existing = artistTally.get(a) || { count: 0, playedSeconds: 0 };
       artistTally.set(a, {
@@ -1354,12 +1355,6 @@ export const ProfileTab: React.FC<Props> = ({
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.fillText(userProfile.youtubeAccount?.handle || '@listenhub_user', 245, 275);
 
-    // Trust Shield Badge
-    fillRoundRect(245, 288, 380, 32, 16, 'rgba(16, 185, 129, 0.16)', 'rgba(16, 185, 129, 0.35)');
-    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-    ctx.fillStyle = '#34d399';
-    ctx.fillText(`🛡️ Güven Puanı: %${userProfile.trustScore || 98} · Doğrulanmış Dinleyici`, 260, 310);
-
     // 2. MÜZİKAL AURA HERO BANNER
     fillRoundRect(90, 360, 900, 330, 32, 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.28)');
 
@@ -1427,8 +1422,8 @@ export const ProfileTab: React.FC<Props> = ({
         ctx.restore();
       } else {
         const coverGrad = ctx.createLinearGradient(cx, vitrinY, cx + cardW, vitrinY + 140);
-        coverGrad.addColorStop(0, i === 0 ? '#b45309' : i === 1 ? '#4338ca' : i === 2 ? '#047857' : '#831843');
-        coverGrad.addColorStop(1, '#090a0f');
+        coverGrad.addColorStop(0, i === 0 ? '#27272A' : i === 1 ? '#312e81' : i === 2 ? '#065f46' : '#3f3f46');
+        coverGrad.addColorStop(1, '#0B0B0D');
         fillRoundRect(cx, vitrinY, cardW, 140, 16, coverGrad);
         ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -1438,9 +1433,9 @@ export const ProfileTab: React.FC<Props> = ({
       }
 
       // Rank Badge (#1..#4)
-      fillRoundRect(cx + 8, vitrinY + 8, 38, 26, 8, i === 0 ? '#f59e0b' : 'rgba(0, 0, 0, 0.75)');
+      fillRoundRect(cx + 8, vitrinY + 8, 38, 26, 8, i === 0 ? '#F5F5F7' : 'rgba(0, 0, 0, 0.75)');
       ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = i === 0 ? '#000000' : '#ffffff';
+      ctx.fillStyle = i === 0 ? '#0B0B0D' : '#ffffff';
       ctx.textAlign = 'center';
       ctx.fillText(`#${i + 1}`, cx + 27, vitrinY + 26);
       ctx.textAlign = 'left';
@@ -1622,7 +1617,7 @@ export const ProfileTab: React.FC<Props> = ({
       : '';
     const summaryText = `ListenHub · Haftalık Müzik Özeti\n${
       userProfile.youtubeAccount?.name || userProfile.name
-    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\nGüven Puanı: ${userProfile.trustScore || 98}/100 (Doğrulanmış Dinleyici)\nToplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\nMüzik Personası: ${weeklyPersona}\nEn Çok Dinlenen Türler: ${genresList}\nZirvedeki Sanatçılar: ${artistsList}${anthemLine}\nFrekansı keşfet: https://listenhub.app`;
+    } (${userProfile.youtubeAccount?.handle || '@muziksever'})\nToplam Dinleme: ${weeklyHours} saat ${weeklyRemainingMinutes} dakika (${weeklyScrobbleCount} haftalık parça · Kütüphane Toplamı: ${totalLibraryCount})\nMüzik Personası: ${weeklyPersona}\nEn Çok Dinlenen Türler: ${genresList}\nZirvedeki Sanatçılar: ${artistsList}${anthemLine}\nFrekansı keşfet: https://listenhub.app`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(summaryText);
@@ -1780,28 +1775,16 @@ export const ProfileTab: React.FC<Props> = ({
                       setManualCityInput(userProfile.city);
                       setShowLocationModal(true);
                     }}
-                    className="inline-flex items-center gap-1 text-[#111113] dark:text-[#F5F5F7] hover:underline underline-offset-2 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[#F5F5F7] hover:underline underline-offset-2 cursor-pointer"
                     title="Şehri güncelle"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7] shrink-0" strokeWidth={1.75} />
+                    <MapPin className="w-3.5 h-3.5 text-[#F5F5F7] shrink-0" strokeWidth={1.75} />
                     <span className="truncate">{userProfile.city}</span>
                   </button>
                 </div>
 
-                <div className="pt-1 flex items-center flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowTrustScoreModal(true)}
-                    className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/20 text-[#16A34A] dark:text-[#22C55E] text-xs font-medium px-2.5 py-1 rounded-lg tabular-nums transition cursor-pointer active:scale-95"
-                    title="Şeffaf Güven Kalkanı Detaylarını İncele"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                    <span>Güven Puanı · {userProfile.trustScore || 99}/100</span>
-                  </button>
-                </div>
-
                 {userProfile.bio && (
-                  <p className="text-xs text-[#63636B] dark:text-[#8E8E98] pt-1 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-[#8E8E98] pt-1 line-clamp-2 leading-relaxed">
                     {userProfile.bio}
                   </p>
                 )}
@@ -1811,8 +1794,8 @@ export const ProfileTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => openSettingsModal('profile')}
-                className="w-10 h-10 rounded-xl bg-[#F1EFEA] dark:bg-[#1C1C22] hover:bg-[#E6E4DF] dark:hover:bg-white/[0.1] text-[#111113] dark:text-[#F5F5F7] flex items-center justify-center transition cursor-pointer shrink-0 active:scale-95"
-                title="Profil, Tema ve Müzik Servisi Ayarları"
+                className="w-10 h-10 rounded-xl bg-[#1C1C22] hover:bg-white/[0.1] text-[#F5F5F7] flex items-center justify-center transition cursor-pointer shrink-0 active:scale-95"
+                title="Profil ve Hesap Ayarları"
                 aria-label="Ayarlar"
               >
                 <Settings className="w-5 h-5" strokeWidth={1.75} />
@@ -3024,370 +3007,6 @@ export const ProfileTab: React.FC<Props> = ({
       )}
 
       {/* =====================================================================
-          MODAL: ŞEFFAF GÜVEN KALKANI (LISTENHUB TRUST SCORE)
-         ===================================================================== */}
-      {showTrustScoreModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
-          onClick={() => setShowTrustScoreModal(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`relative w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar border animate-modal-enter ${
-              isLightTheme
-                ? 'bg-white border-[#E6E4DF] text-[#111113]'
-                : 'bg-[#141418] border-white/[0.08] text-[#F5F5F7]'
-            }`}
-          >
-            {/* Header */}
-            <div
-              className={`flex items-center justify-between pb-3.5 border-b ${
-                isLightTheme ? 'border-[#E6E4DF]' : 'border-white/[0.08]'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center ${
-                    isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
-                  }`}
-                >
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3
-                    className={`text-base font-heading font-bold flex items-center gap-2 flex-wrap ${
-                      isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                    }`}
-                  >
-                    <span>Şeffaf Güven Kalkanı</span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${
-                        isLightTheme
-                          ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
-                          : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                      }`}
-                    >
-                      v2.4 Doğrulandı
-                    </span>
-                  </h3>
-                  <p className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
-                    ListenHub Açık Güvenilirlik &amp; Saygınlık Protokolü
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowTrustScoreModal(false)}
-                className={`p-1.5 rounded-xl transition cursor-pointer ${
-                  isLightTheme
-                    ? 'text-[#63636B] hover:text-[#111113] hover:bg-[#F1EFEA]'
-                    : 'text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]'
-                }`}
-                aria-label="Kapat"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Score Hero Badge (Crisp Light & Dark Contrast) */}
-            <div
-              className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                isLightTheme
-                  ? 'bg-[#FAF9F6] border-[#E6E4DF]'
-                  : 'bg-[#1C1C22] border-white/[0.08]'
-              }`}
-            >
-              <div className="space-y-1">
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                  }`}
-                >
-                  Genel Güven Puanınız
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span
-                    className={`text-4xl font-heading font-black tracking-tight tabular-nums ${
-                      isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                    }`}
-                  >
-                    {userProfile.trustScore || 99}
-                  </span>
-                  <span
-                    className={`text-lg font-semibold tabular-nums ${
-                      isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                    }`}
-                  >
-                    / 100
-                  </span>
-                </div>
-                <div className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
-                  Rozet Seviyesi:{' '}
-                  <span
-                    className={`font-bold ${
-                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
-                    }`}
-                  >
-                    Elit Dinleyici (A+)
-                  </span>
-                </div>
-              </div>
-
-              <div className="sm:text-right space-y-1.5">
-                <div
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${
-                    isLightTheme
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
-                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  }`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Doğrulanmış Hesap</span>
-                </div>
-                <div className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
-                  Canlı oda açma ve sohbet ayrıcalıklı
-                </div>
-              </div>
-            </div>
-
-            {/* 3 Scoring Pillars (Harmonized Warm Copper & Calm Emerald Only) */}
-            <div className="space-y-3">
-              <h4
-                className={`text-xs font-semibold uppercase tracking-wider ${
-                  isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                }`}
-              >
-                Puanlama Sütunları ve Hesaplama Detayı
-              </h4>
-
-              {/* Pillar 1 */}
-              <div
-                className={`p-3.5 rounded-2xl border space-y-2 ${
-                  isLightTheme
-                    ? 'bg-[#FAF9F6] border-[#E6E4DF]'
-                    : 'bg-[#1C1C22] border-white/[0.07]'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Headphones
-                      className={`w-4 h-4 shrink-0 ${
-                        isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-semibold truncate ${
-                        isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                      }`}
-                    >
-                      1. Gerçek Zamanlı Dinleme Tutarlılığı (%35)
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs tabular-nums font-bold shrink-0 ${
-                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
-                    }`}
-                  >
-                    35 / 35
-                  </span>
-                </div>
-                <p
-                  className={`text-xs leading-relaxed ${
-                    isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                  }`}
-                >
-                  Şarkıların en az %70&apos;ini atlamadan, gerçek zaman çizelgesiyle ve kesintisiz
-                  dinleme alışkanlığı. Bot, scraper veya otomatik makro trafiği tespit edilmedi.
-                </p>
-                <div
-                  className={`w-full h-1.5 rounded-full overflow-hidden ${
-                    isLightTheme ? 'bg-[#E6E4DF]' : 'bg-white/10'
-                  }`}
-                >
-                  <div
-                    className={`h-full rounded-full ${
-                      isLightTheme ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
-                    }`}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-
-              {/* Pillar 2 */}
-              <div
-                className={`p-3.5 rounded-2xl border space-y-2 ${
-                  isLightTheme
-                    ? 'bg-[#FAF9F6] border-[#E6E4DF]'
-                    : 'bg-[#1C1C22] border-white/[0.07]'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Sparkles className="w-4 h-4 shrink-0 text-[#111113] dark:text-[#F5F5F7]" />
-                    <span
-                      className={`text-xs font-semibold truncate ${
-                        isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                      }`}
-                    >
-                      2. Topluluk Etkileşimi &amp; Müzikal Rezonans (%35)
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs tabular-nums font-bold shrink-0 ${
-                      isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                    }`}
-                  >
-                    34 / 35
-                  </span>
-                </div>
-                <p
-                  className={`text-xs leading-relaxed ${
-                    isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                  }`}
-                >
-                  Canlı odalarda eşzamanlı dinleme, şarkı ve çalma listesi paylaşımları ile diğer
-                  doğrulanmış dinleyicilerle karşılıklı %85+ frekans uyumu.
-                </p>
-                <div
-                  className={`w-full h-1.5 rounded-full overflow-hidden ${
-                    isLightTheme ? 'bg-[#E6E4DF]' : 'bg-white/10'
-                  }`}
-                >
-                  <div
-                    className="h-full rounded-full bg-[#111113] dark:bg-white"
-                    style={{ width: '97%' }}
-                  />
-                </div>
-              </div>
-
-              {/* Pillar 3 */}
-              <div
-                className={`p-3.5 rounded-2xl border space-y-2 ${
-                  isLightTheme
-                    ? 'bg-[#FAF9F6] border-[#E6E4DF]'
-                    : 'bg-[#1C1C22] border-white/[0.07]'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Shield
-                      className={`w-4 h-4 shrink-0 ${
-                        isLightTheme ? 'text-[#16A34A]' : 'text-[#22C55E]'
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-semibold truncate ${
-                        isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                      }`}
-                    >
-                      3. Sıfır İhlal &amp; Temiz Hesap Sicili (%30)
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs tabular-nums font-bold shrink-0 ${
-                      isLightTheme ? 'text-emerald-700' : 'text-emerald-400'
-                    }`}
-                  >
-                    30 / 30
-                  </span>
-                </div>
-                <p
-                  className={`text-xs leading-relaxed ${
-                    isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                  }`}
-                >
-                  Diğer kullanıcılardan sıfır spam, taciz veya manipülasyon şikayeti. 180+ gündür
-                  temiz ve örnek topluluk sicili.
-                </p>
-                <div
-                  className={`w-full h-1.5 rounded-full overflow-hidden ${
-                    isLightTheme ? 'bg-[#E6E4DF]' : 'bg-white/10'
-                  }`}
-                >
-                  <div
-                    className={`h-full rounded-full ${
-                      isLightTheme ? 'bg-[#16A34A]' : 'bg-[#22C55E]'
-                    }`}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Appeal & Transparency Rules */}
-            <div
-              className={`p-4 rounded-2xl border space-y-3 ${
-                isLightTheme
-                  ? 'bg-[#FAF9F6] border-[#E6E4DF]'
-                  : 'bg-[#1C1C22] border-white/[0.07]'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold flex items-center gap-1.5 ${
-                    isLightTheme ? 'text-[#111113]' : 'text-[#F5F5F7]'
-                  }`}
-                >
-                  <AlertCircle className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7]" />
-                  <span>Şeffaflık &amp; İtiraz Hakkı</span>
-                </span>
-                <span className={`text-xs ${isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'}`}>
-                  Sıfır Gizli Algoritma
-                </span>
-              </div>
-              <p
-                className={`text-xs leading-relaxed ${
-                  isLightTheme ? 'text-[#63636B]' : 'text-[#8E8E98]'
-                }`}
-              >
-                ListenHub, güven puanınızı asla kapalı kapılar ardında veya reklam amacıyla
-                değiştirmez. Hatalı bir puan kırılması şüphesinde anında bağımsız moderatör
-                incelemesi başlatabilirsiniz.
-              </p>
-
-              {appealSent ? (
-                <div
-                  className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
-                    isLightTheme
-                      ? 'bg-emerald-500/12 border-emerald-500/30 text-emerald-700'
-                      : 'bg-emerald-500/12 border-emerald-500/30 text-emerald-400'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>
-                    İtiraz bildiriminiz alındı (#SEC-942). Güvenlik ekibi dinleme kaydınızı 2 saat
-                    içinde inceleyecek.
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setAppealSent(true)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition border cursor-pointer ${
-                      isLightTheme
-                        ? 'bg-[#F1EFEA] hover:bg-[#E6E4DF] text-[#111113] border-[#E2DFD9]'
-                        : 'bg-[#141418] hover:bg-[#24242C] text-[#F5F5F7] border-white/10'
-                    }`}
-                  >
-                    İtiraz Bildirimi Gönder
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTrustScoreModal(false)}
-                    className="studio-btn-primary py-2.5 px-5 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs transition shadow-sm cursor-pointer"
-                  >
-                    Anladım
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================================
           MODAL: MERKEZİ AYARLAR & HESAP (2 SEKMELİ — PROFİL BİLGİLERİ & HESAP)
          ===================================================================== */}
       {showSettingsModal && (
@@ -3956,10 +3575,6 @@ export const ProfileTab: React.FC<Props> = ({
                     <div className="text-xs text-zinc-400 truncate">
                       {userProfile.youtubeAccount?.handle || '@muziksever'}
                     </div>
-                    <div className="inline-flex items-center gap-1 mt-0.5 text-xs font-semibold text-emerald-400">
-                      <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
-                      <span>{userProfile.trustScore || 98}/100 Doğrulanmış</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -4033,7 +3648,7 @@ export const ProfileTab: React.FC<Props> = ({
                 </h3>
 
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Haftalık dinleme süreniz, müzikal aura unvanınız, zirvedeki sanatçınız ve güven puanınızla oluşturulan 9:16 oranında yüksek çözünürlüklü hikaye kartı.
+                  Haftalık dinleme süreniz, müzikal aura unvanınız ve zirvedeki sanatçınızla oluşturulan 9:16 oranında yüksek çözünürlüklü hikaye kartı.
                 </p>
               </div>
 
@@ -4086,12 +3701,7 @@ export const ProfileTab: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* Verified Listener Note */}
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-500">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{userProfile.trustScore || 98}/100 Güven Puanı Mühürlü</span>
-                </span>
+              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-end text-xs text-zinc-500">
                 <span>ListenHub Frekans Motoru</span>
               </div>
             </div>

@@ -262,6 +262,47 @@ export default function App() {
     applyThemeToDocument(activeTheme, effectiveTheme);
   }, [activeTheme, effectiveTheme]);
 
+  // Calm 1.4s crossfade state for full-bleed blurred album cover ambient glow
+  const [ambientCover, setAmbientCover] = useState<{
+    activeUrl: string | null;
+    prevUrl: string | null;
+    activeId: string;
+    isVisible: boolean;
+  }>(() => ({
+    activeUrl: initialPlaybackRef.current?.song?.coverUrl || null,
+    prevUrl: null,
+    activeId: initialPlaybackRef.current?.song?.id || '',
+    isVisible: Boolean(initialPlaybackRef.current?.song?.coverUrl),
+  }));
+
+  useEffect(() => {
+    const nextUrl = currentSong?.coverUrl || null;
+    const nextId = currentSong?.id || '';
+
+    setAmbientCover((prev) => {
+      if (prev.activeUrl === nextUrl && prev.activeId === nextId) return prev;
+      return {
+        prevUrl: prev.activeUrl,
+        activeUrl: nextUrl,
+        activeId: nextId,
+        isVisible: false,
+      };
+    });
+
+    if (!nextUrl) return;
+    const raf = window.requestAnimationFrame(() => {
+      setAmbientCover((prev) => ({ ...prev, isVisible: true }));
+    });
+    const clearPrevTimer = window.setTimeout(() => {
+      setAmbientCover((prev) => ({ ...prev, prevUrl: null }));
+    }, 1450);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(clearPrevTimer);
+    };
+  }, [currentSong?.id, currentSong?.coverUrl]);
+
   // Real-time "Birlikte Dinle" (Co-Listen) live sync session state
   const [activeCoListen, setActiveCoListen] = useState<ActiveCoListenSession | null>(null);
   const [coListenSuggestMode, setCoListenSuggestMode] = useState<boolean>(false);
@@ -335,15 +376,38 @@ export default function App() {
   const [favoriteArtists, setFavoriteArtists] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const persistedLib = getPersistentYouTubeLibrary();
+      const bootSongs: Song[] = [
+        ...(persistedLib?.favoriteSongs || []),
+        ...(persistedLib?.playlists || []).flatMap((p) => p.tracks || []),
+      ];
+      try {
+        const rawSongs = localStorage.getItem('harmoniq_user_favorite_songs');
+        if (rawSongs) {
+          const parsedSongs = JSON.parse(rawSongs);
+          if (Array.isArray(parsedSongs)) bootSongs.push(...parsedSongs);
+        }
+        const rawPls = localStorage.getItem('harmoniq_user_playlists');
+        if (rawPls) {
+          const parsedPls = JSON.parse(rawPls);
+          if (Array.isArray(parsedPls)) {
+            parsedPls.forEach((p: UserPlaylist) => {
+              if (Array.isArray(p?.tracks)) bootSongs.push(...p.tracks);
+            });
+          }
+        }
+      } catch {
+        // ignore storage read errors
+      }
+
       if (persistedLib && persistedLib.favoriteArtists.length > 0) {
-        return cleanNonMusicArtists(persistedLib.favoriteArtists);
+        return cleanNonMusicArtists(persistedLib.favoriteArtists, bootSongs);
       }
       const saved = localStorage.getItem('harmoniq_user_favorite_artists');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            return cleanNonMusicArtists(parsed);
+            return cleanNonMusicArtists(parsed, bootSongs);
           }
         } catch {
           // ignore parsing error
@@ -353,9 +417,35 @@ export default function App() {
     return [];
   });
 
-  // Automatically purge non-music YouTube channels (e.g. Marques Brownlee, tech reviewers) on mount
+  // Automatically purge non-music YouTube channels (e.g. AkademikLink, science, education, tech, vlog) on mount
   useEffect(() => {
-    purgeNonMusicFromLocalStorage(favoriteSongs);
+    const allTracks = [
+      ...favoriteSongs,
+      ...syncedPlaylists.flatMap((p) => p.tracks || []),
+    ];
+    const { removedArtists, cleanArtists } = purgeNonMusicFromLocalStorage(
+      favoriteSongs,
+      syncedPlaylists
+    );
+    if (removedArtists.length > 0) {
+      setFavoriteArtists(cleanArtists);
+    } else {
+      setFavoriteArtists((prev) => {
+        const cleaned = cleanNonMusicArtists(prev, allTracks);
+        return cleaned.length !== prev.length ? cleaned : prev;
+      });
+    }
+    try {
+      const cleanedChannelsRaw = localStorage.getItem('harmoniq_user_subscribed_channels');
+      if (cleanedChannelsRaw) {
+        const parsed = JSON.parse(cleanedChannelsRaw);
+        if (Array.isArray(parsed)) {
+          setSubscribedChannels(parsed);
+        }
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const [personalTaste, setPersonalTaste] = useState<PersonalMusicTaste>(DEFAULT_PERSONAL_TASTE);
@@ -1011,7 +1101,12 @@ export default function App() {
     });
     setActiveChatUser((prev) => (prev?.id === targetUser.id ? null : prev));
     setSelectedDrawerUser((prev) => (prev?.id === targetUser.id ? null : prev));
-    setToastMessage('Bu kullanıcının frekansı kapatıldı');
+    setActiveCoListen((prev) =>
+      prev && (prev.partnerId === targetUser.id || prev.partnerId === targetUser.uid)
+        ? null
+        : prev
+    );
+    setToastMessage('Bu kullanıcı engellendi');
     setTimeout(() => setToastMessage(null), 3200);
   };
 
@@ -3367,14 +3462,35 @@ export default function App() {
   return (
     <>
     <div className="min-h-screen bg-[#0B0B0D] text-[#F5F5F7] flex flex-col font-sans selection:bg-white/20 selection:text-[#F5F5F7] relative overflow-x-clip">
-      {/* Organic Album Color Ceiling Glow — derived strictly from active song cover palette; neutral when idle */}
-      {currentSong && (
+      {/* Calm Multi-Tone Blurred Album Cover Ambient Glow — 1.4s crossfade; neutral #0B0B0D when idle */}
+      {currentSong && (ambientCover.activeUrl || ambientCover.prevUrl) && (
         <div
-          className="fixed inset-x-0 top-0 h-72 pointer-events-none z-0 transition-all duration-1000"
-          style={{
-            background: `radial-gradient(ellipse 80% 42% at 50% -10%, rgba(${activeTheme.rgbString}, 0.18), transparent 72%)`,
-          }}
-        />
+          className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden z-0"
+          aria-hidden="true"
+        >
+          {ambientCover.prevUrl && (
+            <img
+              src={ambientCover.prevUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              className={`absolute inset-0 w-full h-full object-cover scale-150 blur-[110px] saturate-125 transition-opacity duration-[1400ms] ease-in-out ${
+                ambientCover.isVisible ? 'opacity-0' : 'opacity-[0.22]'
+              }`}
+            />
+          )}
+          {ambientCover.activeUrl && (
+            <img
+              key={ambientCover.activeId || ambientCover.activeUrl}
+              src={ambientCover.activeUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              className={`absolute inset-0 w-full h-full object-cover scale-150 blur-[110px] saturate-125 transition-all duration-[1400ms] ease-in-out ${
+                ambientCover.isVisible ? 'opacity-[0.22]' : 'opacity-0'
+              }`}
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0B0D]/60 to-[#0B0B0D]" />
+        </div>
       )}
 
       {/* Desktop Left Sidebar (>= 1024px) */}
@@ -3901,6 +4017,11 @@ export default function App() {
         onClose={() => setSelectedDrawerUser(null)}
         onSendFrequency={handleSendFrequency}
         onToggleFriend={handleToggleFriend}
+        onBlockUser={handleBlockUser}
+        onShowToast={(msg) => {
+          setToastMessage(msg);
+          setTimeout(() => setToastMessage(null), 3200);
+        }}
         themeMode={effectiveTheme}
         onAcceptIncomingRequest={(user) => {
           const targetUid = user.uid || user.id;

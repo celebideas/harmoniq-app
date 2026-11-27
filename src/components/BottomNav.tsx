@@ -202,10 +202,10 @@ export const BottomNav: React.FC<Props> = ({
             title="Şarkıda sar"
           >
             <div
-              className="h-full transition-[width,background-color] duration-500"
+              className="h-full transition-[width,background-color] duration-700 ease-in-out"
               style={{
                 width: `${progressPct}%`,
-                backgroundColor: 'var(--dynamic-track-color)',
+                backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
               }}
             />
           </div>

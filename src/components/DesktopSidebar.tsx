@@ -4,7 +4,6 @@ import {
   Compass,
   MessageCircle,
   User,
-  ShieldCheck,
   Settings,
 } from 'lucide-react';
 import { PrivacyMode, UserProfile } from '../types';
@@ -167,9 +166,8 @@ export const DesktopSidebar: React.FC<Props> = ({
             <div className="text-sm font-semibold tracking-tight truncate text-[#F5F5F7]">
               {userProfile.youtubeAccount?.name || userProfile.name}
             </div>
-            <div className="text-xs font-medium flex items-center gap-1 mt-0.5 tabular-nums text-[#22C55E]">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-              <span>{userProfile.trustScore || 98}/100</span>
+            <div className="text-xs font-normal text-[#8E8E98] truncate mt-0.5">
+              {userProfile.youtubeAccount?.handle || userProfile.city || 'Ayarlar & Hesap'}
             </div>
           </div>
           <Settings

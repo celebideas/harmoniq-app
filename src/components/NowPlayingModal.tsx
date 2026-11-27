@@ -33,7 +33,6 @@ import {
   getGoogleLyricsSearchUrl,
   LyricsResult,
 } from '../services/lyricsService';
-import { extractPaletteFromImage, DEFAULT_PALETTE } from '../services/colorExtractor';
 
 interface Props {
   isOpen: boolean;
@@ -149,21 +148,21 @@ const ModernSeekBar: React.FC<ModernSeekBarProps> = ({
       className="py-3 select-none touch-none cursor-pointer group"
       title="Sarmak için dokun veya sürükle"
     >
-      <div className="h-1.5 w-full rounded-full bg-[#E6E4DF] dark:bg-white/15 cursor-pointer relative group">
+      <div className="h-1.5 w-full rounded-full bg-white/15 cursor-pointer relative group">
         <div
-          className="h-full rounded-full transition-[width,background-color] duration-500"
+          className="h-full rounded-full transition-[width,background-color] duration-700 ease-in-out"
           style={{
             width: `${activePercent}%`,
-            backgroundColor: 'var(--dynamic-track-color)',
+            backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
           }}
         />
         <div
-          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-[#FAF9F6] dark:border-[#0B0B0D] pointer-events-none transition-all duration-300 ${
+          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-[#0B0B0D] pointer-events-none transition-[left,background-color,transform] duration-700 ease-in-out ${
             isDragging ? 'scale-125' : 'group-hover:scale-110'
           }`}
           style={{
             left: `${activePercent}%`,
-            backgroundColor: 'var(--dynamic-track-color)',
+            backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
           }}
         />
       </div>
@@ -202,7 +201,6 @@ export const NowPlayingModal: React.FC<Props> = ({
   const [mobileBottomTab, setMobileBottomTab] = useState<MobileBottomTab>('queue');
 
   const [coverError, setCoverError] = useState<boolean>(false);
-  const [albumRgb, setAlbumRgb] = useState<string>(DEFAULT_PALETTE.rgbString);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(142);
   const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
@@ -247,28 +245,6 @@ export const NowPlayingModal: React.FC<Props> = ({
   useEffect(() => {
     setCoverError(false);
   }, [song.coverUrl, song.id]);
-
-  // Extract organic ambient RGB color directly from active album cover
-  useEffect(() => {
-    if (!isOpen) return;
-    let cancelled = false;
-    if (!song.coverUrl) {
-      setAlbumRgb(DEFAULT_PALETTE.rgbString);
-      return;
-    }
-    extractPaletteFromImage(song.coverUrl)
-      .then((palette) => {
-        if (!cancelled && palette?.rgbString) {
-          setAlbumRgb(palette.rgbString);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setAlbumRgb(DEFAULT_PALETTE.rgbString);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, song.coverUrl, song.id]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -1407,31 +1383,18 @@ export const NowPlayingModal: React.FC<Props> = ({
       aria-label="Tam Ekran Müzik Oynatıcı"
       className="fixed inset-0 z-[120] h-[100dvh] w-full flex flex-col bg-[#0B0B0D] text-[#F5F5F7] overflow-hidden"
     >
-      {/* Full-Screen Organic Album Cover Ambient Glow (Radial Gradient + Soft Blurred Artwork Wash) */}
+      {/* Full-Screen Multi-Tone Blurred Album Cover Ambient Glow (1.4s calm transition) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        {/* Dark Mode Organic Radial Glow */}
-        <div
-          className="hidden dark:block absolute inset-0 transition-all duration-700"
-          style={{
-            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.26) 0%, rgba(${albumRgb}, 0.08) 48%, rgba(11, 11, 13, 0) 80%)`,
-          }}
-        />
-        {/* Light Mode Organic Radial Glow */}
-        <div
-          className="block dark:hidden absolute inset-0 transition-all duration-700"
-          style={{
-            background: `radial-gradient(ellipse 85% 65% at 30% 28%, rgba(${albumRgb}, 0.13) 0%, rgba(${albumRgb}, 0.04) 48%, rgba(250, 249, 246, 0) 80%)`,
-          }}
-        />
-        {/* Ultra-Soft Blurred Full-Bleed Artwork Wash */}
         {song.coverUrl && !coverError && (
           <img
+            key={song.id}
             src={song.coverUrl}
             alt=""
             referrerPolicy="no-referrer"
-            className="w-full h-full object-cover blur-[100px] scale-125 opacity-[0.05] dark:opacity-[0.12] select-none transition-all duration-700"
+            className="w-full h-full object-cover scale-150 blur-[110px] opacity-[0.22] saturate-125 select-none transition-all duration-[1400ms] ease-in-out"
           />
         )}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0B0D]/60 to-[#0B0B0D]" />
       </div>
 
       {/* TOP STUDIO HEADER BAR (Aligned directly to max-w-5xl mx-auto px-6 axis) */}

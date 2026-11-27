@@ -278,25 +278,21 @@ export const DesktopPlayerBar: React.FC<Props> = ({
             aria-valuemax={duration}
             aria-valuenow={displaySecond}
           >
-            <div
-              className={`h-1 w-full rounded-full cursor-pointer relative ${
-                isLight ? 'bg-[#E6E4DF]' : 'bg-white/15'
-              }`}
-            >
+            <div className="h-1 w-full rounded-full cursor-pointer relative bg-white/15">
               <div
-                className="h-full rounded-full transition-[width,background-color] duration-500"
+                className="h-full rounded-full transition-[width,background-color] duration-700 ease-in-out"
                 style={{
                   width: `${progressPct}%`,
-                  backgroundColor: 'var(--dynamic-track-color)',
+                  backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
                 }}
               />
               <div
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full ring-2 shadow-sm pointer-events-none transition-all duration-300 ${
-                  isLight ? 'ring-white' : 'ring-[#141418]'
-                } ${isDragging ? 'scale-125' : 'opacity-0 group-hover:opacity-100'}`}
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full ring-2 ring-[#141418] shadow-sm pointer-events-none transition-[left,background-color,transform,opacity] duration-700 ease-in-out ${
+                  isDragging ? 'scale-125' : 'opacity-0 group-hover:opacity-100'
+                }`}
                 style={{
                   left: `${progressPct}%`,
-                  backgroundColor: 'var(--dynamic-track-color)',
+                  backgroundColor: 'var(--dynamic-track-color, #F5F5F7)',
                 }}
               />
             </div>

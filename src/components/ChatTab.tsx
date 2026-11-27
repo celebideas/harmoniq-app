@@ -24,7 +24,6 @@ import {
   MoreVertical,
   Ban,
   Flag,
-  ShieldAlert,
 } from 'lucide-react';
 import { LoungeConversation, LoungeUser, Song, FriendRequest, ActiveCoListenSession } from '../types';
 import { searchTracks } from '../services/musicResolver';
@@ -177,7 +176,7 @@ export const ChatTab: React.FC<Props> = ({
   const handleSubmitReport = (_category: string) => {
     setShowReportModal(false);
     setShowSafetyMenu(false);
-    onShowToast?.('Bildirimin Şeffaf Güven Kalkanı ekibine iletildi');
+    onShowToast?.('Şikayetin incelemeye alındı');
   };
 
   // Live 350ms debounced catalog search for "An Ekle / Ses Kartı Paylaş"
@@ -1113,7 +1112,7 @@ export const ChatTab: React.FC<Props> = ({
                           className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer flex items-center gap-2.5"
                         >
                           <Ban className="w-3.5 h-3.5 shrink-0" strokeWidth={1.85} />
-                          <span>Frekansı Kapat (Engelle)</span>
+                          <span>Engelle</span>
                         </button>
                         <button
                           type="button"
@@ -1121,10 +1120,10 @@ export const ChatTab: React.FC<Props> = ({
                             setShowSafetyMenu(false);
                             setShowReportModal(true);
                           }}
-                          className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-[#111113] dark:text-[#F5F5F7] hover:bg-[#F1EFEA] dark:hover:bg-white/10 transition cursor-pointer flex items-center gap-2.5"
+                          className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-[#F5F5F7] hover:bg-white/10 transition cursor-pointer flex items-center gap-2.5"
                         >
-                          <Flag className="w-3.5 h-3.5 text-[#111113] dark:text-[#F5F5F7] shrink-0" strokeWidth={1.85} />
-                          <span>Şeffaf Bildir</span>
+                          <Flag className="w-3.5 h-3.5 text-[#F5F5F7] shrink-0" strokeWidth={1.85} />
+                          <span>Şikayet Et</span>
                         </button>
                       </div>
                     )}
@@ -1144,15 +1143,15 @@ export const ChatTab: React.FC<Props> = ({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-[#111113]/[0.08] dark:bg-white/[0.10] text-[#111113] dark:text-[#F5F5F7] flex items-center justify-center shrink-0">
-                          <ShieldAlert className="w-4 h-4" strokeWidth={1.85} />
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.10] text-[#F5F5F7] flex items-center justify-center shrink-0">
+                          <Flag className="w-4 h-4" strokeWidth={1.85} />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-[#111113] dark:text-[#F5F5F7]">
-                            Şeffaf Bildir
+                          <h4 className="text-sm font-semibold text-[#F5F5F7]">
+                            Şikayet Et
                           </h4>
-                          <p className="text-xs text-[#63636B] dark:text-[#8E8E98]">
-                            {activeChatUser.name} için bildirim nedenini seç
+                          <p className="text-xs text-[#8E8E98]">
+                            {activeChatUser.name} için şikayet nedenini seç
                           </p>
                         </div>
                       </div>

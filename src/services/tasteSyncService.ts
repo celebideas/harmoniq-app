@@ -53,10 +53,10 @@ export function derivePersonalTasteFromData(
   const trackArtists = allTracks.map((t) => t.artist).filter(Boolean);
   const trackGenres = allTracks.map((t) => t.genre).filter(Boolean);
 
-  // Sanitize favorite artists using artistFilterService
-  const sanitizedFavoriteArtists = cleanNonMusicArtists(favoriteArtists, favoriteSongs);
+  // Sanitize favorite artists using Whitelist-First artistFilterService (against all playlist + liked tracks)
+  const sanitizedFavoriteArtists = cleanNonMusicArtists(favoriteArtists, allTracks);
 
-  // Frequency map for top artists (strictly filtered against non-music tech, brands, and aggregators)
+  // Frequency map for top artists (strictly whitelist-validated against user tracks, explicit music signals & verified pool)
   const artistCount = new Map<string, number>();
   [...sanitizedFavoriteArtists, ...trackArtists].forEach((a) => {
     if (!a || typeof a !== 'string') return;
@@ -70,7 +70,7 @@ export function derivePersonalTasteFromData(
     ) {
       return;
     }
-    const check = isMusicArtistOrChannel(clean, favoriteSongs);
+    const check = isMusicArtistOrChannel(clean, allTracks);
     if (!check.isMusic) return;
 
     artistCount.set(clean, (artistCount.get(clean) || 0) + 1);

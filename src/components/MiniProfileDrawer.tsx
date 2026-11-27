@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -12,9 +12,16 @@ import {
   Lock,
   Globe,
   Check,
+  MoreVertical,
+  Ban,
+  Flag,
+  ChevronRight,
 } from 'lucide-react';
 import { LoungeUser, Song } from '../types';
 import { sanitizeFormattedLocation } from '../services/locationService';
+
+const BLOCKED_USERS_STORAGE_KEY = 'listenhub_blocked_users';
+const REPORT_CATEGORIES = ['Spam / Bot', 'Rahatsız Edici Dil', 'Sahte Profil'] as const;
 
 interface Props {
   user: LoungeUser | null;
@@ -23,6 +30,8 @@ interface Props {
   onSendFrequency: (user: LoungeUser, icebreakerText?: string) => void;
   onToggleFriend?: (user: LoungeUser) => void;
   onAcceptIncomingRequest?: (user: LoungeUser) => void;
+  onBlockUser?: (user: LoungeUser) => void;
+  onShowToast?: (message: string) => void;
   themeMode?: 'dark' | 'light';
 }
 
@@ -36,12 +45,16 @@ export const MiniProfileDrawer: React.FC<Props> = ({
   onSendFrequency,
   onToggleFriend,
   onAcceptIncomingRequest,
-  themeMode,
+  onBlockUser,
+  onShowToast,
 }) => {
   const [friendActionSent, setFriendActionSent] = useState(false);
   const [hasLikedStatus, setHasLikedStatus] = useState(user?.hasLikedStatus || false);
   const [statusLikesCount, setStatusLikesCount] = useState(user?.statusLikesCount || 8);
   const [coverError, setCoverError] = useState(false);
+  const [showSafetyMenu, setShowSafetyMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const safetyMenuRef = useRef<HTMLDivElement>(null);
 
   const displaySong = user?.currentSong || song;
 
@@ -49,19 +62,61 @@ export const MiniProfileDrawer: React.FC<Props> = ({
     setHasLikedStatus(user?.hasLikedStatus || false);
     setStatusLikesCount(user?.statusLikesCount || 8);
     setFriendActionSent(false);
+    setShowSafetyMenu(false);
+    setShowReportModal(false);
   }, [user?.id]);
 
   useEffect(() => {
     setCoverError(false);
   }, [displaySong?.coverUrl, displaySong?.id]);
 
+  useEffect(() => {
+    if (!showSafetyMenu) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (safetyMenuRef.current && !safetyMenuRef.current.contains(e.target as Node)) {
+        setShowSafetyMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [showSafetyMenu]);
+
   if (!user) return null;
 
-  const isLight =
-    themeMode === 'light' ||
-    (!themeMode &&
-      typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('light'));
+  const isLight = false;
+
+  const handleBlockClick = () => {
+    setShowSafetyMenu(false);
+    setShowReportModal(false);
+    try {
+      const raw = localStorage.getItem(BLOCKED_USERS_STORAGE_KEY);
+      const parsed: string[] = raw ? JSON.parse(raw) : [];
+      const next = Array.isArray(parsed)
+        ? parsed.includes(user.id)
+          ? parsed
+          : [...parsed, user.id]
+        : [user.id];
+      localStorage.setItem(BLOCKED_USERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore storage errors
+    }
+    if (onBlockUser) {
+      onBlockUser(user);
+    } else {
+      onShowToast?.('Bu kullanıcı engellendi');
+    }
+    onClose();
+  };
+
+  const handleSubmitReport = (_category: string) => {
+    setShowReportModal(false);
+    setShowSafetyMenu(false);
+    onShowToast?.('Şikayetin alındı, teşekkürler');
+  };
 
   const displayCity = sanitizeFormattedLocation(user.city);
   const cleanedStatusBubble = user.statusBubble ? stripStrayEmojis(user.statusBubble) : '';
@@ -267,14 +322,47 @@ export const MiniProfileDrawer: React.FC<Props> = ({
               )}
             </button>
 
+            <div ref={safetyMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowSafetyMenu((prev) => !prev)}
+                className="p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]"
+                aria-label="Güvenlik seçenekleri"
+                aria-expanded={showSafetyMenu}
+                title="Seçenekler"
+              >
+                <MoreVertical className="w-5 h-5" strokeWidth={1.85} />
+              </button>
+
+              {showSafetyMenu && (
+                <div className="absolute right-0 mt-1.5 w-48 rounded-xl bg-[#1C1C22] border border-white/[0.1] shadow-2xl p-1.5 z-50 space-y-1">
+                  <button
+                    type="button"
+                    onClick={handleBlockClick}
+                    className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition cursor-pointer flex items-center gap-2.5"
+                  >
+                    <Ban className="w-3.5 h-3.5 shrink-0" strokeWidth={1.85} />
+                    <span>Engelle</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSafetyMenu(false);
+                      setShowReportModal(true);
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-left text-xs font-semibold text-[#F5F5F7] hover:bg-white/10 transition cursor-pointer flex items-center gap-2.5"
+                  >
+                    <Flag className="w-3.5 h-3.5 text-[#F5F5F7] shrink-0" strokeWidth={1.85} />
+                    <span>Şikayet Et</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={onClose}
-              className={`p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer ${
-                isLight
-                  ? 'text-[#63636B] hover:text-[#111113] hover:bg-[#F1EFEA]'
-                  : 'text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]'
-              }`}
+              className="p-2 rounded-xl active:scale-[0.96] transition-transform duration-100 ease-out min-w-[42px] min-h-[42px] flex items-center justify-center cursor-pointer text-[#8E8E98] hover:text-[#F5F5F7] hover:bg-[#1C1C22]"
               aria-label="Kapat"
             >
               <X className="w-5 h-5" />
@@ -549,16 +637,70 @@ export const MiniProfileDrawer: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Primary CTA (Warm Copper / Amber) */}
+        {/* Primary CTA */}
         <button
           type="button"
           onClick={() => onSendFrequency(user)}
-          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-[#111113] dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-[#0B0B0D] font-semibold text-xs uppercase tracking-wider transition-transform duration-100 ease-out flex items-center justify-center gap-2 shadow-sm active:scale-[0.96] min-h-[48px] cursor-pointer"
+          className="studio-btn-primary w-full py-3.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-[#0B0B0D] font-semibold text-xs uppercase tracking-wider transition-transform duration-100 ease-out flex items-center justify-center gap-2 shadow-sm active:scale-[0.96] min-h-[48px] cursor-pointer"
         >
           <Radio className="w-4 h-4 stroke-[2.25]" />
           <span>Frekans Gönder ve Sohbeti Aç</span>
         </button>
       </div>
+
+      {/* Compact Report Dialog (3 Clear Categories) */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-[135] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowReportModal(false);
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl bg-[#141418] border border-white/[0.1] shadow-2xl p-5 space-y-4 animate-modal-enter"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.10] text-[#F5F5F7] flex items-center justify-center shrink-0">
+                  <Flag className="w-4 h-4" strokeWidth={1.85} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-[#F5F5F7]">
+                    Şikayet Et
+                  </h4>
+                  <p className="text-xs text-[#8E8E98]">
+                    {user.name} için şikayet nedenini seç
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="w-8 h-8 rounded-lg bg-[#1C1C22] text-[#8E8E98] hover:text-[#F5F5F7] flex items-center justify-center cursor-pointer"
+                aria-label="Kapat"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {REPORT_CATEGORIES.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => handleSubmitReport(category)}
+                  className="w-full px-3.5 py-3 rounded-xl bg-[#1C1C22] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/25 text-left text-xs font-semibold text-[#F5F5F7] transition cursor-pointer flex items-center justify-between"
+                >
+                  <span>{category}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8E8E98]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

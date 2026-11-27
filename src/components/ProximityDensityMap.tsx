@@ -6,7 +6,6 @@ import {
   MapPin,
   Zap,
   MessageCircle,
-  ShieldCheck,
   Music,
   X,
   Plus,
@@ -1206,17 +1205,6 @@ export const ProximityDensityMap: React.FC<Props> = ({
                   <span>Canlı</span>
                 </span>
               )}
-
-              <span
-                className={`px-2 py-0.5 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
-                  isLight
-                    ? 'bg-[#16A34A]/10 text-[#16A34A]'
-                    : 'bg-[#22C55E]/15 text-[#22C55E]'
-                }`}
-              >
-                <ShieldCheck className="w-3 h-3" strokeWidth={1.75} />
-                <span>Güven · {selectedUser.trustScore || 99}</span>
-              </span>
 
               <span
                 className={`px-2 py-0.5 rounded-lg border text-xs font-semibold flex items-center gap-1 shrink-0 tabular-nums ${
