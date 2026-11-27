@@ -16,8 +16,10 @@ import { Song } from '../types';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
 import {
+  AudioOutputMode,
   ExternalPlaybackSource,
-  getExternalSourceLabel,
+  ExternalPlaybackState,
+  getExternalSourceShortName,
 } from '../services/externalSyncService';
 
 interface Props {
@@ -28,6 +30,10 @@ interface Props {
   isFavorite: boolean;
   themeMode?: 'dark' | 'light';
   externalSyncSource?: ExternalPlaybackSource | null;
+  externalSyncState?: ExternalPlaybackState | null;
+  audioOutputMode?: AudioOutputMode;
+  onPullAudioToListenHub?: () => void;
+  onReleaseAudioToExternal?: () => void;
   onTogglePlay: () => void;
   onNextSong: () => void;
   onPrevSong: () => void;
@@ -51,6 +57,10 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
   isFavorite,
   themeMode = 'dark',
   externalSyncSource = null,
+  externalSyncState = null,
+  audioOutputMode = 'external',
+  onPullAudioToListenHub,
+  onReleaseAudioToExternal,
   onTogglePlay,
   onNextSong,
   onPrevSong,
@@ -119,51 +129,97 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
     }
   };
 
-  return (
-    <footer
-      aria-label="Masaüstü Medya Çubuğu"
-      className={`hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 backdrop-blur-md border-t select-none transition-colors duration-150 ${
-        isLight
-          ? 'bg-white/95 border-[#E6E4DF] text-[#111113]'
-          : 'bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]'
-      }`}
-    >
-      {/* LEFT (w-1/4): Cover + Track Info + Favorite */}
-      <div className="w-1/4 min-w-0 flex items-center gap-3.5">
-        <div
-          onClick={onOpenNowPlaying}
-          className={`relative w-13 h-13 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 cursor-pointer group ${
-            isLight ? 'ring-black/5' : 'ring-white/10'
-          }`}
-          title="Tam Ekran Oynatıcıyı Aç"
-        >
-          {currentSong.coverUrl ? (
-            <img
-              src={currentSong.coverUrl}
-              alt={currentSong.album}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          ) : (
-            <div
-              className={`w-full h-full bg-gradient-to-tr ${currentSong.coverGradient} flex items-center justify-center`}
-            >
-              <Music className="w-5 h-5 text-white" strokeWidth={1.75} />
-            </div>
-          )}
-        </div>
+  const activeExternalSource = externalSyncState?.source || externalSyncSource;
+  const externalSourceName = getExternalSourceShortName(activeExternalSource);
+  const isExternalOutput = audioOutputMode === 'external';
 
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
+  return (
+    <>
+      {activeExternalSource && (
+        <div
+          aria-label="Harici Oynatıcı Senkron Çubuğu"
+          className="hidden lg:flex items-center justify-between fixed bottom-[84px] inset-x-0 h-9 px-6 lg:px-8 z-40 bg-[#141418]/95 backdrop-blur-md border-t border-white/[0.08] text-[#F5F5F7] select-none"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="text-xs font-medium text-[#D1D1D6] truncate">
+              {isExternalOutput
+                ? `${externalSourceName} üzerinden dinleniyor`
+                : `ListenHub üzerinden dinleniyor (${externalSourceName} senkron)`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isExternalOutput ? (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(18);
+                  onPullAudioToListenHub?.();
+                }}
+                className="px-2.5 py-1 rounded-md bg-white hover:bg-zinc-200 text-[#0B0B0D] text-xs font-semibold active:scale-[0.96] transition cursor-pointer"
+              >
+                Buradan Dinle
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(15);
+                  onReleaseAudioToExternal?.();
+                }}
+                className="px-2.5 py-1 rounded-md bg-[#1C1C22] hover:bg-white/10 border border-white/[0.1] text-[#F5F5F7] text-xs font-medium active:scale-[0.96] transition cursor-pointer"
+              >
+                Sesi Geri Bırak
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <footer
+        aria-label="Masaüstü Medya Çubuğu"
+        className={`hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 backdrop-blur-md border-t select-none transition-colors duration-150 ${
+          isLight
+            ? 'bg-white/95 border-[#E6E4DF] text-[#111113]'
+            : 'bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]'
+        }`}
+      >
+        {/* LEFT (w-1/4): Cover + Track Info + Favorite */}
+        <div className="w-1/4 min-w-0 flex items-center gap-3.5">
+          <div
             onClick={onOpenNowPlaying}
-            className={`text-sm font-semibold hover:opacity-75 transition truncate block max-w-full text-left cursor-pointer ${
-              isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
+            className={`relative w-13 h-13 rounded-xl overflow-hidden bg-[#1C1C22] shrink-0 ring-1 cursor-pointer group ${
+              isLight ? 'ring-black/5' : 'ring-white/10'
             }`}
-            title={currentSong.title}
+            title="Tam Ekran Oynatıcıyı Aç"
           >
-            {currentSong.title}
-          </button>
-          <div className="flex items-center gap-1.5 min-w-0">
+            {currentSong.coverUrl ? (
+              <img
+                src={currentSong.coverUrl}
+                alt={currentSong.album}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+            ) : (
+              <div
+                className={`w-full h-full bg-gradient-to-tr ${currentSong.coverGradient} flex items-center justify-center`}
+              >
+                <Music className="w-5 h-5 text-white" strokeWidth={1.75} />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={onOpenNowPlaying}
+              className={`text-sm font-semibold hover:opacity-75 transition truncate block max-w-full text-left cursor-pointer ${
+                isLight ? 'text-[#111113]' : 'text-[#F5F5F7]'
+              }`}
+              title={currentSong.title}
+            >
+              {currentSong.title}
+            </button>
             <div
               className={`text-xs truncate ${
                 isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
@@ -171,23 +227,7 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
             >
               {currentSong.artist}
             </div>
-            {externalSyncSource && (
-              <span
-                className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
-                title={getExternalSourceLabel(externalSyncSource)}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>
-                  {externalSyncSource === 'spotify_api'
-                    ? 'Spotify'
-                    : externalSyncSource === 'chrome_extension'
-                    ? 'Eklenti'
-                    : 'Android'}
-                </span>
-              </span>
-            )}
           </div>
-        </div>
 
         <button
           type="button"
@@ -379,7 +419,8 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
         >
           <Maximize2 className="w-4 h-4" strokeWidth={1.75} />
         </button>
-      </div>
-    </footer>
+        </div>
+      </footer>
+    </>
   );
 });

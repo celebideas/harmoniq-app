@@ -937,7 +937,7 @@ export const YouTubeMusicConnectModal: React.FC<Props> = ({
           {showVideoEmbed && currentYtId && (
             <div className="rounded-2xl overflow-hidden border border-neutral-800 aspect-video bg-black">
               <iframe
-                src={`https://www.youtube.com/embed/${currentYtId}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&widgetid=1`}
+                src={`https://www.youtube.com/embed/${currentYtId}?autoplay=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&widgetid=1`}
                 title="YouTube Video Player"
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

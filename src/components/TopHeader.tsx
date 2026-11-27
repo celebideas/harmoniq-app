@@ -26,7 +26,7 @@ export const TopHeader: React.FC<Props> = React.memo(({
   userProfile,
 }) => {
   return (
-    <header className="lg:hidden sticky top-0 z-40 border-b backdrop-blur-md select-none bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]">
+    <header className="lg:hidden sticky top-0 z-40 pt-[env(safe-area-inset-top)] border-b backdrop-blur-md select-none bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
         {/* LEFT: Pure Studio Monochrome ListenHub SVG Emblem & Title */}
         <button

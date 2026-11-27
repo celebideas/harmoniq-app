@@ -45,6 +45,7 @@ import {
 } from './types';
 import { soundEngine } from './services/soundEngine';
 import {
+  AudioOutputMode,
   externalSyncService,
   externalStateToSong,
   ExternalPlaybackSource,
@@ -1001,36 +1002,102 @@ export default function App() {
   const pendingStartSecondRef = useRef<number | null>(null);
   const pendingStartTimestampRef = useRef<number>(0);
   const [externalSyncSource, setExternalSyncSource] = useState<ExternalPlaybackSource | null>(null);
+  const [externalSyncState, setExternalSyncState] = useState<ExternalPlaybackState | null>(null);
+  const [audioOutputMode, setAudioOutputMode] = useState<AudioOutputMode>('external');
   const externalPlaybackActiveRef = useRef<boolean>(false);
   const externalPlaybackStateRef = useRef<ExternalPlaybackState | null>(null);
+  const audioOutputModeRef = useRef<AudioOutputMode>('external');
+  const lastListenHubSyncedTrackSigRef = useRef<string>('');
+  const lastListenHubSyncedPlayingRef = useRef<boolean | null>(null);
+
+  const playExternalTrackInListenHub = useCallback(async (ext: ExternalPlaybackState) => {
+    const startSec = Math.max(0, Math.floor(ext.currentSecond || 0));
+    const baseSong = externalStateToSong(ext, trackedSongRef.current);
+    let playableSong = baseSong;
+
+    if (!playableSong.youtubeVideoId && !playableSong.audioUrl && playableSong.artist && playableSong.title) {
+      try {
+        playableSong = await resolvePlayableAudioParallel(playableSong);
+      } catch {
+        // fallback to baseSong
+      }
+    }
+
+    // Abort if user already switched back to external mode while resolving
+    if (audioOutputModeRef.current !== 'listenhub') return;
+
+    const latestExt = externalPlaybackStateRef.current;
+    const syncedSecond =
+      latestExt &&
+      latestExt.title.toLowerCase().trim() === ext.title.toLowerCase().trim() &&
+      latestExt.artist.toLowerCase().trim() === ext.artist.toLowerCase().trim()
+        ? Math.max(0, Math.floor(latestExt.currentSecond || startSec))
+        : startSec;
+
+    pendingStartSecondRef.current = syncedSecond > 0 ? syncedSecond : null;
+    pendingStartTimestampRef.current = Date.now();
+    lastPlayIntentRef.current = { playing: true, time: Date.now() };
+
+    setCurrentSong(playableSong);
+    setMySecond(syncedSecond);
+    setIsPlaying(true);
+    lastListenHubSyncedTrackSigRef.current = `${ext.title.toLowerCase().trim()}::${ext.artist.toLowerCase().trim()}`;
+    lastListenHubSyncedPlayingRef.current = true;
+    await soundEngine.playSong(playableSong, syncedSecond);
+  }, []);
+
+  const stableHandlePullAudioToListenHub = useCallback(() => {
+    const ext = externalSyncService.pullAudioToListenHub() || externalPlaybackStateRef.current;
+    if (!ext) return;
+    audioOutputModeRef.current = 'listenhub';
+    setAudioOutputMode('listenhub');
+    void playExternalTrackInListenHub(ext);
+  }, [playExternalTrackInListenHub]);
+
+  const stableHandleReleaseAudioToExternal = useCallback(() => {
+    audioOutputModeRef.current = 'external';
+    setAudioOutputMode('external');
+    lastListenHubSyncedTrackSigRef.current = '';
+    lastListenHubSyncedPlayingRef.current = null;
+    externalSyncService.releaseAudioToExternal();
+    const ext = externalPlaybackStateRef.current;
+    if (ext) {
+      setMySecond(ext.currentSecond);
+      setIsPlaying(ext.isPlaying);
+    }
+  }, []);
 
   const stableHandleReleaseExternalSync = useCallback(() => {
     externalPlaybackActiveRef.current = false;
     externalPlaybackStateRef.current = null;
+    audioOutputModeRef.current = 'external';
+    lastListenHubSyncedTrackSigRef.current = '';
+    lastListenHubSyncedPlayingRef.current = null;
     setExternalSyncSource(null);
+    setExternalSyncState(null);
+    setAudioOutputMode('external');
     externalSyncService.releaseExternalControl();
   }, []);
 
-  // Subscribe to centralized External Playback Sync Engine (Spotify PKCE, Chrome Extension, Android Native Bridge)
+  // Subscribe to centralized External Playback Sync Engine (Spotify PKCE, Chrome Extension, iOS/Android Mobile Bridge)
   useEffect(() => {
     const unsub = externalSyncService.subscribe((snapshot) => {
       externalPlaybackActiveRef.current = snapshot.active;
       externalPlaybackStateRef.current = snapshot.state;
+      audioOutputModeRef.current = snapshot.audioOutputMode;
+      setAudioOutputMode(snapshot.audioOutputMode);
 
       if (!snapshot.active || !snapshot.state) {
         setExternalSyncSource(null);
+        setExternalSyncState(null);
+        lastListenHubSyncedTrackSigRef.current = '';
+        lastListenHubSyncedPlayingRef.current = null;
         return;
       }
 
       const ext = snapshot.state;
-
-      // Double-Audio Conflict Protection: silently pause ListenHub's own audio engine
-      if (soundEngine.getIsPlaying()) {
-        soundEngine.pause();
-      }
-
       setExternalSyncSource(ext.source);
-      setIsAudioLoading(false);
+      setExternalSyncState(ext);
 
       if (ext.source === 'spotify_api') {
         setActivePlatform('spotify');
@@ -1038,43 +1105,90 @@ export default function App() {
         setActivePlatform('youtube_music');
       }
 
-      setCurrentSong((prev) => {
-        const mapped = externalStateToSong(ext, prev);
-        if (
-          prev &&
-          prev.id === mapped.id &&
-          prev.title === mapped.title &&
-          prev.artist === mapped.artist &&
-          prev.coverUrl === mapped.coverUrl &&
-          prev.durationSeconds === mapped.durationSeconds
-        ) {
-          return prev;
+      if (snapshot.audioOutputMode === 'external') {
+        // Double-Audio Conflict Protection: silently pause ListenHub's own audio engine in external mode
+        if (soundEngine.getIsPlaying()) {
+          soundEngine.pause();
         }
-        return mapped;
-      });
+        setIsAudioLoading(false);
 
-      setMySecond(ext.currentSecond);
-      setIsPlaying((prev) => (prev === ext.isPlaying ? prev : ext.isPlaying));
+        setCurrentSong((prev) => {
+          const mapped = externalStateToSong(ext, prev);
+          if (
+            prev &&
+            prev.id === mapped.id &&
+            prev.title === mapped.title &&
+            prev.artist === mapped.artist &&
+            prev.coverUrl === mapped.coverUrl &&
+            prev.durationSeconds === mapped.durationSeconds
+          ) {
+            return prev;
+          }
+          return mapped;
+        });
+
+        setMySecond(ext.currentSecond);
+        setIsPlaying((prev) => (prev === ext.isPlaying ? prev : ext.isPlaying));
+      } else {
+        // audioOutputMode === 'listenhub': ListenHub owns audio output while external player stays muted & synced
+        const incomingSig = `${ext.title.toLowerCase().trim()}::${ext.artist.toLowerCase().trim()}`;
+        if (lastListenHubSyncedTrackSigRef.current && lastListenHubSyncedTrackSigRef.current !== incomingSig) {
+          // External player moved to a new song -> follow seamlessly inside ListenHub's soundEngine
+          void playExternalTrackInListenHub(ext);
+          return;
+        }
+
+        // Sync play/pause transitions coming from the external player
+        if (
+          lastListenHubSyncedPlayingRef.current !== null &&
+          lastListenHubSyncedPlayingRef.current !== ext.isPlaying
+        ) {
+          lastListenHubSyncedPlayingRef.current = ext.isPlaying;
+          if (ext.isPlaying) {
+            if (!soundEngine.getIsPlaying()) {
+              soundEngine.resume();
+            }
+            setIsPlaying(true);
+          } else {
+            if (soundEngine.getIsPlaying()) {
+              soundEngine.pause();
+            }
+            setIsPlaying(false);
+          }
+        }
+
+        // Sync significant external seeks (> 4s drift) without causing micro-stutters
+        const localSec = soundEngine.getCurrentTime();
+        if (Math.abs(localSec - ext.currentSecond) > 4) {
+          soundEngine.seek(ext.currentSecond);
+          setMySecond(ext.currentSecond);
+        }
+      }
     });
 
     return unsub;
-  }, []);
+  }, [playExternalTrackInListenHub]);
 
-  // Smooth 1s timeline progression between external sync polls while external player is playing
+  // Smooth 1s timeline progression between external sync polls when external player owns audio output
   useEffect(() => {
-    if (!externalSyncSource || !isPlaying) return;
+    if (!externalSyncSource || audioOutputMode !== 'external' || !isPlaying) return;
     const timer = window.setInterval(() => {
       const ext = externalPlaybackStateRef.current;
-      if (!externalPlaybackActiveRef.current || !ext || !ext.isPlaying) return;
+      if (!externalPlaybackActiveRef.current || audioOutputModeRef.current !== 'external' || !ext || !ext.isPlaying) {
+        return;
+      }
       const maxDur = Math.max(1, ext.durationSec || 210);
       setMySecond((prev) => (prev < maxDur ? prev + 1 : maxDur));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [externalSyncSource, isPlaying]);
+  }, [externalSyncSource, audioOutputMode, isPlaying]);
 
   useEffect(() => {
+    const isExternalOwningAudio = () =>
+      externalPlaybackActiveRef.current && audioOutputModeRef.current === 'external';
+
     const unsubTime = soundEngine.onTimeUpdate((sec) => {
-      if (externalPlaybackActiveRef.current) return;
+      if (isExternalOwningAudio()) return;
       if (pendingStartSecondRef.current !== null) {
         const target = pendingStartSecondRef.current;
         const elapsed = Date.now() - pendingStartTimestampRef.current;
@@ -1087,7 +1201,7 @@ export default function App() {
       setMySecond(sec);
     });
     const unsubState = soundEngine.onStateChange((playing) => {
-      if (externalPlaybackActiveRef.current) return;
+      if (isExternalOwningAudio()) return;
       const elapsed = Date.now() - lastPlayIntentRef.current.time;
       if (playing === lastPlayIntentRef.current.playing) {
         lastPlayIntentRef.current.time = 0;
@@ -1097,7 +1211,7 @@ export default function App() {
       setIsPlaying((prev) => (prev === playing ? prev : playing));
     });
     const unsubDuration = soundEngine.onDurationChange((realDuration) => {
-      if (externalPlaybackActiveRef.current) return;
+      if (isExternalOwningAudio()) return;
       if (!Number.isFinite(realDuration) || realDuration <= 30) return;
       const rounded = Math.round(realDuration);
       setCurrentSong((prev) => {
@@ -1107,12 +1221,12 @@ export default function App() {
       });
     });
     const unsubLoading = soundEngine.onLoadingChange((loading) => {
-      if (externalPlaybackActiveRef.current) return;
+      if (isExternalOwningAudio()) return;
       setIsAudioLoading(loading);
     });
 
     soundEngine.onErrorFallback((failedSong) => {
-      if (externalPlaybackActiveRef.current) return;
+      if (isExternalOwningAudio()) return;
       setToastMessage(`"${failedSong.title}" akışı atlandı, kesintisiz radyo devam ediyor...`);
       setTimeout(() => setToastMessage(null), 3500);
       handleNextSong();
@@ -2350,11 +2464,14 @@ export default function App() {
     }
     lastToggleClickRef.current = now;
 
-    // If user manually taps Play/Pause inside ListenHub, cleanly release external follow lock
-    if (externalPlaybackActiveRef.current) {
+    // If user manually taps Play/Pause inside ListenHub while in external output mode, release external lock cleanly
+    if (externalPlaybackActiveRef.current && audioOutputModeRef.current === 'external') {
       externalPlaybackActiveRef.current = false;
       externalPlaybackStateRef.current = null;
+      audioOutputModeRef.current = 'external';
       setExternalSyncSource(null);
+      setExternalSyncState(null);
+      setAudioOutputMode('external');
       externalSyncService.releaseExternalControl();
     }
 
@@ -2466,7 +2583,12 @@ export default function App() {
     if (externalPlaybackActiveRef.current) {
       externalPlaybackActiveRef.current = false;
       externalPlaybackStateRef.current = null;
+      audioOutputModeRef.current = 'external';
+      lastListenHubSyncedTrackSigRef.current = '';
+      lastListenHubSyncedPlayingRef.current = null;
       setExternalSyncSource(null);
+      setExternalSyncState(null);
+      setAudioOutputMode('external');
       externalSyncService.releaseExternalControl();
     }
 
@@ -4160,6 +4282,10 @@ export default function App() {
               onSuggestCoListenSong={stableHandleSuggestCoListenSong}
               onLeaveCoListen={stableHandleLeaveCoListen}
               externalSyncSource={externalSyncSource}
+              externalSyncState={externalSyncState}
+              audioOutputMode={audioOutputMode}
+              onPullAudioToListenHub={stableHandlePullAudioToListenHub}
+              onReleaseAudioToExternal={stableHandleReleaseAudioToExternal}
               onReleaseExternalSync={stableHandleReleaseExternalSync}
             />
           </div>
@@ -4457,6 +4583,10 @@ export default function App() {
           isFavorite={isCurrentSongFavorite}
           themeMode={effectiveTheme}
           externalSyncSource={externalSyncSource}
+          externalSyncState={externalSyncState}
+          audioOutputMode={audioOutputMode}
+          onPullAudioToListenHub={stableHandlePullAudioToListenHub}
+          onReleaseAudioToExternal={stableHandleReleaseAudioToExternal}
           onTogglePlay={stableHandleTogglePlay}
           onNextSong={stableHandleNextSong}
           onPrevSong={stableHandlePrevSong}

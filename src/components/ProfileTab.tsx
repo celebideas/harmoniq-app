@@ -3769,7 +3769,7 @@ export const ProfileTab: React.FC<Props> = React.memo(({
                         )}
                       </div>
 
-                      {/* 3) Android Sistem Köprüsü */}
+                      {/* 3) Mobil Uygulama Köprüsü (iOS & Android) */}
                       <div className="p-3.5 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shrink-0">
@@ -3777,24 +3777,24 @@ export const ProfileTab: React.FC<Props> = React.memo(({
                           </div>
                           <div className="min-w-0">
                             <div className="text-xs font-semibold text-white truncate">
-                              Android Sistem Köprüsü
+                              Mobil Uygulama Köprüsü (iOS &amp; Android)
                             </div>
                             <div className="text-xs text-zinc-400 truncate">
-                              {externalChannels.androidBridgeLive
-                                ? 'NotificationListenerService canlı aktif'
+                              {externalChannels.mobileBridgeLive
+                                ? 'Cihazdan Canlı Senkron aktif (iOS & Android)'
                                 : 'YouTube Music, Spotify ve Apple Music sistem bildirimi'}
                             </div>
                           </div>
                         </div>
 
-                        {externalChannels.androidBridgeLive ? (
+                        {externalChannels.mobileBridgeLive ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-xs font-semibold shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span>Bağlı (Canlı)</span>
                           </span>
                         ) : (
                           <span className="px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-zinc-400 text-[11px] font-medium shrink-0 text-right">
-                            PWA/Web Modu (APK&apos;da Otomatik Aktif)
+                            PWA/Web Modu (Uygulamada Otomatik Aktif)
                           </span>
                         )}
                       </div>

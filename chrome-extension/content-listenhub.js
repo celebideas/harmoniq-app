@@ -39,6 +39,23 @@
     // ignore startup errors
   }
 
+  // Bidirectional control: catch mute/unmute commands from ListenHub app and forward to background worker
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+    const data = event.data;
+    if (!data || data.type !== 'LISTENHUB_CONTROL_EXTERNAL') return;
+    if (data.action !== 'mute' && data.action !== 'unmute') return;
+
+    try {
+      chrome.runtime.sendMessage({
+        type: 'LISTENHUB_CONTROL_EXTERNAL',
+        action: data.action,
+      });
+    } catch {
+      // ignore if extension worker is waking up
+    }
+  });
+
   // Relay live playback updates from background service worker to ListenHub page
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== 'object') return false;

@@ -4,7 +4,12 @@ import { soundEngine } from './soundEngine';
 export type ExternalPlaybackSource =
   | 'spotify_api'
   | 'chrome_extension'
+  | 'mobile_native'
   | 'android_bridge';
+
+export type ExternalSyncSource = ExternalPlaybackSource;
+
+export type AudioOutputMode = 'external' | 'listenhub';
 
 export interface ExternalPlaybackState {
   source: ExternalPlaybackSource;
@@ -24,16 +29,22 @@ export interface ExternalSyncChannelStatus {
   spotifyLastSyncAt: number | null;
   chromeExtensionConnected: boolean;
   chromeExtensionLastPingAt: number | null;
+  mobileBridgeAvailable: boolean;
+  mobileBridgeLive: boolean;
+  mobileBridgeLastSyncAt: number | null;
+  // Backward-compatible aliases
   androidBridgeAvailable: boolean;
   androidBridgeLive: boolean;
   androidBridgeLastSyncAt: number | null;
   activeSource: ExternalPlaybackSource | null;
   externalPlaybackActive: boolean;
+  audioOutputMode: AudioOutputMode;
 }
 
 export interface ExternalPlaybackSnapshot {
   active: boolean;
   state: ExternalPlaybackState | null;
+  audioOutputMode: AudioOutputMode;
   channels: ExternalSyncChannelStatus;
 }
 
@@ -41,6 +52,14 @@ declare global {
   interface Window {
     ListenHubNative?: {
       onPlaybackUpdate: (state: Partial<ExternalPlaybackState>) => void;
+      setExternalMuted?: (muted: boolean) => void;
+    };
+    webkit?: {
+      messageHandlers?: {
+        listenhub?: {
+          postMessage: (message: unknown) => void;
+        };
+      };
     };
     Capacitor?: {
       isNativePlatform?: () => boolean;
@@ -50,7 +69,7 @@ declare global {
 }
 
 const EXTENSION_ACTIVE_TTL_MS = 180_000; // 3 minutes freshness after ping/playback
-const ANDROID_ACTIVE_TTL_MS = 180_000;
+const MOBILE_ACTIVE_TTL_MS = 180_000;
 
 function sanitizeText(val: unknown, maxLen = 180): string {
   if (typeof val !== 'string') return '';
@@ -76,8 +95,12 @@ function sanitizePositiveNumber(val: unknown, fallback = 0): number {
   return Math.floor(num);
 }
 
+function normalizeSource(source: ExternalPlaybackSource): ExternalPlaybackSource {
+  return source === 'android_bridge' ? 'mobile_native' : source;
+}
+
 function normalizeTrackSignature(source: ExternalPlaybackSource, title: string, artist: string): string {
-  return `${source}::${title.toLowerCase().trim()}::${artist.toLowerCase().trim()}`;
+  return `${normalizeSource(source)}::${title.toLowerCase().trim()}::${artist.toLowerCase().trim()}`;
 }
 
 function slugifyId(input: string): string {
@@ -96,10 +119,25 @@ export function getExternalSourceLabel(source: ExternalPlaybackSource | null): s
       return "Spotify'dan Canlı Senkron";
     case 'chrome_extension':
       return "YouTube'dan Canlı Senkron (Eklenti)";
+    case 'mobile_native':
     case 'android_bridge':
-      return "Android'den Canlı Senkron";
+      return 'Cihazdan Canlı Senkron';
     default:
       return '';
+  }
+}
+
+export function getExternalSourceShortName(source: ExternalPlaybackSource | null): string {
+  switch (source) {
+    case 'spotify_api':
+      return 'Spotify';
+    case 'chrome_extension':
+      return 'YouTube Music';
+    case 'mobile_native':
+    case 'android_bridge':
+      return 'Cihaz';
+    default:
+      return 'Dış Oynatıcı';
   }
 }
 
@@ -107,6 +145,7 @@ export function externalStateToSong(
   state: ExternalPlaybackState,
   existingSong?: Song | null
 ): Song {
+  const normalizedSrc = normalizeSource(state.source);
   const cleanTitle = state.title || 'Bilinmeyen Parça';
   const cleanArtist = state.artist || 'Bilinmeyen Sanatçı';
   const sameAsExisting =
@@ -123,21 +162,21 @@ export function externalStateToSong(
       : 210;
 
   const sourceGradient =
-    state.source === 'spotify_api'
+    normalizedSrc === 'spotify_api'
       ? 'from-emerald-900 to-neutral-950'
-      : state.source === 'chrome_extension'
+      : normalizedSrc === 'chrome_extension'
       ? 'from-rose-900 to-neutral-950'
       : 'from-indigo-900 to-neutral-950';
 
   const sourceGenre =
-    state.source === 'spotify_api'
+    normalizedSrc === 'spotify_api'
       ? 'Spotify Canlı Senkron'
-      : state.source === 'chrome_extension'
+      : normalizedSrc === 'chrome_extension'
       ? 'YouTube Canlı Senkron'
-      : 'Android Canlı Senkron';
+      : 'Cihazdan Canlı Senkron';
 
   return {
-    id: sameAsExisting && existingSong ? existingSong.id : `ext-${state.source}-${stableSlug}`,
+    id: sameAsExisting && existingSong ? existingSong.id : `ext-${normalizedSrc}-${stableSlug}`,
     title: cleanTitle,
     artist: cleanArtist,
     album: state.album || (sameAsExisting ? existingSong?.album : undefined) || 'Canlı Senkron',
@@ -148,7 +187,7 @@ export function externalStateToSong(
     durationSeconds,
     bpm: sameAsExisting && existingSong?.bpm ? existingSong.bpm : 116,
     keyNote: sameAsExisting && existingSong?.keyNote ? existingSong.keyNote : 'A',
-    catalogNumber: `EXT-${state.source.toUpperCase()}`,
+    catalogNumber: `EXT-${normalizedSrc.toUpperCase()}`,
     releaseYear: new Date().getFullYear(),
     soundType: sameAsExisting && existingSong?.soundType ? existingSong.soundType : 'rock',
     audioUrl: sameAsExisting ? existingSong?.audioUrl : undefined,
@@ -166,6 +205,7 @@ export function externalStateToSong(
 
 class ExternalSyncService {
   private externalPlaybackActive = false;
+  private audioOutputMode: AudioOutputMode = 'external';
   private currentState: ExternalPlaybackState | null = null;
   private suppressedTrackSignature: string | null = null;
 
@@ -176,8 +216,8 @@ class ExternalSyncService {
   private chromeExtensionConnected = false;
   private chromeExtensionLastPingAt: number | null = null;
 
-  private androidBridgeLive = false;
-  private androidBridgeLastSyncAt: number | null = null;
+  private mobileBridgeLive = false;
+  private mobileBridgeLastSyncAt: number | null = null;
 
   private stateSubscribers = new Set<(snapshot: ExternalPlaybackSnapshot) => void>();
   private initialized = false;
@@ -186,11 +226,14 @@ class ExternalSyncService {
     this.initBridges();
   }
 
-  private detectAndroidNativeEnvironment(): boolean {
+  private detectMobileNativeEnvironment(): boolean {
     if (typeof window === 'undefined') return false;
     try {
       const cap = window.Capacitor;
-      if (cap?.isNativePlatform?.() && cap.getPlatform?.() === 'android') {
+      if (cap?.isNativePlatform?.()) {
+        return true;
+      }
+      if (window.webkit?.messageHandlers?.listenhub) {
         return true;
       }
       const ua = navigator.userAgent || '';
@@ -203,19 +246,72 @@ class ExternalSyncService {
     return false;
   }
 
+  private postToNativeBridges(message: { type: string; action: 'mute' | 'unmute'; muted: boolean }): void {
+    if (typeof window === 'undefined') return;
+    // Android (Kotlin / Capacitor) bridge
+    try {
+      window.ListenHubNative?.setExternalMuted?.(message.muted);
+    } catch {
+      // ignore native bridge errors
+    }
+    // iOS (Swift WKWebView) bridge
+    try {
+      window.webkit?.messageHandlers?.listenhub?.postMessage(message);
+    } catch {
+      // ignore WKWebView errors
+    }
+  }
+
+  private sendExternalMuteCommand(muted: boolean): void {
+    if (typeof window === 'undefined') return;
+    const action: 'mute' | 'unmute' = muted ? 'mute' : 'unmute';
+    try {
+      window.postMessage(
+        {
+          type: 'LISTENHUB_CONTROL_EXTERNAL',
+          action,
+        },
+        '*'
+      );
+    } catch {
+      // ignore postMessage errors
+    }
+
+    this.postToNativeBridges({
+      type: 'LISTENHUB_CONTROL_EXTERNAL',
+      action,
+      muted,
+    });
+  }
+
   private initBridges() {
     if (this.initialized || typeof window === 'undefined') return;
     this.initialized = true;
 
-    // 1. Register Global Android Native Bridge (Capacitor / NotificationListenerService)
+    // 1. Register Global Cross-Platform Mobile Native Bridge (iOS Swift WKWebView + Android Kotlin/Capacitor)
+    const existingSetExternalMuted = window.ListenHubNative?.setExternalMuted;
     window.ListenHubNative = {
+      ...(window.ListenHubNative || {}),
+      setExternalMuted:
+        existingSetExternalMuted ||
+        ((muted: boolean) => {
+          try {
+            window.webkit?.messageHandlers?.listenhub?.postMessage({
+              type: 'LISTENHUB_CONTROL_EXTERNAL',
+              action: muted ? 'mute' : 'unmute',
+              muted: Boolean(muted),
+            });
+          } catch {
+            // ignore WKWebView errors
+          }
+        }),
       onPlaybackUpdate: (rawState: Partial<ExternalPlaybackState>) => {
         if (!rawState || typeof rawState !== 'object') return;
         const title = sanitizeText(rawState.title);
         if (!title) return;
         const artist = sanitizeText(rawState.artist) || 'Bilinmeyen Sanatçı';
         this.pushExternalState({
-          source: 'android_bridge',
+          source: 'mobile_native',
           title,
           artist,
           album: sanitizeText(rawState.album) || undefined,
@@ -227,6 +323,16 @@ class ExternalSyncService {
         });
       },
     };
+
+    // Announce readiness to iOS WKWebView host if present
+    try {
+      window.webkit?.messageHandlers?.listenhub?.postMessage({
+        type: 'LISTENHUB_WEB_BRIDGE_READY',
+        version: '1.0.0',
+      });
+    } catch {
+      // ignore outside iOS WKWebView
+    }
 
     // 2. Listen for Chrome Extension window.postMessage broadcasts
     window.addEventListener('message', (event: MessageEvent) => {
@@ -269,12 +375,9 @@ class ExternalSyncService {
   }
 
   public markChromeExtensionConnected(shouldNotify = true): void {
-    const wasConnected = this.chromeExtensionConnected;
     this.chromeExtensionConnected = true;
     this.chromeExtensionLastPingAt = Date.now();
-    if (shouldNotify && !wasConnected) {
-      this.notify();
-    } else if (shouldNotify) {
+    if (shouldNotify) {
       this.notify();
     }
   }
@@ -284,6 +387,7 @@ class ExternalSyncService {
     this.spotifyDisplayName = connected ? displayName : undefined;
     if (!connected && this.currentState?.source === 'spotify_api') {
       this.externalPlaybackActive = false;
+      this.audioOutputMode = 'external';
       this.currentState = null;
       this.suppressedTrackSignature = null;
     }
@@ -291,19 +395,21 @@ class ExternalSyncService {
   }
 
   /**
-   * Central ingestion point for Spotify API, Chrome Extension, and Android NotificationListenerService.
-   * Enforces Double-Audio Conflict Protection by silently pausing ListenHub's internal soundEngine.
+   * Central ingestion point for Spotify API, Chrome Extension, and iOS/Android Mobile Native Bridge.
+   * Default mode is 'external' (internal soundEngine paused).
+   * When user switches to 'listenhub' mode ("Buradan Dinle"), ListenHub plays the track while the external player stays muted & synced.
    */
   public pushExternalState(rawState: ExternalPlaybackState): void {
     const title = sanitizeText(rawState.title);
     if (!title) return;
+    const normalizedSrc = normalizeSource(rawState.source);
     const artist = sanitizeText(rawState.artist) || 'Bilinmeyen Sanatçı';
     const durationSec = sanitizePositiveNumber(rawState.durationSec, 210) || 210;
     const currentSecond = Math.min(durationSec, sanitizePositiveNumber(rawState.currentSecond, 0));
     const now = Date.now();
 
     const sanitized: ExternalPlaybackState = {
-      source: rawState.source,
+      source: normalizedSrc,
       title,
       artist,
       album: sanitizeText(rawState.album) || undefined,
@@ -321,20 +427,19 @@ class ExternalSyncService {
     } else if (sanitized.source === 'chrome_extension') {
       this.chromeExtensionConnected = true;
       this.chromeExtensionLastPingAt = now;
-    } else if (sanitized.source === 'android_bridge') {
-      this.androidBridgeLive = true;
-      this.androidBridgeLastSyncAt = now;
+    } else if (sanitized.source === 'mobile_native') {
+      this.mobileBridgeLive = true;
+      this.mobileBridgeLastSyncAt = now;
     }
 
     const incomingSig = normalizeTrackSignature(sanitized.source, sanitized.title, sanitized.artist);
 
-    // If user manually took over ListenHub internal playback, do NOT hijack back on repeated polls of the same track
+    // If user manually took over ListenHub with an unrelated song, don't hijack on repeated polls of the same external song
     if (this.suppressedTrackSignature) {
       if (this.suppressedTrackSignature === incomingSig) {
         this.notify();
         return;
       }
-      // External source switched to a genuinely new track (and is playing) -> resume external sync!
       if (!sanitized.isPlaying) {
         this.notify();
         return;
@@ -348,10 +453,23 @@ class ExternalSyncService {
       return;
     }
 
-    // CRITICAL DOUBLE-AUDIO CONFLICT LOCK:
-    // Silently pause ListenHub's internal audio engine whenever external playback is active
-    if (soundEngine.getIsPlaying()) {
-      soundEngine.pause();
+    const prevSig = this.currentState
+      ? normalizeTrackSignature(this.currentState.source, this.currentState.title, this.currentState.artist)
+      : null;
+
+    if (!this.externalPlaybackActive) {
+      // Fresh external session starts in 'external' output mode by default
+      this.audioOutputMode = 'external';
+    }
+
+    if (this.audioOutputMode === 'external') {
+      // DOUBLE-AUDIO CONFLICT LOCK: keep ListenHub internal engine paused in external mode
+      if (soundEngine.getIsPlaying()) {
+        soundEngine.pause();
+      }
+    } else if (this.audioOutputMode === 'listenhub' && prevSig && prevSig !== incomingSig) {
+      // Keep external player silently muted when it advances to the next track
+      this.sendExternalMuteCommand(true);
     }
 
     this.externalPlaybackActive = true;
@@ -360,13 +478,37 @@ class ExternalSyncService {
   }
 
   /**
+   * Spotify Connect style: Pull audio output into ListenHub's own soundEngine while muting the external player.
+   */
+  public pullAudioToListenHub(): ExternalPlaybackState | null {
+    if (!this.externalPlaybackActive || !this.currentState) return null;
+    this.audioOutputMode = 'listenhub';
+    this.sendExternalMuteCommand(true);
+    this.notify();
+    return this.currentState;
+  }
+
+  /**
+   * Spotify Connect style: Hand audio output back to the external player (pauses ListenHub + unmutes external player).
+   */
+  public releaseAudioToExternal(): void {
+    if (soundEngine.getIsPlaying()) {
+      soundEngine.pause();
+    }
+    this.audioOutputMode = 'external';
+    this.sendExternalMuteCommand(false);
+    this.notify();
+  }
+
+  /**
    * Called when external source reports nothing is playing (e.g., Spotify 204 No Content).
    */
   public notifyExternalIdle(source: ExternalPlaybackSource): void {
-    if (source === 'spotify_api') {
+    const normalizedSrc = normalizeSource(source);
+    if (normalizedSrc === 'spotify_api') {
       this.spotifyLastSyncAt = Date.now();
     }
-    if (this.currentState?.source === source && this.externalPlaybackActive) {
+    if (this.currentState && normalizeSource(this.currentState.source) === normalizedSrc && this.externalPlaybackActive) {
       this.currentState = {
         ...this.currentState,
         isPlaying: false,
@@ -377,8 +519,7 @@ class ExternalSyncService {
   }
 
   /**
-   * Cleanly releases external follow mode when the user manually plays a track inside ListenHub.
-   * Suppresses re-hijacking on the currently polled external track until the external player starts a new song.
+   * Cleanly detaches external follow mode when the user manually chooses another song inside ListenHub.
    */
   public releaseExternalControl(): void {
     if (!this.externalPlaybackActive && !this.currentState) return;
@@ -390,12 +531,17 @@ class ExternalSyncService {
       );
     }
     this.externalPlaybackActive = false;
+    this.audioOutputMode = 'external';
     this.currentState = null;
     this.notify();
   }
 
   public isExternalPlaybackActive(): boolean {
     return this.externalPlaybackActive;
+  }
+
+  public getAudioOutputMode(): AudioOutputMode {
+    return this.audioOutputMode;
   }
 
   public getCurrentExternalState(): ExternalPlaybackState | null {
@@ -409,10 +555,12 @@ class ExternalSyncService {
       this.chromeExtensionLastPingAt !== null &&
       now - this.chromeExtensionLastPingAt < EXTENSION_ACTIVE_TTL_MS;
 
-    const androidFresh =
-      this.androidBridgeLive &&
-      this.androidBridgeLastSyncAt !== null &&
-      now - this.androidBridgeLastSyncAt < ANDROID_ACTIVE_TTL_MS;
+    const mobileFresh =
+      this.mobileBridgeLive &&
+      this.mobileBridgeLastSyncAt !== null &&
+      now - this.mobileBridgeLastSyncAt < MOBILE_ACTIVE_TTL_MS;
+
+    const mobileAvailable = this.detectMobileNativeEnvironment() || mobileFresh;
 
     return {
       spotifyConnected: this.spotifyConnected,
@@ -420,11 +568,15 @@ class ExternalSyncService {
       spotifyLastSyncAt: this.spotifyLastSyncAt,
       chromeExtensionConnected: extFresh || this.chromeExtensionConnected,
       chromeExtensionLastPingAt: this.chromeExtensionLastPingAt,
-      androidBridgeAvailable: this.detectAndroidNativeEnvironment() || androidFresh,
-      androidBridgeLive: androidFresh,
-      androidBridgeLastSyncAt: this.androidBridgeLastSyncAt,
+      mobileBridgeAvailable: mobileAvailable,
+      mobileBridgeLive: mobileFresh,
+      mobileBridgeLastSyncAt: this.mobileBridgeLastSyncAt,
+      androidBridgeAvailable: mobileAvailable,
+      androidBridgeLive: mobileFresh,
+      androidBridgeLastSyncAt: this.mobileBridgeLastSyncAt,
       activeSource: this.externalPlaybackActive && this.currentState ? this.currentState.source : null,
       externalPlaybackActive: this.externalPlaybackActive,
+      audioOutputMode: this.audioOutputMode,
     };
   }
 
@@ -432,6 +584,7 @@ class ExternalSyncService {
     return {
       active: this.externalPlaybackActive,
       state: this.currentState,
+      audioOutputMode: this.audioOutputMode,
       channels: this.getChannelStatus(),
     };
   }

@@ -23,8 +23,10 @@ import { ytController } from '../services/youtubePlayerController';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
 import {
+  AudioOutputMode,
   ExternalPlaybackSource,
-  getExternalSourceLabel,
+  ExternalPlaybackState,
+  getExternalSourceShortName,
 } from '../services/externalSyncService';
 
 interface VibeNote {
@@ -80,6 +82,10 @@ interface Props {
   onLeaveCoListen?: () => void;
   nearbyFrequencyUsers?: LoungeUser[];
   externalSyncSource?: ExternalPlaybackSource | null;
+  externalSyncState?: ExternalPlaybackState | null;
+  audioOutputMode?: AudioOutputMode;
+  onPullAudioToListenHub?: () => void;
+  onReleaseAudioToExternal?: () => void;
   onReleaseExternalSync?: () => void;
 }
 
@@ -118,6 +124,10 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
   onLeaveCoListen,
   nearbyFrequencyUsers,
   externalSyncSource = null,
+  externalSyncState = null,
+  audioOutputMode = 'external',
+  onPullAudioToListenHub,
+  onReleaseAudioToExternal,
   onReleaseExternalSync,
 }) => {
   // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek NEVER reloads the iframe
@@ -476,7 +486,13 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                   }
                 >
                   <iframe
-                    ref={(el) => ytController.setIframe(el)}
+                    ref={(el) => {
+                      if (el) {
+                        el.setAttribute('playsinline', '1');
+                        el.setAttribute('webkit-playsinline', '1');
+                      }
+                      ytController.setIframe(el);
+                    }}
                     src={ytIframeSrc}
                     onLoad={() => ytController.sendListeningHandshake()}
                     title="ListenHub YouTube Music Player"
@@ -629,7 +645,7 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                 )}
               </button>
 
-              {/* Center: Crisp Song Title + Calm Artist Subtitle + Optional External Sync Source Badge */}
+              {/* Center: Crisp Song Title + Calm Artist Subtitle */}
               <div
                 onClick={onOpenNowPlaying}
                 className="min-w-0 flex-1 cursor-pointer group/title active:scale-[0.98] transition-transform duration-100 ease-out"
@@ -640,29 +656,6 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                 <p className="text-sm text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                   {currentSong.artist}
                 </p>
-                {externalSyncSource && (
-                  <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md truncate max-w-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                      <span className="truncate">{getExternalSourceLabel(externalSyncSource)}</span>
-                    </span>
-                    {onReleaseExternalSync && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          triggerHaptic(10);
-                          onReleaseExternalSync();
-                        }}
-                        className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 transition cursor-pointer shrink-0"
-                        title="Harici senkronu bırak"
-                        aria-label="Harici senkronu bırak"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Right: Clean Search Button + Circular Copper-Amber Play/Pause */}
@@ -719,6 +712,67 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                 </button>
               </div>
             </div>
+
+            {/* Monochrome Studio External Audio Handoff Strip (Spotify Connect Style) */}
+            {(externalSyncState || externalSyncSource) && (() => {
+              const source = externalSyncState?.source || externalSyncSource;
+              const sourceName = getExternalSourceShortName(source);
+              const isExternalOutput = audioOutputMode === 'external';
+
+              return (
+                <div className="mt-3.5 pt-3 border-t border-white/[0.07] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="text-xs font-medium text-[#D1D1D6] truncate">
+                      {isExternalOutput
+                        ? `${sourceName} üzerinden dinleniyor`
+                        : `ListenHub üzerinden dinleniyor (${sourceName} senkron)`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isExternalOutput ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(18);
+                          onPullAudioToListenHub?.();
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-[#0B0B0D] text-xs font-semibold active:scale-[0.96] transition cursor-pointer"
+                      >
+                        Buradan Dinle
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(15);
+                          onReleaseAudioToExternal?.();
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-[#1C1C22] hover:bg-white/10 border border-white/[0.1] text-[#F5F5F7] text-xs font-medium active:scale-[0.96] transition cursor-pointer"
+                      >
+                        Sesi Geri Bırak
+                      </button>
+                    )}
+
+                    {onReleaseExternalSync && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(10);
+                          onReleaseExternalSync();
+                        }}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06] transition cursor-pointer"
+                        title="Harici senkronu kapat"
+                        aria-label="Harici senkronu kapat"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </section>
 
           {/* 2. SINGLE-FOCUSED TIMELINE TRACK */}

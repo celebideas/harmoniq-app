@@ -2,6 +2,7 @@
   const POLL_INTERVAL_MS = 1500;
   let lastSentSignature = '';
   let boundVideoEl = null;
+  let listenHubMutedLock = false;
 
   function cleanTitle(raw) {
     return (raw || '')
@@ -22,6 +23,18 @@
     const valid = artworkList.filter((item) => item && typeof item.src === 'string' && item.src.startsWith('http'));
     if (valid.length === 0) return undefined;
     return valid[valid.length - 1].src;
+  }
+
+  function applyVideoMuteState(muted) {
+    listenHubMutedLock = Boolean(muted);
+    const videos = document.querySelectorAll('video');
+    videos.forEach((video) => {
+      try {
+        video.muted = listenHubMutedLock;
+      } catch {
+        // ignore media element errors
+      }
+    });
   }
 
   function readPlaybackState() {
@@ -119,13 +132,42 @@
 
   function attachVideoEvents() {
     const video = document.querySelector('video');
-    if (!video || video === boundVideoEl) return;
+    if (!video) return;
+
+    // Keep background video silently muted while ListenHub owns audio output
+    if (listenHubMutedLock && !video.muted) {
+      video.muted = true;
+    }
+
+    if (video === boundVideoEl) return;
     boundVideoEl = video;
 
     ['play', 'pause', 'seeked', 'loadedmetadata'].forEach((evtName) => {
-      video.addEventListener(evtName, () => pushUpdate(true), { passive: true });
+      video.addEventListener(
+        evtName,
+        () => {
+          if (listenHubMutedLock && !video.muted) {
+            video.muted = true;
+          }
+          pushUpdate(true);
+        },
+        { passive: true }
+      );
     });
   }
+
+  // Listen for mute / unmute commands from ListenHub via background.js
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (!message || message.type !== 'LISTENHUB_CONTROL_EXTERNAL') return false;
+    if (message.action === 'mute') {
+      applyVideoMuteState(true);
+      sendResponse({ ok: true, muted: true });
+    } else if (message.action === 'unmute') {
+      applyVideoMuteState(false);
+      sendResponse({ ok: true, muted: false });
+    }
+    return false;
+  });
 
   attachVideoEvents();
   pushUpdate(true);

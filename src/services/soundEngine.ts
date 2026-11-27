@@ -340,6 +340,10 @@ class RealMusicEngine {
     this.audio = new Audio();
     this.audio.preload = 'auto';
     this.audio.crossOrigin = 'anonymous';
+    // Guarantee iOS Safari never forces fullscreen media player takeover
+    this.audio.setAttribute('playsinline', 'true');
+    this.audio.setAttribute('webkit-playsinline', 'true');
+    (this.audio as unknown as { playsInline?: boolean }).playsInline = true;
 
     this.audio.addEventListener('timeupdate', () => {
       if (!this.audio || this.isUsingSilentAudio || this.currentSong?.youtubeVideoId) return;
