@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Music,
   Play,
@@ -307,7 +307,7 @@ const SongRoomRow: React.FC<{
   );
 });
 
-export const RoomsTab: React.FC<Props> = ({
+export const RoomsTab: React.FC<Props> = React.memo(({
   currentSong,
   onSelectRoom,
   syncedPlaylists = [],
@@ -352,7 +352,8 @@ export const RoomsTab: React.FC<Props> = ({
   }, [allUserTracks]);
 
   // Dynamically compute Artist Rooms tailored directly to user preferences & strictly sanitized against NON_ARTIST_BLACKLIST
-  const artistRooms: ArtistRoomInfo[] = useMemo(() => {
+  // Decoupled from artistArtworkMap so artistFilterService NEVER re-runs when portraits finish loading
+  const baseArtistRooms: ArtistRoomInfo[] = useMemo(() => {
     const artistSources = [
       ...favoriteArtists,
       ...allUserTracks.map((t) => t.artist).filter(Boolean),
@@ -399,6 +400,8 @@ export const RoomsTab: React.FC<Props> = ({
       }
     }
 
+    const favArtistLowerSet = new Set(favoriteArtists.map((f) => f.toLowerCase()));
+
     return uniqueCandidates.map((artist, idx) => {
       const lowerArtist = artist.toLowerCase();
       const matchingDefault = CURATED_DEFAULT_ARTISTS.find(
@@ -438,9 +441,7 @@ export const RoomsTab: React.FC<Props> = ({
         Math.floor((artist.length * 7 + idx * 11) % 48) + 14
       );
 
-      const isPersonalFavorite = favoriteArtists.some(
-        (f) => f.toLowerCase() === lowerArtist
-      );
+      const isPersonalFavorite = favArtistLowerSet.has(lowerArtist);
 
       const initials = artist
         .split(' ')
@@ -448,9 +449,6 @@ export const RoomsTab: React.FC<Props> = ({
         .join('')
         .slice(0, 2)
         .toUpperCase();
-
-      const imageUrl =
-        artistArtworkMap[lowerArtist] || genuineArtistSong?.coverUrl;
 
       return {
         artist,
@@ -461,42 +459,55 @@ export const RoomsTab: React.FC<Props> = ({
         avatarGradient: GRADIENTS[idx % GRADIENTS.length],
         avatarSeed: initials || artist.slice(0, 2).toUpperCase(),
         isPersonalFavorite,
-        imageUrl,
+        imageUrl: genuineArtistSong?.coverUrl,
         moodTags: inferMoodTags(artist, genre),
       };
     });
-  }, [favoriteArtists, allUserTracks, personalTaste, artistArtworkMap]);
+  }, [favoriteArtists, allUserTracks, personalTaste]);
 
-  // Fetch real high-res portraits for visible artists
+  // Lightweight merge of async fetched artist portraits without re-running artist filtering
+  const artistRooms: ArtistRoomInfo[] = useMemo(() => {
+    if (Object.keys(artistArtworkMap).length === 0) return baseArtistRooms;
+    return baseArtistRooms.map((room) => {
+      const portrait = artistArtworkMap[room.artist.toLowerCase()];
+      return portrait && portrait !== room.imageUrl ? { ...room, imageUrl: portrait } : room;
+    });
+  }, [baseArtistRooms, artistArtworkMap]);
+
+  // Fetch real high-res portraits for visible artists in a single batched state update
   useEffect(() => {
     let cancelled = false;
-    const missing = artistRooms
+    const missing = baseArtistRooms
       .slice(0, 18)
-      .filter((r) => !r.imageUrl && !artistArtworkMap[r.artist.toLowerCase()]);
+      .filter((r) => !r.imageUrl);
 
     if (missing.length === 0) return;
 
     (async () => {
+      const updates: Record<string, string> = {};
       for (const room of missing) {
         if (cancelled) break;
         const art = await getArtistArtwork(room.artist);
         if (art && !cancelled) {
-          setArtistArtworkMap((prev) => ({
-            ...prev,
-            [room.artist.toLowerCase()]: art,
-          }));
+          updates[room.artist.toLowerCase()] = art;
         }
+      }
+      if (!cancelled && Object.keys(updates).length > 0) {
+        setArtistArtworkMap((prev) => ({ ...prev, ...updates }));
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [artistRooms, artistArtworkMap]);
+  }, [baseArtistRooms]);
 
   // Song rooms constructed from sample tracks and user playlists (excluding any corporate/blacklisted channels)
-  const songRooms: Song[] = useMemo(() => {
-    const combined: Song[] = [...SAMPLE_SONGS];
+  const songRoomsWithMoods = useMemo(() => {
+    const combined: { song: Song; moods: MoodTunerId[] }[] = SAMPLE_SONGS.map((song) => ({
+      song,
+      moods: inferMoodTags(song.artist, song.genre),
+    }));
     const seen = new Set<string>(SAMPLE_SONGS.map((s) => s.id));
 
     for (const track of allUserTracks) {
@@ -508,7 +519,10 @@ export const RoomsTab: React.FC<Props> = ({
         !NON_ARTIST_BLACKLIST.test(track.title || '')
       ) {
         seen.add(track.id);
-        combined.push(track);
+        combined.push({
+          song: track,
+          moods: inferMoodTags(track.artist, track.genre),
+        });
       }
     }
     return combined;
@@ -534,35 +548,46 @@ export const RoomsTab: React.FC<Props> = ({
   // Search & Mood Filter for Song Rooms
   const filteredSongRooms = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return songRooms.filter((s) => {
-      const matchSearch =
-        q === '' ||
-        s.title.toLowerCase().includes(q) ||
-        s.artist.toLowerCase().includes(q) ||
-        s.genre.toLowerCase().includes(q);
+    return songRoomsWithMoods
+      .filter(({ song: s, moods }) => {
+        const matchSearch =
+          q === '' ||
+          s.title.toLowerCase().includes(q) ||
+          s.artist.toLowerCase().includes(q) ||
+          s.genre.toLowerCase().includes(q);
 
-      const songMoods = inferMoodTags(s.artist, s.genre);
-      const matchMood =
-        selectedMood === 'all' || songMoods.includes(selectedMood);
+        const matchMood = selectedMood === 'all' || moods.includes(selectedMood);
 
-      return matchSearch && matchMood;
-    });
-  }, [songRooms, searchQuery, selectedMood]);
+        return matchSearch && matchMood;
+      })
+      .map(({ song }) => song);
+  }, [songRoomsWithMoods, searchQuery, selectedMood]);
 
-  const handleEnterArtistRoom = (room: ArtistRoomInfo) => {
-    triggerHaptic(15);
-    if (onStartArtistRadio) {
-      onStartArtistRadio(room.artist);
-    } else {
-      onSelectRoom(room.songObj);
-    }
-  };
+  const mapListenerCount = useMemo(
+    () =>
+      mapRadiusKm >= ALL_TURKEY_RADIUS
+        ? users.length
+        : users.filter((u) => u.distanceKm <= mapRadiusKm).length,
+    [mapRadiusKm, users]
+  );
 
-  const formatDuration = (secs: number) => {
+  const handleEnterArtistRoom = useCallback(
+    (room: ArtistRoomInfo) => {
+      triggerHaptic(15);
+      if (onStartArtistRadio) {
+        onStartArtistRadio(room.artist);
+      } else {
+        onSelectRoom(room.songObj);
+      }
+    },
+    [onStartArtistRadio, onSelectRoom]
+  );
+
+  const formatDuration = useCallback((secs: number) => {
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4 pb-8 max-w-2xl lg:max-w-6xl mx-auto w-full space-y-5 select-none">
@@ -624,11 +649,7 @@ export const RoomsTab: React.FC<Props> = ({
           <RadiusSlider
             radiusKm={mapRadiusKm}
             onChangeRadiusKm={setMapRadiusKm}
-            listenerCount={
-              mapRadiusKm >= ALL_TURKEY_RADIUS
-                ? users.length
-                : users.filter((u) => u.distanceKm <= mapRadiusKm).length
-            }
+            listenerCount={mapListenerCount}
             themeMode={themeMode}
           />
 
@@ -836,4 +857,4 @@ export const RoomsTab: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});

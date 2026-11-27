@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, startTransition } from 'react';
 import { NavTab, BottomNav } from './components/BottomNav';
 import { TopHeader } from './components/TopHeader';
 import { DesktopSidebar } from './components/DesktopSidebar';
@@ -146,6 +146,10 @@ export default function App() {
     }
     return 'lounge';
   });
+  const [visualTab, setVisualTab] = useState<NavTab>(activeTab);
+  useEffect(() => {
+    setVisualTab(activeTab);
+  }, [activeTab]);
   const LAST_PLAYED_SONG_KEY = 'listenhub_last_played_song';
   const LAST_PLAYED_SECOND_KEY = 'listenhub_last_played_second';
 
@@ -295,7 +299,7 @@ export default function App() {
     });
     const clearPrevTimer = window.setTimeout(() => {
       setAmbientCover((prev) => ({ ...prev, prevUrl: null }));
-    }, 1450);
+    }, 750);
 
     return () => {
       window.cancelAnimationFrame(raf);
@@ -2318,9 +2322,12 @@ export default function App() {
     }
   };
 
-  const handleSelectTab = (tab: NavTab) => {
-    setActiveTab(tab);
-  };
+  const handleSelectTab = useCallback((tab: NavTab) => {
+    setVisualTab(tab);
+    startTransition(() => {
+      setActiveTab(tab);
+    });
+  }, []);
 
   const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
     const safeStart = Math.max(0, Math.floor(startSecond || 0));
@@ -3049,51 +3056,72 @@ export default function App() {
     authSession?.name ||
     'Müzik Kaşifi';
 
-  const currentUserProfile: UserProfile = {
-    id: 'me',
-    name: resolvedDisplayName,
-    age: 24,
-    city: userCity,
-    avatarGradient: 'from-purple-600 to-pink-500',
-    avatarSeed:
-      resolvedDisplayName
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((s) => s[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2) || 'MK',
-    avatarUrl: userAvatarUrl || googleUser?.photoUrl || authSession?.avatarUrl || undefined,
-    isYouTubeConnected,
-    youtubeAccount,
-    email:
-      googleUser?.email ||
-      (!authSession?.isGuest && authSession?.email ? authSession.email : undefined) ||
-      (youtubeAccount.email && youtubeAccount.email !== 'contact.yasincelebi@gmail.com'
-        ? youtubeAccount.email
-        : undefined),
-    bio: userBio,
-    currentSong,
-    songProgressSeconds: mySecond,
-    isListeningNow: true,
-    lastActiveMinutesAgo: 0,
-    isSpotifyVerified: true,
-    intent: 'concert_buddy' as IntentType,
-    topArtists: personalTaste.topArtists,
-    topGenres: personalTaste.topGenres,
-    compatibilityScore: 100,
-    sharedArtists: [],
-    sharedGenres: [],
-    trustScore: 99,
-    isOnline: true,
-    distanceKm: 0,
-    privacyMode,
-    syncedPlaylists,
-    personalTaste,
-    isTasteSynced,
-    friendsCount: friendsList.length,
-  };
+  const currentUserProfile: UserProfile = useMemo(
+    () => ({
+      id: 'me',
+      name: resolvedDisplayName,
+      age: 24,
+      city: userCity,
+      avatarGradient: 'from-purple-600 to-pink-500',
+      avatarSeed:
+        resolvedDisplayName
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((s) => s[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2) || 'MK',
+      avatarUrl: userAvatarUrl || googleUser?.photoUrl || authSession?.avatarUrl || undefined,
+      isYouTubeConnected,
+      youtubeAccount,
+      email:
+        googleUser?.email ||
+        (!authSession?.isGuest && authSession?.email ? authSession.email : undefined) ||
+        (youtubeAccount.email && youtubeAccount.email !== 'contact.yasincelebi@gmail.com'
+          ? youtubeAccount.email
+          : undefined),
+      bio: userBio,
+      currentSong,
+      songProgressSeconds: 0,
+      isListeningNow: true,
+      lastActiveMinutesAgo: 0,
+      isSpotifyVerified: true,
+      intent: 'concert_buddy' as IntentType,
+      topArtists: personalTaste.topArtists,
+      topGenres: personalTaste.topGenres,
+      compatibilityScore: 100,
+      sharedArtists: [],
+      sharedGenres: [],
+      trustScore: 99,
+      isOnline: true,
+      distanceKm: 0,
+      privacyMode,
+      syncedPlaylists,
+      personalTaste,
+      isTasteSynced,
+      friendsCount: friendsList.length,
+    }),
+    [
+      resolvedDisplayName,
+      userCity,
+      userAvatarUrl,
+      googleUser?.photoUrl,
+      googleUser?.email,
+      authSession?.avatarUrl,
+      authSession?.isGuest,
+      authSession?.email,
+      isYouTubeConnected,
+      youtubeAccount,
+      userBio,
+      currentSong,
+      personalTaste,
+      privacyMode,
+      syncedPlaylists,
+      isTasteSynced,
+      friendsList.length,
+    ]
+  );
 
   // Sync authenticated profile & attach real-time Firestore social listeners
   useEffect(() => {
@@ -3445,9 +3473,393 @@ export default function App() {
     return selectedDrawerUser;
   }, [selectedDrawerUser, discoverableCloudUsers, mergedFriendsList]);
 
-  const totalUnread =
-    mergedConversations.reduce((acc, curr) => acc + curr.unreadCount, 0) +
-    cloudIncomingRequests.length;
+  const totalUnread = useMemo(
+    () =>
+      mergedConversations.reduce((acc, curr) => acc + curr.unreadCount, 0) +
+      cloudIncomingRequests.length,
+    [mergedConversations, cloudIncomingRequests.length]
+  );
+
+  const liveListenersCount = useMemo(
+    () =>
+      privacyMode === 'friends_only'
+        ? mergedFriendsList.length + 1
+        : combinedLoungeUsers.length,
+    [privacyMode, mergedFriendsList.length, combinedLoungeUsers.length]
+  );
+
+  const profileTabUserProfile = useMemo(
+    () => ({ ...currentUserProfile, friendsCount: mergedFriendsList.length }),
+    [currentUserProfile, mergedFriendsList.length]
+  );
+
+  const outgoingRequestsForChat = useMemo<FriendRequest[]>(
+    () =>
+      mergedOutgoingRequestUsers.map((u) => ({
+        id: `out-${u.id}`,
+        fromUser: u,
+        toUser: u,
+        direction: 'outgoing' as const,
+        timestamp: 'Bekliyor',
+        status: 'pending' as const,
+        isCloudRequest: Boolean(u.isRealUser),
+      })),
+    [mergedOutgoingRequestUsers]
+  );
+
+  const candidateSongsForLounge = useMemo(
+    () =>
+      favoriteSongs.length > 0
+        ? favoriteSongs
+        : activeQueue.length > 0
+        ? activeQueue
+        : SAMPLE_SONGS,
+    [favoriteSongs, activeQueue]
+  );
+
+  const allSongsForChat = useMemo(
+    () => (activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS),
+    [activeQueue]
+  );
+
+  const isCurrentSongFavorite = useMemo(
+    () =>
+      Boolean(
+        currentSong &&
+          favoriteSongs.some(
+            (s) =>
+              s.id === currentSong.id ||
+              (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
+                s.artist.toLowerCase() === currentSong.artist.toLowerCase())
+          )
+      ),
+    [currentSong, favoriteSongs]
+  );
+
+  // Ref-backed stable callbacks so mySecond ticks NEVER invalidate React.memo on Sidebar, BottomNav, RoomsTab, ChatTab, ProfileTab
+  const mySecondRef = useRef(mySecond);
+  mySecondRef.current = mySecond;
+  const getCurrentSecond = useCallback(() => mySecondRef.current, []);
+
+  const latestHandlersRef = useRef({
+    currentSong,
+    firebaseUser,
+    handleTogglePlay,
+    handleSelectSong,
+    handleNextSong,
+    handlePrevSong,
+    handleSeekSecond,
+    handleToggleFavoriteSong,
+    handleSendFrequency,
+    handleToggleFriend,
+    handleWhisperTrack,
+    handleStartCoListen,
+    handleSuggestCoListenSong,
+    handleLeaveCoListen,
+    handlePlayPlaylist,
+    handleStartPersonalRadio,
+    handleStartArtistRadioByName,
+    handleSendMessage,
+    handleSendSongMessage,
+    handlePlayMoment,
+    handleAcceptFriendRequest,
+    handleDeclineFriendRequest,
+    handleCancelSentRequest,
+    handleBlockUser,
+    handleSocialGoogleSignIn,
+    handleUpdateAvatar,
+    handleSyncTaste,
+    handleImportPlaylistUrl,
+    handleDeletePlaylist,
+    handleToggleFavoriteArtist,
+    handleAddFavoriteArtist,
+    handlePlaySongsList,
+    handleGoogleSignIn,
+    handleGoogleSignOut,
+    handleUpdateAccount,
+    handleLoadPopularCollection,
+    handleFullLogout,
+  });
+  latestHandlersRef.current = {
+    currentSong,
+    firebaseUser,
+    handleTogglePlay,
+    handleSelectSong,
+    handleNextSong,
+    handlePrevSong,
+    handleSeekSecond,
+    handleToggleFavoriteSong,
+    handleSendFrequency,
+    handleToggleFriend,
+    handleWhisperTrack,
+    handleStartCoListen,
+    handleSuggestCoListenSong,
+    handleLeaveCoListen,
+    handlePlayPlaylist,
+    handleStartPersonalRadio,
+    handleStartArtistRadioByName,
+    handleSendMessage,
+    handleSendSongMessage,
+    handlePlayMoment,
+    handleAcceptFriendRequest,
+    handleDeclineFriendRequest,
+    handleCancelSentRequest,
+    handleBlockUser,
+    handleSocialGoogleSignIn,
+    handleUpdateAvatar,
+    handleSyncTaste,
+    handleImportPlaylistUrl,
+    handleDeletePlaylist,
+    handleToggleFavoriteArtist,
+    handleAddFavoriteArtist,
+    handlePlaySongsList,
+    handleGoogleSignIn,
+    handleGoogleSignOut,
+    handleUpdateAccount,
+    handleLoadPopularCollection,
+    handleFullLogout,
+  };
+
+  const stableHandleOpenSettings = useCallback(() => {
+    handleSelectTab('profile');
+    setShouldOpenProfileSettings(true);
+  }, [handleSelectTab]);
+  const stableHandleTogglePlay = useCallback(() => latestHandlersRef.current.handleTogglePlay(), []);
+  const stableHandleSelectSong = useCallback(
+    (song: Song, autoPlay?: boolean, startSecond?: number) =>
+      latestHandlersRef.current.handleSelectSong(song, autoPlay, startSecond),
+    []
+  );
+  const stableHandlePlaySongAuto = useCallback(
+    (song: Song) => latestHandlersRef.current.handleSelectSong(song, true),
+    []
+  );
+  const stableHandleNextSong = useCallback(() => latestHandlersRef.current.handleNextSong(), []);
+  const stableHandlePrevSong = useCallback(() => latestHandlersRef.current.handlePrevSong(), []);
+  const stableHandleSeekSecond = useCallback(
+    (sec: number) => latestHandlersRef.current.handleSeekSecond(sec),
+    []
+  );
+  const stableHandleToggleFavoriteSong = useCallback(
+    (song: Song) => latestHandlersRef.current.handleToggleFavoriteSong(song),
+    []
+  );
+  const stableHandleOpenNowPlaying = useCallback(() => {
+    if (latestHandlersRef.current.currentSong) setShowNowPlayingModal(true);
+  }, []);
+  const stableHandleOpenNowPlayingDirect = useCallback(() => {
+    setShowNowPlayingModal(true);
+  }, []);
+  const stableHandleOpenSongPicker = useCallback(() => {
+    setSignatureSlotTarget(null);
+    setCoListenSuggestMode(false);
+    setShowSongPickerModal(true);
+  }, []);
+  const stableHandleOpenInstallModal = useCallback(() => setShowInstallModal(true), []);
+  const stableHandleOpenRoomListeners = useCallback(() => {
+    if (latestHandlersRef.current.currentSong) setShowRoomListenersModal(true);
+  }, []);
+  const stableHandleOpenYouTubeConnectModal = useCallback(() => setShowYouTubeConnectModal(true), []);
+  const stableHandleSelectDrawerUser = useCallback((user: LoungeUser) => setSelectedDrawerUser(user), []);
+  const stableHandleDirectChat = useCallback(
+    (user: LoungeUser, text?: string) => latestHandlersRef.current.handleSendFrequency(user, text),
+    []
+  );
+  const stableHandleToggleFriend = useCallback(
+    (user: LoungeUser) => latestHandlersRef.current.handleToggleFriend(user),
+    []
+  );
+  const stableHandleShowToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+  const stableHandleShowToastLong = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3200);
+  }, []);
+  const stableHandleUpdateCityWithMapToast = useCallback((city: string) => {
+    const updated = setManualLocation(city);
+    setUserCity(updated.fullLocation);
+    setToastMessage(`Konum ve Yoğunluk Haritası "${updated.fullLocation}" olarak güncellendi`);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+  const stableHandleUpdateProfileCity = useCallback((city: string) => {
+    setUserCity(city);
+    if (typeof window !== 'undefined') localStorage.setItem('harmoniq_user_city', city);
+  }, []);
+  const stableHandleUpdateProfileBio = useCallback((bio: string) => {
+    setUserBio(bio);
+    if (typeof window !== 'undefined') localStorage.setItem('harmoniq_user_bio', bio);
+  }, []);
+  const stableHandleWhisperTrack = useCallback(
+    (user: LoungeUser, track: Song, note?: string) =>
+      latestHandlersRef.current.handleWhisperTrack(user, track, note),
+    []
+  );
+  const stableHandleStartCoListen = useCallback(
+    (user: LoungeUser, track?: Song, second?: number) =>
+      latestHandlersRef.current.handleStartCoListen(user, track, second),
+    []
+  );
+  const stableHandleSuggestCoListenSong = useCallback(
+    () => latestHandlersRef.current.handleSuggestCoListenSong(),
+    []
+  );
+  const stableHandleLeaveCoListen = useCallback(
+    () => latestHandlersRef.current.handleLeaveCoListen(),
+    []
+  );
+  const stableHandleSelectRoom = useCallback(
+    (song: Song) => {
+      latestHandlersRef.current.handleSelectSong(song);
+      handleSelectTab('lounge');
+    },
+    [handleSelectTab]
+  );
+  const stableHandlePlayPlaylistAndLounge = useCallback(
+    (pl: UserPlaylist) => {
+      latestHandlersRef.current.handlePlayPlaylist(pl);
+      handleSelectTab('lounge');
+    },
+    [handleSelectTab]
+  );
+  const stableHandleStartPersonalRadioAndLounge = useCallback(() => {
+    latestHandlersRef.current.handleStartPersonalRadio();
+    handleSelectTab('lounge');
+  }, [handleSelectTab]);
+  const stableHandleStartArtistRadioAndLounge = useCallback(
+    async (artistName: string) => {
+      await latestHandlersRef.current.handleStartArtistRadioByName(artistName);
+      handleSelectTab('lounge');
+    },
+    [handleSelectTab]
+  );
+  const stableHandleSeekAndLounge = useCallback(
+    (sec: number) => {
+      latestHandlersRef.current.handleSeekSecond(sec);
+      handleSelectTab('lounge');
+    },
+    [handleSelectTab]
+  );
+  const stableHandleSelectConversation = useCallback((conv: LoungeConversation) => {
+    setActiveChatUser(conv.user);
+    const fbUser = latestHandlersRef.current.firebaseUser;
+    if (
+      conv.isCloudConversation &&
+      conv.unreadCount > 0 &&
+      conv.cloudPairId &&
+      conv.cloudUidA &&
+      fbUser
+    ) {
+      void markCloudConversationRead(conv.cloudPairId, conv.cloudUidA, fbUser.uid).catch(() => {});
+    }
+  }, []);
+  const stableHandleBackToChatList = useCallback(() => setActiveChatUser(null), []);
+  const stableHandleSendMessage = useCallback(
+    (matchId: string, text: string, isIcebreaker?: boolean) =>
+      latestHandlersRef.current.handleSendMessage(matchId, text, isIcebreaker),
+    []
+  );
+  const stableHandleSendSongMessage = useCallback(
+    (matchId: string, song: Song, note?: string, timestampSec?: number) =>
+      latestHandlersRef.current.handleSendSongMessage(matchId, song, note, timestampSec),
+    []
+  );
+  const stableHandlePlayMoment = useCallback(
+    (track: Song, second: number) => latestHandlersRef.current.handlePlayMoment(track, second),
+    []
+  );
+  const stableHandleAcceptFriendRequest = useCallback(
+    (reqId: string) => latestHandlersRef.current.handleAcceptFriendRequest(reqId),
+    []
+  );
+  const stableHandleDeclineFriendRequest = useCallback(
+    (reqId: string) => latestHandlersRef.current.handleDeclineFriendRequest(reqId),
+    []
+  );
+  const stableHandleCancelSentRequest = useCallback(
+    (userId: string) => latestHandlersRef.current.handleCancelSentRequest(userId),
+    []
+  );
+  const stableHandleBlockUser = useCallback(
+    (targetUser: LoungeUser) => latestHandlersRef.current.handleBlockUser(targetUser),
+    []
+  );
+  const stableHandleSocialGoogleSignIn = useCallback(
+    () => latestHandlersRef.current.handleSocialGoogleSignIn(),
+    []
+  );
+  const stableHandleNoopIntent = useCallback(() => {}, []);
+  const stableHandleStartChatWithFriend = useCallback(
+    (friend: LoungeUser) => {
+      setActiveChatUser(friend);
+      handleSelectTab('chat');
+    },
+    [handleSelectTab]
+  );
+  const stableHandleUpdateAvatar = useCallback(
+    (url: string | null) => latestHandlersRef.current.handleUpdateAvatar(url),
+    []
+  );
+  const stableHandlePlayPlaylist = useCallback(
+    (pl: UserPlaylist, shuffle?: boolean) =>
+      latestHandlersRef.current.handlePlayPlaylist(pl, shuffle),
+    []
+  );
+  const stableHandleStartPersonalRadio = useCallback(
+    () => latestHandlersRef.current.handleStartPersonalRadio(),
+    []
+  );
+  const stableHandleSyncTaste = useCallback(() => latestHandlersRef.current.handleSyncTaste(), []);
+  const stableHandleImportPlaylistUrl = useCallback(
+    (urlOrId: string) => latestHandlersRef.current.handleImportPlaylistUrl(urlOrId),
+    []
+  );
+  const stableHandleDeletePlaylist = useCallback(
+    (playlistId: string) => latestHandlersRef.current.handleDeletePlaylist(playlistId),
+    []
+  );
+  const stableHandleToggleFavoriteArtist = useCallback(
+    (artistName: string) => latestHandlersRef.current.handleToggleFavoriteArtist(artistName),
+    []
+  );
+  const stableHandleAddFavoriteArtist = useCallback(
+    (artistName: string) => latestHandlersRef.current.handleAddFavoriteArtist(artistName),
+    []
+  );
+  const stableHandlePlaySongsList = useCallback(
+    (songs: Song[], shuffle?: boolean) =>
+      latestHandlersRef.current.handlePlaySongsList(songs, shuffle),
+    []
+  );
+  const stableHandleStartArtistRadioByName = useCallback(
+    (artistName: string) => latestHandlersRef.current.handleStartArtistRadioByName(artistName),
+    []
+  );
+  const stableHandleGoogleSignIn = useCallback(
+    () => latestHandlersRef.current.handleGoogleSignIn(),
+    []
+  );
+  const stableHandleGoogleSignOut = useCallback(
+    () => latestHandlersRef.current.handleGoogleSignOut(),
+    []
+  );
+  const stableHandleUpdateAccount = useCallback(
+    (acc: { email: string; handle: string; name: string }) =>
+      latestHandlersRef.current.handleUpdateAccount(acc),
+    []
+  );
+  const stableHandleClearSyncError = useCallback(() => setSyncDiagnosticError(null), []);
+  const stableHandleLoadPopularCollection = useCallback(
+    () => latestHandlersRef.current.handleLoadPopularCollection(),
+    []
+  );
+  const stableHandleFullLogout = useCallback(() => latestHandlersRef.current.handleFullLogout(), []);
+  const stableHandleConsumeOpenSettings = useCallback(() => setShouldOpenProfileSettings(false), []);
+  const stableHandlePickSongForSignatureSlot = useCallback((slotIdx: number) => {
+    setSignatureSlotTarget(slotIdx);
+    setShowSongPickerModal(true);
+  }, []);
 
   if (!authSession) {
     return (
@@ -3462,56 +3874,51 @@ export default function App() {
   return (
     <>
     <div className="min-h-screen bg-[#0B0B0D] text-[#F5F5F7] flex flex-col font-sans selection:bg-white/20 selection:text-[#F5F5F7] relative overflow-x-clip">
-      {/* Calm Multi-Tone Blurred Album Cover Ambient Glow — 1.4s crossfade; neutral #0B0B0D when idle */}
+      {/* GPU-Friendly Multi-Tone Blurred Album Cover Ambient Glow */}
       {currentSong && (ambientCover.activeUrl || ambientCover.prevUrl) && (
         <div
-          className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden z-0"
+          className="pointer-events-none fixed inset-x-0 top-0 h-72 overflow-hidden z-0"
           aria-hidden="true"
         >
-          {ambientCover.prevUrl && (
-            <img
-              src={ambientCover.prevUrl}
-              alt=""
-              referrerPolicy="no-referrer"
-              className={`absolute inset-0 w-full h-full object-cover scale-150 blur-[110px] saturate-125 transition-opacity duration-[1400ms] ease-in-out ${
-                ambientCover.isVisible ? 'opacity-0' : 'opacity-[0.22]'
-              }`}
-            />
-          )}
-          {ambientCover.activeUrl && (
-            <img
-              key={ambientCover.activeId || ambientCover.activeUrl}
-              src={ambientCover.activeUrl}
-              alt=""
-              referrerPolicy="no-referrer"
-              className={`absolute inset-0 w-full h-full object-cover scale-150 blur-[110px] saturate-125 transition-all duration-[1400ms] ease-in-out ${
-                ambientCover.isVisible ? 'opacity-[0.22]' : 'opacity-0'
-              }`}
-            />
-          )}
+          <div className="relative max-w-2xl mx-auto h-72">
+            {ambientCover.prevUrl && (
+              <img
+                src={ambientCover.prevUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                decoding="async"
+                className={`absolute inset-0 w-full h-full object-cover blur-3xl transform-gpu will-change-[opacity] transition-opacity duration-700 ease-in-out ${
+                  ambientCover.isVisible ? 'opacity-0' : 'opacity-[0.18]'
+                }`}
+              />
+            )}
+            {ambientCover.activeUrl && (
+              <img
+                key={ambientCover.activeId || ambientCover.activeUrl}
+                src={ambientCover.activeUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                decoding="async"
+                className={`absolute inset-0 w-full h-full object-cover blur-3xl transform-gpu will-change-[opacity] transition-opacity duration-700 ease-in-out ${
+                  ambientCover.isVisible ? 'opacity-[0.18]' : 'opacity-0'
+                }`}
+              />
+            )}
+          </div>
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0B0D]/60 to-[#0B0B0D]" />
         </div>
       )}
 
       {/* Desktop Left Sidebar (>= 1024px) */}
       <DesktopSidebar
-        activeTab={activeTab}
+        activeTab={visualTab}
         onSelectTab={handleSelectTab}
-        onOpenSettings={() => {
-          setActiveTab('profile');
-          setShouldOpenProfileSettings(true);
-        }}
+        onOpenSettings={stableHandleOpenSettings}
         unreadCount={totalUnread}
-        liveListenersCount={
-          privacyMode === 'friends_only'
-            ? mergedFriendsList.length + 1
-            : combinedLoungeUsers.length
-        }
+        liveListenersCount={liveListenersCount}
         isPlaying={isPlaying}
         privacyMode={privacyMode}
-        onChangePrivacyMode={(mode) => {
-          setPrivacyMode(mode);
-        }}
+        onChangePrivacyMode={setPrivacyMode}
         userProfile={currentUserProfile}
         themeMode={effectiveTheme}
       />
@@ -3519,19 +3926,17 @@ export default function App() {
       <div className="w-full flex-1 flex flex-col lg:pl-72 bg-[#0B0B0D]/82 relative z-10 transition-colors duration-300">
         <TopHeader
           currentSong={currentSong}
-          onOpenSongPicker={() => setShowSongPickerModal(true)}
-          onOpenNowPlaying={() => setShowNowPlayingModal(true)}
+          onOpenSongPicker={stableHandleOpenSongPicker}
+          onOpenNowPlaying={stableHandleOpenNowPlayingDirect}
           isPlaying={isPlaying}
-          activeTab={activeTab}
+          activeTab={visualTab}
           onSelectTab={handleSelectTab}
           privacyMode={privacyMode}
-          onChangePrivacyMode={(mode) => {
-            setPrivacyMode(mode);
-          }}
-          onOpenInstallModal={() => setShowInstallModal(true)}
+          onChangePrivacyMode={setPrivacyMode}
+          onOpenInstallModal={stableHandleOpenInstallModal}
           userProfile={currentUserProfile}
           themeMode={effectiveTheme}
-          liveListenersCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
+          liveListenersCount={liveListenersCount}
         />
 
         <main className="flex-1 flex flex-col transition-all duration-300 pb-36 lg:pb-28">
@@ -3582,108 +3987,61 @@ export default function App() {
           <div className={activeTab === 'lounge' ? 'flex-1 flex flex-col' : 'hidden'}>
             <LiveLoungeTab
               currentSong={currentSong}
-              mySecond={mySecond}
+              mySecond={activeTab === 'lounge' ? mySecond : 0}
               users={activeSongListeners}
               nearbyFrequencyUsers={combinedLoungeUsers}
               activePlatform={activePlatform}
               privacyMode={privacyMode}
               onChangePrivacyMode={setPrivacyMode}
               onChangePlatform={setActivePlatform}
-              onSelectUser={(user) => setSelectedDrawerUser(user)}
-              onDirectChat={(user) => handleSendFrequency(user)}
-              onSeekSecond={handleSeekSecond}
-              onOpenSongPicker={() => {
-                setSignatureSlotTarget(null);
-                setCoListenSuggestMode(false);
-                setShowSongPickerModal(true);
-              }}
-              onOpenYouTubeConnect={() => {
-                setActiveTab('profile');
-                setShouldOpenProfileSettings(true);
-              }}
-              onToggleFriend={handleToggleFriend}
-              onOpenNowPlaying={() => {
-                if (currentSong) setShowNowPlayingModal(true);
-              }}
-              onOpenRoomListeners={() => {
-                if (currentSong) setShowRoomListenersModal(true);
-              }}
+              onSelectUser={stableHandleSelectDrawerUser}
+              onDirectChat={stableHandleDirectChat}
+              onSeekSecond={stableHandleSeekSecond}
+              onOpenSongPicker={stableHandleOpenSongPicker}
+              onOpenYouTubeConnect={stableHandleOpenSettings}
+              onToggleFriend={stableHandleToggleFriend}
+              onOpenNowPlaying={stableHandleOpenNowPlaying}
+              onOpenRoomListeners={stableHandleOpenRoomListeners}
               isPlaying={isPlaying}
-              onTogglePlay={handleTogglePlay}
-              onSelectSong={handleSelectSong}
-              onNextSong={handleNextSong}
-              onPrevSong={handlePrevSong}
-              isFavorite={Boolean(
-                currentSong &&
-                  favoriteSongs.some(
-                    (s) =>
-                      s.id === currentSong.id ||
-                      (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
-                        s.artist.toLowerCase() === currentSong.artist.toLowerCase())
-                  )
-              )}
-              onToggleFavorite={handleToggleFavoriteSong}
-              onShowToast={(msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(null), 2500);
-              }}
+              onTogglePlay={stableHandleTogglePlay}
+              onSelectSong={stableHandleSelectSong}
+              onNextSong={stableHandleNextSong}
+              onPrevSong={stableHandlePrevSong}
+              isFavorite={isCurrentSongFavorite}
+              onToggleFavorite={stableHandleToggleFavoriteSong}
+              onShowToast={stableHandleShowToast}
               autoRadioEnabled={autoRadioEnabled}
               onToggleAutoRadio={setAutoRadioEnabled}
               nextRadioSong={nextRadioSong}
               userCity={userCity}
-              onUpdateCity={(city) => {
-                const updated = setManualLocation(city);
-                setUserCity(updated.fullLocation);
-                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.fullLocation}" olarak güncellendi`);
-                setTimeout(() => setToastMessage(null), 3000);
-              }}
-              candidateSongs={favoriteSongs.length > 0 ? favoriteSongs : activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
-              onWhisperTrack={handleWhisperTrack}
+              onUpdateCity={stableHandleUpdateCityWithMapToast}
+              candidateSongs={candidateSongsForLounge}
+              onWhisperTrack={stableHandleWhisperTrack}
               themeMode={effectiveTheme}
               activeCoListen={activeCoListen}
-              onStartCoListen={handleStartCoListen}
-              onSuggestCoListenSong={handleSuggestCoListenSong}
-              onLeaveCoListen={handleLeaveCoListen}
+              onStartCoListen={stableHandleStartCoListen}
+              onSuggestCoListenSong={stableHandleSuggestCoListenSong}
+              onLeaveCoListen={stableHandleLeaveCoListen}
             />
           </div>
 
           {activeTab === 'rooms' && (
             <RoomsTab
               currentSong={currentSong}
-              onSelectRoom={(song) => {
-                handleSelectSong(song);
-                setActiveTab('lounge');
-              }}
+              onSelectRoom={stableHandleSelectRoom}
               syncedPlaylists={syncedPlaylists}
-              onPlayPlaylist={(pl) => {
-                handlePlayPlaylist(pl);
-                setActiveTab('lounge');
-              }}
-              onStartPersonalRadio={() => {
-                handleStartPersonalRadio();
-                setActiveTab('lounge');
-              }}
+              onPlayPlaylist={stableHandlePlayPlaylistAndLounge}
+              onStartPersonalRadio={stableHandleStartPersonalRadioAndLounge}
               favoriteArtists={favoriteArtists}
               favoriteSongs={favoriteSongs}
               personalTaste={personalTaste}
-              onStartArtistRadio={async (artistName) => {
-                await handleStartArtistRadioByName(artistName);
-                setActiveTab('lounge');
-              }}
+              onStartArtistRadio={stableHandleStartArtistRadioAndLounge}
               users={combinedLoungeUsers}
-              onSelectUser={(user) => setSelectedDrawerUser(user)}
-              onDirectChat={(user) => handleSendFrequency(user)}
-              onSeekSecond={(sec) => {
-                handleSeekSecond(sec);
-                setActiveTab('lounge');
-              }}
+              onSelectUser={stableHandleSelectDrawerUser}
+              onDirectChat={stableHandleDirectChat}
+              onSeekSecond={stableHandleSeekAndLounge}
               userCity={userCity}
-              onUpdateCity={(city) => {
-                const updated = setManualLocation(city);
-                setUserCity(updated.fullLocation);
-                setToastMessage(`Konum ve Yoğunluk Haritası "${updated.fullLocation}" olarak güncellendi`);
-                setTimeout(() => setToastMessage(null), 3000);
-              }}
+              onUpdateCity={stableHandleUpdateCityWithMapToast}
               themeMode={effectiveTheme}
             />
           )}
@@ -3692,125 +4050,89 @@ export default function App() {
             <ChatTab
               conversations={mergedConversations}
               activeChatUser={activeChatUser}
-              onSelectConversation={(conv) => {
-                setActiveChatUser(conv.user);
-                if (
-                  conv.isCloudConversation &&
-                  conv.unreadCount > 0 &&
-                  conv.cloudPairId &&
-                  conv.cloudUidA &&
-                  firebaseUser
-                ) {
-                  void markCloudConversationRead(conv.cloudPairId, conv.cloudUidA, firebaseUser.uid).catch(() => {});
-                }
-              }}
-              onBackToList={() => setActiveChatUser(null)}
-              onSendMessage={handleSendMessage}
-              onSendSongMessage={handleSendSongMessage}
-              onPlayMoment={handlePlayMoment}
-              onPlaySong={(song) => handleSelectSong(song, true)}
-              onStartChatWithUser={(user, text) => handleSendFrequency(user, text)}
-              onOpenUserProfile={(user) => setSelectedDrawerUser(user)}
+              onSelectConversation={stableHandleSelectConversation}
+              onBackToList={stableHandleBackToChatList}
+              onSendMessage={stableHandleSendMessage}
+              onSendSongMessage={stableHandleSendSongMessage}
+              onPlayMoment={stableHandlePlayMoment}
+              onPlaySong={stableHandlePlaySongAuto}
+              onStartChatWithUser={stableHandleDirectChat}
+              onOpenUserProfile={stableHandleSelectDrawerUser}
               recentListeners={combinedLoungeUsers}
               discoverableCloudUsers={discoverableCloudUsers}
               friendsList={mergedFriendsList}
               incomingRequests={mergedIncomingRequests}
-              outgoingRequests={mergedOutgoingRequestUsers.map((u) => ({
-                id: `out-${u.id}`,
-                fromUser: u,
-                toUser: u,
-                direction: 'outgoing' as const,
-                timestamp: 'Bekliyor',
-                status: 'pending' as const,
-                isCloudRequest: Boolean(u.isRealUser),
-              }))}
-              onToggleFriend={handleToggleFriend}
-              onAcceptFriendRequest={handleAcceptFriendRequest}
-              onDeclineFriendRequest={handleDeclineFriendRequest}
-              onCancelSentRequest={handleCancelSentRequest}
-              onBlockUser={handleBlockUser}
-              onShowToast={(msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(null), 3200);
-              }}
+              outgoingRequests={outgoingRequestsForChat}
+              onToggleFriend={stableHandleToggleFriend}
+              onAcceptFriendRequest={stableHandleAcceptFriendRequest}
+              onDeclineFriendRequest={stableHandleDeclineFriendRequest}
+              onCancelSentRequest={stableHandleCancelSentRequest}
+              onBlockUser={stableHandleBlockUser}
+              onShowToast={stableHandleShowToastLong}
               activeCoListen={activeCoListen}
-              onStartCoListen={handleStartCoListen}
-              onSuggestCoListenSong={handleSuggestCoListenSong}
-              onLeaveCoListen={handleLeaveCoListen}
+              onStartCoListen={stableHandleStartCoListen}
+              onSuggestCoListenSong={stableHandleSuggestCoListenSong}
+              onLeaveCoListen={stableHandleLeaveCoListen}
               isCloudAuthenticated={Boolean(firebaseUser)}
               isAuthLoading={isGoogleLoading}
-              onGoogleSignIn={handleSocialGoogleSignIn}
+              onGoogleSignIn={stableHandleSocialGoogleSignIn}
               currentSong={currentSong}
-              currentSecond={mySecond}
-              allSongs={activeQueue.length > 0 ? activeQueue : SAMPLE_SONGS}
+              getCurrentSecond={getCurrentSecond}
+              allSongs={allSongsForChat}
             />
           )}
 
           {activeTab === 'profile' && (
             <ProfileTab
-              userProfile={{ ...currentUserProfile, friendsCount: mergedFriendsList.length }}
+              userProfile={profileTabUserProfile}
               friendsList={mergedFriendsList}
               friendRequests={mergedIncomingRequests}
               pendingSentUsers={mergedOutgoingRequestUsers}
-              onAcceptFriendRequest={handleAcceptFriendRequest}
-              onDeclineFriendRequest={handleDeclineFriendRequest}
-              onCancelSentRequest={handleCancelSentRequest}
-              onUpdateIntent={() => {}}
-              onUpdatePrivacyMode={(mode) => {
-                setPrivacyMode(mode);
-              }}
-              onOpenSongPicker={() => setShowSongPickerModal(true)}
-              onToggleFriend={handleToggleFriend}
-              onStartChatWithFriend={(friend) => {
-                setActiveChatUser(friend);
-                setActiveTab('chat');
-              }}
+              onAcceptFriendRequest={stableHandleAcceptFriendRequest}
+              onDeclineFriendRequest={stableHandleDeclineFriendRequest}
+              onCancelSentRequest={stableHandleCancelSentRequest}
+              onUpdateIntent={stableHandleNoopIntent}
+              onUpdatePrivacyMode={setPrivacyMode}
+              onOpenSongPicker={stableHandleOpenSongPicker}
+              onToggleFriend={stableHandleToggleFriend}
+              onStartChatWithFriend={stableHandleStartChatWithFriend}
               appVersion={pwa.appVersion}
               isCheckingUpdates={pwa.isChecking}
               onCheckForUpdates={pwa.checkForUpdates}
-              onOpenYouTubeConnect={() => setShowYouTubeConnectModal(true)}
-              onUpdateAvatar={handleUpdateAvatar}
+              onOpenYouTubeConnect={stableHandleOpenYouTubeConnectModal}
+              onUpdateAvatar={stableHandleUpdateAvatar}
               syncedPlaylists={syncedPlaylists}
-              onPlayPlaylist={handlePlayPlaylist}
-              onStartPersonalRadio={handleStartPersonalRadio}
-              onSyncTaste={handleSyncTaste}
-              onImportPlaylist={handleImportPlaylistUrl}
-              onDeletePlaylist={handleDeletePlaylist}
+              onPlayPlaylist={stableHandlePlayPlaylist}
+              onStartPersonalRadio={stableHandleStartPersonalRadio}
+              onSyncTaste={stableHandleSyncTaste}
+              onImportPlaylist={stableHandleImportPlaylistUrl}
+              onDeletePlaylist={stableHandleDeletePlaylist}
               favoriteSongs={favoriteSongs}
-              onToggleFavoriteSong={handleToggleFavoriteSong}
+              onToggleFavoriteSong={stableHandleToggleFavoriteSong}
               favoriteArtists={favoriteArtists}
               subscribedChannels={subscribedChannels}
-              onToggleFavoriteArtist={handleToggleFavoriteArtist}
-              onAddFavoriteArtist={handleAddFavoriteArtist}
-              onPlaySong={(song) => handleSelectSong(song, true)}
-              onPlaySongsList={handlePlaySongsList}
-              onStartArtistRadio={handleStartArtistRadioByName}
+              onToggleFavoriteArtist={stableHandleToggleFavoriteArtist}
+              onAddFavoriteArtist={stableHandleAddFavoriteArtist}
+              onPlaySong={stableHandlePlaySongAuto}
+              onPlaySongsList={stableHandlePlaySongsList}
+              onStartArtistRadio={stableHandleStartArtistRadioByName}
               isGoogleAuthenticated={isGoogleAuthenticated}
               hasActiveYouTubeToken={hasActiveYouTubeToken}
               isGoogleLoading={isGoogleLoading}
-              onGoogleSignIn={handleGoogleSignIn}
-              onGoogleSignOut={handleGoogleSignOut}
+              onGoogleSignIn={stableHandleGoogleSignIn}
+              onGoogleSignOut={stableHandleGoogleSignOut}
               googleUser={googleUser}
-              onUpdateAccount={handleUpdateAccount}
-              onUpdateBio={(bio) => {
-                setUserBio(bio);
-                if (typeof window !== 'undefined') localStorage.setItem('harmoniq_user_bio', bio);
-              }}
-              onUpdateCity={(city) => {
-                setUserCity(city);
-                if (typeof window !== 'undefined') localStorage.setItem('harmoniq_user_city', city);
-              }}
+              onUpdateAccount={stableHandleUpdateAccount}
+              onUpdateBio={stableHandleUpdateProfileBio}
+              onUpdateCity={stableHandleUpdateProfileCity}
               syncDiagnosticError={syncDiagnosticError}
-              onClearSyncError={() => setSyncDiagnosticError(null)}
+              onClearSyncError={stableHandleClearSyncError}
               themeMode={effectiveTheme}
-              onLoadPopularCollection={handleLoadPopularCollection}
-              onLogout={handleFullLogout}
+              onLoadPopularCollection={stableHandleLoadPopularCollection}
+              onLogout={stableHandleFullLogout}
               shouldOpenSettings={shouldOpenProfileSettings}
-              onConsumeOpenSettings={() => setShouldOpenProfileSettings(false)}
-              onPickSongForSignatureSlot={(slotIdx) => {
-                setSignatureSlotTarget(slotIdx);
-                setShowSongPickerModal(true);
-              }}
+              onConsumeOpenSettings={stableHandleConsumeOpenSettings}
+              onPickSongForSignatureSlot={stableHandlePickSongForSignatureSlot}
               signatureVitrinVersion={signatureVitrinVersion}
             />
           )}
@@ -3849,7 +4171,7 @@ export default function App() {
             }}
             className="fixed top-[68px] left-4 right-4 z-[130] max-w-md mx-auto pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300"
           >
-            <div className="relative rounded-2xl bg-white dark:bg-[#141418] text-[#111113] dark:text-[#F5F5F7] border border-[#E6E4DF] dark:border-white/10 shadow-2xl backdrop-blur-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 overflow-hidden">
+            <div className="relative rounded-2xl bg-white dark:bg-[#141418] text-[#111113] dark:text-[#F5F5F7] border border-[#E6E4DF] dark:border-white/10 shadow-2xl backdrop-blur-md p-3 sm:p-3.5 flex items-center justify-between gap-3 overflow-hidden">
               {/* 5-Second Progress Bar (Right-to-Left / shrinking smoothly) */}
               <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#16A34A]/15 dark:bg-[#22C55E]/15 overflow-hidden">
                 <div
@@ -3956,32 +4278,32 @@ export default function App() {
         )}
 
         {toastMessage && (
-          <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[130] pointer-events-none bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#E6E4DF] dark:border-white/10 text-[#111113] dark:text-[#F5F5F7] px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 max-w-[90vw]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#22C55E] animate-pulse shrink-0" />
+          <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[130] pointer-events-none bg-[#141418]/95 backdrop-blur-md border border-white/10 text-[#F5F5F7] px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 max-w-[90vw]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse shrink-0" />
             <span className="truncate">{toastMessage}</span>
           </div>
         )}
 
         {silentSyncNotice && !toastMessage && (
-          <div className="fixed bottom-36 right-4 z-[130] pointer-events-none bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border border-[#16A34A]/35 dark:border-[#22C55E]/35 text-[#16A34A] dark:text-[#22C55E] px-3.5 py-2 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="fixed bottom-36 right-4 z-[130] pointer-events-none bg-[#141418]/95 backdrop-blur-md border border-[#22C55E]/35 text-[#22C55E] px-3.5 py-2 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <span>{silentSyncNotice}</span>
           </div>
         )}
 
         <BottomNav
-          activeTab={activeTab}
+          activeTab={visualTab}
           onSelectTab={handleSelectTab}
           unreadCount={totalUnread}
-          liveCount={privacyMode === 'friends_only' ? mergedFriendsList.length + 1 : combinedLoungeUsers.length}
+          liveCount={liveListenersCount}
           currentSong={currentSong}
           isPlaying={isPlaying}
-          currentSecond={mySecond}
+          currentSecond={activeTab === 'lounge' ? 0 : mySecond}
           isAudioLoading={isAudioLoading}
           themeMode={effectiveTheme}
-          onTogglePlay={handleTogglePlay}
-          onNextSong={handleNextSong}
-          onOpenNowPlaying={() => setShowNowPlayingModal(true)}
-          onSeekSecond={handleSeekSecond}
+          onTogglePlay={stableHandleTogglePlay}
+          onNextSong={stableHandleNextSong}
+          onOpenNowPlaying={stableHandleOpenNowPlayingDirect}
+          onSeekSecond={stableHandleSeekSecond}
         />
 
         <DesktopPlayerBar
@@ -3989,24 +4311,14 @@ export default function App() {
           isPlaying={isPlaying}
           isAudioLoading={isAudioLoading}
           currentSecond={mySecond}
-          isFavorite={Boolean(
-            currentSong &&
-              favoriteSongs.some(
-                (s) =>
-                  s.id === currentSong.id ||
-                  (s.title.toLowerCase() === currentSong.title.toLowerCase() &&
-                    s.artist.toLowerCase() === currentSong.artist.toLowerCase())
-              )
-          )}
+          isFavorite={isCurrentSongFavorite}
           themeMode={effectiveTheme}
-          onTogglePlay={handleTogglePlay}
-          onNextSong={handleNextSong}
-          onPrevSong={handlePrevSong}
-          onSeekSecond={handleSeekSecond}
-          onToggleFavorite={handleToggleFavoriteSong}
-          onOpenNowPlaying={() => {
-            if (currentSong) setShowNowPlayingModal(true);
-          }}
+          onTogglePlay={stableHandleTogglePlay}
+          onNextSong={stableHandleNextSong}
+          onPrevSong={stableHandlePrevSong}
+          onSeekSecond={stableHandleSeekSecond}
+          onToggleFavorite={stableHandleToggleFavoriteSong}
+          onOpenNowPlaying={stableHandleOpenNowPlaying}
         />
       </div>
     </div>

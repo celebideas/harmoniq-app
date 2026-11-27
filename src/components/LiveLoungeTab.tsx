@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Play,
   Pause,
@@ -77,7 +77,7 @@ interface Props {
   nearbyFrequencyUsers?: LoungeUser[];
 }
 
-export const LiveLoungeTab: React.FC<Props> = ({
+export const LiveLoungeTab: React.FC<Props> = React.memo(({
   currentSong,
   mySecond,
   users,
@@ -166,10 +166,22 @@ export const LiveLoungeTab: React.FC<Props> = ({
   const touchStartY = useRef<number | null>(null);
   const [swipeHint, setSwipeHint] = useState<'next' | 'prev' | null>(null);
 
-  const displayUsers =
-    privacyMode === 'friends_only'
-      ? users.filter((u) => u.friendStatus === 'friends')
-      : users;
+  const displayUsers = useMemo(
+    () =>
+      privacyMode === 'friends_only'
+        ? users.filter((u) => u.friendStatus === 'friends')
+        : users,
+    [privacyMode, users]
+  );
+
+  const handleTimelineCoListen = useCallback(
+    (u: LoungeUser) => {
+      if (onStartCoListen && currentSong) {
+        onStartCoListen(u, currentSong, u.currentSecond);
+      }
+    },
+    [onStartCoListen, currentSong]
+  );
 
   // Cold-start protection: 3 nearby-frequency listeners matched to current genre/artist ONLY when room has 0 exact listeners
   const nearFrequencySuggestions = useMemo(() => {
@@ -694,7 +706,7 @@ export const LiveLoungeTab: React.FC<Props> = ({
               onWhisperTrack={onWhisperTrack}
               onShowToast={onShowToast}
               onOpenRoomListeners={onOpenRoomListeners}
-              onStartCoListen={onStartCoListen ? (u) => onStartCoListen(u, currentSong, u.currentSecond) : undefined}
+              onStartCoListen={onStartCoListen ? handleTimelineCoListen : undefined}
             />
 
             {/* Cold-Start Protection: Shown ONLY when 0 listeners are on this exact rare song */}
@@ -887,4 +899,4 @@ export const LiveLoungeTab: React.FC<Props> = ({
       </div>
     </div>
   );
-};
+});

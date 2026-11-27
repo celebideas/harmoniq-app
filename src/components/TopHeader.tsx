@@ -20,13 +20,13 @@ interface Props {
   liveListenersCount?: number;
 }
 
-export const TopHeader: React.FC<Props> = ({
+export const TopHeader: React.FC<Props> = React.memo(({
   activeTab,
   onSelectTab,
   userProfile,
 }) => {
   return (
-    <header className="lg:hidden sticky top-0 z-40 border-b backdrop-blur-xl select-none bg-[#0B0B0D]/88 border-white/[0.08] text-[#F5F5F7]">
+    <header className="lg:hidden sticky top-0 z-40 border-b backdrop-blur-md select-none bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
         {/* LEFT: Pure Studio Monochrome ListenHub SVG Emblem & Title */}
         <button
@@ -85,4 +85,4 @@ export const TopHeader: React.FC<Props> = ({
       </div>
     </header>
   );
-};
+});

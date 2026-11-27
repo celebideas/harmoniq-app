@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AudioLines,
   Compass,
@@ -30,7 +30,7 @@ interface Props {
   onSeekSecond?: (sec: number) => void;
 }
 
-export const BottomNav: React.FC<Props> = ({
+export const BottomNav: React.FC<Props> = React.memo(({
   activeTab,
   onSelectTab,
   unreadCount,
@@ -47,37 +47,40 @@ export const BottomNav: React.FC<Props> = ({
 }) => {
   const isLight = themeMode === 'light';
 
-  const navItems: {
+  const navItems = useMemo<{
     id: NavTab;
     label: string;
     IconComponent: React.ComponentType<{ className?: string; strokeWidth?: number }>;
     badge?: number | string;
     isLiveBadge?: boolean;
-  }[] = [
-    {
-      id: 'lounge',
-      label: 'Sahne',
-      IconComponent: AudioLines,
-      badge: liveCount,
-      isLiveBadge: true,
-    },
-    {
-      id: 'rooms',
-      label: 'Keşfet',
-      IconComponent: Compass,
-    },
-    {
-      id: 'chat',
-      label: 'Sohbet',
-      IconComponent: MessageCircle,
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-    {
-      id: 'profile',
-      label: 'Ben',
-      IconComponent: User,
-    },
-  ];
+  }[]>(
+    () => [
+      {
+        id: 'lounge',
+        label: 'Sahne',
+        IconComponent: AudioLines,
+        badge: liveCount,
+        isLiveBadge: true,
+      },
+      {
+        id: 'rooms',
+        label: 'Keşfet',
+        IconComponent: Compass,
+      },
+      {
+        id: 'chat',
+        label: 'Sohbet',
+        IconComponent: MessageCircle,
+        badge: unreadCount > 0 ? unreadCount : undefined,
+      },
+      {
+        id: 'profile',
+        label: 'Ben',
+        IconComponent: User,
+      },
+    ],
+    [liveCount, unreadCount]
+  );
 
   const showMiniPlayerStrip = activeTab !== 'lounge' && Boolean(currentSong);
   const progressPct = currentSong
@@ -87,10 +90,10 @@ export const BottomNav: React.FC<Props> = ({
   return (
     <nav
       aria-label="Birleşik Medya ve Navigasyon Konsolu"
-      className={`lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl backdrop-blur-xl border overflow-hidden select-none transition-colors duration-150 ${
+      className={`lg:hidden fixed bottom-2.5 left-2.5 right-2.5 z-40 max-w-md mx-auto rounded-2xl backdrop-blur-md border overflow-hidden select-none transition-colors duration-150 ${
         isLight
           ? 'bg-white/95 border-[#E6E4DF] shadow-[0_8px_30px_rgba(17,17,19,0.08)] text-[#111113]'
-          : 'bg-[#141418]/95 border-white/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#F5F5F7]'
+          : 'bg-[#0B0B0D]/95 border-white/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#F5F5F7]'
       }`}
     >
       {/* UPPER TIER: MINI PLAYER STRIP */}
@@ -265,4 +268,4 @@ export const BottomNav: React.FC<Props> = ({
       </div>
     </nav>
   );
-};
+});

@@ -38,7 +38,7 @@ const formatTime = (secs: number) => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
-export const DesktopPlayerBar: React.FC<Props> = ({
+export const DesktopPlayerBar: React.FC<Props> = React.memo(({
   currentSong,
   isPlaying,
   isAudioLoading = false,
@@ -116,10 +116,10 @@ export const DesktopPlayerBar: React.FC<Props> = ({
   return (
     <footer
       aria-label="Masaüstü Medya Çubuğu"
-      className={`hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 backdrop-blur-xl border-t select-none transition-colors duration-150 ${
+      className={`hidden lg:flex items-center justify-between fixed bottom-0 inset-x-0 h-[84px] px-6 lg:px-8 z-40 backdrop-blur-md border-t select-none transition-colors duration-150 ${
         isLight
           ? 'bg-white/95 border-[#E6E4DF] text-[#111113]'
-          : 'bg-[#141418]/95 border-white/[0.08] text-[#F5F5F7]'
+          : 'bg-[#0B0B0D]/95 border-white/[0.08] text-[#F5F5F7]'
       }`}
     >
       {/* LEFT (w-1/4): Cover + Track Info + Favorite */}
@@ -359,4 +359,4 @@ export const DesktopPlayerBar: React.FC<Props> = ({
       </div>
     </footer>
   );
-};
+});

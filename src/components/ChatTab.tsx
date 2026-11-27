@@ -53,6 +53,7 @@ interface Props {
   recentListeners?: LoungeUser[];
   currentSong?: Song | null;
   currentSecond?: number;
+  getCurrentSecond?: () => number;
   allSongs?: Song[];
   // Real-time cloud social props
   isCloudAuthenticated?: boolean;
@@ -74,7 +75,7 @@ interface Props {
   onLeaveCoListen?: () => void;
 }
 
-export const ChatTab: React.FC<Props> = ({
+export const ChatTab: React.FC<Props> = React.memo(({
   conversations,
   activeChatUser,
   onSelectConversation,
@@ -88,6 +89,7 @@ export const ChatTab: React.FC<Props> = ({
   recentListeners = [],
   currentSong,
   currentSecond = 0,
+  getCurrentSecond,
   allSongs = [],
   isCloudAuthenticated = false,
   isAuthLoading = false,
@@ -1387,7 +1389,7 @@ export const ChatTab: React.FC<Props> = ({
                   onClick={() => {
                     const targetSong = currentSong || allSongs[0] || null;
                     setSelectedSongToShare(targetSong);
-                    const sec = currentSecond || 0;
+                    const sec = (getCurrentSecond ? getCurrentSecond() : currentSecond) || 0;
                     setShareTimestampSecond(sec);
                     setSongComment(`Bu şarkının ${formatTime(sec)} saniyesini dinle.`);
                     setShowSongPickerModal(true);
@@ -1455,7 +1457,7 @@ export const ChatTab: React.FC<Props> = ({
       {/* ==================== SONG & TIMESTAMP SHARE MODAL ==================== */}
       {showSongPickerModal && activeConv && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
           onClick={() => setShowSongPickerModal(false)}
         >
           <div
@@ -1593,7 +1595,8 @@ export const ChatTab: React.FC<Props> = ({
                           (currentSong.id === song.id ||
                             (currentSong.title.toLowerCase() === song.title.toLowerCase() &&
                               currentSong.artist.toLowerCase() === song.artist.toLowerCase()));
-                        const initialSec = isSameAsNow ? Math.max(0, Math.floor(currentSecond)) : 0;
+                        const liveSec = getCurrentSecond ? getCurrentSecond() : currentSecond;
+                        const initialSec = isSameAsNow ? Math.max(0, Math.floor(liveSec)) : 0;
                         setShareTimestampSecond(initialSec);
                         setSongComment(
                           initialSec > 0
@@ -1645,4 +1648,4 @@ export const ChatTab: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});

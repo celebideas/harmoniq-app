@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AudioLines,
   Compass,
@@ -25,7 +25,7 @@ interface Props {
   onToggleTheme?: () => void;
 }
 
-export const DesktopSidebar: React.FC<Props> = ({
+export const DesktopSidebar: React.FC<Props> = React.memo(({
   activeTab,
   onSelectTab,
   onOpenSettings,
@@ -33,37 +33,40 @@ export const DesktopSidebar: React.FC<Props> = ({
   liveListenersCount,
   userProfile,
 }) => {
-  const navItems: {
+  const navItems = useMemo<{
     id: NavTab;
     label: string;
     icon: React.ReactNode;
     badge?: number;
     isLiveBadge?: boolean;
-  }[] = [
-    {
-      id: 'lounge',
-      label: 'Sahne',
-      icon: <AudioLines className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
-      badge: liveListenersCount,
-      isLiveBadge: true,
-    },
-    {
-      id: 'rooms',
-      label: 'Keşfet',
-      icon: <Compass className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
-    },
-    {
-      id: 'chat',
-      label: 'Sohbet',
-      icon: <MessageCircle className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-    {
-      id: 'profile',
-      label: 'Ben',
-      icon: <User className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
-    },
-  ];
+  }[]>(
+    () => [
+      {
+        id: 'lounge',
+        label: 'Sahne',
+        icon: <AudioLines className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
+        badge: liveListenersCount,
+        isLiveBadge: true,
+      },
+      {
+        id: 'rooms',
+        label: 'Keşfet',
+        icon: <Compass className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
+      },
+      {
+        id: 'chat',
+        label: 'Sohbet',
+        icon: <MessageCircle className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
+        badge: unreadCount > 0 ? unreadCount : undefined,
+      },
+      {
+        id: 'profile',
+        label: 'Ben',
+        icon: <User className="w-5 h-5 shrink-0" strokeWidth={1.75} />,
+      },
+    ],
+    [liveListenersCount, unreadCount]
+  );
 
   return (
     <aside
@@ -178,4 +181,4 @@ export const DesktopSidebar: React.FC<Props> = ({
       </div>
     </aside>
   );
-};
+});

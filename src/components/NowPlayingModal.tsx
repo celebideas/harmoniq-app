@@ -1383,22 +1383,25 @@ export const NowPlayingModal: React.FC<Props> = ({
       aria-label="Tam Ekran Müzik Oynatıcı"
       className="fixed inset-0 z-[120] h-[100dvh] w-full flex flex-col bg-[#0B0B0D] text-[#F5F5F7] overflow-hidden"
     >
-      {/* Full-Screen Multi-Tone Blurred Album Cover Ambient Glow (1.4s calm transition) */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        {song.coverUrl && !coverError && (
-          <img
-            key={song.id}
-            src={song.coverUrl}
-            alt=""
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover scale-150 blur-[110px] opacity-[0.22] saturate-125 select-none transition-all duration-[1400ms] ease-in-out"
-          />
-        )}
+      {/* GPU-Friendly Blurred Album Cover Ambient Glow */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 z-0 overflow-hidden" aria-hidden="true">
+        <div className="relative max-w-2xl mx-auto h-72">
+          {song.coverUrl && !coverError && (
+            <img
+              key={song.id}
+              src={song.coverUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              decoding="async"
+              className="w-full h-full object-cover blur-3xl opacity-[0.18] transform-gpu will-change-[opacity] select-none transition-opacity duration-700 ease-in-out"
+            />
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0B0D]/60 to-[#0B0B0D]" />
       </div>
 
       {/* TOP STUDIO HEADER BAR (Aligned directly to max-w-5xl mx-auto px-6 axis) */}
-      <header className="relative z-20 shrink-0 w-full border-b border-[#E6E4DF]/80 dark:border-white/[0.06] bg-[#FAF9F6]/90 dark:bg-[#0B0B0D]/85 backdrop-blur-xl">
+      <header className="relative z-20 shrink-0 w-full border-b border-white/[0.06] bg-[#0B0B0D]/95 backdrop-blur-md">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between gap-2">
           {/* Left: Close Button */}
           <button

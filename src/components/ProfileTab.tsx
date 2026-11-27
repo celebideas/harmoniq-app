@@ -413,7 +413,7 @@ const SubscribedChannelRowItem = React.memo<{
   </div>
 ));
 
-export const ProfileTab: React.FC<Props> = ({
+export const ProfileTab: React.FC<Props> = React.memo(({
   userProfile,
   friendsList,
   friendRequests = [],
@@ -711,9 +711,12 @@ export const ProfileTab: React.FC<Props> = ({
     }
   };
 
-  const totalLibraryTracks =
-    syncedPlaylists.reduce((acc, p) => acc + (p.tracks?.length || p.trackCount || 0), 0) +
-    favoriteSongs.length;
+  const totalLibraryTracks = useMemo(
+    () =>
+      syncedPlaylists.reduce((acc, p) => acc + (p.tracks?.length || p.trackCount || 0), 0) +
+      favoriteSongs.length,
+    [syncedPlaylists, favoriteSongs.length]
+  );
 
   const formatDuration = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -733,10 +736,30 @@ export const ProfileTab: React.FC<Props> = ({
     [favoriteSongs, syncedPlaylists]
   );
 
-  const sanitizedFavoriteArtists = useMemo(() => {
+  // Side effect belongs in useEffect (never in render/useMemo)
+  React.useEffect(() => {
     purgeNonMusicFromLocalStorage(favoriteSongs, syncedPlaylists);
-    return cleanNonMusicArtists(favoriteArtists, allUserLibraryTracks);
-  }, [favoriteArtists, favoriteSongs, syncedPlaylists, allUserLibraryTracks]);
+  }, [favoriteSongs, syncedPlaylists]);
+
+  const sanitizedFavoriteArtists = useMemo(
+    () => cleanNonMusicArtists(favoriteArtists, allUserLibraryTracks),
+    [favoriteArtists, allUserLibraryTracks]
+  );
+
+  const filteredMusicArtists = useMemo(() => {
+    const q = librarySearchQuery.trim().toLowerCase();
+    if (!q) return sanitizedFavoriteArtists;
+    return sanitizedFavoriteArtists.filter((a: string) => a.toLowerCase().includes(q));
+  }, [sanitizedFavoriteArtists, librarySearchQuery]);
+
+  const filteredSubscribedChannels = useMemo(() => {
+    const q = librarySearchQuery.trim().toLowerCase();
+    if (!q) return subscribedChannels;
+    return subscribedChannels.filter(
+      (ch) =>
+        ch.name.toLowerCase().includes(q) || ch.rawTitle.toLowerCase().includes(q)
+    );
+  }, [subscribedChannels, librarySearchQuery]);
 
   const getArtistAvatarInfo = (artistName: string) => {
     const lower = artistName.trim().toLowerCase();
@@ -796,155 +819,240 @@ export const ProfileTab: React.FC<Props> = ({
     [playHistory]
   );
 
-  // Authentic library tracks synced by user (YouTube Music / custom playlists / favorites)
-  const allWeeklyTracks = [
-    ...syncedPlaylists.flatMap((p) => p.tracks || []),
-    ...favoriteSongs,
-  ];
+  // Authentic library tracks synced by user (memoized to prevent per-render recomputation)
+  const allWeeklyTracks = allUserLibraryTracks;
 
-  const hasHistoryPlays =
-    liveWeeklyHistory.weeklySeconds > 0 || liveWeeklyHistory.weeklyScrobbles > 0;
-  const hasSyncedLibraryData =
-    allWeeklyTracks.length > 0 || sanitizedFavoriteArtists.length > 0;
-  const hasRealListeningData = hasHistoryPlays || hasSyncedLibraryData;
+  const {
+    hasRealListeningData,
+    sortedWeeklyGenres,
+    sortedWeeklyArtists,
+    topGenreName,
+    topArtistName,
+    weeklyPersona,
+    weeklyPersonaDesc,
+    weeklyAnthemSong,
+  } = useMemo(() => {
+    const hasHistoryPlays =
+      liveWeeklyHistory.weeklySeconds > 0 || liveWeeklyHistory.weeklyScrobbles > 0;
+    const hasSyncedLibraryData =
+      allWeeklyTracks.length > 0 || sanitizedFavoriteArtists.length > 0;
+    const hasRealData = hasHistoryPlays || hasSyncedLibraryData;
 
-  // Genre breakdown strictly from REAL play history first, then genuine synced library (zero fake defaults)
-  const genreTally = new Map<string, number>();
-  if (liveWeeklyHistory.topGenres.length > 0) {
-    liveWeeklyHistory.topGenres.forEach((g) => {
-      const weight = Math.max(1, g.plays || Math.ceil(g.seconds / 15));
-      genreTally.set(g.genre, (genreTally.get(g.genre) || 0) + weight);
+    const genreTally = new Map<string, number>();
+    if (liveWeeklyHistory.topGenres.length > 0) {
+      liveWeeklyHistory.topGenres.forEach((g) => {
+        const weight = Math.max(1, g.plays || Math.ceil(g.seconds / 15));
+        genreTally.set(g.genre, (genreTally.get(g.genre) || 0) + weight);
+      });
+    }
+    if (allWeeklyTracks.length > 0) {
+      allWeeklyTracks.forEach((track) => {
+        const resolvedGenre = resolveSongGenre(track);
+        if (resolvedGenre) {
+          genreTally.set(resolvedGenre, (genreTally.get(resolvedGenre) || 0) + 1);
+        }
+      });
+    }
+
+    const totalGenreScore = Array.from(genreTally.values()).reduce((a, b) => a + b, 0);
+    const genreColorPalette = [
+      {
+        bar: 'bg-lime-400',
+        glow: 'shadow-[0_0_12px_rgba(163,230,53,0.35)]',
+        text: 'text-lime-500 dark:text-lime-300',
+        dot: 'bg-lime-400',
+        badge: 'bg-lime-400/10 text-lime-500 dark:text-lime-400 border-lime-400/20',
+      },
+      {
+        bar: 'bg-cyan-400',
+        glow: 'shadow-[0_0_12px_rgba(34,211,238,0.35)]',
+        text: 'text-cyan-500 dark:text-cyan-300',
+        dot: 'bg-cyan-400',
+        badge: 'bg-cyan-400/10 text-cyan-500 dark:text-cyan-400 border-cyan-400/20',
+      },
+      {
+        bar: 'bg-zinc-400',
+        glow: 'shadow-[0_0_12px_rgba(251,191,36,0.35)]',
+        text: 'text-[#111113] dark:text-[#F5F5F7]',
+        dot: 'bg-zinc-400',
+        badge: 'bg-zinc-500/10 text-[#111113] dark:text-zinc-300 border-zinc-500/20',
+      },
+      {
+        bar: 'bg-rose-400',
+        glow: 'shadow-[0_0_12px_rgba(251,113,133,0.35)]',
+        text: 'text-rose-500 dark:text-rose-300',
+        dot: 'bg-rose-400',
+        badge: 'bg-rose-400/10 text-rose-500 dark:text-rose-400 border-rose-400/20',
+      },
+      {
+        bar: 'bg-purple-400',
+        glow: 'shadow-[0_0_12px_rgba(192,132,252,0.35)]',
+        text: 'text-purple-500 dark:text-purple-300',
+        dot: 'bg-purple-400',
+        badge: 'bg-purple-400/10 text-purple-500 dark:text-purple-400 border-purple-400/20',
+      },
+    ];
+
+    const genres = Array.from(genreTally.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([genre, count], idx) => {
+        const percentage = Math.max(4, Math.round((count / (totalGenreScore || 1)) * 100));
+        return {
+          genre,
+          count,
+          percentage,
+          palette: genreColorPalette[idx % genreColorPalette.length],
+        };
+      });
+
+    const artistTally = new Map<string, { count: number; playedSeconds: number; sampleSong?: Song }>();
+    liveWeeklyHistory.topArtists.forEach((a) => {
+      const cleanName = a.name.trim();
+      if (!cleanName || cleanName === 'Bilinmeyen Sanatçı') return;
+      const sampleRec = a.sampleTrack;
+      const sampleSong: Song | undefined = sampleRec
+        ? {
+            id: sampleRec.id,
+            title: sampleRec.title,
+            artist: sampleRec.artist,
+            album: sampleRec.album || 'Single',
+            genre: sampleRec.genre,
+            rawMediaTitle: `${sampleRec.artist} - ${sampleRec.title}`,
+            coverUrl: sampleRec.coverUrl,
+            coverGradient: sampleRec.coverGradient || 'from-purple-600 to-fuchsia-600',
+            durationSeconds: sampleRec.durationSeconds || 210,
+            bpm: 118,
+            keyNote: 'Am',
+            catalogNumber: 'LH-LIVE',
+            timelineMarkers: [],
+            audioUrl: sampleRec.audioUrl,
+            youtubeVideoId: sampleRec.youtubeVideoId,
+            releaseYear: new Date().getFullYear(),
+            soundType: 'indie',
+          }
+        : undefined;
+      artistTally.set(cleanName, {
+        count: Math.max(1, a.plays || Math.ceil(a.seconds / 15)),
+        playedSeconds: a.seconds,
+        sampleSong,
+      });
     });
-  }
-  if (allWeeklyTracks.length > 0) {
+
+    // Batch-sanitize unique track artists once (O(N) instead of O(N^2))
+    const uniqueRawTrackArtists: string[] = [];
+    const seenRawArtist = new Set<string>();
+    for (const track of allWeeklyTracks) {
+      const a = track.artist?.trim();
+      if (a && a !== 'YouTube Music' && a !== 'Bilinmeyen Sanatçı' && !seenRawArtist.has(a)) {
+        seenRawArtist.add(a);
+        uniqueRawTrackArtists.push(a);
+      }
+    }
+    const cleanTrackArtistSet = new Set(
+      cleanNonMusicArtists(uniqueRawTrackArtists, allWeeklyTracks).map((x) => x.toLowerCase())
+    );
+
     allWeeklyTracks.forEach((track) => {
-      const resolvedGenre = resolveSongGenre(track);
-      if (resolvedGenre) {
-        genreTally.set(resolvedGenre, (genreTally.get(resolvedGenre) || 0) + 1);
+      const a = track.artist?.trim();
+      if (a && cleanTrackArtistSet.has(a.toLowerCase())) {
+        const existing = artistTally.get(a) || { count: 0, playedSeconds: 0 };
+        artistTally.set(a, {
+          count: existing.count + 1,
+          playedSeconds: existing.playedSeconds,
+          sampleSong: existing.sampleSong || track,
+        });
       }
     });
-  }
 
-  const totalGenreScore = Array.from(genreTally.values()).reduce((a, b) => a + b, 0);
-  const genreColorPalette = [
-    {
-      bar: 'bg-lime-400',
-      glow: 'shadow-[0_0_12px_rgba(163,230,53,0.35)]',
-      text: 'text-lime-500 dark:text-lime-300',
-      dot: 'bg-lime-400',
-      badge: 'bg-lime-400/10 text-lime-500 dark:text-lime-400 border-lime-400/20',
-    },
-    {
-      bar: 'bg-cyan-400',
-      glow: 'shadow-[0_0_12px_rgba(34,211,238,0.35)]',
-      text: 'text-cyan-500 dark:text-cyan-300',
-      dot: 'bg-cyan-400',
-      badge: 'bg-cyan-400/10 text-cyan-500 dark:text-cyan-400 border-cyan-400/20',
-    },
-    {
-      bar: 'bg-zinc-400',
-      glow: 'shadow-[0_0_12px_rgba(251,191,36,0.35)]',
-      text: 'text-[#111113] dark:text-[#F5F5F7]',
-      dot: 'bg-zinc-400',
-      badge: 'bg-zinc-500/10 text-[#111113] dark:text-zinc-300 border-zinc-500/20',
-    },
-    {
-      bar: 'bg-rose-400',
-      glow: 'shadow-[0_0_12px_rgba(251,113,133,0.35)]',
-      text: 'text-rose-500 dark:text-rose-300',
-      dot: 'bg-rose-400',
-      badge: 'bg-rose-400/10 text-rose-500 dark:text-rose-400 border-rose-400/20',
-    },
-    {
-      bar: 'bg-purple-400',
-      glow: 'shadow-[0_0_12px_rgba(192,132,252,0.35)]',
-      text: 'text-purple-500 dark:text-purple-300',
-      dot: 'bg-purple-400',
-      badge: 'bg-purple-400/10 text-purple-500 dark:text-purple-400 border-purple-400/20',
-    },
-  ];
-
-  const sortedWeeklyGenres = Array.from(genreTally.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([genre, count], idx) => {
-      const percentage = Math.max(4, Math.round((count / (totalGenreScore || 1)) * 100));
-      return {
-        genre,
-        count,
-        percentage,
-        palette: genreColorPalette[idx % genreColorPalette.length],
-      };
+    sanitizedFavoriteArtists.forEach((a) => {
+      const clean = a.trim();
+      if (!clean) return;
+      const existing = artistTally.get(clean) || { count: 0, playedSeconds: 0 };
+      artistTally.set(clean, {
+        ...existing,
+        count: existing.count + 2,
+      });
     });
 
-  // Top Artists strictly from REAL play history first, then genuine synced library (zero fake Duman 24 fallback)
-  const artistTally = new Map<string, { count: number; playedSeconds: number; sampleSong?: Song }>();
-  liveWeeklyHistory.topArtists.forEach((a) => {
-    const cleanName = a.name.trim();
-    if (!cleanName || cleanName === 'Bilinmeyen Sanatçı') return;
-    const sampleRec = a.sampleTrack;
-    const sampleSong: Song | undefined = sampleRec
+    const artists = Array.from(artistTally.entries())
+      .sort((a, b) => b[1].playedSeconds - a[1].playedSeconds || b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([artist, data], idx) => ({
+        rank: idx + 1,
+        name: artist,
+        tracksCount: data.count,
+        playedSeconds: data.playedSeconds,
+        sampleSong: data.sampleSong,
+      }));
+
+    const topGenre = genres[0]?.genre || 'Henüz belirlenmedi';
+    const topArtist = artists[0]?.name || 'Henüz yok';
+
+    let persona = 'Yeni Frekans Kaşifi';
+    let personaDesc = 'Dinlediğin her parça ile müzikal auran canlı olarak şekilleniyor.';
+    if (hasRealData) {
+      persona = 'Eklektik Kaşif';
+      personaDesc = 'Farklı müzikal dönemler ve soundlar arasında sezgisel bir denge kuruyor.';
+      const lowerTop = topGenre.toLowerCase();
+      if (lowerTop.includes('anadolu')) {
+        persona = 'Anadolu Saykodelik';
+        personaDesc = 'Geleneksel motifler ile modern psikedelik rock tınılarının kusursuz uyumu.';
+      } else if (lowerTop.includes('rock') || lowerTop.includes('grunge')) {
+        persona = 'Gece Rockerı';
+        personaDesc = 'Gitar rifleri, analog davul vuruşları ve yüksek dinamizmli parçalar bu hafta zirvede.';
+      } else if (lowerTop.includes('synth') || lowerTop.includes('wave') || lowerTop.includes('elektronik')) {
+        persona = 'Synthwave Gezgini';
+        personaDesc = 'Analog synth tınıları ve retro fütürist melodiler bu haftaki odaklanma akışını oluşturdu.';
+      } else if (lowerTop.includes('indie') || lowerTop.includes('alternatif')) {
+        persona = 'İndie Melankolisti';
+        personaDesc = 'Derin lirikler, lo-fi dokular ve bağımsız alternatif melodiler bu hafta başrolde.';
+      } else if (lowerTop.includes('akustik') || lowerTop.includes('lo-fi')) {
+        persona = 'Akustik Gece Yolcusu';
+        personaDesc = 'Sakin analog tınılar, sıcak vokaller ve odaklanma ritimleri bu haftanın imzası.';
+      }
+    }
+
+    const topPlayedRecord = liveWeeklyHistory.topTracks[0]?.record;
+    const topPlayedSong: Song | undefined = topPlayedRecord
       ? {
-          id: sampleRec.id,
-          title: sampleRec.title,
-          artist: sampleRec.artist,
-          album: sampleRec.album || 'Single',
-          genre: sampleRec.genre,
-          rawMediaTitle: `${sampleRec.artist} - ${sampleRec.title}`,
-          coverUrl: sampleRec.coverUrl,
-          coverGradient: sampleRec.coverGradient || 'from-purple-600 to-fuchsia-600',
-          durationSeconds: sampleRec.durationSeconds || 210,
+          id: topPlayedRecord.id,
+          title: topPlayedRecord.title,
+          artist: topPlayedRecord.artist,
+          album: topPlayedRecord.album || 'Single',
+          genre: topPlayedRecord.genre,
+          rawMediaTitle: `${topPlayedRecord.artist} - ${topPlayedRecord.title}`,
+          coverUrl: topPlayedRecord.coverUrl,
+          coverGradient: topPlayedRecord.coverGradient || 'from-purple-600 to-pink-600',
+          durationSeconds: topPlayedRecord.durationSeconds || 210,
           bpm: 118,
           keyNote: 'Am',
           catalogNumber: 'LH-LIVE',
           timelineMarkers: [],
-          audioUrl: sampleRec.audioUrl,
-          youtubeVideoId: sampleRec.youtubeVideoId,
+          audioUrl: topPlayedRecord.audioUrl,
+          youtubeVideoId: topPlayedRecord.youtubeVideoId,
           releaseYear: new Date().getFullYear(),
           soundType: 'indie',
         }
       : undefined;
-    artistTally.set(cleanName, {
-      count: Math.max(1, a.plays || Math.ceil(a.seconds / 15)),
-      playedSeconds: a.seconds,
-      sampleSong,
-    });
-  });
 
-  allWeeklyTracks.forEach((track) => {
-    const a = track.artist?.trim();
-    if (a && a !== 'YouTube Music' && a !== 'Bilinmeyen Sanatçı') {
-      const isClean = cleanNonMusicArtists([a], allWeeklyTracks).length > 0;
-      if (!isClean) return;
-      const existing = artistTally.get(a) || { count: 0, playedSeconds: 0 };
-      artistTally.set(a, {
-        count: existing.count + 1,
-        playedSeconds: existing.playedSeconds,
-        sampleSong: existing.sampleSong || track,
-      });
-    }
-  });
+    const anthemSong: Song | undefined =
+      topPlayedSong ||
+      favoriteSongs[0] ||
+      allWeeklyTracks[0] ||
+      artists[0]?.sampleSong;
 
-  sanitizedFavoriteArtists.forEach((a) => {
-    const clean = a.trim();
-    if (!clean) return;
-    const existing = artistTally.get(clean) || { count: 0, playedSeconds: 0 };
-    artistTally.set(clean, {
-      ...existing,
-      count: existing.count + 2,
-    });
-  });
-
-  const sortedWeeklyArtists = Array.from(artistTally.entries())
-    .sort((a, b) => b[1].playedSeconds - a[1].playedSeconds || b[1].count - a[1].count)
-    .slice(0, 5)
-    .map(([artist, data], idx) => ({
-      rank: idx + 1,
-      name: artist,
-      tracksCount: data.count,
-      playedSeconds: data.playedSeconds,
-      sampleSong: data.sampleSong,
-    }));
+    return {
+      hasRealListeningData: hasRealData,
+      sortedWeeklyGenres: genres,
+      sortedWeeklyArtists: artists,
+      topGenreName: topGenre,
+      topArtistName: topArtist,
+      weeklyPersona: persona,
+      weeklyPersonaDesc: personaDesc,
+      weeklyAnthemSong: anthemSong,
+    };
+  }, [liveWeeklyHistory, allWeeklyTracks, sanitizedFavoriteArtists, favoriteSongs]);
 
   // 100% Authentic Weekly Duration & Scrobble Counters (zero synthetic 22 saat / 1071 fallback)
   const totalLibraryCount = totalLibraryTracks;
@@ -953,62 +1061,6 @@ export const ProfileTab: React.FC<Props> = ({
   const weeklyHours = Math.floor(weeklyTotalSeconds / 3600);
   const weeklyRemainingMinutes = Math.floor((weeklyTotalSeconds % 3600) / 60);
   const weeklyRemainingSeconds = Math.floor(weeklyTotalSeconds % 60);
-
-  const topGenreName = sortedWeeklyGenres[0]?.genre || 'Henüz belirlenmedi';
-  const topArtistName = sortedWeeklyArtists[0]?.name || 'Henüz yok';
-
-  let weeklyPersona = 'Yeni Frekans Kaşifi';
-  let weeklyPersonaDesc = 'Dinlediğin her parça ile müzikal auran canlı olarak şekilleniyor.';
-  if (hasRealListeningData) {
-    weeklyPersona = 'Eklektik Kaşif';
-    weeklyPersonaDesc = 'Farklı müzikal dönemler ve soundlar arasında sezgisel bir denge kuruyor.';
-    const lowerTop = topGenreName.toLowerCase();
-    if (lowerTop.includes('anadolu')) {
-      weeklyPersona = 'Anadolu Saykodelik';
-      weeklyPersonaDesc = 'Geleneksel motifler ile modern psikedelik rock tınılarının kusursuz uyumu.';
-    } else if (lowerTop.includes('rock') || lowerTop.includes('grunge')) {
-      weeklyPersona = 'Gece Rockerı';
-      weeklyPersonaDesc = 'Gitar rifleri, analog davul vuruşları ve yüksek dinamizmli parçalar bu hafta zirvede.';
-    } else if (lowerTop.includes('synth') || lowerTop.includes('wave') || lowerTop.includes('elektronik')) {
-      weeklyPersona = 'Synthwave Gezgini';
-      weeklyPersonaDesc = 'Analog synth tınıları ve retro fütürist melodiler bu haftaki odaklanma akışını oluşturdu.';
-    } else if (lowerTop.includes('indie') || lowerTop.includes('alternatif')) {
-      weeklyPersona = 'İndie Melankolisti';
-      weeklyPersonaDesc = 'Derin lirikler, lo-fi dokular ve bağımsız alternatif melodiler bu hafta başrolde.';
-    } else if (lowerTop.includes('akustik') || lowerTop.includes('lo-fi')) {
-      weeklyPersona = 'Akustik Gece Yolcusu';
-      weeklyPersonaDesc = 'Sakin analog tınılar, sıcak vokaller ve odaklanma ritimleri bu haftanın imzası.';
-    }
-  }
-
-  const topPlayedRecord = liveWeeklyHistory.topTracks[0]?.record;
-  const topPlayedSong: Song | undefined = topPlayedRecord
-    ? {
-        id: topPlayedRecord.id,
-        title: topPlayedRecord.title,
-        artist: topPlayedRecord.artist,
-        album: topPlayedRecord.album || 'Single',
-        genre: topPlayedRecord.genre,
-        rawMediaTitle: `${topPlayedRecord.artist} - ${topPlayedRecord.title}`,
-        coverUrl: topPlayedRecord.coverUrl,
-        coverGradient: topPlayedRecord.coverGradient || 'from-purple-600 to-pink-600',
-        durationSeconds: topPlayedRecord.durationSeconds || 210,
-        bpm: 118,
-        keyNote: 'Am',
-        catalogNumber: 'LH-LIVE',
-        timelineMarkers: [],
-        audioUrl: topPlayedRecord.audioUrl,
-        youtubeVideoId: topPlayedRecord.youtubeVideoId,
-        releaseYear: new Date().getFullYear(),
-        soundType: 'indie',
-      }
-    : undefined;
-
-  const weeklyAnthemSong: Song | undefined =
-    topPlayedSong ||
-    favoriteSongs[0] ||
-    allWeeklyTracks[0] ||
-    sortedWeeklyArtists[0]?.sampleSong;
 
   const isDefaultTemplateSongId = (id?: string) =>
     id === 'song-duman' ||
@@ -2564,9 +2616,7 @@ export const ProfileTab: React.FC<Props> = ({
                     </form>
 
                     {artistFilterMode === 'music_only' && (() => {
-                      const filteredArtists = sanitizedFavoriteArtists.filter((a: string) =>
-                        librarySearchQuery ? a.toLowerCase().includes(librarySearchQuery.toLowerCase()) : true
-                      );
+                      const filteredArtists = filteredMusicArtists;
                       const visibleArtists = filteredArtists.slice(0, visibleArtistsLimit);
                       const hasMoreArtists = filteredArtists.length > visibleArtistsLimit;
                       const remainingArtists = filteredArtists.length - visibleArtistsLimit;
@@ -2617,12 +2667,7 @@ export const ProfileTab: React.FC<Props> = ({
                     })()}
 
                     {artistFilterMode === 'all_channels' && (() => {
-                      const filteredChannels = subscribedChannels.filter((ch) =>
-                        librarySearchQuery
-                          ? ch.name.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
-                            ch.rawTitle.toLowerCase().includes(librarySearchQuery.toLowerCase())
-                          : true
-                      );
+                      const filteredChannels = filteredSubscribedChannels;
                       const visibleChannels = filteredChannels.slice(0, visibleChannelsLimit);
                       const hasMoreChannels = filteredChannels.length > visibleChannelsLimit;
                       const remainingChannels = filteredChannels.length - visibleChannelsLimit;
@@ -2685,7 +2730,7 @@ export const ProfileTab: React.FC<Props> = ({
           MODAL: ÇALMA LİSTESİ DETAY & ŞARKILAR (SINIRSIZ SAYFALAMA)
          ===================================================================== */}
       {viewingPlaylist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
           <div className="relative w-full max-w-lg bg-zinc-950 border border-white/[0.08] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[86vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-3.5 min-w-0">
@@ -3011,7 +3056,7 @@ export const ProfileTab: React.FC<Props> = ({
          ===================================================================== */}
       {showSettingsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-backdrop-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-backdrop-enter"
           onClick={() => setShowSettingsModal(false)}
         >
           <div
@@ -3506,7 +3551,7 @@ export const ProfileTab: React.FC<Props> = ({
             </div>
 
             {/* Sticky Bottom Footer: Değişiklikleri Kaydet */}
-            <div className="sticky bottom-0 px-6 py-3.5 bg-white/95 dark:bg-[#141418]/95 backdrop-blur-xl border-t border-[#E6E4DF] dark:border-white/[0.08] flex items-center gap-2.5 shrink-0 z-20">
+            <div className="sticky bottom-0 px-6 py-3.5 bg-white/95 dark:bg-[#141418]/95 backdrop-blur-md border-t border-[#E6E4DF] dark:border-white/[0.08] flex items-center gap-2.5 shrink-0 z-20">
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
@@ -3530,7 +3575,7 @@ export const ProfileTab: React.FC<Props> = ({
           MODAL: MÜZİKAL AURA & FREKANS KİMLİK KARTI (SHAREABLE STORY CARD)
          ===================================================================== */}
       {showStoryCardModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-2xl animate-in fade-in duration-200 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
           <div className="relative w-full max-w-2xl bg-zinc-950/95 border border-white/[0.12] rounded-3xl p-5 sm:p-7 shadow-[0_25px_80px_rgba(0,0,0,0.85)] max-h-[94vh] overflow-y-auto no-scrollbar flex flex-col md:flex-row items-center gap-6">
             {/* Top Close Button (Mobile & Desktop) */}
             <button
@@ -3812,4 +3857,4 @@ export const ProfileTab: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});
