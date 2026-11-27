@@ -398,6 +398,72 @@ app.get('/api/youtube-search', async (req, res) => {
   }
 });
 
+// Spotify OAuth 2.0 PKCE popup callback route (static HTML, zero server-side query interpolation)
+app.get(['/auth/spotify/callback', '/auth/spotify/callback/'], (_req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(`<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ListenHub · Spotify Bağlantısı</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0b0b0d;
+        color: #f5f5f7;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      .card {
+        max-width: 340px;
+        padding: 20px 24px;
+        border-radius: 16px;
+        background: #141418;
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      p { margin: 8px 0 0; font-size: 13px; color: #8e8e98; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <strong>Spotify bağlantısı tamamlanıyor...</strong>
+      <p>Bu pencere otomatik olarak kapanacak.</p>
+    </div>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var code = params.get('code') || '';
+        var state = params.get('state') || '';
+        var error = params.get('error') || '';
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage(
+              { type: 'LISTENHUB_SPOTIFY_AUTH_CALLBACK', code: code, state: state, error: error },
+              window.location.origin
+            );
+          } catch (e) {}
+          window.close();
+        } else if (code && state) {
+          var next = new URLSearchParams();
+          next.set('spotify_code', code);
+          next.set('spotify_state', state);
+          window.location.replace('/?' + next.toString());
+        } else {
+          window.location.replace('/');
+        }
+      })();
+    </script>
+  </body>
+</html>`);
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "ListenHub Canlı Senkron",
+  "version": "1.0.0",
+  "description": "YouTube ve YouTube Music canlı oynatma bilgisini açık olan ListenHub sekmesine anlık aktarır.",
+  "permissions": ["tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://music.youtube.com/*",
+        "https://www.youtube.com/watch*"
+      ],
+      "js": ["content-youtube.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://harmoniq-app-fawn.vercel.app/*",
+        "http://localhost:*/*",
+        "https://*.listenhub.app/*",
+        "https://*.run.app/*"
+      ],
+      "js": ["content-listenhub.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

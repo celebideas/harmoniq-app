@@ -44,6 +44,13 @@ import {
   ActiveCoListenSession,
 } from './types';
 import { soundEngine } from './services/soundEngine';
+import {
+  externalSyncService,
+  externalStateToSong,
+  ExternalPlaybackSource,
+  ExternalPlaybackState,
+} from './services/externalSyncService';
+import './services/spotifySyncService';
 import { usePwaUpdate } from './hooks/usePwaUpdate';
 import {
   fetchArtistRadio,
@@ -993,9 +1000,81 @@ export default function App() {
   const lastPlayIntentRef = useRef<{ playing: boolean; time: number }>({ playing: false, time: 0 });
   const pendingStartSecondRef = useRef<number | null>(null);
   const pendingStartTimestampRef = useRef<number>(0);
+  const [externalSyncSource, setExternalSyncSource] = useState<ExternalPlaybackSource | null>(null);
+  const externalPlaybackActiveRef = useRef<boolean>(false);
+  const externalPlaybackStateRef = useRef<ExternalPlaybackState | null>(null);
+
+  const stableHandleReleaseExternalSync = useCallback(() => {
+    externalPlaybackActiveRef.current = false;
+    externalPlaybackStateRef.current = null;
+    setExternalSyncSource(null);
+    externalSyncService.releaseExternalControl();
+  }, []);
+
+  // Subscribe to centralized External Playback Sync Engine (Spotify PKCE, Chrome Extension, Android Native Bridge)
+  useEffect(() => {
+    const unsub = externalSyncService.subscribe((snapshot) => {
+      externalPlaybackActiveRef.current = snapshot.active;
+      externalPlaybackStateRef.current = snapshot.state;
+
+      if (!snapshot.active || !snapshot.state) {
+        setExternalSyncSource(null);
+        return;
+      }
+
+      const ext = snapshot.state;
+
+      // Double-Audio Conflict Protection: silently pause ListenHub's own audio engine
+      if (soundEngine.getIsPlaying()) {
+        soundEngine.pause();
+      }
+
+      setExternalSyncSource(ext.source);
+      setIsAudioLoading(false);
+
+      if (ext.source === 'spotify_api') {
+        setActivePlatform('spotify');
+      } else if (ext.source === 'chrome_extension') {
+        setActivePlatform('youtube_music');
+      }
+
+      setCurrentSong((prev) => {
+        const mapped = externalStateToSong(ext, prev);
+        if (
+          prev &&
+          prev.id === mapped.id &&
+          prev.title === mapped.title &&
+          prev.artist === mapped.artist &&
+          prev.coverUrl === mapped.coverUrl &&
+          prev.durationSeconds === mapped.durationSeconds
+        ) {
+          return prev;
+        }
+        return mapped;
+      });
+
+      setMySecond(ext.currentSecond);
+      setIsPlaying((prev) => (prev === ext.isPlaying ? prev : ext.isPlaying));
+    });
+
+    return unsub;
+  }, []);
+
+  // Smooth 1s timeline progression between external sync polls while external player is playing
+  useEffect(() => {
+    if (!externalSyncSource || !isPlaying) return;
+    const timer = window.setInterval(() => {
+      const ext = externalPlaybackStateRef.current;
+      if (!externalPlaybackActiveRef.current || !ext || !ext.isPlaying) return;
+      const maxDur = Math.max(1, ext.durationSec || 210);
+      setMySecond((prev) => (prev < maxDur ? prev + 1 : maxDur));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [externalSyncSource, isPlaying]);
 
   useEffect(() => {
     const unsubTime = soundEngine.onTimeUpdate((sec) => {
+      if (externalPlaybackActiveRef.current) return;
       if (pendingStartSecondRef.current !== null) {
         const target = pendingStartSecondRef.current;
         const elapsed = Date.now() - pendingStartTimestampRef.current;
@@ -1008,6 +1087,7 @@ export default function App() {
       setMySecond(sec);
     });
     const unsubState = soundEngine.onStateChange((playing) => {
+      if (externalPlaybackActiveRef.current) return;
       const elapsed = Date.now() - lastPlayIntentRef.current.time;
       if (playing === lastPlayIntentRef.current.playing) {
         lastPlayIntentRef.current.time = 0;
@@ -1017,6 +1097,7 @@ export default function App() {
       setIsPlaying((prev) => (prev === playing ? prev : playing));
     });
     const unsubDuration = soundEngine.onDurationChange((realDuration) => {
+      if (externalPlaybackActiveRef.current) return;
       if (!Number.isFinite(realDuration) || realDuration <= 30) return;
       const rounded = Math.round(realDuration);
       setCurrentSong((prev) => {
@@ -1026,10 +1107,12 @@ export default function App() {
       });
     });
     const unsubLoading = soundEngine.onLoadingChange((loading) => {
+      if (externalPlaybackActiveRef.current) return;
       setIsAudioLoading(loading);
     });
 
     soundEngine.onErrorFallback((failedSong) => {
+      if (externalPlaybackActiveRef.current) return;
       setToastMessage(`"${failedSong.title}" akışı atlandı, kesintisiz radyo devam ediyor...`);
       setTimeout(() => setToastMessage(null), 3500);
       handleNextSong();
@@ -2267,6 +2350,14 @@ export default function App() {
     }
     lastToggleClickRef.current = now;
 
+    // If user manually taps Play/Pause inside ListenHub, cleanly release external follow lock
+    if (externalPlaybackActiveRef.current) {
+      externalPlaybackActiveRef.current = false;
+      externalPlaybackStateRef.current = null;
+      setExternalSyncSource(null);
+      externalSyncService.releaseExternalControl();
+    }
+
     if (isPlaying) {
       lastPlayIntentRef.current = { playing: false, time: now };
       setIsPlaying(false);
@@ -2371,6 +2462,14 @@ export default function App() {
   }, [currentSong?.id, activeQueue, nextRadioSong?.id]);
 
   const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
+    // Manual track start inside ListenHub cleanly releases external player follow mode
+    if (externalPlaybackActiveRef.current) {
+      externalPlaybackActiveRef.current = false;
+      externalPlaybackStateRef.current = null;
+      setExternalSyncSource(null);
+      externalSyncService.releaseExternalControl();
+    }
+
     const safeStart = Math.max(0, Math.floor(startSecond || 0));
     pendingStartSecondRef.current = safeStart > 0 ? safeStart : null;
     pendingStartTimestampRef.current = Date.now();
@@ -4060,6 +4159,8 @@ export default function App() {
               onStartCoListen={stableHandleStartCoListen}
               onSuggestCoListenSong={stableHandleSuggestCoListenSong}
               onLeaveCoListen={stableHandleLeaveCoListen}
+              externalSyncSource={externalSyncSource}
+              onReleaseExternalSync={stableHandleReleaseExternalSync}
             />
           </div>
 
@@ -4355,6 +4456,7 @@ export default function App() {
           currentSecond={mySecond}
           isFavorite={isCurrentSongFavorite}
           themeMode={effectiveTheme}
+          externalSyncSource={externalSyncSource}
           onTogglePlay={stableHandleTogglePlay}
           onNextSong={stableHandleNextSong}
           onPrevSong={stableHandlePrevSong}

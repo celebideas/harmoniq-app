@@ -22,6 +22,10 @@ import { TimelineTrack } from './TimelineTrack';
 import { ytController } from '../services/youtubePlayerController';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
+import {
+  ExternalPlaybackSource,
+  getExternalSourceLabel,
+} from '../services/externalSyncService';
 
 interface VibeNote {
   id: string;
@@ -75,6 +79,8 @@ interface Props {
   onSuggestCoListenSong?: () => void;
   onLeaveCoListen?: () => void;
   nearbyFrequencyUsers?: LoungeUser[];
+  externalSyncSource?: ExternalPlaybackSource | null;
+  onReleaseExternalSync?: () => void;
 }
 
 export const LiveLoungeTab: React.FC<Props> = React.memo(({
@@ -111,6 +117,8 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
   onSuggestCoListenSong,
   onLeaveCoListen,
   nearbyFrequencyUsers,
+  externalSyncSource = null,
+  onReleaseExternalSync,
 }) => {
   // Memoize YouTube iframe URL ONLY by videoId so play/pause/seek NEVER reloads the iframe
   const ytIframeSrc = useMemo(() => {
@@ -621,7 +629,7 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                 )}
               </button>
 
-              {/* Center: Crisp Song Title + Calm Artist Subtitle */}
+              {/* Center: Crisp Song Title + Calm Artist Subtitle + Optional External Sync Source Badge */}
               <div
                 onClick={onOpenNowPlaying}
                 className="min-w-0 flex-1 cursor-pointer group/title active:scale-[0.98] transition-transform duration-100 ease-out"
@@ -632,6 +640,29 @@ export const LiveLoungeTab: React.FC<Props> = React.memo(({
                 <p className="text-sm text-[#63636B] dark:text-[#8E8E98] truncate mt-0.5">
                   {currentSong.artist}
                 </p>
+                {externalSyncSource && (
+                  <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md truncate max-w-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span className="truncate">{getExternalSourceLabel(externalSyncSource)}</span>
+                    </span>
+                    {onReleaseExternalSync && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic(10);
+                          onReleaseExternalSync();
+                        }}
+                        className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 transition cursor-pointer shrink-0"
+                        title="Harici senkronu bırak"
+                        aria-label="Harici senkronu bırak"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Right: Clean Search Button + Circular Copper-Amber Play/Pause */}

@@ -15,6 +15,10 @@ import {
 import { Song } from '../types';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/themeService';
+import {
+  ExternalPlaybackSource,
+  getExternalSourceLabel,
+} from '../services/externalSyncService';
 
 interface Props {
   currentSong: Song | null;
@@ -23,6 +27,7 @@ interface Props {
   currentSecond: number;
   isFavorite: boolean;
   themeMode?: 'dark' | 'light';
+  externalSyncSource?: ExternalPlaybackSource | null;
   onTogglePlay: () => void;
   onNextSong: () => void;
   onPrevSong: () => void;
@@ -45,6 +50,7 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
   currentSecond,
   isFavorite,
   themeMode = 'dark',
+  externalSyncSource = null,
   onTogglePlay,
   onNextSong,
   onPrevSong,
@@ -157,12 +163,29 @@ export const DesktopPlayerBar: React.FC<Props> = React.memo(({
           >
             {currentSong.title}
           </button>
-          <div
-            className={`text-xs truncate ${
-              isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
-            }`}
-          >
-            {currentSong.artist}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div
+              className={`text-xs truncate ${
+                isLight ? 'text-[#63636B]' : 'text-[#8E8E98]'
+              }`}
+            >
+              {currentSong.artist}
+            </div>
+            {externalSyncSource && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
+                title={getExternalSourceLabel(externalSyncSource)}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>
+                  {externalSyncSource === 'spotify_api'
+                    ? 'Spotify'
+                    : externalSyncSource === 'chrome_extension'
+                    ? 'Eklenti'
+                    : 'Android'}
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
