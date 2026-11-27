@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, startTransition } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavTab, BottomNav } from './components/BottomNav';
 import { TopHeader } from './components/TopHeader';
 import { DesktopSidebar } from './components/DesktopSidebar';
@@ -146,10 +146,6 @@ export default function App() {
     }
     return 'lounge';
   });
-  const [visualTab, setVisualTab] = useState<NavTab>(activeTab);
-  useEffect(() => {
-    setVisualTab(activeTab);
-  }, [activeTab]);
   const LAST_PLAYED_SONG_KEY = 'listenhub_last_played_song';
   const LAST_PLAYED_SECOND_KEY = 'listenhub_last_played_second';
 
@@ -2323,10 +2319,7 @@ export default function App() {
   };
 
   const handleSelectTab = useCallback((tab: NavTab) => {
-    setVisualTab(tab);
-    startTransition(() => {
-      setActiveTab(tab);
-    });
+    setActiveTab(tab);
   }, []);
 
   const handleSelectSong = async (song: Song, autoPlay = true, startSecond = 0) => {
@@ -3190,22 +3183,31 @@ export default function App() {
     return () => clearInterval(timer);
   }, [firebaseUser?.uid, currentSong?.id]);
 
-  // Subscribe to real-time messages for the currently open cloud conversation
+  // Subscribe to real-time messages for the currently open cloud conversation (deferred past first frame)
   useEffect(() => {
     if (!firebaseUser || !activeChatUser?.isRealUser) {
       setActiveCloudMessages([]);
       return;
     }
-    const [uidA, uidB] = sortPair(firebaseUser.uid, activeChatUser.id);
-    const pairId = `${uidA}_${uidB}`;
-    const unsub = subscribeConversationMessages(
-      pairId,
-      uidA,
-      uidB,
-      firebaseUser.uid,
-      setActiveCloudMessages
-    );
-    return () => unsub();
+    let cancelled = false;
+    let unsub: (() => void) | null = null;
+    const rafId = window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      const [uidA, uidB] = sortPair(firebaseUser.uid, activeChatUser.id);
+      const pairId = `${uidA}_${uidB}`;
+      unsub = subscribeConversationMessages(
+        pairId,
+        uidA,
+        uidB,
+        firebaseUser.uid,
+        setActiveCloudMessages
+      );
+    });
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(rafId);
+      unsub?.();
+    };
   }, [firebaseUser?.uid, activeChatUser?.id, activeChatUser?.isRealUser]);
 
   // Real-time Heartbeat & Cross-Tab Presence (BroadcastChannel)
@@ -3911,7 +3913,7 @@ export default function App() {
 
       {/* Desktop Left Sidebar (>= 1024px) */}
       <DesktopSidebar
-        activeTab={visualTab}
+        activeTab={activeTab}
         onSelectTab={handleSelectTab}
         onOpenSettings={stableHandleOpenSettings}
         unreadCount={totalUnread}
@@ -3929,7 +3931,7 @@ export default function App() {
           onOpenSongPicker={stableHandleOpenSongPicker}
           onOpenNowPlaying={stableHandleOpenNowPlayingDirect}
           isPlaying={isPlaying}
-          activeTab={visualTab}
+          activeTab={activeTab}
           onSelectTab={handleSelectTab}
           privacyMode={privacyMode}
           onChangePrivacyMode={setPrivacyMode}
@@ -4046,7 +4048,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'chat' && (
+          <div className={activeTab === 'chat' ? 'flex-1 flex flex-col' : 'hidden'}>
             <ChatTab
               conversations={mergedConversations}
               activeChatUser={activeChatUser}
@@ -4080,7 +4082,7 @@ export default function App() {
               getCurrentSecond={getCurrentSecond}
               allSongs={allSongsForChat}
             />
-          )}
+          </div>
 
           {activeTab === 'profile' && (
             <ProfileTab
@@ -4291,7 +4293,7 @@ export default function App() {
         )}
 
         <BottomNav
-          activeTab={visualTab}
+          activeTab={activeTab}
           onSelectTab={handleSelectTab}
           unreadCount={totalUnread}
           liveCount={liveListenersCount}

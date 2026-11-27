@@ -122,18 +122,26 @@ export const ChatTab: React.FC<Props> = React.memo(({
   const [isCoListeningActive, setIsCoListeningActive] = useState<boolean>(false);
   const [showSafetyMenu, setShowSafetyMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [localBlockedIds, setLocalBlockedIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = localStorage.getItem(BLOCKED_USERS_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [localBlockedIds, setLocalBlockedIds] = useState<string[]>([]);
   const safetyMenuRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Defer localStorage read past first frame so opening ChatTab never blocks initial paint
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const rafId = window.requestAnimationFrame(() => {
+      try {
+        const raw = localStorage.getItem(BLOCKED_USERS_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLocalBlockedIds(parsed);
+        }
+      } catch {
+        // ignore storage errors
+      }
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
 
   useEffect(() => {
     setShowSafetyMenu(false);
@@ -225,7 +233,9 @@ export const ChatTab: React.FC<Props> = React.memo(({
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
   }, [activeConv?.messages?.length, activeConv?.matchId]);
 
   const formatTime = (secs: number) => {
@@ -319,6 +329,7 @@ export const ChatTab: React.FC<Props> = React.memo(({
   );
 
   const filteredShareSongs = useMemo(() => {
+    if (!showSongPickerModal) return [];
     const q = songSearchTerm.trim().toLowerCase();
     const localMatches = allSongs.filter(
       (s) =>
@@ -344,7 +355,7 @@ export const ChatTab: React.FC<Props> = React.memo(({
       remoteShareSongs.forEach(pushUnique);
     }
     return merged;
-  }, [allSongs, songSearchTerm, remoteShareSongs]);
+  }, [showSongPickerModal, allSongs, songSearchTerm, remoteShareSongs]);
 
   const renderUserAvatar = (user: LoungeUser, sizeClass = 'w-11 h-11') => (
     <div className="relative shrink-0">
@@ -1258,7 +1269,10 @@ export const ChatTab: React.FC<Props> = React.memo(({
               })()}
 
               {/* Messages Stream */}
-              <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 min-h-[240px]">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 min-h-[240px]"
+              >
                 {activeConv.messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-8 space-y-2">
                     <Headphones className="w-8 h-8 text-[#63636B] dark:text-[#8E8E98]" strokeWidth={1.5} />
@@ -1353,7 +1367,6 @@ export const ChatTab: React.FC<Props> = React.memo(({
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Musical Icebreakers Bar */}
